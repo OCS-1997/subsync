@@ -9,6 +9,7 @@ const initialState = {
   isAuthenticated: !!storedUser,
   isLoading: false,
   error: null,
+  role: storedUser ? JSON.parse(storedUser).role : null,
 };
 
 export const loginUser = createAsyncThunk(
@@ -37,6 +38,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.isLoading = false;
       state.error = null;
+      state.role = null;
       sessionStorage.removeItem('subsync_user');
       sessionStorage.removeItem('subsync_token');
     },
@@ -51,6 +53,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.role = action.payload.role;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;

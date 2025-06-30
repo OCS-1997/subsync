@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { toast, ToastContainer } from "react-toastify";
 import { useState, useEffect, useRef } from 'react';
+import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -217,19 +218,19 @@ function Services() {
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link to={`add`}>
-            <Button className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
               <Plus /> Add Service
             </Button>
           </Link>
 
-          <Button className="sm:w-auto" onClick={handleImportButtonClick}>
+          <Button className="sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
             <FileDown /> Import
           </Button>
 
           <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
                   <FileUp /> Export
                 </Button>
               </DropdownMenuTrigger>

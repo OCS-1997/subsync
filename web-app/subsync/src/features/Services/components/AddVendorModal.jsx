@@ -94,56 +94,56 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   
 
   useEffect(() => {
-  if (isEditing && editableVendor) {
-
-    setVendorData({
-      salutation: editableVendor.salutation || "Mr.",
-      firstName: editableVendor.first_name || "",
-      lastName: editableVendor.last_name || "",
-      companyName: editableVendor.company_name || "",
-      displayName: editableVendor.display_name || "",
-      email: editableVendor.primary_email || editableVendor.email || "",
-      country_code: editableVendor.country_code || "+91",
-      phoneNumber: editableVendor.primary_phone_number || editableVendor.phone_number || "",
-      secondaryPhoneNumber: editableVendor.secondary_phone_number || "",
-      gstin: editableVendor.gst_in || "",
-      gst_treatment: editableVendor.gst_treatment || "CGST & SGST",
-      tax_preference: editableVendor.tax_preference || "Taxable",
-      exemption_reason: editableVendor.exemption_reason || "",
-      currencyCode: editableVendor.currency_code
-        ? { label: editableVendor.currency_code, value: editableVendor.currency_code }
-        : "INR",
-      address: {
-        country: editableVendor.address?.country
-          ? { label: editableVendor.address.country, value: editableVendor.address.country }
-          : { label: "India", value: "IN" },
-        addressLine: editableVendor.address?.address_line || "",
-        state: editableVendor.address?.state
-          ? { label: editableVendor.address.state, value: editableVendor.address.state }
-          : null,
-        city: editableVendor.address?.city || "",
-        zipCode: editableVendor.address?.zip_code || "",
-      },
-      payment_terms: editableVendor.payment_terms || null,
-      notes: editableVendor.notes || "",
-      vendorStatus: editableVendor.vendor_status || "Active",
-    });
-
-    setContactPersons(
-      Array.isArray(editableVendor.contact_persons)
-        ? editableVendor.contact_persons.map((person) => ({
-            salutation: person.salutation || "Mr.",
-            designation: person.designation || "",
-            first_name: person.first_name || "",
-            last_name: person.last_name || "",
-            email: person.email || "",
-            phone_number: person.phone_number || "",
-            country_code: person.country_code || "+91",
-          }))
-        : []
-    );
-  }
-}, [isEditing, editableVendor]);
+    if (isEditing && editableVendor) {
+  
+      // Parse JSON fields if needed
+      let address = editableVendor.vendor_address || editableVendor.address || {};
+      if (typeof address === "string") {
+        try { address = JSON.parse(address); } catch { address = {}; }
+      }
+      let contactPersons = editableVendor.other_contacts || editableVendor.contact_persons || [];
+      if (typeof contactPersons === "string") {
+        try { contactPersons = JSON.parse(contactPersons); } catch { contactPersons = []; }
+      }
+      let paymentTerms = editableVendor.payment_terms;
+      if (typeof paymentTerms === "string") {
+        try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
+      }
+      setVendorData({
+        salutation: editableVendor.salutation || "Mr.",
+        firstName: editableVendor.first_name || editableVendor.firstName || "",
+        lastName: editableVendor.last_name || editableVendor.lastName || "",
+        companyName: editableVendor.company_name || editableVendor.companyName || "",
+        displayName: editableVendor.display_name || editableVendor.displayName || "",
+        email: editableVendor.primary_email || editableVendor.email || "",
+        country_code: editableVendor.country_code || "+91",
+        phoneNumber: editableVendor.primary_phone_number || editableVendor.phoneNumber || "",
+        secondaryPhoneNumber: editableVendor.secondary_phone_number || editableVendor.secondaryPhoneNumber || "",
+        gstin: editableVendor.gst_in || editableVendor.gstin || "",
+        gst_treatment: editableVendor.gst_treatment || "CGST & SGST",
+        tax_preference: editableVendor.tax_preference || "Taxable",
+        exemption_reason: editableVendor.exemption_reason || "",
+        currencyCode: editableVendor.currency_code
+          ? { label: editableVendor.currency_code, value: editableVendor.currency_code }
+          : "INR",
+        address: {
+          country: address.country
+            ? { label: address.country, value: address.country }
+            : { label: "India", value: "IN" },
+          addressLine: address.addressLine || address.address_line || "",
+          state: address.state
+            ? { label: address.state, value: address.state }
+            : null,
+          city: address.city || "",
+          zipCode: address.zipCode || address.zip_code || "",
+        },
+        payment_terms: paymentTerms || null,
+        notes: editableVendor.notes || "",
+        vendorStatus: editableVendor.vendor_status || "Active",
+      });
+      setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
+    }
+  }, [isEditing, editableVendor]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -210,7 +210,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         secondaryPhoneNumber: vendorData.secondaryPhoneNumber,
         companyName: vendorData.companyName,
         displayName: vendorData.displayName,
-        gstin: vendorData.gstin,
+        gstin: vendorData.gst_in,
         currencyCode: vendorData.currencyCode?.value || vendorData.currencyCode || "INR",
         gst_treatment: vendorData.gst_treatment,
         tax_preference: vendorData.tax_preference,
@@ -269,7 +269,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
+          <DialogTitle className="">{isEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
           <DialogDescription>
             {isEditing ? "Update vendor details." : "Add a new vendor to your services."}
           </DialogDescription>
@@ -356,7 +356,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
             <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" className=" bg-blue-500 hover:bg-blue-600 text-white">
               {isEditing ? "Update Vendor" : "Add Vendor"}
             </Button>
           </DialogFooter>

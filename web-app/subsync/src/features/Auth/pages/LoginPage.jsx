@@ -45,6 +45,12 @@ function LoginPage() {
     await dispatch(loginUser({ username, password }));
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
+    }
+  };
+
   return (
     <>
       <ToastContainer />
@@ -169,10 +175,12 @@ function LoginPage() {
                     }`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     required
                   />
                   <button
                     type="button"
+                    onKeyDown={handleKeyDown}
                     onClick={() => setShowPassword(!showPassword)}
                     className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 z-30 focus:outline-none ${
                       showPassword ? 'text-yellow-300' : 'text-gray-500'
@@ -200,6 +208,7 @@ function LoginPage() {
               <button
                 type="submit"
                 onClick={handleSubmit}
+                onKeyDown={handleKeyDown}
                 className={`w-full py-2 px-4 rounded-md font-medium transition-all duration-700 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
                   showPassword
                     ? 'bg-yellow-600 hover:bg-yellow-500 text-black shadow-[0_0_20px_rgba(255,255,0,0.3)] focus:ring-yellow-400'

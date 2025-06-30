@@ -15,6 +15,7 @@ const getGSTSettingsController = async (req, res) => {
 const updateGSTSettingsController = async (req, res) => {
     try {
         const { taxRegistrationNumberLabel, gstin, businessLegalName, businessTradeName, gstRegisteredOn } = req.body;
+        console.log("Received GST settings update request:", req.body);
 
         if (!taxRegistrationNumberLabel || !gstin || !businessLegalName || !businessTradeName || !gstRegisteredOn) {
             return res.status(400).json({ error: "All fields are required" });

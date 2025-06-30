@@ -172,7 +172,7 @@ const getAllVendors = async ({ search = "", sort = "display_name", order = "asc"
 const getVendorById = async (vendorId) => {
     const query = `SELECT * FROM vendors WHERE vendor_id = ?`;
     const [rows] = await appDB.execute(query, [vendorId]);
-    return rows[0];
+    return rows;
 };
 
 /**

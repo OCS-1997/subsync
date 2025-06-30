@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import {ToastContainer, toast} from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,27 +17,47 @@ function GSTSettings() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchGSTSettings = async () => {
-            try {
-                const response = await api.get("/gst-settings");
-                const data = response.data;
+   useEffect(() => {
+    const fetchGSTSettings = async () => {
+        try {
+            const response = await api.get("/get-gst-settings");
+            const data = response.data;
 
-                if (!data.success) {
-                    throw new Error(data.error || "GST settings retrieval failed.");
-                }
-
-                setFormDetails(data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching GST settings:", error.message);
-                setError("Failed to load GST settings.");
-                setLoading(false);
+            if (!data.success) {
+                throw new Error(data.error || "GST settings retrieval failed.");
             }
-        };
 
-        fetchGSTSettings();
-    }, []);
+            
+            const settings = data.settings[0];
+            if (settings) {
+                setFormDetails({
+                    taxRegistrationNumberLabel: settings.tax_reg_num_label || "",
+                    gstin: settings.gst_in || "",
+                    businessLegalName: settings.business_legal_name || "",
+                    businessTradeName: settings.business_trade_name || "",
+                    gstRegisteredOn: settings.gst_reg_date
+                        ? settings.gst_reg_date.slice(0, 10) 
+                        : "",
+                });
+            } else {
+                setFormDetails({
+                    taxRegistrationNumberLabel: "",
+                    gstin: "",
+                    businessLegalName: "",
+                    businessTradeName: "",
+                    gstRegisteredOn: "",
+                });
+            }
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching GST settings:", error.message);
+            setError("Failed to load GST settings.");
+            setLoading(false);
+        }
+    };
+
+    fetchGSTSettings();
+}, []);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -52,13 +72,13 @@ function GSTSettings() {
 
             const response = await api.put("/update-gst-settings", formDetails);
             console.log("Response:", response);
-            const data = await response.json();
+            const data = await response.data;
 
-            if (!response.ok) {
-                throw new Error(data.error || "Failed to update GST settings.");
-            }
+            // if (!response.ok) {
+            //     throw new Error(data.error || "Failed to update GST settings.");
+            // }
 
-            alert("GST Settings updated successfully!");
+            toast.success("GST Settings updated successfully!");
         } catch (error) {
             console.error("Error updating GST settings:", error.message);
             alert("Error updating GST settings.");
@@ -69,6 +89,8 @@ function GSTSettings() {
     if (error) return <p className="text-red-500">{error}</p>;
 
     return (
+        <>
+        <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         <div className="md:w-[50%] w-full">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold mb-4">GST Settings</h1>
@@ -135,6 +157,7 @@ function GSTSettings() {
                 <Button type="submit">Save</Button>
             </form>
         </div>
+        </>
     );
 }
 

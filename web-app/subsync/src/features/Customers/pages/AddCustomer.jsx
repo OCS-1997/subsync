@@ -109,7 +109,7 @@ const AddCustomer = () => {
       dispatch(fetchCustomerById(editableCustomerId));
     }
     return () => {
-      dispatch(clearCustomerState()); // Clear current customer data when component unmounts
+      dispatch(clearCustomerState()); 
     };
   }, [editableCustomerId, dispatch]);
 
@@ -294,7 +294,7 @@ const AddCustomer = () => {
   return (
     <div className="container mt-4">
       <ToastContainer position="top-center" autoClose={2000} theme="dark" transition={Bounce} pauseOnHover />
-      <h1 className="mb-4 text-3xl font-bold ">{isEditing ? "Edit Customer" : "Add Customer"}</h1>
+      <h1 className="mb-4 text-3xl font-bold  ">{isEditing ? "Edit Customer" : "Add Customer"}</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
 
       <form onSubmit={handleSubmit}>
@@ -375,7 +375,7 @@ const AddCustomer = () => {
         </Tabs>
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button type="submit" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
+          <Button type="submit" className="" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
           <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={resetCustomerData} disabled={loading}>Reset</Button>
           <Button type="button" variant="destructive" onClick={handleCancel} disabled={loading}>Cancel</Button>
         </div>

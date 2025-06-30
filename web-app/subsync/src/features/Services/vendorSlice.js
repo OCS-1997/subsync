@@ -36,8 +36,6 @@ export const createVendor = createAsyncThunk(
         try {
             console.log("Data to be sent:", vendorData);
             const response = await api.post("/create-vendor", vendorData);
-            
-            toast.success('Vendor added successfully.');
             return response.data;
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to add vendor.');

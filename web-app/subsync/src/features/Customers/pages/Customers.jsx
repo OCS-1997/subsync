@@ -211,17 +211,17 @@ function Customers() {
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link to={`add`}>
-            <Button className="w-full sm:w-auto"> 
+            <Button className="w-full sm:w-aut bg-blue-500 hover:bg-blue-600 text-white"> 
               <UserPlus/> Add
             </Button>
           </Link>
 
-          <Button className="sm:w-auto" onClick={handleImportButtonClick}>
+          <Button className="sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
             <FileDown /> Import
           </Button>
 
           <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
-            <Button className="w-full sm:w-auto" onClick={fetchCustomersAndExport}>
+            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
               <FileUp /> Export
             </Button>
             <DropdownMenu>

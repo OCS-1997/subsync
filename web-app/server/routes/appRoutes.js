@@ -11,6 +11,7 @@ import { createItemGroupController, getAllItemGroupsController, getItemGroupById
 import { getSubscriptionsController, createSubscription } from '../controllers/subscriptionController.js';
 import { getAllTaxes, createTax, editTax, deleteTax } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
+import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -73,6 +74,13 @@ router.post('/delete-tax/:taxId', isAuthenticated, deleteTax);
 
 // GST Settings
 router.get('/get-gst-settings', isAuthenticated, getGSTSettingsController);
-router.post('/update-gst-settings', isAuthenticated, updateGSTSettingsController);
+router.put('/update-gst-settings', isAuthenticated, updateGSTSettingsController);
+
+// User Management
+router.get('/users', isAuthenticated, getallUsers);
+router.get('/users/:username', isAuthenticated, getUser);
+router.post('/users', isAuthenticated, createUserController);
+router.put('/users/:username', isAuthenticated, updateUserController);
+router.delete('/users/:username', isAuthenticated, deleteUserController);
 
 export default router;

@@ -50,7 +50,7 @@ CREATE TABLE payment_terms (
     term_name VARCHAR(50) NOT NULL,
     days INT NOT NULL,
     is_default BOOLEAN DEFAULT false,
-
+ 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_term_name (term_name)
@@ -164,10 +164,10 @@ CREATE TABLE gst_settings (
 CREATE TABLE users (
     username VARCHAR(32) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(32) NOT NULL,
+    password TEXT NOT NULL,
+    role ENUM('Admin', 'Manager', 'User') NOT NULL DEFAULT 'User',
     email VARCHAR(255) UNIQUE NOT NULL,
-
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

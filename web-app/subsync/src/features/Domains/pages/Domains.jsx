@@ -102,7 +102,7 @@ function Domains() {
         />
         <Link to="add">
           <Button className="bg-blue-500 hover:bg-blue-600 text-white w-full sm:w-auto">
-            New Domain
+            + New Domain
           </Button>
         </Link>
       </div>

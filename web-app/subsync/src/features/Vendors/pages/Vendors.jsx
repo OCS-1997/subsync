@@ -13,6 +13,7 @@ import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import useFetchData from "@/hooks/useFetchData.js";
 import AddVendorModal from "@/features/Services/components/AddVendorModal";
+import { use } from "react";
 
 const headers = [
   { key: "display_name", label: "Display Name" },
@@ -32,6 +33,12 @@ function Vendors() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editingVendor, setEditingVendor] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+  const [vendorsError, setVendorsError] = useState(null);
+  const [editingVendorDetails, setEditingVendorDetails] = useState(null);
+  const [editingVendorLoading, setEditingVendorLoading] = useState(false);
+  const [editingVendorError, setEditingVendorError] = useState(null);
 
   const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-vendors`,
@@ -49,9 +56,9 @@ function Vendors() {
   };
 
   const handleEditVendor = (vendor) => {
-  setEditingVendor(vendor);
-  setShowAddModal(true);
-   };
+    setEditingVendor(vendor);
+    setShowAddModal(true);
+  };
 
   const fetchVendorsAndExport = async () => {
     try {
@@ -83,12 +90,12 @@ function Vendors() {
   };
 
   const renderActions = (vendor) => (
-  <div className="flex items-center">
-    <Button variant="ghost" size="icon" onClick={() => handleEditVendor(vendor)}>
-      <Eye className="w-4 h-4" />
-    </Button>
-  </div>
-);
+    <div className="flex items-center">
+      <Button variant="ghost" size="icon" onClick={() => handleEditVendor(vendor)}>
+        <Eye className="w-4 h-4" />
+      </Button>
+    </div>
+  );
 
   const filteredData = data.filter((v) => {
     const term = search.toLowerCase();
@@ -110,79 +117,117 @@ function Vendors() {
   const handleAddVendor = () => setShowAddModal(true);
   const handleVendorAdded = () => {
     setShowAddModal(false);
-    setRefreshKey(prev => prev + 1); 
-   
+    setRefreshKey(prev => prev + 1);
   };
+
+  // Fetch all vendors on load or refreshKey change
+  useEffect(() => {
+    const fetchVendors = async () => {
+      setVendorsLoading(true);
+      setVendorsError(null);
+      try {
+        const response = await api.get("/all-vendors");
+        const vendorList = Array.isArray(response.data) ? response.data : response.data.vendors;
+        setVendors(vendorList || []);
+      } catch (err) {
+        setVendorsError("Failed to fetch vendors.");
+      } finally {
+        setVendorsLoading(false);
+      }
+    };
+    fetchVendors();
+  }, [refreshKey]);
+
+  // Fetch single vendor details when editingVendor changes
+  useEffect(() => {
+    if (editingVendor && editingVendor.vendor_id) {
+      setEditingVendorLoading(true);
+      setEditingVendorError(null);
+      const fetchVendorDetails = async () => {
+        try {
+          const response = await api.get(`/vendor/${editingVendor.vendor_id}`);
+          setEditingVendorDetails(response.data.vendor || editingVendor);
+        } catch (err) {
+          setEditingVendorError("Failed to fetch vendor details.");
+        } finally {
+          setEditingVendorLoading(false);
+        }
+      };
+      fetchVendorDetails();
+    } else {
+      setEditingVendorDetails(null);
+    }
+  }, [editingVendor]);
 
   return (
     <>
-    <ToastContainer/>
-    <div className="container p-6 rounded-lg shadow-lg">
-      <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
-        <div className="flex flex-col sm:flex-row w-full items-center gap-3">
-          <SearchFilterForm
-            search={search}
-            setSearch={setSearch}
-            handleSearch={handleSearch}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            order={order}
-            setOrder={setOrder}
-            headers={headers.map(({ key, label }) => ({ key, label }))}
-          />
+      <ToastContainer />
+      <div className="container p-6 rounded-lg shadow-lg">
+        <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
+        <hr className="mb-4 border-blue-500 border-3 size-auto" />
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
+          <div className="flex flex-col sm:flex-row w-full items-center gap-3">
+            <SearchFilterForm
+              search={search}
+              setSearch={setSearch}
+              handleSearch={handleSearch}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              order={order}
+              setOrder={setOrder}
+              headers={headers.map(({ key, label }) => ({ key, label }))}
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ">
+            <AddVendorModal
+              isEditing={!!editingVendor}
+              editableVendor={editingVendor}
+              onVendorAdded={() => {
+                setShowAddModal(false);
+                setEditingVendor(null);
+                setRefreshKey(prev => prev + 1);
+              }}
+              isOpen={showAddModal}
+              setIsOpen={setShowAddModal}
+            />
+            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
+              <FileUp /> Export
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <span />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={fetchVendorsAndExport}>Export as CSV</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <AddVendorModal
-            isEditing={!!editingVendor}
-            editableVendor={editingVendor}
-            onVendorAdded={() => {
-              setShowAddModal(false);
-              setEditingVendor(null);
-              setRefreshKey(prev => prev + 1);
-            }}
-            isOpen={showAddModal}
-            setIsOpen={setShowAddModal}
-          />
-          <Button className="w-full sm:w-auto" onClick={fetchVendorsAndExport}>
-            <FileUp /> Export
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={fetchVendorsAndExport}>Export as CSV</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {(fetchLoading || loading || vendorsLoading) ? (
+          <div className="flex justify-center items-center my-8">
+            <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
+          </div>
+        ) : modifiedData.length > 0 ? (
+          <>
+            <GenericTable headers={headers} data={modifiedData} primaryKey="vendor_id" />
+            <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
+          </>
+        ) : (
+          <Alert>
+            <AlertTitle>Info</AlertTitle>
+            <AlertDescription>No vendors available</AlertDescription>
+          </Alert>
+        )}
       </div>
-
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {(fetchLoading || loading) ? (
-        <div className="flex justify-center items-center my-8">
-          <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
-        </div>
-      ) : modifiedData.length > 0 ? (
-        <>
-          <GenericTable headers={headers} data={modifiedData} primaryKey="vendor_id" />
-          <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
-        </>
-      ) : (
-        <Alert>
-          <AlertTitle>Info</AlertTitle>
-          <AlertDescription>No vendors available</AlertDescription>
-        </Alert>
-      )}
-    </div>
     </>
   );
 }

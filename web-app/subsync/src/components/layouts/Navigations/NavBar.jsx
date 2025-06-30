@@ -2,7 +2,7 @@ import { HelpCircle, User, Settings, LogOut, X } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-
+import { ThemeToggle } from "../ThemeToggle";
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
 
@@ -110,7 +110,18 @@ function NavBar({ toggleSidebar }) {
               >
                 Taxes
               </Link>
+
+              <Link
+                className="text-gray-700 hover:text-blue-500"
+                to="settings/user-management"
+                onClick={() => setSettingsOpen(false)}
+              >
+               User Management
+              </Link>
             </ul>
+            
+             
+            
           </div>
         </div>
       )}

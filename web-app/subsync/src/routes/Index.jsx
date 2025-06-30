@@ -18,6 +18,8 @@ import Services from '@/features/Services/pages/Services.jsx';
 import Settings from '@/features/Settings/Settings.jsx';
 import Taxes from '@/features/Settings/Taxes.jsx';
 import Vendors from '@/features/Vendors/pages/Vendors';
+import UserManagement from '@/features/Settings/UserManagement';
+import AddUser from '@/features/Settings/AddUser';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -57,7 +59,10 @@ const router = createBrowserRouter([
               { path: "default-tax-pref", element: <DefaultTaxPreference /> },
               { path: "gst-settings", element: <GSTSettings /> },
             ]
-          }
+          },
+          {path: "user-management", element: <UserManagement/>},
+          {path: "user-management/add-user", element: <AddUser />},
+          {path: "user-management/add-user/:editUsername", element: <AddUser />},
         ]
       }
     ]

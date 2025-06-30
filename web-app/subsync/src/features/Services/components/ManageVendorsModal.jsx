@@ -1,6 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer  } from 'react-toastify';
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
     try {
       await dispatch(deleteVendor(vendorId)).unwrap();
       onVendorsUpdated();
+      toast.success('Vendor deleted successfully.');
     } catch (err) {
       console.error('Error deleting vendor:', err);
       toast.error(err.message || 'Failed to delete vendor');
@@ -40,6 +41,8 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
   };
 
   return (
+    <>
+    <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable pauseOnFocusLoss />
     <Dialog open={isManageModalOpen} onOpenChange={setIsManageModalOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" disabled={loading}>
@@ -89,6 +92,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 

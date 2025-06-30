@@ -11,11 +11,11 @@ const validateLogin = async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const valid = await checkLogin(username, password);
+        const user = await checkLogin(username, password);
 
-        if (valid) {
-            const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1d' });
-            return res.status(200).json({ success: true, message: "Validation successful.", token: token, username });
+        if (user) {
+            const token = jwt.sign({ username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            return res.status(200).json({ success: true, message: "Validation successful.", token, username: user.username, role: user.role });
         }
         else {
             return res.status(401).json({ success: false, message: "Invalid username or password." });
