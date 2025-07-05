@@ -9,11 +9,16 @@ import { createServiceController, getAllServicesController, getServiceByIdContro
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
 import { getSubscriptionsController, createSubscription } from '../controllers/subscriptionController.js';
-import { getAllTaxes, createTax, editTax, deleteTax } from '../controllers/taxController.js';
+import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
 
 const router = express.Router();
+
+// Health check route
+router.get('/health', (req, res) => {
+    res.status(200).json({ message: 'Server is running' });
+});
 
 // Login
 router.post('/login/user', validateLogin);
@@ -68,9 +73,12 @@ router.post('/add-subscription', isAuthenticated, createSubscription);
 
 // Taxes Rates
 router.get('/all-taxes', isAuthenticated, getAllTaxes);
+router.get('/tax/:id', isAuthenticated, getTaxByIdController);
 router.post('/add-tax', isAuthenticated, createTax);
-router.post('/update-tax', isAuthenticated, editTax);
-router.post('/delete-tax/:taxId', isAuthenticated, deleteTax);
+router.put('/edit-tax/:id', isAuthenticated, editTax);
+router.delete('/delete-tax/:id', isAuthenticated, deleteTax);
+router.get('/default-tax-preference', isAuthenticated, getDefaultTaxPref);
+router.post('/set-default-tax-preference', isAuthenticated, setDefaultTaxPref);
 
 // GST Settings
 router.get('/get-gst-settings', isAuthenticated, getGSTSettingsController);

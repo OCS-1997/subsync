@@ -14,11 +14,17 @@ app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 
+// Add request logging
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+    next();
+});
+
 // CORS configuration
 app.use(cors({
   origin: [
-    `http://localhost:${process.env.CLIENT_PORT}`, // for dev outside Docker
-    `http://<span class="math-inline">\{process\.env\.HOME\_IP\}\:</span>{process.env.CLIENT_PORT}`, // for dev outside Docker
+    `http://localhost:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
+    `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
     `http://localhost`, // allows requests from your Nginx frontend (port 80)
     `http://127.0.0.1`,
   ],
@@ -46,6 +52,6 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-app.listen(process.env.NODE_PORT, () => {
-  console.log(`Server is running at http://localhost:${process.env.NODE_PORT}`.bgGreen.white);
+app.listen(process.env.NODE_PORT || 3000, () => {
+  console.log(`Server is running at http://localhost:${process.env.NODE_PORT || 3000}`.bgGreen.white);
 });

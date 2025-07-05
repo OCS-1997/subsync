@@ -4,84 +4,252 @@ import { generateID } from "../middlewares/generateID.js";
 
 // Fetch all taxes
 async function getTaxes() {
-    const [rows] = await appDB.query("SELECT tax_rates FROM taxes LIMIT 1");
-    if (!rows.length || !rows[0].tax_rates) return [];
-    let taxRates = rows[0].tax_rates;
-    if (Buffer.isBuffer(taxRates)) taxRates = taxRates.toString("utf8");
-    if (typeof taxRates === "string") taxRates = JSON.parse(taxRates);
-    return Array.isArray(taxRates) ? taxRates : [];
+    try {
+        const [rows] = await appDB.query(
+            "SELECT * FROM tax_rates WHERE is_active = TRUE ORDER BY created_at DESC"
+        );
+        return rows;
+    } catch (error) {
+        console.error("Error fetching taxes:", error);
+        throw new Error("Failed to fetch taxes");
+    }
 }
 
 // Add a new tax
-async function addTax({ taxName, taxType, taxRate }) {
-    if (!taxName || !taxType || taxRate === undefined || taxRate === null)
+async function addTax({ taxName, taxType, taxRate, description = "" }) {
+    if (!taxName || !taxType || taxRate === undefined || taxRate === null) {
         throw new Error("Tax Name, Tax Type, and Tax Rate are required fields.");
+    }
+
+    // Validate tax rate
+    if (isNaN(taxRate) || taxRate < 0) {
+        throw new Error("Tax rate must be a non-negative number.");
+    }
+
+    // Validate tax type
+    const validTypes = ['CGST', 'SGST', 'IGST', 'SEZ', 'NO_TAX'];
+    if (!validTypes.includes(taxType)) {
+        throw new Error("Invalid tax type. Must be one of: CGST, SGST, IGST, SEZ, NO_TAX");
+    }
 
     const taxId = generateID("TID");
     const currentTime = getCurrentTime();
 
-    // Ensure at least one row exists
-    await appDB.query("INSERT IGNORE INTO taxes (tax_rates, default_tax_preference, gst_settings) VALUES ('[]', '{}', '{}')");
-
-    const taxRates = await getTaxes();
-    const newTax = {
-        tax_id: taxId,
-        tax_name: taxName,
-        tax_type: taxType,
-        tax_rate: parseFloat(taxRate),
-        created_at: currentTime,
-        updated_at: currentTime
-    };
-    taxRates.push(newTax);
-    await appDB.query("UPDATE taxes SET tax_rates = ? WHERE 1=1", [JSON.stringify(taxRates)]);
-    return newTax;
+    try {
+        const query = `
+            INSERT INTO tax_rates (tax_id, tax_name, tax_type, tax_rate, description, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        const values = [taxId, taxName, taxType, parseFloat(taxRate), description, currentTime, currentTime];
+        
+        await appDB.execute(query, values);
+        
+        // Return the newly created tax
+        const [newTax] = await appDB.query("SELECT * FROM tax_rates WHERE tax_id = ?", [taxId]);
+        return newTax[0];
+    } catch (error) {
+        console.error("Error adding tax:", error);
+        throw new Error("Failed to add tax");
+    }
 }
 
 // Update a tax
-async function updateTax({ taxId, taxName, taxType, taxRate }) {
-    if (!taxId || !taxName || !taxType || taxRate === undefined || taxRate === null)
+async function updateTax({ taxId, taxName, taxType, taxRate, description = "" }) {
+    if (!taxId || !taxName || !taxType || taxRate === undefined || taxRate === null) {
         throw new Error("Tax ID, Tax Name, Tax Type, and Tax Rate are required fields.");
+    }
 
-    const taxRates = await getTaxes();
-    const idx = taxRates.findIndex(t => t.tax_id === taxId);
-    if (idx === -1) throw new Error("Tax ID not found.");
+    // Validate tax rate
+    if (isNaN(taxRate) || taxRate < 0) {
+        throw new Error("Tax rate must be a non-negative number.");
+    }
 
-    taxRates[idx] = {
-        ...taxRates[idx],
-        tax_name: taxName,
-        tax_type: taxType,
-        tax_rate: parseFloat(taxRate),
-        updated_at: getCurrentTime()
-    };
-    await appDB.query("UPDATE taxes SET tax_rates = ? WHERE 1=1", [JSON.stringify(taxRates)]);
-    return taxRates[idx];
+    // Validate tax type
+    const validTypes = ['CGST', 'SGST', 'IGST', 'SEZ', 'NO_TAX'];
+    if (!validTypes.includes(taxType)) {
+        throw new Error("Invalid tax type. Must be one of: CGST, SGST, IGST, SEZ, NO_TAX");
+    }
+
+    try {
+        // Check if tax exists
+        const [existingTax] = await appDB.query("SELECT * FROM tax_rates WHERE tax_id = ?", [taxId]);
+        if (!existingTax.length) {
+            throw new Error("Tax not found");
+        }
+
+        const query = `
+            UPDATE tax_rates 
+            SET tax_name = ?, tax_type = ?, tax_rate = ?, description = ?, updated_at = ?
+            WHERE tax_id = ?
+        `;
+        
+        const values = [taxName, taxType, parseFloat(taxRate), description, getCurrentTime(), taxId];
+        
+        await appDB.execute(query, values);
+        
+        // Return the updated tax
+        const [updatedTax] = await appDB.query("SELECT * FROM tax_rates WHERE tax_id = ?", [taxId]);
+        return updatedTax[0];
+    } catch (error) {
+        console.error("Error updating tax:", error);
+        throw new Error("Failed to update tax");
+    }
 }
 
-// Remove a tax
+// Remove a tax (soft delete)
 async function removeTax(taxId) {
-    if (!taxId) throw new Error("Tax ID is required.");
-    const taxRates = await getTaxes();
-    const newTaxRates = taxRates.filter(t => t.tax_id !== taxId);
-    if (newTaxRates.length === taxRates.length) throw new Error("Tax ID not found.");
-    await appDB.query("UPDATE taxes SET tax_rates = ? WHERE 1=1", [JSON.stringify(newTaxRates)]);
-    return true;
+    if (!taxId) {
+        throw new Error("Tax ID is required.");
+    }
+
+    try {
+        // Check if tax exists
+        const [existingTax] = await appDB.query("SELECT * FROM tax_rates WHERE tax_id = ?", [taxId]);
+        if (!existingTax.length) {
+            throw new Error("Tax not found");
+        }
+
+        // Check if it's the default tax
+        if (existingTax[0].is_default) {
+            throw new Error("Cannot delete the default tax. Please set another tax as default first.");
+        }
+
+        // Soft delete by setting is_active to false
+        await appDB.execute(
+            "UPDATE tax_rates SET is_active = FALSE, updated_at = ? WHERE tax_id = ?",
+            [getCurrentTime(), taxId]
+        );
+        
+        return true;
+    } catch (error) {
+        console.error("Error removing tax:", error);
+        throw new Error("Failed to remove tax");
+    }
 }
 
 // Get default tax preference
 async function getDefaultTaxPreference() {
-    const [rows] = await appDB.query("SELECT default_tax_preference FROM taxes LIMIT 1");
-    if (!rows.length || !rows[0].default_tax_preference) return null;
-    let pref = rows[0].default_tax_preference;
-    if (Buffer.isBuffer(pref)) pref = pref.toString("utf8");
-    if (typeof pref === "string") pref = JSON.parse(pref);
-    return pref;
+    try {
+        const [rows] = await appDB.query(
+            "SELECT * FROM tax_rates WHERE is_default = TRUE AND is_active = TRUE LIMIT 1"
+        );
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        console.error("Error fetching default tax preference:", error);
+        throw new Error("Failed to fetch default tax preference");
+    }
 }
 
 // Set default tax preference
-async function setDefaultTaxPreference(defaultTax) {
-    if (!defaultTax || !defaultTax.tax_id) throw new Error("A valid tax object is required.");
-    await appDB.query("UPDATE taxes SET default_tax_preference = ? WHERE 1=1", [JSON.stringify(defaultTax)]);
-    return true;
+async function setDefaultTaxPreference(taxId) {
+    if (!taxId) {
+        throw new Error("Tax ID is required.");
+    }
+
+    try {
+        // Check if tax exists and is active
+        const [existingTax] = await appDB.query(
+            "SELECT * FROM tax_rates WHERE tax_id = ? AND is_active = TRUE",
+            [taxId]
+        );
+        if (!existingTax.length) {
+            throw new Error("Tax not found or inactive");
+        }
+
+        // Remove current default
+        await appDB.execute("UPDATE tax_rates SET is_default = FALSE WHERE is_default = TRUE");
+        
+        // Set new default
+        await appDB.execute(
+            "UPDATE tax_rates SET is_default = TRUE, updated_at = ? WHERE tax_id = ?",
+            [getCurrentTime(), taxId]
+        );
+        
+        return true;
+    } catch (error) {
+        console.error("Error setting default tax preference:", error);
+        throw new Error("Failed to set default tax preference");
+    }
 }
 
-export { getTaxes, addTax, updateTax, removeTax, getDefaultTaxPreference, setDefaultTaxPreference };
+// Get tax by ID
+async function getTaxById(taxId) {
+    try {
+        const [rows] = await appDB.query(
+            "SELECT * FROM tax_rates WHERE tax_id = ? AND is_active = TRUE",
+            [taxId]
+        );
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        console.error("Error fetching tax by ID:", error);
+        throw new Error("Failed to fetch tax");
+    }
+}
+
+// Get GST settings
+async function getGSTSettings() {
+    try {
+        const [rows] = await appDB.query(
+            "SELECT setting_value FROM tax_settings WHERE setting_key = 'gst_settings' LIMIT 1"
+        );
+        if (!rows.length) {
+            return {
+                gst_enabled: true,
+                gst_threshold: 20000,
+                reverse_charge: false
+            };
+        }
+        
+        let settings = rows[0].setting_value;
+        if (Buffer.isBuffer(settings)) {
+            settings = settings.toString("utf8");
+        }
+        if (typeof settings === "string") {
+            settings = JSON.parse(settings);
+        }
+        
+        return settings;
+    } catch (error) {
+        console.error("Error fetching GST settings:", error);
+        throw new Error("Failed to fetch GST settings");
+    }
+}
+
+// Update GST settings
+async function updateGSTSettings(settings) {
+    try {
+        const currentTime = getCurrentTime();
+        
+        await appDB.execute(
+            `INSERT INTO tax_settings (setting_id, setting_key, setting_value, created_at, updated_at) 
+             VALUES (?, 'gst_settings', ?, ?, ?) 
+             ON DUPLICATE KEY UPDATE setting_value = ?, updated_at = ?`,
+            [
+                generateID("SET"),
+                JSON.stringify(settings),
+                currentTime,
+                currentTime,
+                JSON.stringify(settings),
+                currentTime
+            ]
+        );
+        
+        return true;
+    } catch (error) {
+        console.error("Error updating GST settings:", error);
+        throw new Error("Failed to update GST settings");
+    }
+}
+
+export { 
+    getTaxes, 
+    addTax, 
+    updateTax, 
+    removeTax, 
+    getDefaultTaxPreference, 
+    setDefaultTaxPreference,
+    getTaxById,
+    getGSTSettings,
+    updateGSTSettings
+};

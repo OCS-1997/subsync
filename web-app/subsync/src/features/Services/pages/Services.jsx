@@ -10,6 +10,14 @@ import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import api from '@/lib/axiosInstance.js';
 import GenericTable from '@/components/layouts/GenericTable.jsx';
@@ -37,7 +45,8 @@ function Services() {
   const [order, setOrder] = useState("desc");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  // const { username } = useParams(); // Only if username is part of base path, otherwise not needed
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
 
   const fileInputRef = useRef(null);
 
@@ -52,9 +61,8 @@ function Services() {
 
   // Handle search input change (e.g., on Enter key)
   const handleSearch = (e) => {
-    // This function is for triggering search on Enter key,
-    // the actual filtering happens in filteredServices below.
-    // No need to set search state here if it's already bound to the input value.
+    setSearch(e.target.value);
+    setCurrentPage(1);
   };
 
   const filteredAndSortedServices = services
@@ -84,9 +92,41 @@ function Services() {
     currentPage * itemsPerPage
   );
 
-  const handleDeleteService = async (serviceId) => {
-    if (window.confirm("Are you sure you want to delete this service?")) {
-      await dispatch(deleteService(serviceId));
+  const handleDeleteClick = (serviceId) => {
+    const service = services.find(s => s.service_id === serviceId);
+    setServiceToDelete(service);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!serviceToDelete) return;
+
+    try {
+      await dispatch(deleteService(serviceToDelete.service_id));
+      toast.success(`Service "${serviceToDelete.service_name}" deleted successfully!`, {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+        transition: Bounce,
+      });
+    } catch (error) {
+      toast.error("Failed to delete service", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+        transition: Bounce,
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setServiceToDelete(null);
     }
   };
 
@@ -97,7 +137,7 @@ function Services() {
           <Eye className="w-4 h-4" />
         </Button>
       </Link>
-      <Button variant="ghost" size="icon" onClick={() => handleDeleteService(serviceId)}>
+      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(serviceId)}>
         <Trash2 className="w-4 h-4 text-red-500" />
       </Button>
     </div>
@@ -275,6 +315,33 @@ function Services() {
         </Alert>
       )}
     </div>
+
+    {/* Delete Confirmation Dialog */}
+    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Service</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete the service "{serviceToDelete?.service_name}"? 
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={handleDeleteConfirm}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

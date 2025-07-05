@@ -2,8 +2,10 @@ import { getGSTSettings, updateGSTSettings } from "../models/gstSettingsModel.js
 
 // Controller to get GST settings
 const getGSTSettingsController = async (req, res) => {
+    console.log("GET /get-gst-settings - Request received");
     try {
         const settings = await getGSTSettings();
+        console.log("GST settings:", settings);
         res.status(200).json({ success: true, settings });
     } catch (error) {
         console.error("Error fetching GST settings:", error.message);

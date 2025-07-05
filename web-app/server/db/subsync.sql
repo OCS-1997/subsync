@@ -142,12 +142,40 @@ ALTER TABLE services
     ON DELETE SET NULL
     ON UPDATE CASCADE; 
 
--- Create the Tax details table
-CREATE TABLE taxes (
-    tax_rates JSON,
-    default_tax_preference JSON,
-    gst_settings JSON
+
+-- Create new tax_rates table
+CREATE TABLE tax_rates (
+    tax_id VARCHAR(20) PRIMARY KEY,
+    tax_name VARCHAR(100) NOT NULL,
+    tax_type ENUM('CGST', 'SGST', 'IGST', 'SEZ', 'NO_TAX') NOT NULL,
+    tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Insert default tax rates
+INSERT INTO tax_rates (tax_id, tax_name, tax_type, tax_rate, description, is_default) VALUES
+('TID001', 'Within State - CGST', 'CGST', 9.00, 'Central Goods and Services Tax for within state transactions', FALSE),
+('TID002', 'Within State - SGST', 'SGST', 9.00, 'State Goods and Services Tax for within state transactions', FALSE),
+('TID003', 'Outside State - IGST', 'IGST', 18.00, 'Integrated Goods and Services Tax for outside state transactions', TRUE),
+('TID004', 'SEZ - Zero Tax', 'SEZ', 0.00, 'Special Economic Zone - Zero tax rate', FALSE),
+('TID005', 'International - No Tax', 'NO_TAX', 0.00, 'International transactions - No tax applicable', FALSE);
+
+-- Create tax_settings table for other settings
+CREATE TABLE tax_settings (
+    setting_id VARCHAR(20) PRIMARY KEY,
+    setting_key VARCHAR(50) NOT NULL UNIQUE,
+    setting_value JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert default GST settings
+INSERT INTO tax_settings (setting_id, setting_key, setting_value) VALUES
+('SET001', 'gst_settings', '{"gst_enabled": true, "gst_threshold": 20000, "reverse_charge": false}');
 
 CREATE TABLE gst_settings (
 	tax_reg_num_label VARCHAR(10) NOT NULL,
@@ -172,14 +200,3 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE taxes (
-    tax_id SERIAL PRIMARY KEY,                -- Unique identifier
-    tax_name VARCHAR(50) NOT NULL,            -- e.g., SGST, CGST, IGST, SEZ, No Tax
-    tax_type VARCHAR(20) NOT NULL,            -- e.g., SGST, CGST, IGST, SEZ, NONE
-    tax_rate DECIMAL(5,2) NOT NULL,           -- e.g., 9.00, 18.00, 0.00
-    applicability VARCHAR(30) NOT NULL,       -- e.g., 'Within State', 'Outside State', 'SEZ', 'Abroad'
-    description TEXT,                         -- Optional: details or notes
-    is_active BOOLEAN DEFAULT TRUE,           -- For soft delete/status
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
