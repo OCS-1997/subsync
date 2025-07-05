@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import countryList from "react-select-country-list";
 import { Bounce, toast, ToastContainer } from "react-toastify";
 import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
@@ -127,21 +128,8 @@ const AddCustomer = () => {
   }, []);
 
   useEffect(() => {
-  if (currentCustomer && isEditing && paymentTermsList.length > 0) {
-    // Find the matching term object from the list
-    const matchedTerm = paymentTermsList.find(
-      t => t.term_name === currentCustomer.payment_terms?.term_name
-    );
-    setCustomerData(prev => ({
-      ...prev,
-      payment_terms: matchedTerm || currentCustomer.payment_terms,
-    }));
-  }
-
-  }, [currentCustomer, isEditing, paymentTermsList.length]);
-
-  useEffect(() => {
     if (currentCustomer && isEditing) {
+      // Set all customer data including payment terms
       setCustomerData({
         salutation: currentCustomer.salutation,
         firstName: currentCustomer.first_name,
@@ -172,7 +160,25 @@ const AddCustomer = () => {
     }
   }, [currentCustomer, isEditing]);
 
-  
+  // Update payment terms with matched term from the list when both are available
+  useEffect(() => {
+    if (currentCustomer && isEditing && paymentTermsList.length > 0 && currentCustomer.payment_terms) {
+      // Find the matching term object from the list by term_id
+      const matchedTerm = paymentTermsList.find(
+        t => t.term_id === currentCustomer.payment_terms?.term_id
+      );
+      
+      console.log('AddCustomer: currentCustomer.payment_terms:', currentCustomer.payment_terms);
+      console.log('AddCustomer: matchedTerm:', matchedTerm);
+      
+      if (matchedTerm) {
+        setCustomerData(prev => ({
+          ...prev,
+          payment_terms: matchedTerm,
+        }));
+      }
+    }
+  }, [currentCustomer, isEditing, paymentTermsList]);
 
   useEffect(() => {
     if (!customerData.address.state) {
@@ -219,6 +225,7 @@ const AddCustomer = () => {
   };
 
   const handlePaymentTermChange = (term) => {
+    console.log('AddCustomer: handlePaymentTermChange called with:', term);
     setCustomerData(prev => ({
       ...prev,
       payment_terms: term
@@ -287,6 +294,12 @@ const AddCustomer = () => {
       toast.error(errorMessage);
     }
   };
+  
+  const handleBack = () => {
+    const currentPath = location.pathname;
+    const userSegment = currentPath.split("/")[1];
+    navigate(`/${userSegment}/dashboard/customers`);
+  };
 
   if (loading) return <p>Loading customer details...</p>;
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
@@ -294,6 +307,14 @@ const AddCustomer = () => {
   return (
     <div className="container mt-4">
       <ToastContainer position="top-center" autoClose={2000} theme="dark" transition={Bounce} pauseOnHover />
+      <button
+          onClick={handleBack}
+          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+          disabled={loading}
+        >
+          <ArrowLeft size={20} className="animate-bounce-x" />
+          <span className="font-medium">Back</span>
+        </button>
       <h1 className="mb-4 text-3xl font-bold  ">{isEditing ? "Edit Customer" : "Add Customer"}</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
 
@@ -345,6 +366,7 @@ const AddCustomer = () => {
             <PaymentTermsSection
               selectedTerm={customerData.payment_terms}
               onTermChange={handlePaymentTermChange}
+              isEditing={isEditing}
             />
           </TabsContent>
 

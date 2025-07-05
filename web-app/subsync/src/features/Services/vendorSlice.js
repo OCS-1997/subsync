@@ -9,7 +9,7 @@ export const fetchVendors = createAsyncThunk(
         try {
             const response = await api.get("/all-vendors");
             console.log("Fetched vendors:", response.data);
-            // Ensure we return an array even if the response is empty
+            // The server returns {vendors: [], totalPages: number}
             return response.data.vendors || [];
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || error.message);
@@ -72,14 +72,33 @@ export const deleteVendor = createAsyncThunk(
     }
 );
 
+export const fetchVendorById = createAsyncThunk(
+    "vendors/fetchVendorById",
+    async (id, thunkAPI) => {
+        try {
+            const response = await api.get(`/get-vendor/${id}`);
+            // The server returns the vendor directly, not wrapped in a vendor property
+            return response.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
+
 const vendorSlice = createSlice({
     name: "vendors",
     initialState: {
         list: [],
+        currentVendor: null,
         loading: false,
         error: null,
     },
-    reducers: {},
+    reducers: {
+        clearVendorState: (state) => {
+            state.currentVendor = null;
+            state.error = null;
+        },
+    },
     extraReducers: (builder) => {
         builder
             // read
@@ -99,8 +118,7 @@ const vendorSlice = createSlice({
             // fetch all vendors
             .addCase(fetchAllVendors.fulfilled, (state, action) => {
               state.loading = false;
-              state.list = action.payload.vendors || [];
-              state.totalPages = action.payload.totalPages || 1;
+              state.list = action.payload;
               state.error = null;
             })
             // create
@@ -150,8 +168,23 @@ const vendorSlice = createSlice({
             .addCase(deleteVendor.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // fetch vendor by id
+            .addCase(fetchVendorById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchVendorById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.currentVendor = action.payload;
+                state.error = null;
+            })
+            .addCase(fetchVendorById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     },
 });
 
 export default vendorSlice.reducer;
+export const { clearVendorState } = vendorSlice.actions;

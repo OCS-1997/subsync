@@ -1,6 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { toast } from 'react-toastify';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import api from '@/lib/axiosInstance.js';
 
-const PaymentTermsSection = ({ selectedTerm, onTermChange }) => {
+const PaymentTermsSection = ({ selectedTerm, onTermChange, isEditing }) => {
   const [paymentTerms, setPaymentTerms] = useState([]);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [newTerm, setNewTerm] = useState({ term_name: '', days: '' });
@@ -27,14 +27,28 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange }) => {
     fetchPaymentTerms();
   }, []);
 
+  // Prevent overriding selected term when editing
+  useEffect(() => {
+    if (isEditing && selectedTerm && paymentTerms.length > 0) {
+      // Ensure the selected term is in the payment terms list
+      const termExists = paymentTerms.some(t => t.term_id === selectedTerm.term_id);
+      if (!termExists && selectedTerm.term_id) {
+        // If the selected term is not in the list, add it temporarily
+        setPaymentTerms(prev => [...prev, selectedTerm]);
+      }
+    }
+  }, [isEditing, selectedTerm, paymentTerms]);
+
   const fetchPaymentTerms = async () => {
     try {
       const response = await api.get('/payment-terms');
       const terms = response.data;
       if (Array.isArray(terms)) {
         setPaymentTerms(terms);
-        if (!selectedTerm && terms.length > 0) {
+        // Only set default if not editing and no selectedTerm
+        if (!isEditing && !selectedTerm && terms.length > 0) {
           const defaultTerm = terms.find(term => term.is_default) || terms[0];
+          console.log('PaymentTermsSection: Setting default term:', defaultTerm);
           onTermChange(defaultTerm);
         }
       }
@@ -126,18 +140,39 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange }) => {
     }
   };
 
+  // Add selectedTerm to dropdown if not present (for edit mode)
+  const mergedTerms = useMemo(() => {
+    if (!selectedTerm || !selectedTerm.term_id) {
+      return paymentTerms;
+    }
+    
+    const termExists = paymentTerms.some(t => t.term_id === selectedTerm.term_id);
+    if (termExists) {
+      return paymentTerms;
+    }
+    
+    // If selected term is not in the list, add it
+    return [...paymentTerms, selectedTerm];
+  }, [paymentTerms, selectedTerm]);
+
+  // Use term_id for value and selection
   const handleTermSelection = (value) => {
-    const term = paymentTerms.find(t => t.term_name === value);
+    const term = mergedTerms.find(t => String(t.term_id) === String(value));
     if (term) {
-      const selectedTermData = {
+      console.log('PaymentTermsSection: Selected term:', term);
+      onTermChange({
         term_id: term.term_id,
         term_name: term.term_name,
         days: term.term_name.toLowerCase() === 'due on receipt' ? 0 : term.days,
         is_default: term.is_default
-      };
-      onTermChange(selectedTermData);
+      });
     }
   };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('PaymentTermsSection: isEditing:', isEditing, 'selectedTerm:', selectedTerm, 'paymentTerms count:', paymentTerms.length);
+  }, [isEditing, selectedTerm, paymentTerms.length]);
 
   return (
     <div className="container my-4 mx-2">
@@ -146,7 +181,7 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange }) => {
           <Label htmlFor="payment-terms">Payment Terms</Label>
           <div className="flex gap-2 mt-1">
             <Select
-              value={selectedTerm?.term_name || ''}
+              value={selectedTerm?.term_id ? String(selectedTerm.term_id) : ''}
               onValueChange={handleTermSelection}
               className="flex-1"
             >
@@ -154,8 +189,8 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange }) => {
                 <SelectValue placeholder="Select payment term" />
               </SelectTrigger>
               <SelectContent>
-                {paymentTerms.map((term) => (
-                  <SelectItem key={term.term_id} value={term.term_name}>
+                {mergedTerms.map((term) => (
+                  <SelectItem key={term.term_id} value={String(term.term_id)}>
                     {term.term_name} ({term.days || 0} days)
                   </SelectItem>
                 ))}

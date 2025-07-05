@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import DisplayCustomer from "../components/DisplayCustomer.jsx";
 
@@ -12,6 +13,8 @@ function CustomerDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentCustomer, loading, error } = useSelector((state) => state.customers);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (id) {
@@ -22,6 +25,12 @@ function CustomerDetails() {
     };
   }, [id, dispatch]);
 
+  const handleBack = () => {
+    const currentPath = location.pathname;
+    const userSegment = currentPath.split("/")[1];
+    navigate(`/${userSegment}/dashboard/customers`);
+  };
+
   if (loading) return <SkeletonLoader />;
   if (error) return <ErrorMessage message={error} />;
 
@@ -29,6 +38,14 @@ function CustomerDetails() {
 
   return (
     <div className="container mx-auto py-4 px-2 sm:px-2 lg:px-6">
+      <button
+        onClick={handleBack}
+        className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+        disabled={loading}
+      >
+        <ArrowLeft size={20} className="animate-bounce-x" />
+        <span className="font-medium">Back</span>
+      </button>
       <DisplayCustomer
         customerDetails={{
           ...currentCustomer,

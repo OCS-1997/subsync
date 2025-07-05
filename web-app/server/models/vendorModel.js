@@ -172,7 +172,7 @@ const getAllVendors = async ({ search = "", sort = "display_name", order = "asc"
 const getVendorById = async (vendorId) => {
     const query = `SELECT * FROM vendors WHERE vendor_id = ?`;
     const [rows] = await appDB.execute(query, [vendorId]);
-    return rows;
+    return rows[0];
 };
 
 /**
@@ -214,7 +214,7 @@ const updateVendor = async (vendorId, updatedData) => {
 
         // Serialize JSON fields
         const serializedAddress = JSON.stringify(vendor_address);
-        const serializedContacts = JSON.stringify(other_contacts);
+        const serializedContacts = JSON.stringify(other_contacts || []);
         const serializedPaymentTerms = JSON.stringify(payment_terms) || JSON.stringify({ term_name: "Due on Receipt", days: 0, is_default: true });
 
         const query = `
@@ -229,7 +229,7 @@ const updateVendor = async (vendorId, updatedData) => {
 
         const values = [
             salutation, first_name, last_name, primary_email, country_code,
-            Number(primary_phone_number), secondary_phone_number ? Number(secondary_phone_number) : null,
+            primary_phone_number, secondary_phone_number || null,
             serializedAddress, serializedContacts, company_name, display_name, gst_in,
             currency_code, gst_treatment, tax_preference, exemption_reason || "",
             serializedPaymentTerms, notes || "", vendor_status || "Active",

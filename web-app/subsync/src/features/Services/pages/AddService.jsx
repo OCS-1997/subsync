@@ -1,8 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 
@@ -208,7 +207,7 @@ const AddService = () => {
 
   return (
     <>
-    <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <form className="space-y-6 p-6" onSubmit={handleSubmit}>
       <h1 className="text-2xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
       <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />

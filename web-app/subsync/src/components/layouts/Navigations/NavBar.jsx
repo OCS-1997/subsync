@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound} from "lucide-react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -95,28 +95,31 @@ function NavBar({ toggleSidebar }) {
               </Button>
             </div>
 
-            <ul className="flex flex-col space-y-2">
+            <ul className="flex flex-col space-y-4 text-sm">
               <Link
-                className="text-gray-700 hover:text-blue-500"
+                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/profile"
                 onClick={() => setSettingsOpen(false)}
               >
+                <UserRound className="mr-2 h-5 w-5" />
                 Profile
               </Link>
               <Link
-                className="text-gray-700 hover:text-blue-500"
+                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/taxes/tax-rates"
                 onClick={() => setSettingsOpen(false)}
               >
+                <ReceiptIndianRupeeIcon className="mr-2 h-5 w-5" />
                 Taxes
               </Link>
 
               <Link
-                className="text-gray-700 hover:text-blue-500"
+                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/user-management"
                 onClick={() => setSettingsOpen(false)}
               >
-               User Management
+                <UserCog className="mr-2 h-5 w-5" />
+               Users Management
               </Link>
             </ul>
             

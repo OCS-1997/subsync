@@ -25,8 +25,8 @@ export const createVendorController = async (req, res) => {
 // READ All Vendors
 export const getAllVendorsController = async (req, res) => {
     try {
-        const vendors = await getAllVendors();
-        return res.status(200).json(vendors); // Return array directly as per common API practice
+        const result = await getAllVendors(req.query);
+        return res.status(200).json(result); // Return {vendors: [], totalPages: number}
     } catch (error) {
         console.error("Error fetching all vendors:", error);
         return res.status(500).json({ error: "Internal Server Error" });
@@ -41,6 +41,31 @@ export const getVendorByIdController = async (req, res) => {
 
         if (!vendor) {
             return res.status(404).json({ error: "Vendor not found." });
+        }
+
+        // Parse JSON fields if they exist
+        if (vendor.vendor_address && typeof vendor.vendor_address === 'string') {
+            try {
+                vendor.vendor_address = JSON.parse(vendor.vendor_address);
+            } catch (e) {
+                vendor.vendor_address = {};
+            }
+        }
+
+        if (vendor.other_contacts && typeof vendor.other_contacts === 'string') {
+            try {
+                vendor.other_contacts = JSON.parse(vendor.other_contacts);
+            } catch (e) {
+                vendor.other_contacts = [];
+            }
+        }
+
+        if (vendor.payment_terms && typeof vendor.payment_terms === 'string') {
+            try {
+                vendor.payment_terms = JSON.parse(vendor.payment_terms);
+            } catch (e) {
+                vendor.payment_terms = { term_name: "Due on Receipt", days: 0, is_default: true };
+            }
         }
 
         return res.status(200).json(vendor);
@@ -61,23 +86,39 @@ export const updateVendorController = async (req, res) => {
             return res.status(404).json({ error: "Vendor not found." });
         }
 
-        // Optional: Check if the new name already exists for a *different* vendor
-        const vendorsWithSameName = await getAllVendors();
-        if (vendorsWithSameName.some(v => v.vendor_name.toLowerCase() === vendorData.vendor_name.toLowerCase() && v.vendor_id !== parseInt(id))) {
-            return res.status(409).json({ error: "Another vendor with this name already exists." });
-        }
+        // Map frontend field names to backend field names
+        const mappedData = {
+            salutation: vendorData.salutation,
+            first_name: vendorData.firstName,
+            last_name: vendorData.lastName,
+            primary_email: vendorData.email,
+            country_code: vendorData.country_code,
+            primary_phone_number: vendorData.phoneNumber,
+            secondary_phone_number: vendorData.secondaryPhoneNumber,
+            vendor_address: vendorData.address,
+            company_name: vendorData.companyName,
+            display_name: vendorData.displayName,
+            gst_in: vendorData.gstin,
+            currency_code: vendorData.currencyCode,
+            gst_treatment: vendorData.gst_treatment,
+            tax_preference: vendorData.tax_preference,
+            exemption_reason: vendorData.exemption_reason,
+            payment_terms: vendorData.payment_terms,
+            notes: vendorData.notes,
+            vendor_status: vendorData.vendorStatus,
+            other_contacts: vendorData.contactPersons
+        };
 
-        const result = await updateVendor(id, vendorData);
+        const result = await updateVendor(id, mappedData);
 
         if (result.affectedRows === 0) {
-            // This might happen if the ID exists but no data was actually changed (e.g., same name provided)
-            return res.status(200).json({ message: "Vendor found, but no changes applied (name might be the same)." });
+            return res.status(200).json({ message: "Vendor found, but no changes applied." });
         }
 
         return res.status(200).json({ message: "Vendor updated successfully." });
     } catch (error) {
         console.error("Error updating vendor:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: error.message || "Internal Server Error" });
     }
 };
 

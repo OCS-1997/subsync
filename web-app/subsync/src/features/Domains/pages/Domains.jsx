@@ -88,7 +88,10 @@ function Domains() {
   }, [dispatch, debouncedSearch, sortBy, order, currentPage]);
 
   return (
+    
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 shadow-lg rounded-lg">
+      <h1 className="w-full text-3xl font-bold mb-2">Domains</h1>
+      <hr className="mb-4 border-blue-500 border-3 size-auto" />
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <SearchFilterForm
           search={search}

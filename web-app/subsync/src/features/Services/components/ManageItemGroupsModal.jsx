@@ -1,6 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";

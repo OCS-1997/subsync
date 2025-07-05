@@ -3,7 +3,7 @@ import { Eye, FileDown, FileUp, Plus, Trash2 } from 'lucide-react';
 import * as Papa from "papaparse";
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { useState, useEffect, useRef } from 'react';
 import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 
@@ -198,7 +198,7 @@ function Services() {
 
   return (
     <>
-    <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable pauseOnFocusLoss />
+    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <div className="container p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Services</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />

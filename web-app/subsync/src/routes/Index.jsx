@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import AddCustomer from '@/features/Customers/pages/AddCustomer.jsx';
 import AddService from '@/features/Services/pages/AddService.jsx';
 import AddTax from '@/features/Settings/AddTax.jsx';
+import AddVendor from '@/features/Vendors/pages/AddVendor.jsx';
 import AllTaxes from '@/features/Settings/AllTaxes.jsx';
 import CreateDomain from '@/features/Domains/pages/CreateDomain.jsx';
 import CustomerDetails from '@/features/Customers/pages/CustomerDetails.jsx';
@@ -18,6 +19,7 @@ import Services from '@/features/Services/pages/Services.jsx';
 import Settings from '@/features/Settings/Settings.jsx';
 import Taxes from '@/features/Settings/Taxes.jsx';
 import Vendors from '@/features/Vendors/pages/Vendors';
+import VendorDetails from '@/features/Vendors/pages/VendorDetails';
 import UserManagement from '@/features/Settings/UserManagement';
 import AddUser from '@/features/Settings/AddUser';
 
@@ -43,6 +45,9 @@ const router = createBrowserRouter([
       { path: "services/:id/edit", element: <AddService /> },
 
       { path: "vendors", element: <Vendors /> },
+      { path: "vendors/:id", element: <VendorDetails /> },
+      { path: "vendors/add", element: <AddVendor /> },
+      { path: "vendors/:id/edit", element: <AddVendor /> },
 
       {
         path: "settings",

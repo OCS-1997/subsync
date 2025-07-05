@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { UserPlus, UserRoundPen, UserRoundMinus } from "lucide-react";
 import { useNavigate, useParams, Outlet } from "react-router-dom";
 import api from "@/lib/axiosInstance";
@@ -21,7 +21,7 @@ const UserManagement = () => {
     setLoading(true);
     try {
       const res = await api.get("/users");
-      console.log("Fetched users:", res.data);
+      // console.log("Fetched users:", res.data);
       setUsers(res.data || []);
     } catch (err) {
       toast.error("Failed to fetch users");
@@ -58,7 +58,7 @@ const UserManagement = () => {
 
   return (
     <div className="min-h-screen py-4 px-2 bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900">
-      <ToastContainer position="top-right" theme="colored"  />
+     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white tracking-tight">User Management</h2>

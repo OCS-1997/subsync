@@ -172,4 +172,14 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-SELECT * FROM customers;
+CREATE TABLE taxes (
+    tax_id SERIAL PRIMARY KEY,                -- Unique identifier
+    tax_name VARCHAR(50) NOT NULL,            -- e.g., SGST, CGST, IGST, SEZ, No Tax
+    tax_type VARCHAR(20) NOT NULL,            -- e.g., SGST, CGST, IGST, SEZ, NONE
+    tax_rate DECIMAL(5,2) NOT NULL,           -- e.g., 9.00, 18.00, 0.00
+    applicability VARCHAR(30) NOT NULL,       -- e.g., 'Within State', 'Outside State', 'SEZ', 'Abroad'
+    description TEXT,                         -- Optional: details or notes
+    is_active BOOLEAN DEFAULT TRUE,           -- For soft delete/status
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

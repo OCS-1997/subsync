@@ -1,19 +1,16 @@
 import { Eye, FileUp, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { useState, useEffect } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
-import { ToastContainer } from "react-toastify";
 import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import useFetchData from "@/hooks/useFetchData.js";
-import AddVendorModal from "@/features/Services/components/AddVendorModal";
-import { use } from "react";
 
 const headers = [
   { key: "display_name", label: "Display Name" },
@@ -25,20 +22,17 @@ const headers = [
 ];
 
 function Vendors() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [sortBy, setSortBy] = useState("vendor_id");
   const [order, setOrder] = useState("asc");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [editingVendor, setEditingVendor] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [vendorsError, setVendorsError] = useState(null);
-  const [editingVendorDetails, setEditingVendorDetails] = useState(null);
-  const [editingVendorLoading, setEditingVendorLoading] = useState(false);
-  const [editingVendorError, setEditingVendorError] = useState(null);
 
   const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-vendors`,
@@ -56,8 +50,9 @@ function Vendors() {
   };
 
   const handleEditVendor = (vendor) => {
-    setEditingVendor(vendor);
-    setShowAddModal(true);
+    const currentPath = location.pathname;
+    const userSegment = currentPath.split("/")[1];
+    navigate(`/${userSegment}/dashboard/vendors/${vendor.vendor_id}/edit`);
   };
 
   const fetchVendorsAndExport = async () => {
@@ -90,9 +85,26 @@ function Vendors() {
   };
 
   const renderActions = (vendor) => (
-    <div className="flex items-center">
-      <Button variant="ghost" size="icon" onClick={() => handleEditVendor(vendor)}>
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={() => {
+          const currentPath = location.pathname;
+          const userSegment = currentPath.split("/")[1];
+          navigate(`/${userSegment}/dashboard/vendors/${vendor.vendor_id}`);
+        }}
+        title="View Details"
+      >
         <Eye className="w-4 h-4" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={() => handleEditVendor(vendor)}
+        title="Edit Vendor"
+      >
+        <UserPlus className="w-4 h-4" />
       </Button>
     </div>
   );
@@ -114,10 +126,10 @@ function Vendors() {
     actions: renderActions(v),
   }));
 
-  const handleAddVendor = () => setShowAddModal(true);
-  const handleVendorAdded = () => {
-    setShowAddModal(false);
-    setRefreshKey(prev => prev + 1);
+  const handleAddVendor = () => {
+    const currentPath = location.pathname;
+    const userSegment = currentPath.split("/")[1];
+    navigate(`/${userSegment}/dashboard/vendors/add`);
   };
 
   // Fetch all vendors on load or refreshKey change
@@ -138,30 +150,9 @@ function Vendors() {
     fetchVendors();
   }, [refreshKey]);
 
-  // Fetch single vendor details when editingVendor changes
-  useEffect(() => {
-    if (editingVendor && editingVendor.vendor_id) {
-      setEditingVendorLoading(true);
-      setEditingVendorError(null);
-      const fetchVendorDetails = async () => {
-        try {
-          const response = await api.get(`/vendor/${editingVendor.vendor_id}`);
-          setEditingVendorDetails(response.data.vendor || editingVendor);
-        } catch (err) {
-          setEditingVendorError("Failed to fetch vendor details.");
-        } finally {
-          setEditingVendorLoading(false);
-        }
-      };
-      fetchVendorDetails();
-    } else {
-      setEditingVendorDetails(null);
-    }
-  }, [editingVendor]);
-
   return (
     <>
-      <ToastContainer />
+      <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
       <div className="container p-6 rounded-lg shadow-lg">
         <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
         <hr className="mb-4 border-blue-500 border-3 size-auto" />
@@ -180,17 +171,12 @@ function Vendors() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ">
-            <AddVendorModal
-              isEditing={!!editingVendor}
-              editableVendor={editingVendor}
-              onVendorAdded={() => {
-                setShowAddModal(false);
-                setEditingVendor(null);
-                setRefreshKey(prev => prev + 1);
-              }}
-              isOpen={showAddModal}
-              setIsOpen={setShowAddModal}
-            />
+            <Button 
+              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" 
+              onClick={handleAddVendor}
+            >
+              <UserPlus /> Add Vendor
+            </Button>
             <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
               <FileUp /> Export
             </Button>

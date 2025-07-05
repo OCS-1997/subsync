@@ -30,7 +30,7 @@ function LoginPage() {
         pauseOnHover: true,
         draggable: true,
         progress: undefined,
-        theme: "dark",
+        theme: "colored",
         transition: Bounce,
       });
 
@@ -53,7 +53,7 @@ function LoginPage() {
 
   return (
     <>
-      <ToastContainer />
+      <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
       <div className={`min-h-screen flex items-center justify-center transition-all duration-700 relative overflow-hidden ${
         showPassword ? 'bg-black' : 'bg-gradient-to-tl from-cyan-500 to-blue-500'
       }`}>

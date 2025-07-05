@@ -1,6 +1,6 @@
 import { Settings2 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { toast, ToastContainer  } from 'react-toastify';
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { useState, useEffect } from 'react';
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
 
   return (
     <>
-    <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnHover draggable pauseOnFocusLoss />
+    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <Dialog open={isManageModalOpen} onOpenChange={setIsManageModalOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" disabled={loading}>

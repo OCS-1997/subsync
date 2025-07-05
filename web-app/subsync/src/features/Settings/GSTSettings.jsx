@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import {ToastContainer, toast} from "react-toastify";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,7 @@ function GSTSettings() {
 
     return (
         <>
-        <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+        <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
         <div className="md:w-[50%] w-full">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold mb-4">GST Settings</h1>
@@ -148,7 +148,7 @@ function GSTSettings() {
                     <input
                         type="date"
                         id="gstRegisteredOn"
-                        className="flex flex-grow-1 py-2 px-1 border-1 border-gray-100 max-w-60 shadow-md rounded-md"
+                        className="flex flex-grow-1 py-2 px-1 border-2 border-black-100 max-w-60 shadow-md rounded-md"
                         value={formDetails.gstRegisteredOn}
                         onChange={handleChange}
                     />

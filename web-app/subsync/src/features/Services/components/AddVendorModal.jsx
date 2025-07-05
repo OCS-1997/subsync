@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer, toast, Bounce } from "react-toastify";
 import countryList from "react-select-country-list";
 
 import { Button } from "@/components/ui/button";
@@ -24,14 +24,16 @@ import PersonalDetails from "@/features/Customers/components/PersonalDetails";
 import RemarksSection from "@/features/Customers/components/RemarksSection";
 
 import { createVendor, updateVendor } from "@/features/Services/vendorSlice";
+import { indianStates } from "@/features/Customers/data/statesOfIndia.js";
+import api from '@/lib/axiosInstance.js';
 
 const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdded, isOpen, setIsOpen  }) => {
   const dispatch = useDispatch();
  
   const [activeTab, setActiveTab] = useState("otherDetails");
   const [contactPersons, setContactPersons] = useState([]);
-  const [states, setStates] = useState([]);
-
+  const [states, setStates] = useState(indianStates);
+  const [paymentTermsList, setPaymentTermsList] = useState([]);
 
   const countries = countryList().getData();
 
@@ -51,7 +53,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     exemption_reason: "",
     currencyCode: "INR",
     address: {
-      country: "IN",
+      country: { label: "India", value: "IN" },
       addressLine: "",
       state: null,
       city: "",
@@ -74,12 +76,12 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       phoneNumber: "",
       secondaryPhoneNumber: "",
       gstin: "",
-      gst_treatment: "",
+      gst_treatment: "CGST & SGST",
       tax_preference: "Taxable",
       exemption_reason: "",
       currencyCode: "INR",
       address: {
-        country:{ label: "India", value: "IN" },
+        country: { label: "India", value: "IN" },
         addressLine: "",
         state: null,
         city: "",
@@ -90,13 +92,38 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       vendorStatus: "Active",
     });
     setContactPersons([]);
+    setStates(indianStates);
   };
-  
+
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        const response = await api.get('/payment-terms');
+        setPaymentTermsList(response.data || []);
+      } catch (e) {
+        setPaymentTermsList([]);
+      }
+    };
+    fetchTerms();
+  }, []);
+
+  useEffect(() => {
+    if (editableVendor && isEditing && paymentTermsList.length > 0 && editableVendor.payment_terms) {
+      const matchedTerm = paymentTermsList.find(
+        t => t.term_id === editableVendor.payment_terms?.term_id
+      );
+      
+      if (matchedTerm) {
+        setVendorData(prev => ({
+          ...prev,
+          payment_terms: matchedTerm,
+        }));
+      }
+    }
+  }, [editableVendor, isEditing, paymentTermsList]);
 
   useEffect(() => {
     if (isEditing && editableVendor) {
-  
-      // Parse JSON fields if needed
       let address = editableVendor.vendor_address || editableVendor.address || {};
       if (typeof address === "string") {
         try { address = JSON.parse(address); } catch { address = {}; }
@@ -109,6 +136,12 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       if (typeof paymentTerms === "string") {
         try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
       }
+
+      const countryValue = address.country || "IN";
+      if (countryValue === "IN" || countryValue === "India") {
+        setStates(indianStates);
+      }
+
       setVendorData({
         salutation: editableVendor.salutation || "Mr.",
         firstName: editableVendor.first_name || editableVendor.firstName || "",
@@ -128,11 +161,11 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
           : "INR",
         address: {
           country: address.country
-            ? { label: address.country, value: address.country }
+            ? (typeof address.country === 'object' ? address.country : { label: address.country === "IN" ? "India" : address.country, value: address.country })
             : { label: "India", value: "IN" },
           addressLine: address.addressLine || address.address_line || "",
           state: address.state
-            ? { label: address.state, value: address.state }
+            ? (typeof address.state === 'object' ? address.state : { label: address.state, value: address.state })
             : null,
           city: address.city || "",
           zipCode: address.zipCode || address.zip_code || "",
@@ -142,8 +175,16 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         vendorStatus: editableVendor.vendor_status || "Active",
       });
       setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
+    } else if (!isEditing) {
+      resetVendorData();
     }
   }, [isEditing, editableVendor]);
+
+  useEffect(() => {
+    if (vendorData.address.country?.value === "IN" || vendorData.address.country === "IN") {
+      setStates(indianStates);
+    }
+  }, [vendorData.address.country]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -260,7 +301,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
 
   return (
     <>
-    <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
@@ -323,6 +364,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
               <PaymentTermsSection
                 selectedTerm={vendorData.payment_terms}
                 onTermChange={handlePaymentTermChange}
+                isEditing={isEditing}
               />
             </TabsContent>
 

@@ -7,13 +7,12 @@ import { UserPlus, ArrowLeft } from "lucide-react";
 const ROLES = ["Admin", "Manager", "User"];
 
 const AddUser = () => {
-  // username: logged-in user, editUsername: user being edited (if any)
-  const { username, editUsername } = useParams();
+  const { editUsername } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  // editing is true if editUsername param is present
+  // Robust editing logic: true if editUsername param is a non-empty string
   const editing = !!editUsername;
-  console.log('AddUser.jsx username:', username, 'editUsername:', editUsername, 'editing:', editing);
+  console.log('AddUser.jsx editUsername:', editUsername, 'editing:', editing);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     username: "",
@@ -23,10 +22,11 @@ const AddUser = () => {
     role: "User",
     is_active: true,
   });
-  const [showPasswordField, setShowPasswordField] = useState(!editing); // show by default for add, hidden for edit
 
+  // Reset form when switching between add/edit modes
   useEffect(() => {
     if (!editing) {
+      // Reset form for new user
       setForm({
         username: "",
         name: "",
@@ -35,14 +35,12 @@ const AddUser = () => {
         role: "User",
         is_active: true,
       });
-      setShowPasswordField(true); // Always show for add
-      // Clear any state that might have been passed
-      if (location.state) {
-        navigate("add-user", { replace: true, state: null });
-      }
-      return;
+      setLoading(false);
     }
-    setShowPasswordField(false); // Hide for edit until reveal
+  }, [editing]);
+
+  useEffect(() => {
+    if (!editing) return; // Only fetch user data if editing
     // If user data is passed via state, use it, else fetch from API
     const user = location.state?.user;
     if (user) {
@@ -66,12 +64,11 @@ const AddUser = () => {
             role: res.data.role,
             is_active: !!res.data.is_active,
           });
-          toast.success("User loaded successfully!");
         })
         .catch(() => toast.error("Failed to load user"))
         .finally(() => setLoading(false));
     }
-  }, [editing, editUsername]); // Remove location.state from deps, use editUsername
+  }, [editing, editUsername, location.state]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -102,18 +99,24 @@ const AddUser = () => {
     setLoading(false);
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 flex items-center justify-center relative">
+    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 flex items-center justify-center">
       <ToastContainer position="top-right" />
-      {/* Animated back arrow icon in the top right above the form */}
-      <button
-        onClick={() => navigate(`/${username}/dashboard/settings/user-management`)}
-        className="absolute top-8 left-8 z-10 p-2 rounded-full text-blue-600 hover:text-blue-800 transition-transform duration-200 hover:scale-125 bg-white/70 dark:bg-gray-800/70 shadow"
-        title="Back to User Management"
-      >
-        <ArrowLeft className="w-7 h-7" />
-      </button>
       <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-blue-100 dark:border-gray-800 animate-fadeIn">
+        {/* Back Button */}
+        <button
+          onClick={handleBack}
+          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+          disabled={loading}
+        >
+          <ArrowLeft size={20} className="animate-bounce-x" />
+          <span className="font-medium">Back</span>
+        </button>
+
         <div className="flex items-center gap-2 mb-6">
           <UserPlus size={28} className="text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
@@ -156,30 +159,18 @@ const AddUser = () => {
             />
           </div>
           <div>
-            {/* Password field logic */}
             <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
               Password {editing && <span className="text-xs text-gray-400">(leave blank to keep unchanged)</span>}
             </label>
-            {editing && !showPasswordField ? (
-              <button
-                type="button"
-                onClick={() => setShowPasswordField(true)}
-                className="px-4 py-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-gray-700 transition"
-              >
-                Reveal password to edit
-              </button>
-            ) : (
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                required={!editing}
-                autoComplete="new-password"
-                placeholder={editing ? "Enter new password to change" : ""}
-              />
-            )}
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              required={!editing}
+              autoComplete="new-password"
+            />
           </div>
           <div>
             <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Role</label>
@@ -232,6 +223,22 @@ const AddUser = () => {
         }
         .animate-fadeIn {
           animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes slideInLeft {
+          0% { opacity: 0; transform: translateX(-20px);}
+          100% { opacity: 1; transform: translateX(0);}
+        }
+        .animate-slideInLeft {
+          animation: slideInLeft 0.3s ease;
+        }
+        
+        @keyframes bounce-x {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-3px); }
+        }
+        .animate-bounce-x {
+          animation: bounce-x 1s infinite;
         }
       `}</style>
     </div>

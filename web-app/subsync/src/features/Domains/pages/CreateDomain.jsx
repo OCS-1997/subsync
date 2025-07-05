@@ -191,7 +191,7 @@ function AddDomain() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <ToastContainer position="top-center" autoClose={2000} transition={Bounce} theme="dark" />
+     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
       <h1 className="text-3xl font-bold mb-4">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
       <hr className="mb-6 border-blue-500" />
       <form onSubmit={handleSubmit} className="space-y-6">
