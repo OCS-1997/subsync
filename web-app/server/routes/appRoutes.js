@@ -12,6 +12,7 @@ import { getSubscriptionsController, createSubscription } from '../controllers/s
 import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
+import { getLogs } from '../controllers/activityLogController.js';
 
 const router = express.Router();
 
@@ -90,5 +91,8 @@ router.get('/users/:username', isAuthenticated, getUser);
 router.post('/users', isAuthenticated, createUserController);
 router.put('/users/:username', isAuthenticated, updateUserController);
 router.delete('/users/:username', isAuthenticated, deleteUserController);
+
+// Activity Logs (admin only)
+router.get('/activity-logs', isAuthenticated, getLogs);
 
 export default router;

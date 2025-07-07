@@ -2,6 +2,7 @@ import {
     getTaxes, addTax, updateTax, removeTax,
     getDefaultTaxPreference, setDefaultTaxPreference, getTaxById
 } from "../models/taxModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 /**
  * Get all taxes
@@ -58,6 +59,11 @@ const createTax = async (req, res) => {
 
         const result = await addTax({ taxName, taxType, taxRate, description });
 
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_TAX', resourceType: 'Tax', details: { taxName, taxType, taxRate, description } });
+        }
+
         res.status(201).json({ 
             message: "Tax added successfully", 
             tax: result 
@@ -92,6 +98,11 @@ const editTax = async (req, res) => {
 
         const result = await updateTax({ taxId: id, taxName, taxType, taxRate, description });
 
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_TAX', resourceType: 'Tax', resourceId: id, details: { taxName, taxType, taxRate, description } });
+        }
+
         res.status(200).json({ 
             message: "Tax updated successfully", 
             tax: result 
@@ -114,6 +125,11 @@ const deleteTax = async (req, res) => {
         }
 
         await removeTax(id);
+
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_TAX', resourceType: 'Tax', resourceId: id });
+        }
 
         res.status(200).json({ message: "Tax deleted successfully" });
     } catch (error) {

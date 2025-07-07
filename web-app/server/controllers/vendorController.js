@@ -5,6 +5,7 @@ import {
     updateVendor,
     deleteVendor
 } from '../models/vendorModel.js'; // Ensure this path is correct
+import { logActivity } from '../models/activityLogModel.js';
 
 // CREATE Vendor
 export const createVendorController = async (req, res) => {
@@ -13,7 +14,10 @@ export const createVendorController = async (req, res) => {
 
         // Pass the full vendor object to the model for validation and creation
         const result = await createVendor(vendorData);
-
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_VENDOR', resourceType: 'Vendor', resourceId: result.insertId, details: vendorData });
+        }
         return res.status(201).json({ message: "Vendor created successfully", vendor_id: result.insertId });
     } catch (error) {
         console.error("Error creating vendor:", error);
@@ -110,7 +114,10 @@ export const updateVendorController = async (req, res) => {
         };
 
         const result = await updateVendor(id, mappedData);
-
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_VENDOR', resourceType: 'Vendor', resourceId: id, details: mappedData });
+        }
         if (result.affectedRows === 0) {
             return res.status(200).json({ message: "Vendor found, but no changes applied." });
         }
@@ -133,7 +140,10 @@ export const deleteVendorController = async (req, res) => {
         }
 
         const result = await deleteVendor(id);
-
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_VENDOR', resourceType: 'Vendor', resourceId: id });
+        }
         if (result.affectedRows === 0) {
             // Should theoretically not happen if existingVendor check passed, but good for robustness
             return res.status(404).json({ error: "Vendor not found or already deleted." });

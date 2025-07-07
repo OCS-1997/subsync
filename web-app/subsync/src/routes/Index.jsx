@@ -22,6 +22,7 @@ import Vendors from '@/features/Vendors/pages/Vendors';
 import VendorDetails from '@/features/Vendors/pages/VendorDetails';
 import UserManagement from '@/features/Settings/UserManagement';
 import AddUser from '@/features/Settings/AddUser';
+import AdminActivityLog from '@/features/Settings/AdminActivityLog.jsx';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -68,6 +69,7 @@ const router = createBrowserRouter([
           {path: "user-management", element: <UserManagement/>},
           {path: "user-management/add-user", element: <AddUser />},
           {path: "user-management/add-user/:editUsername", element: <AddUser />},
+          {path: "activity-logs", element: <AdminActivityLog />},
         ]
       }
     ]

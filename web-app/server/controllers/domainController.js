@@ -1,4 +1,5 @@
 import { addDomain, updateDomain, getAllDomains, getDomainById, importDomainData } from "../models/domainModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 /**
  * Controller function for addDomain() to be executed at /create-domain
@@ -7,6 +8,10 @@ const createDomain = async (req, res) => {
     try {
         console.log("Received Data", req.body);
         await addDomain(req.body);
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_DOMAIN', resourceType: 'Domain', details: req.body });
+        }
         res.status(201).json({ message: 'Domain created successfully!' });
     } catch (error) {
         console.error("Domain creation error:", error);
@@ -23,6 +28,10 @@ const updateDomainDetails = async (req, res) => {
         const { did } = req.params;
         await updateDomain(did, req.body);
         const updatedDomain = await getDomainById(did); // after update
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did, details: req.body });
+        }
         res.json(updatedDomain);
     } catch (error) {
         console.error("Domain update error:", error);

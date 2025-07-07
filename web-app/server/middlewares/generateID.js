@@ -1,6 +1,6 @@
 /**
- * Function to create a customer's ID in "CIDYYMMDDHHMMSS" format and export it
- * @returns {string} The customer ID in "CIDYYMMDDHHMMSS" format
+ * Function to generate a unique ID for a record
+ * @returns {string} The ID in "textYYYYMMDDHHMMSS" format
  */
 export const generateID = (text) => {
   const now = new Date();
@@ -13,4 +13,4 @@ export const generateID = (text) => {
   const second = String(now.getSeconds()).padStart(2, '0');
 
   return `${text}${year}${month}${day}${hour}${minute}${second}`;
-};
+}; 

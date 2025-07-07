@@ -1,4 +1,5 @@
 import { getSubscriptions, addSubscription } from "../models/subscriptionModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 const createSubscription = async (req, res) => {
   try {
@@ -12,6 +13,10 @@ const createSubscription = async (req, res) => {
     const success = await addSubscription(subscription);
     
     if (success) {
+      // Log activity
+      if (req.user && req.user.username) {
+        await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', details: subscription });
+      }
       res.status(201).json({ message: "Subscription added successfully!" });
     } else {
       res.status(400).json({ error: "Failed to add subscription." });

@@ -6,6 +6,7 @@ import {
     deletePaymentTerm,
     updateDefaultPaymentTerm
 } from '../models/paymentTermsModel.js';
+import { logActivity } from '../models/activityLogModel.js';
 
 export const getPaymentTerms = async (req, res) => {
     try {
@@ -36,6 +37,10 @@ export const createPaymentTerm = async (req, res) => {
             return res.status(400).json({ error: 'Term name and days are required' });
         }
         const termId = await addPaymentTerm(termName, days);
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_PAYMENT_TERM', resourceType: 'PaymentTerm', resourceId: termId, details: { termName, days } });
+        }
         res.status(201).json({ termId, message: 'Payment term created successfully' });
     } catch (error) {
         if (error.message === 'Payment term name already exists') {
@@ -53,6 +58,10 @@ export const updatePaymentTermById = async (req, res) => {
             return res.status(400).json({ error: 'Term name and days are required' });
         }
         await updatePaymentTerm(id, termName, days);
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_PAYMENT_TERM', resourceType: 'PaymentTerm', resourceId: id, details: { termName, days } });
+        }
         res.json({ message: 'Payment term updated successfully' });
     } catch (error) {
         if (error.message === 'Payment term not found') {
@@ -69,6 +78,10 @@ export const deletePaymentTermById = async (req, res) => {
     try {
         const { id } = req.params;
         await deletePaymentTerm(id);
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_PAYMENT_TERM', resourceType: 'PaymentTerm', resourceId: id });
+        }
         res.json({ message: 'Payment term deleted successfully' });
     } catch (error) {
         if (error.message === 'Payment term not found') {

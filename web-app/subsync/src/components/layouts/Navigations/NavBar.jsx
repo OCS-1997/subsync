@@ -1,5 +1,5 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound} from "lucide-react";
-import { useDispatch } from "react-redux";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ThemeToggle } from "../ThemeToggle";
@@ -18,6 +18,8 @@ function NavBar({ toggleSidebar }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const role = useSelector(state => state.auth.role);
+  const isAdmin = role && role.toLowerCase() === 'admin';
 
   const handleLogout = () => {
     dispatch(logout());
@@ -121,10 +123,17 @@ function NavBar({ toggleSidebar }) {
                 <UserCog className="mr-2 h-5 w-5" />
                Users Management
               </Link>
+              {isAdmin && (
+                <Link
+                  className="text-gray-700 hover:text-blue-500 flex items-center"
+                  to="settings/activity-logs"
+                  onClick={() => setSettingsOpen(false)}
+                >
+                  <FileText className="mr-2 h-5 w-5" />
+                  Activity Logs
+                </Link>
+              )}
             </ul>
-            
-             
-            
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { getAllUsers, getUserByUsername, createUser, updateUser, deleteUser } from "../models/userModel.js";
 import bcrypt from "bcrypt";
+import { logActivity } from "../models/activityLogModel.js";
 
 export const getallUsers = async (req, res) => {
     try {
@@ -34,6 +35,10 @@ export const createUserController = async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         await createUser({ username, name, email, password: hashedPassword, role, is_active });
+        // Log activity (admin creates user)
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_USER', resourceType: 'User', resourceId: username, details: { name, email, role, is_active } });
+        }
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
         console.error("Error creating user:", error);
@@ -51,6 +56,10 @@ export const updateUserController = async (req, res) => {
             updateData.password = await bcrypt.hash(updateData.password, 10);
         }
         await updateUser(username, updateData);
+        // Log activity (admin updates user)
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_USER', resourceType: 'User', resourceId: username, details: updateData });
+        }
         res.json({ message: "User updated successfully" });
     } catch (error) {
         console.error("Error updating user:", error);
@@ -64,6 +73,10 @@ export const deleteUserController = async (req, res) => {
         const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
         await deleteUser(username);
+        // Log activity (admin deletes user)
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_USER', resourceType: 'User', resourceId: username });
+        }
         res.json({ message: "User deleted successfully" });
     } catch (error) {
         console.error("Error deleting user:", error);

@@ -1,4 +1,5 @@
 import { getGSTSettings, updateGSTSettings } from "../models/gstSettingsModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 // Controller to get GST settings
 const getGSTSettingsController = async (req, res) => {
@@ -32,6 +33,11 @@ const updateGSTSettingsController = async (req, res) => {
         };
 
         await updateGSTSettings(newSettings);
+
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_GST_SETTINGS', resourceType: 'GSTSettings', details: newSettings });
+        }
 
         res.status(200).json({ message: "GST settings updated successfully" });
     } catch (error) {

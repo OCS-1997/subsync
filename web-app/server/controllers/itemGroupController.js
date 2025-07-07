@@ -5,6 +5,7 @@ import {
     updateItemGroup,
     deleteItemGroup
 } from '../models/itemGroupModel.js';
+import { logActivity } from '../models/activityLogModel.js';
 
 // CREATE Item Group
 export const createItemGroupController = async (req, res) => {
@@ -22,6 +23,10 @@ export const createItemGroupController = async (req, res) => {
         }
 
         const result = await createItemGroup({ item_group_name });
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: result.insertId, details: { item_group_name } });
+        }
         // result.insertId will contain the newly generated item_group_id
         return res.status(201).json({ message: "Item group created successfully", item_group_id: result.insertId });
     } catch (error) {
@@ -84,6 +89,10 @@ export const updateItemGroupController = async (req, res) => {
         }
 
         const result = await updateItemGroup(id, { item_group_name });
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: id, details: { item_group_name } });
+        }
 
         if (result.affectedRows === 0) {
             // This might happen if the ID exists but no data was actually changed (e.g., same name provided)
@@ -111,6 +120,10 @@ export const deleteItemGroupController = async (req, res) => {
         }
 
         const result = await deleteItemGroup(id);
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: id });
+        }
 
         if (result.affectedRows === 0) {
             // Should theoretically not happen if existingItemGroup check passed, but good for robustness

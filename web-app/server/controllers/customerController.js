@@ -1,4 +1,5 @@
 import { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData } from "../models/customerModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 /**
  * Controller function for addCustomer() to be executed at /create-customer
@@ -10,8 +11,10 @@ const createCustomer = async (req, res) => {
     try {
         console.log("Received Data", req.body)
         addCustomer(req.body);
-        
-
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', details: req.body });
+        }
         res.status(201).json({ message: 'Customer created successfully!' });
     } catch (error) {
         console.error("Customer creation error:", error);
@@ -82,7 +85,10 @@ const updateCustomerDetails = async (req, res) => {
 
       const { cid } = req.params;
       await updateCustomer(cid, updatedData);  // Await the async call
-
+      // Log activity
+      if (req.user && req.user.username) {
+          await logActivity({ username: req.user.username, action: 'UPDATE_CUSTOMER', resourceType: 'Customer', resourceId: cid, details: updatedData });
+      }
       res.status(200).json({ message: "Customer updated successfully!" });
   } catch (error) {
       console.error("Customer update error:", error);
