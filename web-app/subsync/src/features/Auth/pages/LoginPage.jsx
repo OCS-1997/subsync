@@ -34,9 +34,7 @@ function LoginPage() {
         transition: Bounce,
       });
 
-      setTimeout(() => {
-        navigate(`/${loggedInUsername}/dashboard`);
-      }, 2000);
+      navigate(`/${loggedInUsername}/dashboard`);
     }
   }, [isAuthenticated, isLoading, error, navigate]);
 

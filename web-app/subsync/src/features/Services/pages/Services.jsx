@@ -26,14 +26,11 @@ import SearchFilterForm from '@/components/layouts/SearchFilterForm.jsx';
 import { fetchServices, deleteService } from '@/features/Services/serviceSlice.js';
 
 const headers = [
-  { key: 'service_id', label: 'ID' },
-  { key: 'service_name', label: 'Name' },
+  { key: 'service_name', label: 'Service Name' },
   { key: 'stock_keepers_unit', label: 'SKU' },
   { key: 'item_group_name', label: 'Item Group' },
   { key: 'tax_preference', label: 'Tax Pref.' },
   { key: 'preferred_vendor_name', label: 'Vendor' },
-  { key: 'created_at', label: 'Created At' },
-  { key: 'updated_at', label: 'Updated At' },
   { key: 'actions', label: 'Actions' },
 ];
 
@@ -42,7 +39,7 @@ function Services() {
   const { list: services, loading, error } = useSelector((state) => state.services);
 
   const [sortBy, setSortBy] = useState("service_name");
-  const [order, setOrder] = useState("desc");
+  const [order, setOrder] = useState("asc");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -239,7 +236,7 @@ function Services() {
   return (
     <>
     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
-    <div className="container p-6 rounded-lg shadow-lg">
+    <div className="flex flex-col p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Services</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
@@ -252,14 +249,14 @@ function Services() {
             setSortBy={setSortBy}
             order={order}
             setOrder={setOrder}
-            headers={headers.filter(h => h.key !== 'actions').map(({ key, label }) => ({ key, label }))}
+            headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
           />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link to={`add`}>
             <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
-              <Plus /> Add Service
+              <Plus /> Add
             </Button>
           </Link>
 
@@ -322,7 +319,7 @@ function Services() {
         <DialogHeader>
           <DialogTitle>Delete Service</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the service "{serviceToDelete?.service_name}"? 
+            Are you sure you want to delete the service &quot;{serviceToDelete?.service_name}&quot;? 
             This action cannot be undone.
           </DialogDescription>
         </DialogHeader>

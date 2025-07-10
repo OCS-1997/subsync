@@ -56,6 +56,13 @@ CREATE TABLE payment_terms (
     UNIQUE KEY unique_term_name (term_name)
 );
 
+-- Insert default payment terms
+INSERT INTO payment_terms (term_name, days, is_default) VALUES
+('Net 30', 30, false),
+('Net 45', 45, false),
+('Net 60', 60, false),
+('Due on Receipt', 0, true);
+
 -- Create the Domains Table Associated with Customers
 CREATE TABLE IF NOT EXISTS domains (
     domain_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -210,4 +217,3 @@ CREATE TABLE activity_logs (
     details TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-

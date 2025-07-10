@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import api from "@/lib/axiosInstance";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { UserPlus, UserRoundPen, ArrowLeft } from "lucide-react";
 
 const ROLES = ["Admin", "Manager", "User"];
 
@@ -104,10 +104,9 @@ const AddUser = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 flex items-center justify-center">
+    <div className="py-8 px-4 flex items-center justify-center">
       <ToastContainer position="top-right" />
       <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-blue-100 dark:border-gray-800 animate-fadeIn">
-        {/* Back Button */}
         <button
           onClick={handleBack}
           className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
@@ -118,7 +117,7 @@ const AddUser = () => {
         </button>
 
         <div className="flex items-center gap-2 mb-6">
-          <UserPlus size={28} className="text-blue-600" />
+          {editing ? <UserRoundPen size={28} className="text-blue-600" /> : <UserPlus size={28} className="text-blue-600" />}
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
             {editing ? "Edit User" : "Add User"}
           </h2>
@@ -208,7 +207,7 @@ const AddUser = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg shadow hover:from-blue-700 hover:to-cyan-600 transition disabled:opacity-50"
+              className="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow transition disabled:opacity-50"
               disabled={loading}
             >
               {editing ? "Update" : "Add"}

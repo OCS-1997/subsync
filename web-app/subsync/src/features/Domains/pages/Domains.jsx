@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,7 +15,7 @@ import { fetchDomains } from "../domainSlice";
 
 function Domains() {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [sortBy, setSortBy] = useState("domain_name");
   const [order, setOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -89,7 +89,7 @@ function Domains() {
 
   return (
     
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 shadow-lg rounded-lg">
+    <div className="flex flex-col p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Domains</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -101,11 +101,12 @@ function Domains() {
           setSortBy={setSortBy}
           order={order}
           setOrder={setOrder}
-          headers={headers.map(({ key, label }) => ({ key, label }))}
+          headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
+
         />
         <Link to="add">
           <Button className="bg-blue-500 hover:bg-blue-600 text-white w-full sm:w-auto">
-            + New Domain
+            <Plus /> Add
           </Button>
         </Link>
       </div>
@@ -165,7 +166,7 @@ function Domains() {
                             }
                           }}
                         >
-                          <Button size="icon" variant="outline" className="ml-1">
+                          <Button size="icon" variant="ghost" className="ml-1">
                             <Pencil size={12} />
                           </Button>
                         </Link>

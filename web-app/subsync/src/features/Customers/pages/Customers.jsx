@@ -19,19 +19,17 @@ import useFetchData from "@/hooks/useFetchData.js";
 import "jspdf-autotable";
 
 const headers = [
-  // { key: "customer_id", label: "CID" },
-  // { key: "salutation", label: "Salutation" },
-  { key: "first_name", label: "Name" },
+  { key: "first_name", label: "Customer Name" },
   { key: "display_name", label: "Display Name" },
   { key: "company_name", label: "Company Name" },
   { key: "phone_with_country_code", label: "Phone Number" },
   { key: "primary_email", label: "Email" },
   { key: "customer_status", label: "Status" },
-  { key: "actions", label: "View/Edit" },
+  { key: "actions", label: "Actions" },
 ];
 
 function Customers() {
-  const [sortBy, setSortBy] = useState("customer_id");
+  const [sortBy, setSortBy] = useState("first_name");
   const [order, setOrder] = useState("asc");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -187,12 +185,13 @@ function Customers() {
 
   const modifiedData = filteredData.map((c) => ({
     ...c,
+    first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
     phone_with_country_code: `${c.country_code || ""}${c.primary_phone_number}`,
     actions: renderActions(c.customer_id),
   }));
 
   return (
-    <div className="container p-6 rounded-lg shadow-lg">
+    <div className="flex flex-col p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Customers</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
@@ -205,23 +204,23 @@ function Customers() {
             setSortBy={setSortBy}
             order={order}
             setOrder={setOrder}
-            headers={headers.map(({ key, label }) => ({ key, label }))}
+            headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
           />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link to={`add`}>
             <Button className="w-full sm:w-aut bg-blue-500 hover:bg-blue-600 text-white"> 
-              <UserPlus/> Add
+              <UserPlus /> Add
             </Button>
           </Link>
 
-          <Button className="sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+          <Button className="sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
             <FileDown /> Import
           </Button>
 
           <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
-            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
+            <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
               <FileUp /> Export
             </Button>
             <DropdownMenu>

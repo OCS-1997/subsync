@@ -13,18 +13,18 @@ import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import useFetchData from "@/hooks/useFetchData.js";
 
 const headers = [
-  { key: "display_name", label: "Display Name" },
+  { key: "display_name", label: "Vendor Display Name" },
   { key: "company_name", label: "Company Name" },
   { key: "primary_phone_number", label: "Phone Number" },
   { key: "primary_email", label: "Email" },
   { key: "vendor_status", label: "Status" },
-  { key: "actions", label: "View/Edit" },
+  { key: "actions", label: "Actions" },
 ];
 
 function Vendors() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sortBy, setSortBy] = useState("vendor_id");
+  const [sortBy, setSortBy] = useState("display_name");
   const [order, setOrder] = useState("asc");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,14 +98,6 @@ function Vendors() {
       >
         <Eye className="w-4 h-4" />
       </Button>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        onClick={() => handleEditVendor(vendor)}
-        title="Edit Vendor"
-      >
-        <UserPlus className="w-4 h-4" />
-      </Button>
     </div>
   );
 
@@ -153,7 +145,7 @@ function Vendors() {
   return (
     <>
       <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
-      <div className="container p-6 rounded-lg shadow-lg">
+      <div className="flex flex-col p-6 rounded-lg shadow-lg">
         <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
         <hr className="mb-4 border-blue-500 border-3 size-auto" />
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
@@ -166,7 +158,7 @@ function Vendors() {
               setSortBy={setSortBy}
               order={order}
               setOrder={setOrder}
-              headers={headers.map(({ key, label }) => ({ key, label }))}
+              headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
             />
           </div>
 
@@ -175,7 +167,7 @@ function Vendors() {
               className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" 
               onClick={handleAddVendor}
             >
-              <UserPlus /> Add Vendor
+              <UserPlus /> Add
             </Button>
             <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
               <FileUp /> Export
