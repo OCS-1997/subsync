@@ -207,7 +207,11 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
---Activity Log Table
+-- Default user data
+INSERT INTO users (username, name, password, role, email, is_active) VALUES 
+('admin', 'Admin', '$2a$15$4NbEZKOhHJtwE..L2peByOQjdFnt0cRdAkO.xJy2BBlnMhNeo0Amy', 'Admin', 'admin123@gmail.com', TRUE);
+
+-- Activity Log Table
 CREATE TABLE activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
