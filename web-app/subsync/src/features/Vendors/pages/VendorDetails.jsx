@@ -219,9 +219,7 @@ function VendorDetails() {
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Payment Term</label>
             <p className="text-lg text-gray-900 dark:text-white">
               {currentVendor.payment_terms.term_name} ({currentVendor.payment_terms.days || 0} days)
-              {currentVendor.payment_terms.is_default && (
-                <span className="ml-2 inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Default</span>
-              )}
+              
             </p>
           </div>
         </div>

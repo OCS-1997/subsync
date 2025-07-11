@@ -209,7 +209,8 @@ const AddService = () => {
     <>
     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <form className="space-y-6 p-6" onSubmit={handleSubmit}>
-      <h1 className="text-2xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
+      <h1 className="text-3xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
+      <hr className="mb-2 border-blue-500 border-1 size-auto" />
       <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />
 
       <hr className="mb-4 border-gray-500 border-1 size-auto" />
@@ -234,7 +235,7 @@ const AddService = () => {
       <TaxSection taxRates={taxRates} setTaxRates={setTaxRates} />
 
       <div className="flex justify-end gap-4 pt-4">
-        <Button type="submit" disabled={isSubmittingService}>
+        <Button type="submit" className="bg-blue-500"  disabled={isSubmittingService}>
           {isSubmittingService ? (isEditing ? "Updating..." : "Saving...") : (isEditing ? "Update Service" : "Save Service")}
         </Button>
         <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>

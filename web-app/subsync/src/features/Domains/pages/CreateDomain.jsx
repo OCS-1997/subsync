@@ -292,7 +292,7 @@ function AddDomain() {
         </div>
 
         <div className="pt-6">
-          <Button type="submit">{isEditing ? "Update Domain" : "Create Domain"}</Button>
+          <Button type="submit" className="ml-4 bg-blue-500">{isEditing ? "Update Domain" : "Create Domain"}</Button>
           <Button type="button" variant="secondary" className="ml-4" onClick={() => navigate(-1)}>
             Cancel
           </Button>

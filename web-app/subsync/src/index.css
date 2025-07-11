@@ -1,6 +1,13 @@
+/* subsync/web-app/subsync/src/index.css */
+/* @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap');@import url('https://fonts.googleapis.com/css2?family=Huninn&family=Open+Sans:ital,wght@0,473;1,473&family=Roboto+Condensed:wght@300&family=TikTok+Sans:opsz,wght@12..36,300..900&display=swap'); */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* body {
+  font-family:'Roboto Condensed';
+} */
 
 @layer base {
   :root {

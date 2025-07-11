@@ -281,7 +281,14 @@ const AddCustomer = () => {
       }
 
       if (actionResult.meta.requestStatus === "rejected") {
-        throw new Error(actionResult.payload || "Error saving customer details.");
+        // Check for duplicate name error
+        const backendMsg = actionResult.payload || "Error saving customer details.";
+        if (backendMsg.includes("name already exists")) {
+          toast.error("A customer with this name already exists. Please use a different name.");
+        } else {
+          throw new Error(backendMsg);
+        }
+        return;
       }
 
       toast.success(isEditing ? "Customer Updated Successfully." : "Customer Created Successfully.");
@@ -305,7 +312,7 @@ const AddCustomer = () => {
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 ml-4">
       <ToastContainer position="top-center" autoClose={2000} theme="dark" transition={Bounce} pauseOnHover />
       <button
           onClick={handleBack}
@@ -397,7 +404,7 @@ const AddCustomer = () => {
         </Tabs>
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button type="submit" className="" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
+          <Button type="submit" className="bg-blue-500" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
           <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={resetCustomerData} disabled={loading}>Reset</Button>
           <Button type="button" variant="destructive" onClick={handleCancel} disabled={loading}>Cancel</Button>
         </div>

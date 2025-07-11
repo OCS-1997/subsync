@@ -37,6 +37,15 @@ async function addCustomer(customer) {
             throw new Error("State cannot be empty in the address.");
         }
 
+        // Check for duplicate display_name (case-insensitive)
+        const [existing] = await appDB.query(
+            "SELECT 1 FROM customers WHERE LOWER(display_name) = LOWER(?) LIMIT 1",
+            [customer.displayName]
+        );
+        if (existing.length > 0) {
+            throw new Error("A customer with this name already exists.");
+        }
+
         const currentTime = getCurrentTime();
         const cid = generateID("CID");
 
@@ -69,13 +78,11 @@ async function addCustomer(customer) {
             throw new Error("Failed to add customer. No rows affected.");
         }
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
-            throw new Error("A customer with this email or phone number already exists.");
-        } else if (error.code === 'ER_BAD_NULL_ERROR') {
+        if (error.code === 'ER_BAD_NULL_ERROR') {
             throw new Error("One or more fields cannot be null.");
         } else {
             console.error("Database error:", error);
-            throw new Error("An unexpected error occurred while adding the customer.");
+            throw new Error(error.message || "An unexpected error occurred while adding the customer.");
         }
     }
 }

@@ -27,14 +27,18 @@ function NavBar({ toggleSidebar }) {
   };
 
   return (
-    <nav className="bg-white shadow-md rounded-b-lg border-b-2 border-gray-300">
+    <nav className="bg-white shadow-md rounded-b-lg border-b-2 mb-2 border-gray-200">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
         <div className="flex">
           <Button variant="ghost" size="icon" className="mr-2 lg:hidden" onClick={toggleSidebar}>
             <span className="material-symbols-outlined">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex items-center">
-            <span className="text-xl font-bold text-primary">SubSync</span>
+          <div className="flex-shrink-0 flex items-center bg-[#39a0e4] p-2 rounded">
+        
+        
+            <img src="/logo.png" alt="" className="h-8 w-auto" />
+         
+     
           </div>
         </div>
 

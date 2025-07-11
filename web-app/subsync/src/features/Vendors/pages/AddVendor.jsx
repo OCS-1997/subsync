@@ -330,7 +330,7 @@ const AddVendor = () => {
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 ml-4">
       <button
         onClick={handleBack}
         className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
@@ -421,8 +421,8 @@ const AddVendor = () => {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 mt-4">
-          <Button type="submit" className="" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
+        <div className="flex justify-end gap-3 mt-4 mr-4">
+          <Button type="submit" className="bg-blue-500 " disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
           <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={resetVendorData} disabled={loading}>Reset</Button>
           <Button type="button" variant="destructive" onClick={handleCancel} disabled={loading}>Cancel</Button>
         </div>

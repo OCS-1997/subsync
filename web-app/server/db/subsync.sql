@@ -207,7 +207,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Default user data
+-- Default user data (username: admin, password: admin123)
 INSERT INTO users (username, name, password, role, email, is_active) VALUES 
 ('admin', 'Admin', '$2a$15$4NbEZKOhHJtwE..L2peByOQjdFnt0cRdAkO.xJy2BBlnMhNeo0Amy', 'Admin', 'admin123@gmail.com', TRUE);
 

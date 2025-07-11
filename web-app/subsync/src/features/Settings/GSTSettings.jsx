@@ -154,7 +154,7 @@ function GSTSettings() {
                     />
                 </div>
 
-                <Button type="submit">Save</Button>
+                <Button type="submit" className="w-1/2">Save</Button>
             </form>
         </div>
         </>

@@ -1,5 +1,6 @@
 import appDB from "../db/subsyncDB.js";
 import { getCurrentTime } from "../middlewares/time.js";
+import { generateID } from "../middlewares/generateID.js";
 
 /**
  * Function to add a domain into the database
@@ -14,13 +15,14 @@ async function addDomain(domain) {
         }
 
         const currentTime = getCurrentTime();
+        const did = generateID("DID");
         
         // Execute SQL query
         const [result] = await appDB.query(
-            "INSERT INTO domains (customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, created_at, updated_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT INTO domains (domain_id,customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, created_at, updated_at) " +
+            "VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             [
-                domain.customer_id, domain.customer_name, domain.domain_name, domain.registration_date,
+                did, domain.customer_id, domain.customer_name, domain.domain_name, domain.registration_date,
                 domain.registered_with, domain.other_provider || "", domain.description || "", 
                 domain.mail_service_provider || "", domain.other_mail_service_details || "", currentTime, currentTime
             ]
