@@ -47,7 +47,7 @@ function DisplayCustomer({ customerDetails }) {
                   renderDetails("Customer Status", customerDetails.customer_status, "bg-green-500 text-white py-1 px-2 rounded-lg w-max")}
                 {customerDetails.customer_status === "Inactive" &&
                   renderDetails("Customer Status", customerDetails.customer_status, "bg-red-500 text-white py-1 px-2 rounded-lg w-max")}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
                   {renderDetails("Customer ID", customerDetails.customer_id)}
                   {renderDetails("Salutation", customerDetails.salutation)}
                   {renderDetails("First Name", customerDetails.first_name)}

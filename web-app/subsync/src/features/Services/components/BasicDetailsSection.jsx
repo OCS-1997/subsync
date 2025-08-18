@@ -24,7 +24,7 @@ const BasicDetailsSection = ({ formData, setFormData, serviceError }) => {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="service_name">Name</Label>
+          <Label htmlFor="service_name">Name<span className="text-red-800">*</span></Label>
           <Input
             id="service_name"
             value={formData.service_name}
@@ -35,7 +35,7 @@ const BasicDetailsSection = ({ formData, setFormData, serviceError }) => {
           )}
         </div>
         <div>
-          <Label htmlFor="SKU">SKU (Stock Keepers Unit)</Label>
+          <Label htmlFor="SKU">SKU (Stock Keepers Unit)<span className="text-red-800">*</span></Label>
           <Input
             id="SKU"
             value={formData.SKU}
@@ -43,7 +43,7 @@ const BasicDetailsSection = ({ formData, setFormData, serviceError }) => {
           />
         </div>
         <div>
-          <Label htmlFor="tax_preference">Tax Preference</Label>
+          <Label htmlFor="tax_preference">Tax Preference<span className="text-red-800">*</span></Label>
           <Select
             id="tax_preference"
             onValueChange={(val) => setFormData({ ...formData, tax_preference: val })}
@@ -59,7 +59,7 @@ const BasicDetailsSection = ({ formData, setFormData, serviceError }) => {
           </Select>
         </div>
         <div>
-          <Label htmlFor="item-group">Item Group</Label>
+          <Label htmlFor="item-group">Item Group<span className="text-red-800">*</span></Label>
           <div className="flex gap-2">
             <Select
               value={formData.item_group || ""}

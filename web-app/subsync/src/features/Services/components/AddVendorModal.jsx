@@ -108,22 +108,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   }, []);
 
   useEffect(() => {
-    if (editableVendor && isEditing && paymentTermsList.length > 0 && editableVendor.payment_terms) {
-      const matchedTerm = paymentTermsList.find(
-        t => t.term_id === editableVendor.payment_terms?.term_id
-      );
-      
-      if (matchedTerm) {
-        setVendorData(prev => ({
-          ...prev,
-          payment_terms: matchedTerm,
-        }));
-      }
-    }
-  }, [editableVendor, isEditing, paymentTermsList]);
-
-  useEffect(() => {
-    if (isEditing && editableVendor) {
+    if (editableVendor && isEditing) {
+      // Parse JSON fields if needed
       let address = editableVendor.vendor_address || editableVendor.address || {};
       if (typeof address === "string") {
         try { address = JSON.parse(address); } catch { address = {}; }
@@ -137,6 +123,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
       }
 
+      // Set states based on country
       const countryValue = address.country || "IN";
       if (countryValue === "IN" || countryValue === "India") {
         setStates(indianStates);
@@ -175,11 +162,10 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         vendorStatus: editableVendor.vendor_status || "Active",
       });
       setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
-    } else if (!isEditing) {
-      resetVendorData();
     }
-  }, [isEditing, editableVendor]);
+  }, [editableVendor, isEditing]);
 
+  // Ensure states are set when country is India
   useEffect(() => {
     if (vendorData.address.country?.value === "IN" || vendorData.address.country === "IN") {
       setStates(indianStates);
@@ -224,13 +210,6 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     }
   };
 
-  const handlePaymentTermChange = (term) => {
-    setVendorData(prev => ({
-      ...prev,
-      payment_terms: term
-    }));
-  };
-
   const handleStatusChange = (status) => {
     setVendorData((prevData) => ({
       ...prevData,
@@ -238,8 +217,52 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     }));
   };
 
+  const handlePaymentTermChange = (term) => {
+    setVendorData(prev => ({
+      ...prev,
+      payment_terms: term
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Enhanced validation with specific field checks and better error messages
+    const validationErrors = [];
+    
+    // Check personal details
+    if (!vendorData.salutation?.trim()) validationErrors.push("Salutation");
+    if (!vendorData.firstName?.trim()) validationErrors.push("First Name");
+    if (!vendorData.lastName?.trim()) validationErrors.push("Last Name");
+    if (!vendorData.email?.trim()) validationErrors.push("Email");
+    if (!vendorData.phoneNumber?.trim()) validationErrors.push("Phone Number");
+    
+    // Check company details
+    if (!vendorData.companyName?.trim()) validationErrors.push("Company Name");
+    if (!vendorData.displayName?.trim()) validationErrors.push("Display Name");
+    if (!vendorData.gstin?.trim()) validationErrors.push("GSTIN");
+    
+    // Check address details
+    if (!vendorData.address?.addressLine?.trim()) validationErrors.push("Address Line");
+    if (!vendorData.address?.city?.trim()) validationErrors.push("City");
+    if (!vendorData.address?.zipCode?.trim()) validationErrors.push("ZIP Code");
+    
+    // Check state selection
+    if (!vendorData.address?.state) {
+      validationErrors.push("State");
+    } else if (typeof vendorData.address.state === 'object' && !vendorData.address.state.value) {
+      validationErrors.push("State");
+    } else if (typeof vendorData.address.state === 'string' && !vendorData.address.state.trim()) {
+      validationErrors.push("State");
+    }
+
+    if (validationErrors.length > 0) {
+      console.log('Validation failed. Missing fields:', validationErrors);
+      console.log('Vendor data:', vendorData);
+      toast.error(`Please fill in the following required fields: ${validationErrors.join(', ')}`);
+      return;
+    }
+
     try {
       const payload = {
         salutation: vendorData.salutation,
@@ -251,13 +274,12 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         secondaryPhoneNumber: vendorData.secondaryPhoneNumber,
         companyName: vendorData.companyName,
         displayName: vendorData.displayName,
-        gstin: vendorData.gst_in,
+        gstin: vendorData.gstin,
         currencyCode: vendorData.currencyCode?.value || vendorData.currencyCode || "INR",
         gst_treatment: vendorData.gst_treatment,
         tax_preference: vendorData.tax_preference,
         exemption_reason: vendorData.exemption_reason || "",
         address: {
-          ...vendorData.address,
           country: vendorData.address.country?.value || vendorData.address.country || "IN",
           state: vendorData.address.state?.value || vendorData.address.state || "",
           addressLine: vendorData.address.addressLine || "",
@@ -277,6 +299,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         notes: vendorData.notes || "",
         vendorStatus: vendorData.vendorStatus || "Active"
       };
+
+      console.log('Submitting vendor payload:', payload);
 
       let actionResult;
       if (isEditing) {
@@ -322,11 +346,13 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
             handleInputChange={handleInputChange}
             handleSelectChange={handleSelectChange}
             handleStatusChange={handleStatusChange}
+            isVendor={true}
           />
           <CompanyDetails
             customerData={vendorData}
             handleInputChange={handleInputChange}
             handleSelectChange={handleSelectChange}
+            isVendor={true}
           />
 
           <hr className="mb-4 border-gray-500 border-1 size-auto" />
@@ -336,7 +362,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
               <TabsTrigger
                 value="otherDetails"
                 className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-                  Other Details
+                Other Details
               </TabsTrigger>
               <TabsTrigger
                 value="address"

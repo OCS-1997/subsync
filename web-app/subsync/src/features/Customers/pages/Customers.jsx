@@ -215,7 +215,9 @@ function Customers() {
             </Button>
           </Link>
 
-          <Button className="sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+          <Button
+          disabled
+          className="sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
             <FileDown /> Import
           </Button>
 

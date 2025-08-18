@@ -403,7 +403,7 @@ const AddCustomer = () => {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 mt-4">
+        <div className="flex justify-end gap-3 mt-4 mr-4">
           <Button type="submit" className="bg-blue-500" disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
           <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={resetCustomerData} disabled={loading}>Reset</Button>
           <Button type="button" variant="destructive" onClick={handleCancel} disabled={loading}>Cancel</Button>

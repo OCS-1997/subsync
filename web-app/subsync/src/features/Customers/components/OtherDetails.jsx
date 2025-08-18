@@ -15,7 +15,7 @@ const OtherDetails = ({ customerData, handleInputChange, handleSelectChange }) =
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="gstin">GSTIN</Label>
+          <Label htmlFor="gstin">GSTIN<span className="text-red-800">*</span></Label>
           <Input
             id="gstin"
             name="gstin"
@@ -27,7 +27,7 @@ const OtherDetails = ({ customerData, handleInputChange, handleSelectChange }) =
         </div>
 
         <div className="space-y-2">
-          <Label>Currency Code</Label>
+          <Label>Currency Code<span className="text-red-800">*</span></Label>
           <Select
             value={currencyValue}
             onValueChange={(value) => handleSelectChange("currencyCode", value)}
@@ -46,7 +46,7 @@ const OtherDetails = ({ customerData, handleInputChange, handleSelectChange }) =
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>GST Treatment</Label>
+          <Label>GST Treatment<span className="text-red-800">*</span></Label>
           <Select
             value={gstTreatmentValue}
             onValueChange={(value) => handleSelectChange("gst_treatment", value)}
@@ -63,7 +63,7 @@ const OtherDetails = ({ customerData, handleInputChange, handleSelectChange }) =
         </div>
 
         <div className="space-y-2">
-          <Label>Tax Preference</Label>
+          <Label>Tax Preference<span className="text-red-800">*</span></Label>
           <Select
             value={customerData.tax_preference || ""}
             onValueChange={(value) => handleSelectChange("tax_preference", value)}
@@ -82,7 +82,7 @@ const OtherDetails = ({ customerData, handleInputChange, handleSelectChange }) =
 
       {customerData.tax_preference === "Tax Exempt" && (
         <div className="space-y-2">
-          <Label htmlFor="exemption_reason">Tax Exemption Reason</Label>
+          <Label htmlFor="exemption_reason">Tax Exemption Reason<span className="text-red-800">*</span></Label>
           <Input
             id="exemption_reason"
             name="exemption_reason"

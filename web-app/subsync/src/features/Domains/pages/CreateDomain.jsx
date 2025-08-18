@@ -196,7 +196,7 @@ function AddDomain() {
       <hr className="mb-6 border-blue-500" />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label>Customer Name</Label>
+          <Label>Customer Name<span className="text-red-800">*</span></Label>
           <Select
             options={filteredCustomers}
             inputValue={searchTerm}
@@ -220,15 +220,15 @@ function AddDomain() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label>Domain Name</Label>
+            <Label>Domain Name<span className="text-red-800">*</span></Label>
             <Input required value={formData.domainName} onChange={(e) => setFormData({ ...formData, domainName: e.target.value })} />
           </div>
           <div>
-            <Label>Registration Date</Label>
+            <Label>Registration Date<span className="text-red-800">*</span></Label>
             <Input type="date" required value={formData.registrationDate} onChange={(e) => setFormData({ ...formData, registrationDate: e.target.value })} />
           </div>
           <div>
-            <Label>Registered With</Label>
+            <Label>Registered With<span className="text-red-800">*</span></Label>
             <Select
               options={registeredWithOptions}
               value={registeredWithOptions.find(opt => opt.value === formData.registeredWith)}
@@ -270,7 +270,7 @@ function AddDomain() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label>Mail Services</Label>
+            <Label>Mail Services<span className="text-red-800">*</span></Label>
             <Select
               options={mailServicesOptions}
               value={mailServicesOptions.find(opt => opt.value === formData.mailServices)}

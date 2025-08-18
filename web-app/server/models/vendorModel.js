@@ -30,22 +30,27 @@ const createVendor = async (vendor) => {
         };
 
         // Validate required fields (use extracted values)
-        if (
-            !vendor.salutation ||
-            !vendor.firstName ||
-            !vendor.lastName ||
-            !vendor.email ||
-            !vendor.phoneNumber ||
-            !address ||
-            !address.state ||
-            !vendor.companyName ||
-            !vendor.displayName ||
-            !vendor.gstin ||
-            !currencyCode ||
-            !vendor.gst_treatment ||
-            !vendor.tax_preference
-        ) {
-            throw new Error("All required fields must be provided.");
+        const validationErrors = [];
+        
+        if (!vendor.salutation) validationErrors.push("salutation");
+        if (!vendor.firstName) validationErrors.push("firstName");
+        if (!vendor.lastName) validationErrors.push("lastName");
+        if (!vendor.email) validationErrors.push("email");
+        if (!vendor.phoneNumber) validationErrors.push("phoneNumber");
+        if (!address) validationErrors.push("address object");
+        if (!address.state) validationErrors.push("address.state");
+        if (!vendor.companyName) validationErrors.push("companyName");
+        if (!vendor.displayName) validationErrors.push("displayName");
+        if (!vendor.gstin) validationErrors.push("gstin");
+        if (!currencyCode) validationErrors.push("currencyCode");
+        if (!vendor.gst_treatment) validationErrors.push("gst_treatment");
+        if (!vendor.tax_preference) validationErrors.push("tax_preference");
+
+        if (validationErrors.length > 0) {
+            console.log("Vendor validation failed. Missing fields:", validationErrors);
+            console.log("Vendor data received:", JSON.stringify(vendor, null, 2));
+            console.log("Extracted address:", JSON.stringify(address, null, 2));
+            throw new Error(`Missing required fields: ${validationErrors.join(', ')}. Please ensure all required fields are filled.`);
         }
 
         if (!isValidGSTIN(vendor.gstin)) {

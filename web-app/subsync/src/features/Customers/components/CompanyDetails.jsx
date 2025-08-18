@@ -1,11 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const CompanyDetails = ({ customerData, handleInputChange }) => {
+const CompanyDetails = ({ customerData, handleInputChange, isVendor = false }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="companyName">Company Name</Label>
+        <Label htmlFor="companyName">Company Name<span className="text-red-800">*</span></Label>
         <Input
           id="companyName"
           name="companyName"
@@ -18,7 +18,9 @@ const CompanyDetails = ({ customerData, handleInputChange }) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="displayName">Customer Display Name</Label>
+        <Label htmlFor="displayName">
+          {isVendor ? "Vendor" : "Customer"} Display Name<span className="text-red-800">*</span>
+        </Label>
         <Input
           id="displayName"
           name="displayName"

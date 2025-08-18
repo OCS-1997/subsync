@@ -36,12 +36,27 @@ const AddressSection = ({
 
   const address = customerData.address || {};
   const countryValue = address.country;
+  
+  // Handle both object and string values for state
+  const getStateValue = () => {
+    if (!address.state) return null;
+    
+    // If state is an object with value property
+    if (typeof address.state === 'object' && address.state.value) {
+      return address.state.value;
+    }
+    
+    // If state is a string or has a different structure
+    return address.state;
+  };
+
+  const stateValue = getStateValue();
 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-12">
-          <Label htmlFor="addressLine" className="mb-2">Address Line</Label>
+          <Label htmlFor="addressLine" className="mb-2">Address Line<span className="text-red-800">*</span></Label>
           <Input
             id="addressLine"
             type="text"
@@ -56,7 +71,7 @@ const AddressSection = ({
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="country" className="mb-2">Country</Label>
+          <Label htmlFor="country" className="mb-2">Country<span className="text-red-800">*</span></Label>
           <Select
             id="country"
             placeholder="Select Country"
@@ -71,13 +86,13 @@ const AddressSection = ({
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="state" className="mb-2">State</Label>
+          <Label htmlFor="state" className="mb-2">State<span className="text-red-800">*</span></Label>
           <Select
             id="state"
             placeholder="Select State"
             options={states}
             value={Array.isArray(states)
-              ? states.find(option => option.value === address.state) || null
+              ? states.find(option => option.value === stateValue) || null
               : null}
             onChange={handleStateChange}
             className="react-select-container shadow-sm"
@@ -88,7 +103,7 @@ const AddressSection = ({
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="city" className="mb-2">City</Label>
+          <Label htmlFor="city" className="mb-2">City<span className="text-red-800">*</span></Label>
           <Input
             id="city"
             type="text"
@@ -101,7 +116,7 @@ const AddressSection = ({
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="zipCode" className="mb-2">Zip Code</Label>
+          <Label htmlFor="zipCode" className="mb-2">Zip Code<span className="text-red-800">*</span></Label>
           <Input
             id="zipCode"
             type="text"

@@ -30,7 +30,7 @@ async function addDomain(domain) {
 
         // Add name servers if provided
         if (domain.name_servers && domain.name_servers.length > 0) {
-            const nameServerValues = domain.name_servers.map(ns => [result.insertId, ns]);
+            const nameServerValues = domain.name_servers.map(ns => [did, ns]);
             await appDB.query(
                 "INSERT INTO domain_name_servers (domain_id, name_server) VALUES ?",
                 [nameServerValues]

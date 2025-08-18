@@ -10,7 +10,7 @@ CREATE TABLE customers (
 	salutation ENUM('Mr.', 'Ms.', 'Mrs.', 'Dr.') NOT NULL,
 	first_name VARCHAR(100) NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
-	primary_email VARCHAR(255) NOT NULL UNIQUE,
+	primary_email VARCHAR(255) NOT NULL,
 	country_code VARCHAR(5) NOT NULL DEFAULT '+91',
 	primary_phone_number VARCHAR(15) NOT NULL,
 	secondary_phone_number VARCHAR(15),
@@ -65,7 +65,7 @@ INSERT INTO payment_terms (term_name, days, is_default) VALUES
 
 -- Create the Domains Table Associated with Customers
 CREATE TABLE IF NOT EXISTS domains (
-    domain_id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_id VARCHAR(15) PRIMARY KEY,
     customer_id VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     customer_name VARCHAR(255) NOT NULL,
     domain_name VARCHAR(255) UNIQUE NOT NULL,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS domains (
 
 CREATE TABLE domain_name_servers (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    domain_id INT NOT NULL,
+    domain_id VARCHAR(15) NOT NULL,
     name_server VARCHAR(255) NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -135,10 +135,7 @@ CREATE TABLE IF NOT EXISTS vendors (
     notes TEXT,
     vendor_status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_gst_in (gst_in),
-    UNIQUE KEY unique_email (primary_email),
-    UNIQUE KEY unique_phone (primary_phone_number)
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ); 
 
 ALTER TABLE services

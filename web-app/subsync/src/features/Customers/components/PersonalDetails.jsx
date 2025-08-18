@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 
 import 'react-phone-number-input/style.css';
 
-const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, handleStatusChange }) => {
+const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, handleStatusChange, isVendor = false }) => {
 
   const getCurrentPhoneNumber = (type = 'primary') => {
     const phoneNumber = type === 'primary' ? customerData.phoneNumber : customerData.secondaryPhoneNumber;
@@ -50,18 +50,22 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
 
   // Set default salutation to Mr. if not set
   const selectedSalutation = salutationOptions.find(option => option.value === customerData.salutation) || salutationOptions[0];
+  
+  // Handle both customerStatus and vendorStatus
+  const statusField = isVendor ? 'vendorStatus' : 'customerStatus';
+  const currentStatus = customerData[statusField] || "Active";
 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-12">
-          <Label htmlFor="customer-status" className="mb-2">Customer Status</Label>
+          <Label htmlFor="customer-status" className="mb-2">{isVendor ? "Vendor" : "Customer"} Status</Label>
           <div className="inline-flex rounded-md shadow-sm w-max" role="group">
             <Button
               id="tbg-radio-1"
               type="button"
-              variant={customerData.customerStatus === "Active" ? "default" : "outline"}
-              className={`rounded-r-none ${customerData.customerStatus === "Active" ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-50'}`}
+              variant={currentStatus === "Active" ? "default" : "outline"}
+              className={`rounded-r-none ${currentStatus === "Active" ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-50'}`}
               onClick={() => handleStatusChange("Active")}
             >
               Active
@@ -69,8 +73,8 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
             <Button
               id="tbg-radio-2"
               type="button"
-              variant={customerData.customerStatus === "Inactive" ? "destructive" : "outline"}
-              className={`rounded-l-none ${customerData.customerStatus === "Inactive" ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-50'}`}
+              variant={currentStatus === "Inactive" ? "destructive" : "outline"}
+              className={`rounded-l-none ${currentStatus === "Inactive" ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-50'}`}
               onClick={() => handleStatusChange("Inactive")}
             >
               Inactive
@@ -79,7 +83,7 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
         </div>
 
         <div className="flex flex-col mb-2 md:col-span-2">
-          <Label htmlFor="salutation" className="mb-2">Salutation</Label>
+          <Label htmlFor="salutation" className="mb-2">Salutation<span className="text-red-800">*</span></Label>
           <Select
             id="salutation"
             options={salutationOptions}
@@ -137,7 +141,7 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-5">
-          <Label htmlFor="firstName" className="mb-2">First Name</Label>
+          <Label htmlFor="firstName" className="mb-2">First Name<span className="text-red-800">*</span></Label>
           <Input
             id="firstName"
             type="text"
@@ -150,7 +154,7 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-5">
-          <Label htmlFor="lastName" className="mb-2">Last Name</Label>
+          <Label htmlFor="lastName" className="mb-2">Last Name<span className="text-red-800">*</span></Label>
           <Input
             id="lastName"
             type="text"
@@ -165,7 +169,7 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="primaryPhoneNumber" className="mb-2">Primary Phone Number</Label>
+          <Label htmlFor="primaryPhoneNumber" className="mb-2">Primary Phone Number<span className="text-red-800">*</span></Label>
           <div className="relative">
             <PhoneInput
               international
@@ -193,7 +197,7 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="email" className="mb-2">Email</Label>
+          <Label htmlFor="email" className="mb-2">Email<span className="text-red-800">*</span></Label>
           <Input
             id="email"
             type="email"

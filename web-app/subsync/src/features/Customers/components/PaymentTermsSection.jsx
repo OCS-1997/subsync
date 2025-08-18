@@ -178,7 +178,7 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange, isEditing }) => {
     <div className="container my-4 mx-2">
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label htmlFor="payment-terms">Payment Terms</Label>
+          <Label htmlFor="payment-terms">Payment Terms<span className="text-red-800">*</span></Label>
           <div className="flex gap-2 mt-1">
             <Select
               value={selectedTerm?.term_id ? String(selectedTerm.term_id) : ''}
