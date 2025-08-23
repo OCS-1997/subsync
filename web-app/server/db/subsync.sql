@@ -18,9 +18,9 @@ CREATE TABLE customers (
 	-- Company Information
 	company_name VARCHAR(128) NOT NULL,
 	display_name VARCHAR(128) NOT NULL,
-	gst_in VARCHAR(15) NOT NULL,
+	gst_in VARCHAR(15),
 	currency_code CHAR(3) NOT NULL DEFAULT 'INR',
-	gst_treatment ENUM('iGST', 'CGST & SGST', 'No GST', 'Zero Tax', 'SEZ') NOT NULL,
+	gst_treatment VARCHAR(32) NOT NULL,
 	tax_preference ENUM('Taxable', 'Tax Exempt') NOT NULL DEFAULT 'Taxable',
 	exemption_reason TEXT,
 	
@@ -126,9 +126,9 @@ CREATE TABLE IF NOT EXISTS vendors (
     other_contacts JSON,
     company_name VARCHAR(100) NOT NULL,
     display_name VARCHAR(100) NOT NULL,
-    gst_in VARCHAR(15) NOT NULL,
+    gst_in VARCHAR(15),
     currency_code CHAR(3) NOT NULL DEFAULT 'INR',
-    gst_treatment ENUM('iGST', 'CGST & SGST', 'No GST', 'Zero Tax', 'SEZ') NOT NULL,
+    gst_treatment VARCHAR(32) NOT NULL,
     tax_preference ENUM('Taxable', 'Tax Exempt') NOT NULL DEFAULT 'Taxable',
     exemption_reason TEXT,
     payment_terms JSON NOT NULL,

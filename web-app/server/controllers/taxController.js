@@ -179,6 +179,18 @@ const setDefaultTaxPref = async (req, res) => {
     }
 };
 
+/**
+ * Get all active tax rates for GST treatment selection
+ */
+const getAllActiveTaxRates = async (req, res) => {
+    try {
+        const taxes = await getTaxes();
+        res.status(200).json({ taxes });
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Failed to fetch tax rates" });
+    }
+};
+
 export { 
     getAllTaxes, 
     getTaxByIdController,
@@ -186,5 +198,6 @@ export {
     editTax, 
     deleteTax, 
     getDefaultTaxPref, 
-    setDefaultTaxPref 
+    setDefaultTaxPref,
+    getAllActiveTaxRates 
 };

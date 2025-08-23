@@ -4,6 +4,7 @@ import countryList from "react-select-country-list";
 import { Bounce, toast, ToastContainer } from "react-toastify";
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
@@ -30,7 +31,7 @@ const AddCustomer = () => {
   const countries = countryList().getData();
   const [states, setStates] = useState([]);
   const [contactPersons, setContactPersons] = useState([]);
-  const [activeTab, setActiveTab] = useState("otherDetails");
+  const [activeTab, setActiveTab] = useState("address"); // Default to Address tab
   const [isEditing, setIsEditing] = useState(!!editableCustomerId);
   const [paymentTermsList, setPaymentTermsList] = useState([]);
 
@@ -308,6 +309,14 @@ const AddCustomer = () => {
     navigate(`/${userSegment}/dashboard/customers`);
   };
 
+  // Determine if country is India for state dropdown logic
+  const countryVal =
+    customerData.address?.country?.value ||
+    customerData.address?.country ||
+    customerData.country ||
+    "";
+  const isIndia = countryVal === "IN" || countryVal === "India";
+
   if (loading) return <p>Loading customer details...</p>;
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
 
@@ -343,15 +352,16 @@ const AddCustomer = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
           <TabsList className="flex flex-wrap justify-start w-fit border-1 border-gray-300 bg-gray-200 mb-4 gap-2">
             <TabsTrigger
-              value="otherDetails"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-                Other Details
-            </TabsTrigger>
-            <TabsTrigger
               value="address"
               className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
               Address
             </TabsTrigger>
+            <TabsTrigger
+              value="otherDetails"
+              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              Tax Details
+            </TabsTrigger>
+            
             <TabsTrigger
               value="contactPersons"
               className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
@@ -364,19 +374,6 @@ const AddCustomer = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="otherDetails" className="tabs-content-transition">
-            <OtherDetails
-              customerData={customerData}
-              handleInputChange={handleInputChange}
-              handleSelectChange={handleSelectChange}
-            />
-            <PaymentTermsSection
-              selectedTerm={customerData.payment_terms}
-              onTermChange={handlePaymentTermChange}
-              isEditing={isEditing}
-            />
-          </TabsContent>
-
           <TabsContent value="address" className="tabs-content-transition">
             <AddressSection
               customerData={customerData}
@@ -385,6 +382,24 @@ const AddCustomer = () => {
               countries={countries}
               states={states}
               setStates={setStates}
+              isIndia={isIndia}
+            />
+          </TabsContent>
+
+          <TabsContent value="otherDetails" className="tabs-content-transition">
+            <OtherDetails
+              customerData={customerData}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+              countries={countries}
+              states={states}
+              setStates={setStates}
+              isIndia={isIndia}
+            />
+            <PaymentTermsSection
+              selectedTerm={customerData.payment_terms}
+              onTermChange={handlePaymentTermChange}
+              isEditing={isEditing}
             />
           </TabsContent>
 

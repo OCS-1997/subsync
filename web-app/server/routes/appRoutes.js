@@ -9,7 +9,7 @@ import { createServiceController, getAllServicesController, getServiceByIdContro
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
 import { getSubscriptionsController, createSubscription } from '../controllers/subscriptionController.js';
-import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref } from '../controllers/taxController.js';
+import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref, getAllActiveTaxRates } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
 import { getLogs } from '../controllers/activityLogController.js';
@@ -80,6 +80,7 @@ router.put('/edit-tax/:id', isAuthenticated, editTax);
 router.delete('/delete-tax/:id', isAuthenticated, deleteTax);
 router.get('/default-tax-preference', isAuthenticated, getDefaultTaxPref);
 router.post('/set-default-tax-preference', isAuthenticated, setDefaultTaxPref);
+router.get('/tax-rates', isAuthenticated, getAllActiveTaxRates);
 
 // GST Settings
 router.get('/get-gst-settings', isAuthenticated, getGSTSettingsController);

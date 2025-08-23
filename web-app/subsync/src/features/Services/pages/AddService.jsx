@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ToastContainer, toast, Bounce } from "react-toastify";
+import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button";
 
@@ -45,6 +46,7 @@ const AddService = () => {
   const [salesInfo, setSalesInfo] = useState({ price: "", account: "Sales", description: "" });
   const [purchaseInfo, setPurchaseInfo] = useState({ price: "", account: "Cost of Goods Sold", description: "", vendor: "" }); // This will hold the vendor ID as a string
   const [taxRates, setTaxRates] = useState({ intra: "", inter: "" });
+  const [taxRatesList, setTaxRatesList] = useState([]);
 
   const getBasePath = () => {
     const pathSegments = location.pathname.split('/');
@@ -62,6 +64,7 @@ const AddService = () => {
 
     dispatch(fetchVendors());
     dispatch(fetchItemGroups());
+    api.get("/tax-rates").then(res => setTaxRatesList(res.data.taxes || []));
 
 
     return () => {
@@ -107,6 +110,34 @@ const AddService = () => {
       });
     }
   }, [isEditing, currentService]);
+
+  // When vendor changes, update default tax rates based on vendor GST treatment
+  useEffect(() => {
+    if (!purchaseInfo.vendor || !vendors?.length || !taxRatesList.length) return;
+    const selectedVendor = vendors.find(
+      v => String(v.vendor_id || v.id) === String(purchaseInfo.vendor)
+    );
+    if (!selectedVendor) return;
+    const gstTreatment = selectedVendor.gst_treatment;
+    // Find tax rates matching the vendor's GST treatment
+    let intra = "";
+    let inter = "";
+    if (gstTreatment === "CGST & SGST") {
+      intra = taxRatesList.find(t => t.tax_type === "CGST")?.tax_rate || "";
+      inter = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
+    } else if (gstTreatment === "IGST" || gstTreatment === "iGST") {
+      intra = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
+      inter = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
+    } else if (gstTreatment === "SEZ") {
+      intra = taxRatesList.find(t => t.tax_type === "SEZ")?.tax_rate || "";
+      inter = taxRatesList.find(t => t.tax_type === "SEZ")?.tax_rate || "";
+    } else if (gstTreatment === "No GST" || gstTreatment === "NO_TAX") {
+      intra = taxRatesList.find(t => t.tax_type === "NO_TAX")?.tax_rate || "";
+      inter = taxRatesList.find(t => t.tax_type === "NO_TAX")?.tax_rate || "";
+    }
+    setTaxRates({ intra, inter });
+  // eslint-disable-next-line
+  }, [purchaseInfo.vendor, vendors, taxRatesList]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -232,7 +263,7 @@ const AddService = () => {
 
       <hr className="mb-4 border-gray-500 border-1 size-auto" />
 
-      <TaxSection taxRates={taxRates} setTaxRates={setTaxRates} />
+      <TaxSection taxRates={taxRates} setTaxRates={setTaxRates} taxRatesList={taxRatesList} />
 
       <div className="flex justify-end gap-4 pt-4">
         <Button type="submit" className="bg-blue-500"  disabled={isSubmittingService}>

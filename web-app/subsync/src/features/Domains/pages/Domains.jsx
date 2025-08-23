@@ -60,7 +60,7 @@ function Domains() {
 
   const formatNameServers = (nameServers) => {
     if (!nameServers || nameServers.length === 0) return "-";
-    return nameServers.map((ns, i) => <div key={i}>{ns}</div>);
+    return nameServers.map((ns, i) => <div key={i}>{ns}<br/></div>);
   };
 
   const formatMailServices = (provider, details) => {
@@ -143,6 +143,7 @@ function Domains() {
 
               return {
                 ...domain,
+                name_servers: formatNameServers(domain.name_servers),
                 registration_date: formatDateForInput(domain.registration_date),
                 actions: (
                   <TooltipProvider>

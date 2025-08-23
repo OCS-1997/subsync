@@ -13,6 +13,7 @@ const AddressSection = ({
   countries,
   states = [],
   setStates = () => {}, // fallback to no-op if not provided
+  isIndia = false, // new prop
 }) => {
   const countryOptions = countries && Array.isArray(countries) && countries.length > 0
     ? countries
@@ -71,7 +72,9 @@ const AddressSection = ({
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="country" className="mb-2">Country<span className="text-red-800">*</span></Label>
+          <Label htmlFor="country" className="mb-2">
+            Country<span className="text-red-800">*</span>
+          </Label>
           <Select
             id="country"
             placeholder="Select Country"
@@ -79,25 +82,48 @@ const AddressSection = ({
             value={Array.isArray(countryOptions)
               ? countryOptions.find(option => option.value === countryValue) || null
               : null}
-            onChange={handleCountryChange}
+            onChange={selectedOption => {
+              handleSelectChange("address.country", selectedOption);
+              handleSelectChange("address.state", null);
+              if (selectedOption && selectedOption.value === "IN") {
+                setStates(indianStates);
+              } else {
+                setStates([]);
+              }
+            }}
             className="react-select-container shadow-sm"
             classNamePrefix="react-select"
           />
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="state" className="mb-2">State<span className="text-red-800">*</span></Label>
-          <Select
-            id="state"
-            placeholder="Select State"
-            options={states}
-            value={Array.isArray(states)
-              ? states.find(option => option.value === stateValue) || null
-              : null}
-            onChange={handleStateChange}
-            className="react-select-container shadow-sm"
-            classNamePrefix="react-select"
-          />
+          <Label htmlFor="state" className="mb-2">
+            State<span className="text-red-800">*</span>
+          </Label>
+          {isIndia ? (
+            <Select
+              id="state"
+              placeholder="Select State"
+              options={states}
+              value={Array.isArray(states)
+                ? states.find(option => option.value === stateValue) || null
+                : null}
+              onChange={handleStateChange}
+              className="react-select-container shadow-sm"
+              classNamePrefix="react-select"
+            />
+          ) : (
+            <Input
+              id="state"
+              type="text"
+              name="address.state"
+              value={address.state || ""}
+              onChange={handleInputChange}
+              required
+              placeholder="Enter State/Province"
+              className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            />
+          )}
         </div>
       </div>
 

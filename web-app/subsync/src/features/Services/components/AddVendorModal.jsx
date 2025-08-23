@@ -30,12 +30,15 @@ import api from '@/lib/axiosInstance.js';
 const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdded, isOpen, setIsOpen  }) => {
   const dispatch = useDispatch();
  
-  const [activeTab, setActiveTab] = useState("otherDetails");
+  const [activeTab, setActiveTab] = useState("address");
   const [contactPersons, setContactPersons] = useState([]);
   const [states, setStates] = useState(indianStates);
   const [paymentTermsList, setPaymentTermsList] = useState([]);
-
+  const [taxRates, setTaxRates] = useState([]);
   const countries = countryList().getData();
+
+  // Track local editing state to avoid prop confusion
+  const [localIsEditing, setLocalIsEditing] = useState(isEditing);
 
   const [vendorData, setVendorData] = useState({
     salutation: "Mr.",
@@ -108,8 +111,17 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   }, []);
 
   useEffect(() => {
-    if (editableVendor && isEditing) {
-      // Parse JSON fields if needed
+    api.get("/tax-rates").then(res => setTaxRates(res.data.taxes || []));
+  }, []);
+
+  // Reset local editing state when modal opens/closes
+  useEffect(() => {
+    setLocalIsEditing(isEditing);
+  }, [isEditing, isOpen]);
+
+  // Prefill vendor data when editing
+  useEffect(() => {
+    if (editableVendor && localIsEditing) {
       let address = editableVendor.vendor_address || editableVendor.address || {};
       if (typeof address === "string") {
         try { address = JSON.parse(address); } catch { address = {}; }
@@ -123,10 +135,26 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
       }
 
-      // Set states based on country
-      const countryValue = address.country || "IN";
-      if (countryValue === "IN" || countryValue === "India") {
-        setStates(indianStates);
+      // --- Country normalization ---
+      let countryObj;
+      if (address.country && typeof address.country === "object" && address.country.value) {
+        countryObj = address.country;
+      } else if (address.country === "IN" || address.country === "India") {
+        countryObj = { label: "India", value: "IN" };
+      } else if (typeof address.country === "string" && address.country) {
+        countryObj = { label: address.country, value: address.country };
+      } else {
+        countryObj = { label: "India", value: "IN" };
+      }
+
+      // --- State normalization ---
+      let stateObj = null;
+      if (countryObj.value === "IN") {
+        // Try to find matching state object from indianStates
+        const stateVal = address.state?.value || address.state;
+        stateObj = indianStates.find(s => s.value === stateVal) || (stateVal ? { label: stateVal, value: stateVal } : null);
+      } else {
+        stateObj = address.state || "";
       }
 
       setVendorData({
@@ -143,17 +171,13 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         gst_treatment: editableVendor.gst_treatment || "CGST & SGST",
         tax_preference: editableVendor.tax_preference || "Taxable",
         exemption_reason: editableVendor.exemption_reason || "",
-        currencyCode: editableVendor.currency_code
+        currencyCode: editableVendor.currency_code?.value
           ? { label: editableVendor.currency_code, value: editableVendor.currency_code }
-          : "INR",
+          : editableVendor.currency_code || "INR",
         address: {
-          country: address.country
-            ? (typeof address.country === 'object' ? address.country : { label: address.country === "IN" ? "India" : address.country, value: address.country })
-            : { label: "India", value: "IN" },
+          country: countryObj,
           addressLine: address.addressLine || address.address_line || "",
-          state: address.state
-            ? (typeof address.state === 'object' ? address.state : { label: address.state, value: address.state })
-            : null,
+          state: stateObj,
           city: address.city || "",
           zipCode: address.zipCode || address.zip_code || "",
         },
@@ -162,8 +186,42 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         vendorStatus: editableVendor.vendor_status || "Active",
       });
       setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
+      // Set states for India
+      if (countryObj.value === "IN") setStates(indianStates);
+      else setStates([]);
+    } else if (!localIsEditing) {
+      // Reset for add
+      setVendorData({
+        salutation: "Mr.",
+        firstName: "",
+        lastName: "",
+        companyName: "",
+        displayName: "",
+        email: "",
+        country_code: "+91",
+        phoneNumber: "",
+        secondaryPhoneNumber: "",
+        gstin: "",
+        gst_treatment: "CGST & SGST",
+        tax_preference: "Taxable",
+        exemption_reason: "",
+        currencyCode: "INR",
+        address: {
+          country: { label: "India", value: "IN" },
+          addressLine: "",
+          state: null,
+          city: "",
+          zipCode: "",
+        },
+        payment_terms: null,
+        notes: "",
+        vendorStatus: "Active",
+      });
+      setContactPersons([]);
+      setStates(indianStates);
     }
-  }, [editableVendor, isEditing]);
+  // eslint-disable-next-line
+  }, [editableVendor, localIsEditing, isOpen]);
 
   // Ensure states are set when country is India
   useEffect(() => {
@@ -226,28 +284,27 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Enhanced validation with specific field checks and better error messages
+
+    // Validation for vendor, not service
     const validationErrors = [];
-    
-    // Check personal details
     if (!vendorData.salutation?.trim()) validationErrors.push("Salutation");
     if (!vendorData.firstName?.trim()) validationErrors.push("First Name");
     if (!vendorData.lastName?.trim()) validationErrors.push("Last Name");
     if (!vendorData.email?.trim()) validationErrors.push("Email");
     if (!vendorData.phoneNumber?.trim()) validationErrors.push("Phone Number");
-    
-    // Check company details
     if (!vendorData.companyName?.trim()) validationErrors.push("Company Name");
     if (!vendorData.displayName?.trim()) validationErrors.push("Display Name");
-    if (!vendorData.gstin?.trim()) validationErrors.push("GSTIN");
-    
-    // Check address details
+    // GSTIN required only for India
+    const countryVal =
+      vendorData.address?.country?.value ||
+      vendorData.address?.country ||
+      vendorData.country ||
+      "";
+    const isIndia = countryVal === "IN" || countryVal === "India";
+    if (isIndia && !vendorData.gstin?.trim()) validationErrors.push("GSTIN");
     if (!vendorData.address?.addressLine?.trim()) validationErrors.push("Address Line");
     if (!vendorData.address?.city?.trim()) validationErrors.push("City");
     if (!vendorData.address?.zipCode?.trim()) validationErrors.push("ZIP Code");
-    
-    // Check state selection
     if (!vendorData.address?.state) {
       validationErrors.push("State");
     } else if (typeof vendorData.address.state === 'object' && !vendorData.address.state.value) {
@@ -257,8 +314,6 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     }
 
     if (validationErrors.length > 0) {
-      console.log('Validation failed. Missing fields:', validationErrors);
-      console.log('Vendor data:', vendorData);
       toast.error(`Please fill in the following required fields: ${validationErrors.join(', ')}`);
       return;
     }
@@ -300,10 +355,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         vendorStatus: vendorData.vendorStatus || "Active"
       };
 
-      console.log('Submitting vendor payload:', payload);
-
       let actionResult;
-      if (isEditing) {
+      if (localIsEditing) {
         actionResult = await dispatch(updateVendor({ id: editableVendor.vendor_id, ...payload }));
       } else {
         actionResult = await dispatch(createVendor(payload));
@@ -313,8 +366,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         throw new Error(actionResult.payload || "Error saving vendor details.");
       }
 
-      toast.success(isEditing ? "Vendor Updated Successfully." : "Vendor Created Successfully.");
-      if (!isEditing) resetVendorData();
+      toast.success(localIsEditing ? "Vendor Updated Successfully." : "Vendor Created Successfully.");
+      if (!localIsEditing) resetVendorData();
       setIsOpen(false);
       if (onVendorAdded) onVendorAdded();
     } catch (err) {
@@ -323,20 +376,28 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     }
   };
 
+  // Determine if country is India for state dropdown logic
+  const countryVal =
+    vendorData.address?.country?.value ||
+    vendorData.address?.country ||
+    vendorData.country ||
+    "";
+  const isIndia = countryVal === "IN" || countryVal === "India";
+
   return (
     <>
     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          {isEditing ? "Edit Vendor" : "+ Add New Vendor"}
+          {localIsEditing ? "Edit Vendor" : "+ Add New Vendor"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="">{isEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
+          <DialogTitle className="">{localIsEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update vendor details." : "Add a new vendor to your services."}
+            {localIsEditing ? "Update vendor details." : "Add a new vendor to your services."}
           </DialogDescription>
         </DialogHeader>
 
@@ -360,15 +421,16 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
             <TabsList className="flex flex-wrap justify-start w-fit border-1 border-gray-300 bg-gray-200 mb-4 gap-2">
               <TabsTrigger
-                value="otherDetails"
-                className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-                Other Details
-              </TabsTrigger>
-              <TabsTrigger
                 value="address"
                 className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Address
               </TabsTrigger>
+              <TabsTrigger
+                value="otherDetails"
+                className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+               Tax Details
+              </TabsTrigger>
+              
               <TabsTrigger
                 value="contactPersons"
                 className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
@@ -381,19 +443,6 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="otherDetails" className="tabs-content-transition">
-              <OtherDetails
-                customerData={vendorData}
-                handleInputChange={handleInputChange}
-                handleSelectChange={handleSelectChange}
-              />
-              <PaymentTermsSection
-                selectedTerm={vendorData.payment_terms}
-                onTermChange={handlePaymentTermChange}
-                isEditing={isEditing}
-              />
-            </TabsContent>
-
             <TabsContent value="address" className="tabs-content-transition">
               <AddressSection
                 customerData={vendorData}
@@ -402,6 +451,25 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
                 countries={countries}
                 states={states}
                 setStates={setStates}
+                isIndia={isIndia}
+              />
+            </TabsContent>
+
+            <TabsContent value="otherDetails" className="tabs-content-transition">
+              <OtherDetails
+                customerData={vendorData}
+                handleInputChange={handleInputChange}
+                handleSelectChange={handleSelectChange}
+                taxRates={taxRates}
+                countries={countries}
+                states={states}
+                setStates={setStates}
+                isIndia={isIndia}
+              />
+              <PaymentTermsSection
+                selectedTerm={vendorData.payment_terms}
+                onTermChange={handlePaymentTermChange}
+                isEditing={isEditing}
               />
             </TabsContent>
 

@@ -31,9 +31,10 @@ const AddVendor = () => {
   const countries = countryList().getData();
   const [states, setStates] = useState(indianStates);
   const [contactPersons, setContactPersons] = useState([]);
-  const [activeTab, setActiveTab] = useState("otherDetails");
+  const [activeTab, setActiveTab] = useState("address"); // Default to Address tab
   const [isEditing, setIsEditing] = useState(!!editableVendorId);
   const [paymentTermsList, setPaymentTermsList] = useState([]);
+  const [taxRates, setTaxRates] = useState([]);
 
   const [vendorData, setVendorData] = useState({
     salutation: "Mr.",
@@ -326,8 +327,20 @@ const AddVendor = () => {
     }
   };
 
+  useEffect(() => {
+    api.get("/tax-rates").then(res => setTaxRates(res.data.taxes || []));
+  }, []);
+
   if (loading) return <p>Loading vendor details...</p>;
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
+
+  // Determine if country is India for state dropdown logic
+  const countryVal =
+    vendorData.address?.country?.value ||
+    vendorData.address?.country ||
+    vendorData.country ||
+    "";
+  const isIndia = countryVal === "IN" || countryVal === "India";
 
   return (
     <div className="container mt-4 ml-4">
@@ -361,14 +374,14 @@ const AddVendor = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
           <TabsList className="flex flex-wrap justify-start w-fit border-1 border-gray-300 bg-gray-200 mb-4 gap-2">
             <TabsTrigger
-              value="otherDetails"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-                Other Details
-            </TabsTrigger>
-            <TabsTrigger
               value="address"
               className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
               Address
+            </TabsTrigger>
+            <TabsTrigger
+              value="otherDetails"
+              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              Tax Details
             </TabsTrigger>
             <TabsTrigger
               value="contactPersons"
@@ -382,19 +395,6 @@ const AddVendor = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="otherDetails" className="tabs-content-transition">
-            <OtherDetails
-              customerData={vendorData}
-              handleInputChange={handleInputChange}
-              handleSelectChange={handleSelectChange}
-            />
-            <PaymentTermsSection
-              selectedTerm={vendorData.payment_terms}
-              onTermChange={handlePaymentTermChange}
-              isEditing={isEditing}
-            />
-          </TabsContent>
-
           <TabsContent value="address" className="tabs-content-transition">
             <AddressSection
               customerData={vendorData}
@@ -403,6 +403,25 @@ const AddVendor = () => {
               countries={countries}
               states={states}
               setStates={setStates}
+              isIndia={isIndia}
+            />
+          </TabsContent>
+
+          <TabsContent value="otherDetails" className="tabs-content-transition">
+            <OtherDetails
+              customerData={vendorData}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+              taxRates={taxRates}
+              countries={countries}
+              states={states}
+              setStates={setStates}
+              isIndia={isIndia}
+            />
+            <PaymentTermsSection
+              selectedTerm={vendorData.payment_terms}
+              onTermChange={handlePaymentTermChange}
+              isEditing={isEditing}
             />
           </TabsContent>
 
@@ -431,4 +450,4 @@ const AddVendor = () => {
   );
 };
 
-export default AddVendor; 
+export default AddVendor;
