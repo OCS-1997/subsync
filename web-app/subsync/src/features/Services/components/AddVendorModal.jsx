@@ -27,7 +27,7 @@ import { createVendor, updateVendor } from "@/features/Services/vendorSlice";
 import { indianStates } from "@/features/Customers/data/statesOfIndia.js";
 import api from '@/lib/axiosInstance.js';
 
-const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdded, isOpen, setIsOpen  }) => {
+const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdded, isOpen, setIsOpen }) => {
   const dispatch = useDispatch();
  
   const [activeTab, setActiveTab] = useState("address");
@@ -36,9 +36,6 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   const [paymentTermsList, setPaymentTermsList] = useState([]);
   const [taxRates, setTaxRates] = useState([]);
   const countries = countryList().getData();
-
-  // Track local editing state to avoid prop confusion
-  const [localIsEditing, setLocalIsEditing] = useState(isEditing);
 
   const [vendorData, setVendorData] = useState({
     salutation: "Mr.",
@@ -56,7 +53,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     exemption_reason: "",
     currencyCode: "INR",
     address: {
-      country: { label: "India", value: "IN" },
+      country: "IN",
       addressLine: "",
       state: null,
       city: "",
@@ -84,7 +81,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       exemption_reason: "",
       currencyCode: "INR",
       address: {
-        country: { label: "India", value: "IN" },
+        country: "IN",
         addressLine: "",
         state: null,
         city: "",
@@ -96,6 +93,72 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     });
     setContactPersons([]);
     setStates(indianStates);
+  };
+
+  const handleCancel = () => {
+    if (isEditing && editableVendor) {
+      // If editing, reset to original data
+      prefillVendorData(editableVendor);
+    } else {
+      // If adding new, reset to empty form
+      resetVendorData();
+    }
+    setIsOpen(false);
+  };
+
+  const prefillVendorData = (vendor) => {
+    // Parse JSON fields if needed
+    let address = vendor.vendor_address || vendor.address || {};
+    if (typeof address === "string") {
+      try { address = JSON.parse(address); } catch { address = {}; }
+    }
+    
+    let contactPersons = vendor.other_contacts || vendor.contact_persons || [];
+    if (typeof contactPersons === "string") {
+      try { contactPersons = JSON.parse(contactPersons); } catch { contactPersons = []; }
+    }
+    
+    let paymentTerms = vendor.payment_terms;
+    if (typeof paymentTerms === "string") {
+      try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
+    }
+
+    // Set states based on country
+    const countryValue = address.country || "IN";
+    if (countryValue === "IN" || countryValue === "India") {
+      setStates(indianStates);
+    } else {
+      setStates([]);
+    }
+
+    setVendorData({
+      salutation: vendor.salutation || "Mr.",
+      firstName: vendor.first_name || vendor.firstName || "",
+      lastName: vendor.last_name || vendor.lastName || "",
+      companyName: vendor.company_name || vendor.companyName || "",
+      displayName: vendor.display_name || vendor.displayName || "",
+      email: vendor.primary_email || vendor.email || "",
+      country_code: vendor.country_code || "+91",
+      phoneNumber: vendor.primary_phone_number || vendor.phoneNumber || "",
+      secondaryPhoneNumber: vendor.secondary_phone_number || vendor.secondaryPhoneNumber || "",
+      gstin: vendor.gst_in || vendor.gstin || "",
+      gst_treatment: vendor.gst_treatment || "CGST & SGST",
+      tax_preference: vendor.tax_preference || "Taxable",
+      exemption_reason: vendor.exemption_reason || "",
+      currencyCode: vendor.currency_code?.value || vendor.currency_code || "INR",
+      address: {
+        country: address.country || "IN",
+        addressLine: address.addressLine || address.address_line || "",
+        state: address.state || null,
+        city: address.city || "",
+        zipCode: address.zipCode || address.zip_code || "",
+      },
+      payment_terms: paymentTerms || null,
+      notes: vendor.notes || "",
+      vendorStatus: vendor.vendor_status || "Active",
+    });
+    
+    setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
   };
 
   useEffect(() => {
@@ -114,118 +177,36 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     api.get("/tax-rates").then(res => setTaxRates(res.data.taxes || []));
   }, []);
 
-  // Reset local editing state when modal opens/closes
-  useEffect(() => {
-    setLocalIsEditing(isEditing);
-  }, [isEditing, isOpen]);
-
   // Prefill vendor data when editing
   useEffect(() => {
-    if (editableVendor && localIsEditing) {
-      let address = editableVendor.vendor_address || editableVendor.address || {};
-      if (typeof address === "string") {
-        try { address = JSON.parse(address); } catch { address = {}; }
-      }
-      let contactPersons = editableVendor.other_contacts || editableVendor.contact_persons || [];
-      if (typeof contactPersons === "string") {
-        try { contactPersons = JSON.parse(contactPersons); } catch { contactPersons = []; }
-      }
-      let paymentTerms = editableVendor.payment_terms;
-      if (typeof paymentTerms === "string") {
-        try { paymentTerms = JSON.parse(paymentTerms); } catch { paymentTerms = null; }
-      }
-
-      // --- Country normalization ---
-      let countryObj;
-      if (address.country && typeof address.country === "object" && address.country.value) {
-        countryObj = address.country;
-      } else if (address.country === "IN" || address.country === "India") {
-        countryObj = { label: "India", value: "IN" };
-      } else if (typeof address.country === "string" && address.country) {
-        countryObj = { label: address.country, value: address.country };
-      } else {
-        countryObj = { label: "India", value: "IN" };
-      }
-
-      // --- State normalization ---
-      let stateObj = null;
-      if (countryObj.value === "IN") {
-        // Try to find matching state object from indianStates
-        const stateVal = address.state?.value || address.state;
-        stateObj = indianStates.find(s => s.value === stateVal) || (stateVal ? { label: stateVal, value: stateVal } : null);
-      } else {
-        stateObj = address.state || "";
-      }
-
-      setVendorData({
-        salutation: editableVendor.salutation || "Mr.",
-        firstName: editableVendor.first_name || editableVendor.firstName || "",
-        lastName: editableVendor.last_name || editableVendor.lastName || "",
-        companyName: editableVendor.company_name || editableVendor.companyName || "",
-        displayName: editableVendor.display_name || editableVendor.displayName || "",
-        email: editableVendor.primary_email || editableVendor.email || "",
-        country_code: editableVendor.country_code || "+91",
-        phoneNumber: editableVendor.primary_phone_number || editableVendor.phoneNumber || "",
-        secondaryPhoneNumber: editableVendor.secondary_phone_number || editableVendor.secondaryPhoneNumber || "",
-        gstin: editableVendor.gst_in || editableVendor.gstin || "",
-        gst_treatment: editableVendor.gst_treatment || "CGST & SGST",
-        tax_preference: editableVendor.tax_preference || "Taxable",
-        exemption_reason: editableVendor.exemption_reason || "",
-        currencyCode: editableVendor.currency_code?.value
-          ? { label: editableVendor.currency_code, value: editableVendor.currency_code }
-          : editableVendor.currency_code || "INR",
-        address: {
-          country: countryObj,
-          addressLine: address.addressLine || address.address_line || "",
-          state: stateObj,
-          city: address.city || "",
-          zipCode: address.zipCode || address.zip_code || "",
-        },
-        payment_terms: paymentTerms || null,
-        notes: editableVendor.notes || "",
-        vendorStatus: editableVendor.vendor_status || "Active",
-      });
-      setContactPersons(Array.isArray(contactPersons) ? contactPersons : []);
-      // Set states for India
-      if (countryObj.value === "IN") setStates(indianStates);
-      else setStates([]);
-    } else if (!localIsEditing) {
+    if (editableVendor && isEditing) {
+      prefillVendorData(editableVendor);
+    } else if (!isEditing) {
       // Reset for add
-      setVendorData({
-        salutation: "Mr.",
-        firstName: "",
-        lastName: "",
-        companyName: "",
-        displayName: "",
-        email: "",
-        country_code: "+91",
-        phoneNumber: "",
-        secondaryPhoneNumber: "",
-        gstin: "",
-        gst_treatment: "CGST & SGST",
-        tax_preference: "Taxable",
-        exemption_reason: "",
-        currencyCode: "INR",
-        address: {
-          country: { label: "India", value: "IN" },
-          addressLine: "",
-          state: null,
-          city: "",
-          zipCode: "",
-        },
-        payment_terms: null,
-        notes: "",
-        vendorStatus: "Active",
-      });
-      setContactPersons([]);
-      setStates(indianStates);
+      resetVendorData();
     }
-  // eslint-disable-next-line
-  }, [editableVendor, localIsEditing, isOpen]);
+  }, [editableVendor, isEditing, isOpen]);
+
+  // Update payment terms with matched term from the list when both are available
+  useEffect(() => {
+    if (editableVendor && isEditing && paymentTermsList.length > 0 && editableVendor.payment_terms) {
+      // Find the matching term object from the list by term_id
+      const matchedTerm = paymentTermsList.find(
+        t => t.term_id === editableVendor.payment_terms?.term_id
+      );
+      
+      if (matchedTerm) {
+        setVendorData(prev => ({
+          ...prev,
+          payment_terms: matchedTerm,
+        }));
+      }
+    }
+  }, [editableVendor, isEditing, paymentTermsList]);
 
   // Ensure states are set when country is India
   useEffect(() => {
-    if (vendorData.address.country?.value === "IN" || vendorData.address.country === "IN") {
+    if (vendorData.address.country === "IN" || vendorData.address.country === "India") {
       setStates(indianStates);
     }
   }, [vendorData.address.country]);
@@ -257,7 +238,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         ...prevData,
         [keys[0]]: {
           ...prevData[keys[0]],
-          [keys[1]]: value?.value || "",
+          [keys[1]]: value?.value || value || "",
         },
       }));
     } else {
@@ -285,7 +266,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation for vendor, not service
+    // Validation for vendor
     const validationErrors = [];
     if (!vendorData.salutation?.trim()) validationErrors.push("Salutation");
     if (!vendorData.firstName?.trim()) validationErrors.push("First Name");
@@ -294,24 +275,16 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
     if (!vendorData.phoneNumber?.trim()) validationErrors.push("Phone Number");
     if (!vendorData.companyName?.trim()) validationErrors.push("Company Name");
     if (!vendorData.displayName?.trim()) validationErrors.push("Display Name");
+    
     // GSTIN required only for India
-    const countryVal =
-      vendorData.address?.country?.value ||
-      vendorData.address?.country ||
-      vendorData.country ||
-      "";
+    const countryVal = vendorData.address?.country || "";
     const isIndia = countryVal === "IN" || countryVal === "India";
     if (isIndia && !vendorData.gstin?.trim()) validationErrors.push("GSTIN");
+    
     if (!vendorData.address?.addressLine?.trim()) validationErrors.push("Address Line");
     if (!vendorData.address?.city?.trim()) validationErrors.push("City");
     if (!vendorData.address?.zipCode?.trim()) validationErrors.push("ZIP Code");
-    if (!vendorData.address?.state) {
-      validationErrors.push("State");
-    } else if (typeof vendorData.address.state === 'object' && !vendorData.address.state.value) {
-      validationErrors.push("State");
-    } else if (typeof vendorData.address.state === 'string' && !vendorData.address.state.trim()) {
-      validationErrors.push("State");
-    }
+    if (!vendorData.address?.state) validationErrors.push("State");
 
     if (validationErrors.length > 0) {
       toast.error(`Please fill in the following required fields: ${validationErrors.join(', ')}`);
@@ -335,8 +308,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         tax_preference: vendorData.tax_preference,
         exemption_reason: vendorData.exemption_reason || "",
         address: {
-          country: vendorData.address.country?.value || vendorData.address.country || "IN",
-          state: vendorData.address.state?.value || vendorData.address.state || "",
+          country: vendorData.address.country || "IN",
+          state: vendorData.address.state || "",
           addressLine: vendorData.address.addressLine || "",
           city: vendorData.address.city || "",
           zipCode: vendorData.address.zipCode || ""
@@ -356,7 +329,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
       };
 
       let actionResult;
-      if (localIsEditing) {
+      if (isEditing) {
         actionResult = await dispatch(updateVendor({ id: editableVendor.vendor_id, ...payload }));
       } else {
         actionResult = await dispatch(createVendor(payload));
@@ -366,8 +339,8 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
         throw new Error(actionResult.payload || "Error saving vendor details.");
       }
 
-      toast.success(localIsEditing ? "Vendor Updated Successfully." : "Vendor Created Successfully.");
-      if (!localIsEditing) resetVendorData();
+      toast.success(isEditing ? "Vendor Updated Successfully." : "Vendor Created Successfully.");
+      if (!isEditing) resetVendorData();
       setIsOpen(false);
       if (onVendorAdded) onVendorAdded();
     } catch (err) {
@@ -377,27 +350,30 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
   };
 
   // Determine if country is India for state dropdown logic
-  const countryVal =
-    vendorData.address?.country?.value ||
-    vendorData.address?.country ||
-    vendorData.country ||
-    "";
+  const countryVal = vendorData.address?.country || "";
   const isIndia = countryVal === "IN" || countryVal === "India";
 
   return (
     <>
-    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+    <ToastContainer 
+      autoClose={2000} 
+      position="top-right" 
+      theme="colored" 
+      transition={Bounce} 
+      pauseOnHover
+      style={{ zIndex: 9999 }}
+    />
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          {localIsEditing ? "Edit Vendor" : "+ Add New Vendor"}
+          {isEditing ? "Edit Vendor" : "+ Add New Vendor"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="">{localIsEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
+          <DialogTitle className="">{isEditing ? "Edit Vendor" : "Add New Vendor"}</DialogTitle>
           <DialogDescription>
-            {localIsEditing ? "Update vendor details." : "Add a new vendor to your services."}
+            {isEditing ? "Update vendor details." : "Add a new vendor to your services."}
           </DialogDescription>
         </DialogHeader>
 
@@ -489,7 +465,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
           </Tabs>
 
           <DialogFooter className="mt-4">
-            <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
+            <Button type="button" variant="secondary" onClick={handleCancel}>
               Cancel
             </Button>
             <Button type="submit" className=" bg-blue-500 hover:bg-blue-600 text-white">

@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Select from "react-select";
 import { toast, ToastContainer, Bounce } from "react-toastify";
@@ -189,9 +189,23 @@ function AddDomain() {
     setFormData({ ...formData, nameServers: formData.nameServers.filter((_, i) => i !== index) });
   };
 
+  const handleBack = () => {
+    const currentPath = location.pathname;
+    const userSegment = currentPath.split("/")[1];
+    navigate(`/${userSegment}/dashboard/customers`);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
      <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+      <button
+          onClick={handleBack}
+          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+          disabled={loading}
+        >
+          <ArrowLeft size={20} className="animate-bounce-x" />
+          <span className="font-medium">Back</span>
+        </button>
       <h1 className="text-3xl font-bold mb-4">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
       <hr className="mb-6 border-blue-500" />
       <form onSubmit={handleSubmit} className="space-y-6">

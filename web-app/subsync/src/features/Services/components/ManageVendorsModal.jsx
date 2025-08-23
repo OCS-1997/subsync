@@ -22,6 +22,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
   const { list: vendors, loading, error } = useSelector((state) => state.vendors);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (isManageModalOpen) {
@@ -40,9 +41,32 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
     }
   };
 
+  const handleEditVendor = (vendor) => {
+    setEditingVendor(vendor);
+    setIsEditModalOpen(true);
+  };
+
+  const handleVendorUpdated = () => {
+    setIsEditModalOpen(false);
+    setEditingVendor(null);
+    onVendorsUpdated();
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingVendor(null);
+  };
+
   return (
     <>
-    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+    <ToastContainer 
+      autoClose={2000} 
+      position="top-right" 
+      theme="colored" 
+      transition={Bounce} 
+      pauseOnHover
+      style={{ zIndex: 9999 }}
+    />
     <Dialog open={isManageModalOpen} onOpenChange={setIsManageModalOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" disabled={loading}>
@@ -68,11 +92,13 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
               vendors.map((vendor) => (
                 <div key={vendor.vendor_id} className="flex items-center gap-4 p-4 border rounded-lg">
                   <span className="flex-1">{vendor.display_name}</span>
-                  <AddVendorModal
-                    isEditing={true}
-                    editableVendor={vendor}
-                    onVendorAdded={onVendorsUpdated}
-                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => handleEditVendor(vendor)}
+                    disabled={loading}
+                  >
+                    Edit
+                  </Button>
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteVendor(vendor.vendor_id)}
@@ -92,6 +118,17 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Separate Edit Modal */}
+    {editingVendor && (
+      <AddVendorModal
+        isEditing={true}
+        editableVendor={editingVendor}
+        onVendorAdded={handleVendorUpdated}
+        isOpen={isEditModalOpen}
+        setIsOpen={setIsEditModalOpen}
+      />
+    )}
     </>
   );
 };

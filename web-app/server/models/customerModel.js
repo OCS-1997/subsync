@@ -178,20 +178,21 @@ const getAllCustomers = async ({ search = "", sort = "display_name", order = "as
 
     try {
       const [customers] = await appDB.query(
-            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, primary_phone_number, primary_email, customer_status
+            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, country_code, primary_phone_number, primary_email, customer_status
              FROM customers 
              WHERE (
                 display_name LIKE ? OR
                 first_name LIKE ? OR
                 last_name LIKE ? OR
                 company_name LIKE ? OR
+                country_code LIKE ? OR
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
                 customer_id LIKE ?
              )
-             ORDER BY ?? ${order.toUpperCase()} 
+             ORDER BY ${sort} ${order.toUpperCase()} 
              LIMIT ? OFFSET ?`, 
-            [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, sort, parseInt(limit), parseInt(offset)]
+            [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, parseInt(limit), parseInt(offset)]
         );
 
         const [[{ total }]] = await appDB.query(
@@ -200,8 +201,8 @@ const getAllCustomers = async ({ search = "", sort = "display_name", order = "as
                 first_name LIKE ? OR
                 last_name LIKE ? OR
                 company_name LIKE ? OR
+                country_code LIKE ? OR
                 primary_phone_number LIKE ? OR
-                primary_email LIKE ? OR
                 customer_id LIKE ?
             )`,
             [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]
@@ -282,7 +283,7 @@ const getCustomerById = async (customerId) => {
         customer.customer_status,
     ]);
 
-    await db.query(query, [values]);
+    await appDB.query(query, [values]);
 };
 
 

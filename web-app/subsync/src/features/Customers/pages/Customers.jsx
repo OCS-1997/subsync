@@ -186,7 +186,7 @@ function Customers() {
   const modifiedData = filteredData.map((c) => ({
     ...c,
     first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
-    phone_with_country_code: `${c.country_code || ""}${c.primary_phone_number}`,
+    phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
     actions: renderActions(c.customer_id),
   }));
 
