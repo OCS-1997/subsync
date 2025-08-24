@@ -6,7 +6,7 @@ import { logActivity } from "../models/activityLogModel.js";
  */
 const createDomain = async (req, res) => {
     try {
-        console.log("Received Data", req.body);
+        // console.log("Received Data", req.body);
         await addDomain(req.body);
         // Log activity
         if (req.user && req.user.username) {
@@ -24,7 +24,7 @@ const createDomain = async (req, res) => {
  */
 const updateDomainDetails = async (req, res) => {
     try {
-        console.log("Request body received:", req.body);
+        // console.log("Request body received:", req.body);
         const { did } = req.params;
         await updateDomain(did, req.body);
         const updatedDomain = await getDomainById(did); // after update

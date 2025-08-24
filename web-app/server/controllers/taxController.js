@@ -142,10 +142,10 @@ const deleteTax = async (req, res) => {
  * Get default tax preference
  */
 const getDefaultTaxPref = async (req, res) => {
-    console.log("GET /default-tax-preference - Request received");
+    // console.log("GET /default-tax-preference - Request received");
     try {
         const pref = await getDefaultTaxPreference();
-        console.log("Default tax preference:", pref);
+        // console.log("Default tax preference:", pref);
         res.status(200).json({ defaultTaxPreference: pref });
     } catch (error) {
         console.error("Error in getDefaultTaxPref:", error);

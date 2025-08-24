@@ -32,8 +32,8 @@ async function getSubscriptions(searchType, search, sort, order, page = 1, limit
     baseQuery += ` LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
 
-    console.log("Executing SQL query:", baseQuery);
-    console.log("With parameters:", queryParams);
+    // console.log("Executing SQL query:", baseQuery);
+    // console.log("With parameters:", queryParams);
 
     const [dataArray] = await appDB.query(baseQuery, queryParams);
     const [[{ totalCount }]] = await appDB.query(countQuery, countParams);
@@ -53,29 +53,29 @@ async function addSubscription(subscription) {
     throw new Error("Customer ID and Product ID are required fields.");
   }
 
-  console.log("Adding subscription for:", subscription); // Log the input
+  // console.log("Adding subscription for:", subscription); // Log the input
 
   try {
     const currentTime = getCurrentTime();
-    console.log("Current time:", currentTime); // Log current time
+    // console.log("Current time:", currentTime); // Log current time
 
     // Validate product
     const [productDetails] = await appDB.query("SELECT * FROM services WHERE sid = ?", [productID]);
-    console.log("Product details:", productDetails); // Log product details
+    // console.log("Product details:", productDetails); // Log product details
 
     if (!productDetails.length) {
       throw new Error("Invalid Product ID. Product not found.");
     }
 
     const endDate = addDaysToTimestamp(currentTime, productDetails[0].validity);
-    console.log("Calculated end date:", endDate); // Log end date
+    // console.log("Calculated end date:", endDate); // Log end date
 
     const [result] = await appDB.query(
       "INSERT INTO subscriptions (customer_id, service_id, amount, start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?);",
       [customerID, productID, productDetails[0].price, currentTime, endDate, "active"]
     );
 
-    console.log("Insert result:", result); // Log insert result
+    // console.log("Insert result:", result); // Log insert result
 
     if (result.affectedRows === 0) {
       throw new Error("Failed to add subscription. No rows affected.");

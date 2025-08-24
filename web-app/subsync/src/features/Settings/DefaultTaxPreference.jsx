@@ -56,11 +56,11 @@ function DefaultTaxPreference() {
             setError(null);
             
             const response = await api.post("/set-default-tax-preference", { taxId: selectedTaxId });
-             console.log("Default Tax Res:",response.data);
+             // console.log("Default Tax Res:",response.data);
             setDefaultTax(response.data.defaultTaxPreference);
             
             const selectedTax = taxes.find(tax => tax.tax_id === selectedTaxId);
-            console.log("Selected Tax;",selectedTax);
+            // console.log("Selected Tax;",selectedTax);
             toast.success(`"${selectedTax?.tax_name}" set as default tax!`, {
                 position: "top-right",
                 autoClose: 2000,

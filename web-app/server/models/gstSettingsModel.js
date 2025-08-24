@@ -4,7 +4,7 @@ import appDB from "../db/subsyncDB.js";
 async function getGSTSettings() {
     try {
         const [rows] = await appDB.query("SELECT * from gst_settings ");
-        console.log(rows);
+        // console.log(rows);
         return rows;
     } catch (error) {
         console.error("Error fetching GST settings:", error.message);
@@ -17,7 +17,7 @@ async function updateGSTSettings(newSettings) {
     try {
         const { taxRegistrationNumberLabel, gstin, businessLegalName, businessTradeName, gstRegisteredOn } = newSettings;
 
-        console.log("Updating GST settings with:", newSettings);
+        // console.log("Updating GST settings with:", newSettings);
 
         if (!taxRegistrationNumberLabel || !gstin || !businessLegalName || !businessTradeName || !gstRegisteredOn) {
             throw new Error("All fields are required");
@@ -34,7 +34,7 @@ async function updateGSTSettings(newSettings) {
             `;
             const values = [taxRegistrationNumberLabel, gstin, businessLegalName, businessTradeName, gstRegisteredOn];
             await appDB.query(insertQuery, values);
-            console.log("GST settings inserted successfully");
+            // console.log("GST settings inserted successfully");
         } else {
             // Update if row exists
             const updateQuery = `
@@ -48,7 +48,7 @@ async function updateGSTSettings(newSettings) {
             `;
             const values = [taxRegistrationNumberLabel, gstin, businessLegalName, businessTradeName, gstRegisteredOn];
             await appDB.query(updateQuery, values);
-            console.log("GST settings updated successfully");
+            // console.log("GST settings updated successfully");
         }
     } catch (error) {
         console.error("Error updating GST settings:", error.message);

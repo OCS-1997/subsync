@@ -68,10 +68,10 @@ function GSTSettings() {
         e.preventDefault();
 
         try {
-            console.log("Form Data:", formDetails);
+            // console.log("Form Data:", formDetails);
 
             const response = await api.put("/update-gst-settings", formDetails);
-            console.log("Response:", response);
+            // console.log("Response:", response);
             const data = await response.data;
 
             // if (!response.ok) {

@@ -169,8 +169,8 @@ const AddCustomer = () => {
         t => t.term_id === currentCustomer.payment_terms?.term_id
       );
       
-      console.log('AddCustomer: currentCustomer.payment_terms:', currentCustomer.payment_terms);
-      console.log('AddCustomer: matchedTerm:', matchedTerm);
+      // console.log('AddCustomer: currentCustomer.payment_terms:', currentCustomer.payment_terms);
+      // console.log('AddCustomer: matchedTerm:', matchedTerm);
       
       if (matchedTerm) {
         setCustomerData(prev => ({
@@ -226,7 +226,7 @@ const AddCustomer = () => {
   };
 
   const handlePaymentTermChange = (term) => {
-    console.log('AddCustomer: handlePaymentTermChange called with:', term);
+    // console.log('AddCustomer: handlePaymentTermChange called with:', term);
     setCustomerData(prev => ({
       ...prev,
       payment_terms: term

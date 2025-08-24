@@ -29,7 +29,7 @@ const createSubscription = async (req, res) => {
 const getSubscriptionsController = async (req, res) => {
   try {
     const { searchType, search, sort, order, page = 1 } = req.query;
-    console.log("Controller received query params:", { searchType, search, sort, order, page });
+    // console.log("Controller received query params:", { searchType, search, sort, order, page });
 
     const limit = 10;
     const { dataArray, totalCount } = await getSubscriptions(searchType, search, sort, order, page, limit);

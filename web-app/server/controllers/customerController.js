@@ -9,7 +9,7 @@ import { logActivity } from "../models/activityLogModel.js";
  */
 const createCustomer = async (req, res) => {
     try {
-        console.log("Received Data", req.body)
+        // console.log("Received Data", req.body)
         await addCustomer(req.body);
         // Log activity
         if (req.user && req.user.username) {
@@ -30,7 +30,7 @@ const createCustomer = async (req, res) => {
  */
 const updateCustomerDetails = async (req, res) => {
   try {
-      console.log("Request body received:", req.body);
+    //   console.log("Request body received:", req.body);
 
       const {
           salutation,
@@ -81,7 +81,7 @@ const updateCustomerDetails = async (req, res) => {
           payment_terms
       };
 
-      console.log("Updated data:", updatedData);
+    //   console.log("Updated data:", updatedData);
 
       const { cid } = req.params;
       await updateCustomer(cid, updatedData);  // Await the async call

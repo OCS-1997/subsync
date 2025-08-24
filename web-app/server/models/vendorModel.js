@@ -47,9 +47,9 @@ const createVendor = async (vendor) => {
         if (!vendor.tax_preference) validationErrors.push("tax_preference");
 
         if (validationErrors.length > 0) {
-            console.log("Vendor validation failed. Missing fields:", validationErrors);
-            console.log("Vendor data received:", JSON.stringify(vendor, null, 2));
-            console.log("Extracted address:", JSON.stringify(address, null, 2));
+            // console.log("Vendor validation failed. Missing fields:", validationErrors);
+            // console.log("Vendor data received:", JSON.stringify(vendor, null, 2));
+            // console.log("Extracted address:", JSON.stringify(address, null, 2));
             throw new Error(`Missing required fields: ${validationErrors.join(', ')}. Please ensure all required fields are filled.`);
         }
 

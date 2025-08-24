@@ -8,7 +8,7 @@ export const fetchVendors = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const response = await api.get("/all-vendors");
-            console.log("Fetched vendors:", response.data);
+            // console.log("Fetched vendors:", response.data);
             // The server returns {vendors: [], totalPages: number}
             return response.data.vendors || [];
         } catch (error) {
@@ -22,7 +22,7 @@ export const fetchAllVendors = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const response = await api.get("/all-vendors")
-            console.log("Fetched all vendors:", response.data);
+            // console.log("Fetched all vendors:", response.data);
             return response.data.vendors || [];
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || error.message);
@@ -34,7 +34,7 @@ export const createVendor = createAsyncThunk(
     "vendors/createVendor",
     async (vendorData, thunkAPI) => {
         try {
-            console.log("Data to be sent:", vendorData);
+            // console.log("Data to be sent:", vendorData);
             const response = await api.post("/create-vendor", vendorData);
             return response.data;
         } catch (error) {

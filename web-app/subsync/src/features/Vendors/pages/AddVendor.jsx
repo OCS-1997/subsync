@@ -175,9 +175,9 @@ const AddVendor = () => {
       }
 
       // Debug logging
-      console.log("Editing vendor - Address data:", address);
-      console.log("Country value:", countryValue);
-      console.log("State value:", address.state);
+      // console.log("Editing vendor - Address data:", address);
+      // console.log("Country value:", countryValue);
+      // console.log("State value:", address.state);
 
       setVendorData({
         salutation: currentVendor.salutation || "Mr.",

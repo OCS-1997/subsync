@@ -6,7 +6,7 @@ import { logActivity } from '../models/activityLogModel.js';
 // CREATE Service
 const createServiceController = async (req, res) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const serviceData = {
       ...req.body,
       // The database schema indicates service_id is AUTO_INCREMENT,

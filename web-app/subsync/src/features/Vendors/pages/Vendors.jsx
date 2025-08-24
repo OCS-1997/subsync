@@ -39,7 +39,7 @@ function Vendors() {
     { search, sort: sortBy, order, currentPage, refreshKey }
   );
 
-  console.log("Vendors: useFetchData - data:", data, "error:", error, "loading:", fetchLoading, "totalPages:", totalPages);
+  // console.log("Vendors: useFetchData - data:", data, "error:", error, "loading:", fetchLoading, "totalPages:", totalPages);
 
   useEffect(() => {
     setCurrentPage(1);

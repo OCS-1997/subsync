@@ -48,7 +48,7 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange, isEditing }) => {
         // Only set default if not editing and no selectedTerm
         if (!isEditing && !selectedTerm && terms.length > 0) {
           const defaultTerm = terms.find(term => term.is_default) || terms[0];
-          console.log('PaymentTermsSection: Setting default term:', defaultTerm);
+          // console.log('PaymentTermsSection: Setting default term:', defaultTerm);
           onTermChange(defaultTerm);
         }
       }
@@ -159,7 +159,7 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange, isEditing }) => {
   const handleTermSelection = (value) => {
     const term = mergedTerms.find(t => String(t.term_id) === String(value));
     if (term) {
-      console.log('PaymentTermsSection: Selected term:', term);
+      // console.log('PaymentTermsSection: Selected term:', term);
       onTermChange({
         term_id: term.term_id,
         term_name: term.term_name,
@@ -171,7 +171,7 @@ const PaymentTermsSection = ({ selectedTerm, onTermChange, isEditing }) => {
 
   // Debug logging
   useEffect(() => {
-    console.log('PaymentTermsSection: isEditing:', isEditing, 'selectedTerm:', selectedTerm, 'paymentTerms count:', paymentTerms.length);
+    // console.log('PaymentTermsSection: isEditing:', isEditing, 'selectedTerm:', selectedTerm, 'paymentTerms count:', paymentTerms.length);
   }, [isEditing, selectedTerm, paymentTerms.length]);
 
   return (
