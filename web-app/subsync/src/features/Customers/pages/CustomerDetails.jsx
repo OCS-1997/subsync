@@ -109,6 +109,10 @@ function CustomerDetails() {
                     <p className="text-lg text-gray-900 dark:text-white">{currentCustomer.primary_email}</p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Secondary Email</label>
+                    <p className="text-lg text-gray-900 dark:text-white">{currentCustomer.secondary_email || "Not provided"}</p>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Phone Number</label>
                     <p className="text-lg text-gray-900 dark:text-white">
                       {currentCustomer.country_code} {currentCustomer.primary_phone_number}

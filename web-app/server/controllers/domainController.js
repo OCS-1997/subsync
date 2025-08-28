@@ -99,4 +99,6 @@ const importDomains = async (req, res) => {
     }
 };
 
+// No changes needed for ENUM, as backend just forwards values.
+
 export { createDomain, updateDomainDetails, fetchAllDomains, fetchAllDomainDetails, domainDetailsByID, importDomains };

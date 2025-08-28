@@ -11,6 +11,7 @@ CREATE TABLE customers (
 	first_name VARCHAR(100) NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
 	primary_email VARCHAR(255) NOT NULL,
+	secondary_email VARCHAR(255),
 	country_code VARCHAR(5) NOT NULL DEFAULT '+91',
 	primary_phone_number VARCHAR(15) NOT NULL,
 	secondary_phone_number VARCHAR(15),
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS domains (
     customer_name VARCHAR(255) NOT NULL,
     domain_name VARCHAR(255) UNIQUE NOT NULL,
     registration_date DATE NOT NULL,
-    registered_with ENUM('OCS', 'Direct Customer', 'Winds', 'Others') NOT NULL,
+    registered_with ENUM('OCS', 'OCS (RC)', 'Direct Customer', 'Winds', 'Others') NOT NULL, -- Added 'OCS (RC)'
     mail_service_provider ENUM('ResellerClub', 'Google Workspace', 'Business Email', 'Microsoft 365', 'Others') NOT NULL DEFAULT 'Others',
     other_provider VARCHAR(255) DEFAULT NULL,
     other_mail_service_details VARCHAR(255) DEFAULT NULL,

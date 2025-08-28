@@ -1,4 +1,4 @@
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Settings } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Select from "react-select";
 import { toast, ToastContainer, Bounce } from "react-toastify";
@@ -39,8 +39,16 @@ function AddDomain() {
   const [isEditing, setIsEditing] = useState(false);
   const [domainId, setDomainId] = useState(null);
 
+  // Name server default count (persist in localStorage)
+  const [defaultNameServerCount, setDefaultNameServerCount] = useState(() => {
+    const saved = localStorage.getItem("defaultNameServerCount");
+    return saved ? parseInt(saved, 10) : 2;
+  });
+  const [showNSSettings, setShowNSSettings] = useState(false);
+
   const registeredWithOptions = [
     { value: "OCS", label: "OCS" },
+    { value: "OCS (RC)", label: "OCS (RC)" },
     { value: "Direct Customer", label: "Direct Customer" },
     { value: "Winds", label: "Winds" },
     { value: "Others", label: "Others" },
@@ -157,6 +165,7 @@ function AddDomain() {
       mail_service_provider: formData.mailServices,
       mail_services_other: formData.mailServices === "Others" ? formData.mailServicesOther : ""
     };
+    console.log("Submitting payload:", payload);
     try {
       if (isEditing) {
         await dispatch(updateDomain({ id: domainId, payload })).unwrap();
@@ -192,8 +201,30 @@ function AddDomain() {
   const handleBack = () => {
     const currentPath = location.pathname;
     const userSegment = currentPath.split("/")[1];
-    navigate(`/${userSegment}/dashboard/customers`);
+    navigate(`/${userSegment}/dashboard/domains`);
   };
+
+  useEffect(() => {
+    // Set default values for add mode
+    if (!location.state?.domain) {
+      setFormData((prev) => ({
+        ...prev,
+        registeredWith: "OCS",
+        mailServices: "ResellerClub",
+        nameServers: Array(defaultNameServerCount).fill(""),
+      }));
+    }
+  }, [defaultNameServerCount, location.state]);
+
+  // When changing defaultNameServerCount, update nameServers if not editing
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData((prev) => ({
+        ...prev,
+        nameServers: Array(defaultNameServerCount).fill(""),
+      }));
+    }
+  }, [defaultNameServerCount, isEditing]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -206,7 +237,35 @@ function AddDomain() {
           <ArrowLeft size={20} className="animate-bounce-x" />
           <span className="font-medium">Back</span>
         </button>
-      <h1 className="text-3xl font-bold mb-4">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
+      <div className="flex items-center gap-2 mb-2">
+        <h1 className="text-3xl font-bold">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
+        <button
+          type="button"
+          className="ml-2 p-1 rounded hover:bg-gray-200"
+          title="Name Server Settings"
+          onClick={() => setShowNSSettings((v) => !v)}
+        >
+          <Settings size={20} />
+        </button>
+        {showNSSettings && (
+          <div className="ml-4 flex items-center gap-2 bg-gray-100 px-3 py-2 rounded shadow">
+            <span className="text-sm">Default Name Servers:</span>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={defaultNameServerCount}
+              onChange={e => {
+                const val = Math.max(1, Math.min(10, Number(e.target.value)));
+                setDefaultNameServerCount(val);
+                localStorage.setItem("defaultNameServerCount", val);
+              }}
+              className="w-16 px-2 py-1 border rounded"
+            />
+            <span className="text-xs text-gray-500">(applies to new domains)</span>
+          </div>
+        )}
+      </div>
       <hr className="mb-6 border-blue-500" />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -290,6 +349,7 @@ function AddDomain() {
               value={mailServicesOptions.find(opt => opt.value === formData.mailServices)}
               onChange={(s) => setFormData({ ...formData, mailServices: s?.value || "" })}
               isClearable
+              placeholder="Select mail service"
             />
           </div>
           {formData.mailServices === "Others" && (

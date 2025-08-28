@@ -1,8 +1,12 @@
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, FileUp } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
+import api from "@/lib/axiosInstance.js";
+import * as Papa from "papaparse";
+import { saveAs } from "file-saver";
+import "jspdf-autotable";
+import { toast } from "react-toastify";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,7 +31,7 @@ function Domains() {
   const headers = [
     { key: "domain_name", label: "Domain Name" },
     { key: "customer_name", label: "Customer Name" },
-    { key: "registered_with", label: "Registered With" },
+    { key: "registered_with", label: "Registered With" }, // OCS (RC) will show automatically if present in data
     { key: "name_servers", label: "Name Servers" },
     { key: "mail_service_provider", label: "Mail Services" },
     { key: "description", label: "Description" },
@@ -87,9 +91,42 @@ function Domains() {
     dispatch(fetchDomains({ search: debouncedSearch, sortBy, order, page: currentPage }));
   }, [dispatch, debouncedSearch, sortBy, order, currentPage]);
 
+   const fetchDomainsAndExport = async () => {
+    try {
+      console.log("Fetching all domains for export...");
+      const response = await api.get(`/all-domains`);
+      const data = response.data;
+
+      if (!data.domains || !Array.isArray(data.domains)) throw new Error("Invalid domain data received!");
+      if (data.domains.length === 0) throw new Error("No domain data available to export!");
+
+      const formattedData = data.domains.map((d) => ({
+        "Domain ID": d.domain_id || "",
+        "Domain Name": d.domain_name || "",
+        "Customer ID": d.customer_id || "",
+        "Customer Name": d.customer_name || "",
+        "Registered With": d.registered_with || "",
+        "Name Servers": d.name_servers?.join(", ") || "",
+        "Mail Services": d.mail_service_provider || "",
+        "Description": d.description || "",
+        "Registration Date": formatDate(d.registration_date) || "",
+      }));
+
+      const csv = Papa.unparse(formattedData);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, `domains_export_${new Date().toISOString()}.csv`);
+      toast.success("CSV file downloaded successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to generate CSV file.");
+    }
+  };
+
+
+
   return (
     
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
+
       <h1 className="w-full text-3xl font-bold mb-2">Domains</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -109,6 +146,9 @@ function Domains() {
             <Plus /> Add
           </Button>
         </Link>
+        <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchDomainsAndExport}>
+              <FileUp /> Export
+            </Button>
       </div>
 
       {error && (

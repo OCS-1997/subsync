@@ -208,6 +208,17 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
             className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           />
         </div>
+        <div className="flex flex-col mb-4 md:col-span-6">
+          <Label htmlFor="secondaryEmail" className="mb-2">Secondary Email</Label>
+          <Input
+            id="secondaryEmail"
+            type="email"
+            name="secondary_email"
+            value={customerData.secondary_email}
+            onChange={handleInputChange}
+            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          />
+        </div>
       </div>
     </>
   );

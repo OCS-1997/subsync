@@ -24,6 +24,10 @@ async function addCustomer(customer) {
             throw new Error("Invalid email address format.");
         }
 
+        if (customer.secondaryEmail && !isValidEmail(customer.secondaryEmail)) {
+            throw new Error("Invalid secondary email address format.");
+        }
+
         if (!isValidPhoneNumber(customer.phoneNumber)) {
             throw new Error("Invalid primary phone number format.");
         }
@@ -56,12 +60,13 @@ async function addCustomer(customer) {
 
         // Execute SQL query
         const [result] = await appDB.query(
-            "INSERT INTO customers (customer_id, salutation, first_name, last_name, primary_email, country_code, primary_phone_number, secondary_phone_number, " +
+            "INSERT INTO customers (customer_id, salutation, first_name, last_name, primary_email, secondary_email, country_code, primary_phone_number, secondary_phone_number, " +
             "customer_address, other_contacts, company_name, display_name, gst_in, currency_code, gst_treatment, tax_preference, exemption_reason, " +
             "payment_terms, notes, customer_status, created_at, updated_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             [
                 cid, customer.salutation, customer.firstName, customer.lastName, customer.email,
+                customer.secondary_email || null,
                 customer.country_code,
                 Number(customer.phoneNumber),
                 customer.secondaryPhoneNumber ? Number(customer.secondaryPhoneNumber) : null,
@@ -96,7 +101,7 @@ async function addCustomer(customer) {
  */
 async function updateCustomer(customerId, updatedData) {
     const {
-        salutation, first_name, last_name, primary_email, country_code, primary_phone_number, secondary_phone_number,
+        salutation, first_name, last_name, primary_email, secondary_email, country_code, primary_phone_number, secondary_phone_number,
         customer_address, company_name, display_name, gst_in, currency_code, gst_treatment, other_contacts,
         tax_preference, exemption_reason, payment_terms, notes, customer_status
     } = updatedData;
@@ -114,6 +119,9 @@ async function updateCustomer(customerId, updatedData) {
     }
     if (!isValidEmail(primary_email)) {
         throw new Error("Invalid email address format.");
+    }
+    if (secondary_email && !isValidEmail(secondary_email)) {
+        throw new Error("Invalid secondary email address format.");
     }
     if (!isValidPhoneNumber(primary_phone_number)) {
         throw new Error("Invalid primary phone number format.");
@@ -136,14 +144,14 @@ async function updateCustomer(customerId, updatedData) {
 
         const [result] = await appDB.query(
             `UPDATE customers SET 
-                salutation = ?, first_name = ?, last_name = ?, primary_email = ?, country_code = ?,
+                salutation = ?, first_name = ?, last_name = ?, primary_email = ?, secondary_email = ?, country_code = ?,
                 primary_phone_number = ?, secondary_phone_number = ?, customer_address = ?, other_contacts = ?,
                 company_name = ?, display_name = ?, gst_in = ?, currency_code = ?, gst_treatment = ?,
                 tax_preference = ?, exemption_reason = ?, payment_terms = ?, notes = ?, customer_status = ?,
                 updated_at = ?
             WHERE customer_id = ?`,
             [
-                salutation, first_name, last_name, primary_email, country_code,
+                salutation, first_name, last_name, primary_email, secondary_email || null, country_code,
                 formattedPrimaryPhone, formattedSecondaryPhone, serializedAddress, serializedContacts,
                 company_name, display_name, gst_in, currency_code, gst_treatment,
                 tax_preference, exemption_reason, serializedPaymentTerms, notes, customer_status,

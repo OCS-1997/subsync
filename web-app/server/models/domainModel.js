@@ -56,7 +56,7 @@ async function addDomain(domain) {
  * @returns {Promise<*>}
  */
 async function updateDomain(domainId, updatedData) {
-    const { domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, name_servers } = updatedData;
+    const {customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, name_servers } = updatedData;
     
     // console.log("Updated data received:", updatedData);
     
@@ -70,11 +70,11 @@ async function updateDomain(domainId, updatedData) {
 
         const [result] = await appDB.query(
             `UPDATE domains 
-             SET domain_name = ?, registration_date = ?, registered_with = ?, 
+             SET customer_id=?, customer_name=?, domain_name = ?, registration_date = ?, registered_with = ?, 
                  other_provider = ?, description = ?, mail_service_provider = ?, other_mail_service_details = ?, updated_at = ? 
              WHERE domain_id = ?;`,
             [
-                domain_name, registration_date, registered_with, 
+               customer_id,customer_name, domain_name, registration_date, registered_with, 
                 other_provider || "", description || "", 
                 mail_service_provider || "", other_mail_service_details || "", currentTime, domainId
             ]

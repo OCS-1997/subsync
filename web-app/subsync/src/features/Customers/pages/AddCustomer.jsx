@@ -42,6 +42,7 @@ const AddCustomer = () => {
     companyName: "",
     displayName: "",
     email: "",
+    secondary_email: "",
     country_code: "+91",
     phoneNumber: "",
     secondaryPhoneNumber: "",
@@ -70,6 +71,7 @@ const AddCustomer = () => {
       companyName: "",
       displayName: "",
       email: "",
+      secondary_email: "",
       country_code: "+91",
       phoneNumber: "",
       secondaryPhoneNumber: "",
@@ -138,6 +140,7 @@ const AddCustomer = () => {
         companyName: currentCustomer.company_name,
         displayName: currentCustomer.display_name,
         email: currentCustomer.primary_email,
+        secondary_email: currentCustomer.secondary_email ,
         country_code: currentCustomer.country_code,
         phoneNumber: currentCustomer.primary_phone_number,
         secondaryPhoneNumber: currentCustomer.secondary_phone_number,
@@ -242,6 +245,7 @@ const AddCustomer = () => {
         firstName: customerData.firstName,
         lastName: customerData.lastName,
         email: customerData.email,
+        secondary_email: customerData.secondary_email,
         country_code: customerData.country_code,
         phoneNumber: customerData.phoneNumber,
         secondaryPhoneNumber: customerData.secondaryPhoneNumber,
@@ -273,6 +277,7 @@ const AddCustomer = () => {
         notes: customerData.notes || "",
         customerStatus: customerData.customerStatus || "Active"
       };
+      
 
       let actionResult;
       if (isEditing) {
