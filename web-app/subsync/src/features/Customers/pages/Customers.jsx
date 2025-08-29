@@ -29,22 +29,33 @@ const headers = [
 ];
 
 function Customers() {
-  const [sortBy, setSortBy] = useState("first_name");
-  const [order, setOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [file, setFile] = useState(null);
   const [importData, setImportData] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Debounce search
+  const debounceTimeout = useRef();
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(debounceTimeout.current);
+  }, [search]);
+
   const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-customers`,
-    { search, sort: sortBy, order, currentPage }
+    { search: debouncedSearch, sort: sortBy, order: sortOrder, currentPage }
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, sortBy, sortOrder]);
 
   const handleSearch = (e) => {
     if (e.key === "Enter") setCurrentPage(1);
@@ -159,6 +170,19 @@ function Customers() {
     }
   };
 
+ const handleSort = (key) => {
+    if (sortBy === key && sortOrder === "asc") {
+      setSortOrder("desc");
+    } else if (sortBy === key && sortOrder === "desc") {
+      setSortBy(null);
+      setSortOrder(null);
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setCurrentPage(1);
+  };
+
   const renderActions = (id) => (
     <div className="flex items-center">
       <Link to={`${id}`}>
@@ -169,28 +193,34 @@ function Customers() {
     </div>
   );
 
-  const filteredData = data.filter((c) => {
-    const term = search.toLowerCase();
-    return (
-      c.customer_id.toString().toLowerCase().includes(term) ||
-      c.salutation.toLowerCase().includes(term) ||
-      c.first_name.toLowerCase().includes(term) ||
-      c.last_name?.toLowerCase().includes(term) ||
-      c.display_name.toLowerCase().includes(term) ||
-      c.company_name.toLowerCase().includes(term) ||
-      c.primary_phone_number.toString().toLowerCase().includes(term) ||
-      c.primary_email.toLowerCase().includes(term) ||
-      c.gst_in?.toLowerCase().includes(term) ||
-      c.customer_status.toLowerCase().includes(term)
-    );
-  });
+  const filteredData = data
+    .filter((c) => {
+      const term = debouncedSearch.toLowerCase();
+      return (
+        c.customer_id.toString().toLowerCase().includes(term) ||
+        c.salutation.toLowerCase().includes(term) ||
+        c.first_name.toLowerCase().includes(term) ||
+        c.last_name?.toLowerCase().includes(term) ||
+        c.display_name.toLowerCase().includes(term) ||
+        c.company_name.toLowerCase().includes(term) ||
+        c.primary_phone_number.toString().toLowerCase().includes(term) ||
+        c.primary_email.toLowerCase().includes(term) ||
+        c.gst_in?.toLowerCase().includes(term) ||
+        c.customer_status.toLowerCase().includes(term)
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a[sortBy] || "";
+      const bValue = b[sortBy] || "";
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortOrder === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    });
 
-  const modifiedData = filteredData.map((c) => ({
-    ...c,
-    first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
-    phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
-    actions: renderActions(c.customer_id),
-  }));
+  const paginatedData = filteredData.slice((currentPage - 1) * 10, currentPage * 10);
 
   return (
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
@@ -202,11 +232,6 @@ function Customers() {
             search={search}
             setSearch={setSearch}
             handleSearch={handleSearch}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            order={order}
-            setOrder={setOrder}
-            headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
           />
         </div>
 
@@ -251,10 +276,22 @@ function Customers() {
         <div className="flex justify-center items-center my-8">
           <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
         </div>
-      ) : modifiedData.length > 0 ? (
+      ) : paginatedData.length > 0 ? (
         <>
-          <GenericTable headers={headers} data={modifiedData} primaryKey="customer_id" />
-          <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
+          <GenericTable
+            headers={headers}
+            data={paginatedData.map((c) => ({
+              ...c,
+              first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
+              phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
+              actions: renderActions(c.customer_id),
+            }))}
+            primaryKey="customer_id"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+          />
+          <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={Math.ceil(filteredData.length / 10)} />
         </>
       ) : (
         <Alert>

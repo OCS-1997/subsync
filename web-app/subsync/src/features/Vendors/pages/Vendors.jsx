@@ -1,7 +1,7 @@
 import { Eye, FileUp, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast, Bounce } from "react-toastify";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -24,9 +24,10 @@ const headers = [
 function Vendors() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sortBy, setSortBy] = useState("display_name");
-  const [order, setOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -34,19 +35,42 @@ function Vendors() {
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [vendorsError, setVendorsError] = useState(null);
 
+  // Debounce search
+  const debounceTimeout = useRef();
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(debounceTimeout.current);
+  }, [search]);
+
   const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-vendors`,
-    { search, sort: sortBy, order, currentPage, refreshKey }
+    { search: debouncedSearch, sort: sortBy, order: sortOrder, currentPage, refreshKey }
   );
 
   // console.log("Vendors: useFetchData - data:", data, "error:", error, "loading:", fetchLoading, "totalPages:", totalPages);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, sortBy, sortOrder]);
 
   const handleSearch = (e) => {
     if (e.key === "Enter") setCurrentPage(1);
+  };
+
+  const handleSort = (key) => {
+    if (sortBy === key && sortOrder === "asc") {
+      setSortOrder("desc");
+    } else if (sortBy === key && sortOrder === "desc") {
+      setSortBy(null);
+      setSortOrder(null);
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setCurrentPage(1);
   };
 
   const handleEditVendor = (vendor) => {
@@ -101,22 +125,36 @@ function Vendors() {
     </div>
   );
 
-  const filteredData = data.filter((v) => {
-    const term = search.toLowerCase();
-    return (
-      (v.vendor_id?.toString().toLowerCase().includes(term) || "") ||
-      (v.display_name?.toLowerCase().includes(term) || "") ||
-      (v.company_name?.toLowerCase().includes(term) || "") ||
-      (v.primary_phone_number?.toString().toLowerCase().includes(term) || "") ||
-      (v.primary_email?.toLowerCase().includes(term) || "") ||
-      (v.vendor_status?.toLowerCase().includes(term) || "")
-    );
-  });
+  const filteredData = data
+    .filter((v) => {
+      const term = search.toLowerCase();
+      return (
+        (v.vendor_id?.toString().toLowerCase().includes(term) || "") ||
+        (v.display_name?.toLowerCase().includes(term) || "") ||
+        (v.company_name?.toLowerCase().includes(term) || "") ||
+        (v.primary_phone_number?.toString().toLowerCase().includes(term) || "") ||
+        (v.primary_email?.toLowerCase().includes(term) || "") ||
+        (v.vendor_status?.toLowerCase().includes(term) || "")
+      );
+    });
 
-  const modifiedData = filteredData.map((v) => ({
-    ...v,
-    actions: renderActions(v),
-  }));
+  // Sorting logic
+  const sortedData = sortBy
+    ? [...filteredData].sort((a, b) => {
+        const aValue = a[sortBy] || "";
+        const bValue = b[sortBy] || "";
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortOrder === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      })
+    : filteredData;
+
+  const itemsPerPage = 10;
+
+  const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleAddVendor = () => {
     const currentPath = location.pathname;
@@ -154,11 +192,6 @@ function Vendors() {
               search={search}
               setSearch={setSearch}
               handleSearch={handleSearch}
-              sortBy={sortBy}
-              setSortBy={setSortBy}
-              order={order}
-              setOrder={setOrder}
-              headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
             />
           </div>
 
@@ -194,9 +227,19 @@ function Vendors() {
           <div className="flex justify-center items-center my-8">
             <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
           </div>
-        ) : modifiedData.length > 0 ? (
+        ) : sortedData.length > 0 ? (
           <>
-            <GenericTable headers={headers} data={modifiedData} primaryKey="vendor_id" />
+            <GenericTable
+              headers={headers}
+              data={paginatedData.map((v) => ({
+                ...v,
+                actions: renderActions(v),
+              }))}
+              primaryKey="vendor_id"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
             <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
           </>
         ) : (

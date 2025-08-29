@@ -16,9 +16,10 @@ const validateLogin = async (req, res) => {
 
         if (user) {
             const token = jwt.sign({ username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const loginTime = new Date().toISOString();
             // Log successful login
-            await logActivity({ username: user.username, action: 'LOGIN_SUCCESS', details: { ip: req.ip } });
-            return res.status(200).json({ success: true, message: "Validation successful.", token, username: user.username, name: user.name, role: user.role });
+            await logActivity({ username: user.username, action: 'LOGIN_SUCCESS', details: { ip: req.ip, loginTime } });
+            return res.status(200).json({ success: true, message: "Validation successful.", token, username: user.username, name: user.name, role: user.role, ip: req.ip, loginTime });
         }
         else {
             // Log failed login

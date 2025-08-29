@@ -18,8 +18,13 @@ function NavBar({ toggleSidebar }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector(state => state.auth.user);
+  const loginIp = user?.ip;
+  const loginTime = user?.loginTime;
   const role = useSelector(state => state.auth.role);
   const isAdmin = role && role.toLowerCase() === 'admin';
+
+ 
 
   const handleLogout = () => {
     dispatch(logout());
@@ -41,8 +46,15 @@ function NavBar({ toggleSidebar }) {
      
           </div>
         </div>
+       
 
         <div className="flex items-center">
+            {loginIp && loginTime && (
+                <div className="px-3 py-2  justify-end items-end text-xs text-gray-500  mb-2">
+                  <div >IP: {loginIp}</div>
+                  <div>Logged in: {new Date(loginTime).toLocaleString()}</div>
+                </div>
+                )}
           <Button
             variant="ghost"
             className="h-6 w-6 p-3 rounded-full hover:bg-gray-100"
@@ -58,6 +70,7 @@ function NavBar({ toggleSidebar }) {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48" align="end">
+             
               {navItems.map((item) => (
                 item.key === "logout" ? (
                   <button

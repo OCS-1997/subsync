@@ -1,10 +1,10 @@
-import { Pencil } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table.jsx";
 
-function GenericTable({ headers, data, actions, basePath, primaryKey = "id" }) {
+function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onSort }) {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -13,17 +13,20 @@ function GenericTable({ headers, data, actions, basePath, primaryKey = "id" }) {
             {headers.map((header) => (
               <TableCell
                 as="th"
-                className="px-4 py-2 text-left font-semibold"
+                className={`px-4 py-2 text-left font-semibold cursor-pointer select-none ${
+                  sortBy === header.key ? "bg-blue-700 text-white" : ""
+                }`}
                 key={header.key}
+                onClick={() => onSort && onSort(header.key)}
               >
-                {header.label}
+                <span className="flex items-center gap-1">
+                  {header.label}
+                  {sortBy === header.key && (
+                    sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                  )}
+                </span>
               </TableCell>
             ))}
-            {actions && (
-              <TableCell as="th" className="px-4 py-2 text-left font-semibold">
-                Actions
-              </TableCell>
-            )}
           </TableRow>
         </TableHeader>
 
@@ -47,20 +50,6 @@ function GenericTable({ headers, data, actions, basePath, primaryKey = "id" }) {
                   {item[header.key] || "N/A"}
                 </TableCell>
               ))}
-
-              {actions && (
-                <TableCell className="px-4 py-2 text-left">
-                  <Link to={`${basePath}/${item[primaryKey]}`}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Edit ${item[headers[0]?.key] || "item"}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </TableCell>
-              )}
             </TableRow>
           ))}
         </TableBody>

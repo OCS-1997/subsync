@@ -19,11 +19,11 @@ import { fetchDomains } from "../domainSlice";
 
 function Domains() {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("domain_name");
-  const [order, setOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const totalPages = 5;
+  const itemsPerPage = 10;
   const { username } = useParams();
   const dispatch = useDispatch();
   const { list: domains, loading, error } = useSelector((state) => state.domains);
@@ -88,10 +88,27 @@ function Domains() {
 
   useEffect(() => {
     // Fetch domains whenever search, sort, order, or page changes
-    dispatch(fetchDomains({ search: debouncedSearch, sortBy, order, page: currentPage }));
-  }, [dispatch, debouncedSearch, sortBy, order, currentPage]);
+    dispatch(fetchDomains({ search: debouncedSearch, sortBy, order: sortOrder, page: currentPage }));
+  }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
-   const fetchDomainsAndExport = async () => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, sortBy, sortOrder]);
+
+  const handleSort = (key) => {
+    if (sortBy === key && sortOrder === "asc") {
+      setSortOrder("desc");
+    } else if (sortBy === key && sortOrder === "desc") {
+      setSortBy(null);
+      setSortOrder(null);
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  const fetchDomainsAndExport = async () => {
     try {
       console.log("Fetching all domains for export...");
       const response = await api.get(`/all-domains`);
@@ -121,7 +138,35 @@ function Domains() {
     }
   };
 
+  const filteredDomains = domains
+    .filter((domain) => {
+      const term = search.toLowerCase();
+      return (
+        domain.domain_name?.toLowerCase().includes(term) ||
+        domain.customer_name?.toLowerCase().includes(term) ||
+        domain.registered_with?.toLowerCase().includes(term) ||
+        domain.name_servers?.join(",").toLowerCase().includes(term) ||
+        domain.mail_service_provider?.toLowerCase().includes(term) ||
+        domain.description?.toLowerCase().includes(term)
+      );
+    });
 
+  // Sorting logic
+  const sortedDomains = sortBy
+    ? [...filteredDomains].sort((a, b) => {
+        const aValue = a[sortBy] || "";
+        const bValue = b[sortBy] || "";
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortOrder === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      })
+    : filteredDomains;
+
+  const totalPages = Math.max(1, Math.ceil(sortedDomains.length / itemsPerPage));
+  const paginatedDomains = sortedDomains.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     
@@ -134,12 +179,6 @@ function Domains() {
           search={search}
           setSearch={setSearch}
           handleSearch={handleSearch}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          order={order}
-          setOrder={setOrder}
-          headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
-
         />
         <Link to="add">
           <Button className="bg-blue-500 hover:bg-blue-600 text-white w-full sm:w-auto">
@@ -162,11 +201,11 @@ function Domains() {
         <div className="flex justify-center items-center my-10">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
         </div>
-      ) : domains.length > 0 ? (
+      ) : sortedDomains.length > 0 ? (
         <>
           <GenericTable
             headers={headers}
-            data={domains.map((domain) => {
+            data={paginatedDomains.map((domain) => {
               const {
                 domain_id,
                 domain_name,
@@ -221,6 +260,9 @@ function Domains() {
               };
             })}
             primaryKey="domain_id"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
           />
           <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
         </>

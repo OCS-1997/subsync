@@ -39,13 +39,15 @@ function Services() {
   const { list: services, loading, error } = useSelector((state) => state.services);
 
   const [sortBy, setSortBy] = useState("service_name");
-  const [order, setOrder] = useState("asc");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
 
   const fileInputRef = useRef(null);
+  const debounceTimeout = useRef();
 
   // Fetch services on component mount or when sort/order/page changes
   useEffect(() => {
@@ -54,6 +56,15 @@ function Services() {
 
   useEffect(() => {
     setCurrentPage(1);
+  }, [search, sortBy, sortOrder]);
+
+  // Debounce search
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
   // Handle search input change (e.g., on Enter key)
@@ -62,9 +73,19 @@ function Services() {
     setCurrentPage(1);
   };
 
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+    setCurrentPage(1);
+  };
+
   const filteredAndSortedServices = services
     .filter((service) => {
-      const searchTerm = search.toLowerCase();
+      const searchTerm = debouncedSearch.toLowerCase();
       return (
         service.service_name.toLowerCase().includes(searchTerm) ||
         service.stock_keepers_unit.toLowerCase().includes(searchTerm) ||
@@ -73,13 +94,14 @@ function Services() {
       );
     })
     .sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return order === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      const aValue = a[sortBy] || "";
+      const bValue = b[sortBy] || "";
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortOrder === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
-      return order === 'asc' ? aValue - bValue : bValue - aValue;
+      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
     });
 
   const itemsPerPage = 10;
@@ -139,14 +161,6 @@ function Services() {
       </Button>
     </div>
   );
-
-  const modifiedData = paginatedServices.map((service) => ({
-    ...service,
-    stock_keepers_unit: service.stock_keepers_unit,
-    item_group_name: service.item_group_name || 'N/A',
-    preferred_vendor_name: service.preferred_vendor_name || 'N/A',
-    actions: renderActions(service.service_id),
-  }));
 
   const fetchServicesAndExport = async () => {
     try {
@@ -245,11 +259,6 @@ function Services() {
             search={search}
             setSearch={setSearch}
             handleSearch={(e) => setSearch(e.target.value)}
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            order={order}
-            setOrder={setOrder}
-            headers={headers.filter(({ key }) => key !== 'actions').map(({ key, label }) => ({ key, label }))}
           />
         </div>
 
@@ -292,12 +301,21 @@ function Services() {
         <div className="flex justify-center items-center my-8">
           <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
         </div>
-      ) : modifiedData.length > 0 ? (
+      ) : paginatedServices.length > 0 ? (
         <>
           <GenericTable
             headers={headers}
-            data={modifiedData}
+            data={paginatedServices.map((service) => ({
+              ...service,
+              stock_keepers_unit: service.stock_keepers_unit,
+              item_group_name: service.item_group_name || 'N/A',
+              preferred_vendor_name: service.preferred_vendor_name || 'N/A',
+              actions: renderActions(service.service_id),
+            }))}
             primaryKey="service_id"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
           />
           <Pagination
             currentPage={currentPage}
