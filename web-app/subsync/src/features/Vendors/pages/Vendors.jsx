@@ -47,7 +47,7 @@ function Vendors() {
 
   const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-vendors`,
-    { search: debouncedSearch, sort: sortBy, order: sortOrder, currentPage, refreshKey }
+    { search: debouncedSearch, sort: sortBy, order:  sortOrder, currentPage, refreshKey }
   );
 
   // console.log("Vendors: useFetchData - data:", data, "error:", error, "loading:", fetchLoading, "totalPages:", totalPages);
@@ -59,6 +59,8 @@ function Vendors() {
   const handleSearch = (e) => {
     if (e.key === "Enter") setCurrentPage(1);
   };
+
+
 
   const handleSort = (key) => {
     if (sortBy === key && sortOrder === "asc") {
@@ -126,17 +128,18 @@ function Vendors() {
   );
 
   const filteredData = data
+    
     .filter((v) => {
-      const term = search.toLowerCase();
-      return (
-        (v.vendor_id?.toString().toLowerCase().includes(term) || "") ||
-        (v.display_name?.toLowerCase().includes(term) || "") ||
-        (v.company_name?.toLowerCase().includes(term) || "") ||
-        (v.primary_phone_number?.toString().toLowerCase().includes(term) || "") ||
-        (v.primary_email?.toLowerCase().includes(term) || "") ||
-        (v.vendor_status?.toLowerCase().includes(term) || "")
-      );
-    });
+        const term = search.toLowerCase();
+        return (
+          (v.vendor_id?.toString().toLowerCase().includes(term) || "") ||
+          (v.display_name?.toLowerCase().includes(term) || "") ||
+          (v.company_name?.toLowerCase().includes(term) || "") ||
+          (v.primary_phone_number?.toString().toLowerCase().includes(term) || "") ||
+          (v.primary_email?.toLowerCase().includes(term) || "") ||
+          (v.vendor_status?.toLowerCase().includes(term) || "")
+        );
+      });
 
   // Sorting logic
   const sortedData = sortBy

@@ -16,10 +16,10 @@ app.use(helmet());
 app.set('trust proxy', true);
 
 // Add request logging
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
-    next();
-});
+// app.use((req, res, next) => {
+//     console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+//     next();
+// });
 
 // CORS configuration
 app.use(cors({
