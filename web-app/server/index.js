@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
+app.set('trust proxy', true);
 
 // Add request logging
 app.use((req, res, next) => {
@@ -27,6 +28,7 @@ app.use(cors({
     `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
     `http://localhost`, // allows requests from your Nginx frontend (port 80)
     `http://127.0.0.1`,
+    `http://ocs365.in`
   ],
   methods: ['GET', 'POST','PUT','DELETE'],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -44,7 +46,7 @@ app.use(cors({
 // });
 
 // app.use(limiter);
-app.use("/", router);
+app.use("/api", router);
 
 
 app.use((err, req, res, next) => {
