@@ -220,8 +220,9 @@ function Customers() {
       return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
     });
 
+  const totalRecords = filteredData.length;
   const paginatedData = filteredData.slice((currentPage - 1) * 10, currentPage * 10);
-
+  
   return (
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Customers</h1>
@@ -291,7 +292,12 @@ function Customers() {
             sortOrder={sortOrder}
             onSort={handleSort}
           />
-          <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={Math.ceil(filteredData.length / 10)} />
+          <Pagination
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+          />
         </>
       ) : (
         <Alert>

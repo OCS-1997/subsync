@@ -105,7 +105,8 @@ function Services() {
     });
 
   const itemsPerPage = 10;
-  const totalFilteredPages = Math.ceil(filteredAndSortedServices.length / itemsPerPage);
+  const totalRecords = filteredAndSortedServices.length;
+  const totalFilteredPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
   const paginatedServices = filteredAndSortedServices.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -321,6 +322,7 @@ function Services() {
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             totalPages={totalFilteredPages}
+            totalRecords={totalRecords}
           />
         </>
       ) : (

@@ -45,7 +45,7 @@ function Vendors() {
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
-  const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
+  const { data = [], error, loading: fetchLoading} = useFetchData(
     `${import.meta.env.VITE_API_URL}/all-vendors`,
     { search: debouncedSearch, sort: sortBy, order:  sortOrder, currentPage, refreshKey }
   );
@@ -156,7 +156,8 @@ function Vendors() {
     : filteredData;
 
   const itemsPerPage = 10;
-
+  const totalRecords = sortedData.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
   const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleAddVendor = () => {
@@ -242,7 +243,12 @@ function Vendors() {
               sortOrder={sortOrder}
               onSort={handleSort}
             />
-            <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+            />
           </>
         ) : (
           <Alert>

@@ -165,7 +165,8 @@ function Domains() {
       })
     : filteredDomains;
 
-  const totalPages = Math.max(1, Math.ceil(sortedDomains.length / itemsPerPage));
+  const totalRecords = sortedDomains.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
   const paginatedDomains = sortedDomains.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
@@ -264,7 +265,12 @@ function Domains() {
             sortOrder={sortOrder}
             onSort={handleSort}
           />
-          <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} />
+          <Pagination
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+          />
         </>
       ) : (
         <Alert>
