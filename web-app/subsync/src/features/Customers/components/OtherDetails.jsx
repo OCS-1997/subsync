@@ -91,6 +91,11 @@ const OtherDetails = ({
             placeholder={isIndia ? "Enter GSTIN" : "Not required for non-India"}
             className="rounded-xl px-4 py-3 text-base border border-gray-300"
           />
+          {isIndia && (
+            <p className="text-sm text-gray-500 ml-2">
+              Enter "GST_NA" if not applicable
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

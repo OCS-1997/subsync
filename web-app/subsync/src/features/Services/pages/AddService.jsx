@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { ToastContainer, toast, Bounce } from "react-toastify";
+import { toast} from "react-toastify";
 import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button";
@@ -246,7 +246,7 @@ const AddService = () => {
 
   return (
     <>
-    <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+   
     <button
           onClick={handleBack}
           className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"

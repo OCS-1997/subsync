@@ -105,7 +105,6 @@ const AddUser = () => {
 
   return (
     <div className="py-8 px-4 flex items-center justify-center">
-      <ToastContainer position="top-right" />
       <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-blue-100 dark:border-gray-800 animate-fadeIn">
         <button
           onClick={handleBack}

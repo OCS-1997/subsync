@@ -352,7 +352,7 @@ const AddVendor = () => {
         <ArrowLeft size={20} className="animate-bounce-x" />
         <span className="font-medium">Back</span>
       </button>
-      <ToastContainer position="top-center" autoClose={2000} theme="dark" transition={Bounce} pauseOnHover />
+    
       <h1 className="mb-4 text-3xl font-bold">{isEditing ? "Edit Vendor" : "Add Vendor"}</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
 

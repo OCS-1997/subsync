@@ -137,7 +137,7 @@ function AddTax() {
 
     return (
         <>
-            <ToastContainer />
+
             <div className="w-full max-w-2xl mx-auto">
                 <div className="flex items-center gap-4 mb-6">
                     <Button 
@@ -160,7 +160,7 @@ function AddTax() {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-2">
-                                <Label htmlFor="taxName">Tax Name *</Label>
+                                <Label htmlFor="taxName">Tax Name <span className="text-red-500">*</span></Label>
                                 <Input
                                     id="taxName"
                                     value={taxName}
@@ -179,7 +179,7 @@ function AddTax() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="taxType">Tax Type *</Label>
+                                <Label htmlFor="taxType">Tax Type <span className="text-red-500">*</span></Label>
                                 <Select value={taxType} onValueChange={setTaxType} disabled={loading}>
                                     <SelectTrigger className={error ? "border-red-500" : ""}>
                                         <SelectValue placeholder="Select tax type" />
@@ -202,7 +202,7 @@ function AddTax() {
 
                             {taxType && taxType !== "NO_TAX" && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="taxRate">Tax Rate (%) *</Label>
+                                    <Label htmlFor="taxRate">Tax Rate (%) <span className="text-red-500">*</span></Label>
                                     <Input
                                         id="taxRate"
                                         type="number"

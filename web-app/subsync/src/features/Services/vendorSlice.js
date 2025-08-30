@@ -49,7 +49,7 @@ export const updateVendor = createAsyncThunk(
     async ({ id, ...payload }, thunkAPI) => {
         try {
             const response = await api.put(`/update-vendor/${id}`, payload);
-            toast.success('Vendor updated successfully.');
+            // toast.success('Vendor updated successfully.');
             return response.data;
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to update vendor.');

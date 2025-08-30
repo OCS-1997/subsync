@@ -182,6 +182,29 @@ CREATE TABLE tax_settings (
 INSERT INTO tax_settings (setting_id, setting_key, setting_value) VALUES
 ('SET001', 'gst_settings', '{"gst_enabled": true, "gst_threshold": 20000, "reverse_charge": false}');
 
+-- Tax Groups tables
+CREATE TABLE IF NOT EXISTS tax_groups (
+    group_id VARCHAR(20) PRIMARY KEY,
+    group_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tax_group_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    group_id VARCHAR(20) NOT NULL,
+    tax_id VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_id) REFERENCES tax_groups(group_id) ON DELETE CASCADE,
+    FOREIGN KEY (tax_id) REFERENCES tax_rates(tax_id) ON DELETE RESTRICT,
+    UNIQUE KEY uniq_group_member (group_id, tax_id)
+);
+
+-- Default tax preferences (intra/inter) stored in tax_settings as JSON
+-- Example value: {"intra": {"kind": "tax" | "group", "id": "TID003"}, "inter": {"kind": "tax" | "group", "id": "TGR001"}}
+
 CREATE TABLE gst_settings (
 	tax_reg_num_label VARCHAR(10) NOT NULL,
     gst_in VARCHAR(15) NOT NULL,

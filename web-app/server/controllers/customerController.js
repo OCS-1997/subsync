@@ -10,7 +10,7 @@ import { logActivity } from "../models/activityLogModel.js";
 const createCustomer = async (req, res) => {
     try {
         // console.log("Received Data", req.body)
-        await addCustomer(req.body);
+        addCustomer(req.body);
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', details: req.body });
@@ -37,7 +37,6 @@ const updateCustomerDetails = async (req, res) => {
           firstName: first_name,
           lastName: last_name,
           email: primary_email,
-          secondary_email: secondary_email,
           country_code,
           phoneNumber: primary_phone_number,
           secondaryPhoneNumber,
@@ -65,7 +64,6 @@ const updateCustomerDetails = async (req, res) => {
           first_name,
           last_name,
           primary_email,
-          secondary_email,
           country_code,
           primary_phone_number,
           secondary_phone_number: secondaryPhoneNumber ? secondaryPhoneNumber : null,

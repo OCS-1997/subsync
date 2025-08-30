@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ToastContainer, toast, Bounce } from "react-toastify";
+import { toast} from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,6 @@ function GSTSettings() {
 
     return (
         <>
-        <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
         <div className="md:w-[50%] w-full">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <h1 className="text-2xl font-bold mb-4">GST Settings</h1>

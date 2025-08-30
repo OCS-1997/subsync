@@ -38,7 +38,7 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                   key={`${item[primaryKey]}-${header.key}`}
                   className={
                     "px-4 py-2 text-left " +
-                    (header.key === "customer_status"
+                    (header.key === "customer_status" || header.key === "vendor_status"
                       ? item[header.key] === "Active"
                         ? "text-green-500 font-bold"
                         : item[header.key] === "Inactive"

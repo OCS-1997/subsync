@@ -4,9 +4,10 @@ function SearchFilterForm({ search, setSearch, handleSearch }) {
   return (
     <div className="w-full flex flex-col sm:flex-row items-center gap-2 mb-2">
       <div className="relative w-full sm:w-auto">
-        <Command className="border-b-0 border-gray-300">
+        <Command className="border rounded-full  border-gray-300">
           <CommandInput
             value={search}
+            className="text-pretty w-full font-semibold "
             onValueChange={setSearch}
             placeholder="Search"
             onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}

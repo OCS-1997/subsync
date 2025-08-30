@@ -52,7 +52,7 @@ function LoginPage() {
 
   return (
     <>
-      <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+      
       <div className={`min-h-screen flex items-center justify-center transition-all duration-1000 relative overflow-hidden ${
         showPassword ? 'bg-black' : 'bg-gradient-to-tl from-blue-50 via-blue-100 to-blue-200'
       }`}

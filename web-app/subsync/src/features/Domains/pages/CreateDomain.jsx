@@ -228,7 +228,7 @@ function AddDomain() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+     
       <button
           onClick={handleBack}
           className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
