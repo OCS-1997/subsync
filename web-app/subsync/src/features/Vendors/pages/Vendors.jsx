@@ -1,6 +1,6 @@
 import { Eye, FileUp, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ToastContainer, toast, Bounce } from "react-toastify";
+import { toast} from "react-toastify";
 import { useState, useEffect, useRef } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
@@ -185,7 +185,6 @@ function Vendors() {
 
   return (
     <>
-      <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
       <div className="flex flex-col p-6 rounded-lg shadow-lg">
         <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
         <hr className="mb-4 border-blue-500 border-3 size-auto" />

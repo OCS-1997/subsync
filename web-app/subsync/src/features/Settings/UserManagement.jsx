@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast, Bounce } from "react-toastify";
+import { toast} from "react-toastify";
 import { UserPlus, UserRoundPen, UserRoundMinus } from "lucide-react";
 import { useNavigate, useParams, Outlet } from "react-router-dom";
 import api from "@/lib/axiosInstance";
@@ -57,7 +57,7 @@ const UserManagement = () => {
 
   return (
     <div className="py-4 px-2">
-     <ToastContainer autoClose={2000} position="top-right" theme="colored" transition={Bounce} pauseOnHover />
+  
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white tracking-tight">User Management</h2>

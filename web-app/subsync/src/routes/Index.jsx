@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import AddCustomer from '@/features/Customers/pages/AddCustomer.jsx';
 import AddService from '@/features/Services/pages/AddService.jsx';
 import AddTax from '@/features/Settings/AddTax.jsx';
+import AddTaxGroup from '@/features/Settings/AddTaxGroup.jsx';
 import AddVendor from '@/features/Vendors/pages/AddVendor.jsx';
 import AllTaxes from '@/features/Settings/AllTaxes.jsx';
 import CreateDomain from '@/features/Domains/pages/CreateDomain.jsx';
@@ -61,6 +62,8 @@ const router = createBrowserRouter([
             children: [
               { path: "tax-rates", element: <AllTaxes /> },
               { path: "tax-rates/add", element: <AddTax /> },
+              { path: "tax-groups/add", element: <AddTaxGroup /> },
+              { path: "tax-groups/edit/:id", element: <AddTaxGroup /> },
               { path: "tax-rates/edit/:id", element: <AddTax /> },
               { path: "default-tax-pref", element: <DefaultTaxPreference /> },
               { path: "gst-settings", element: <GSTSettings /> },

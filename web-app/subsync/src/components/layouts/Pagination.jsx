@@ -2,13 +2,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-function Pagination({ currentPage, setCurrentPage, totalPages }) {
+function Pagination({ currentPage, setCurrentPage, totalPages, totalRecords }) {
+  // Ensure totalPages is at least 1
+  const safeTotalPages = Math.max(1, totalPages);
+
   return (
     <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
       <div>
         <p className="text-sm text-gray-700">
           Showing page <span className="font-medium">{currentPage}</span> of{" "}
-          <span className="font-medium">{totalPages}</span>
+          <span className="font-medium">{safeTotalPages}</span>
+          {typeof totalRecords === "number" && (
+            <> &nbsp;|&nbsp; Total records: <span className="font-medium">{totalRecords}</span></>
+          )}
         </p>
       </div>
       <nav className="inline-flex items-center gap-2" aria-label="Pagination">
@@ -16,7 +22,7 @@ function Pagination({ currentPage, setCurrentPage, totalPages }) {
           variant="outline"
           size="icon"
           onClick={() => setCurrentPage(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage <= 1}
           className="rounded-full"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -25,7 +31,7 @@ function Pagination({ currentPage, setCurrentPage, totalPages }) {
           variant="outline"
           size="icon"
           onClick={() => setCurrentPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage >= safeTotalPages}
           className="rounded-full"
         >
           <ChevronRight className="h-5 w-5" />

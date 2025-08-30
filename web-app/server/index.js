@@ -10,7 +10,7 @@ import morgan from 'morgan';
 dotenv.config();
 const app = express();
 app.use(express.json());
-app.use(morgan('dev'))
+// app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.set('trust proxy', true);

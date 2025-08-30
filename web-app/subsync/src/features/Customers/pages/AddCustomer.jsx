@@ -327,7 +327,7 @@ const AddCustomer = () => {
 
   return (
     <div className="container mt-4 ml-4">
-      <ToastContainer position="top-center" autoClose={2000} theme="dark" transition={Bounce} pauseOnHover />
+     
       <button
           onClick={handleBack}
           className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"

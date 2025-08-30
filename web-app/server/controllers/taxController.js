@@ -1,6 +1,11 @@
 import {
     getTaxes, addTax, updateTax, removeTax,
-    getDefaultTaxPreference, setDefaultTaxPreference, getTaxById
+    getDefaultTaxPreference, setDefaultTaxPreference, getTaxById,
+    // tax groups
+    getTaxGroups, getTaxGroupById, createTaxGroup, updateTaxGroup, deleteTaxGroup,
+    // intra/inter defaults
+    getDefaultTaxPreferences, setDefaultTaxPreferences,
+    getTaxGroupsWithMembers
 } from "../models/taxModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 
@@ -9,7 +14,8 @@ import { logActivity } from "../models/activityLogModel.js";
  */
 const getAllTaxes = async (req, res) => {
     try {
-        const taxes = await getTaxes();
+        const includeInactive = (req.query || {}).include === 'inactive' || (req.query || {}).include === 'all';
+        const taxes = await getTaxes({ includeInactive });
         res.status(200).json({ taxes });
     } catch (error) {
         console.error("Error in getAllTaxes:", error);
@@ -191,6 +197,100 @@ const getAllActiveTaxRates = async (req, res) => {
     }
 };
 
+// -------------------- TAX GROUP CONTROLLERS --------------------
+const getAllTaxGroupsController = async (req, res) => {
+    try {
+        const include = (req.query || {}).include;
+        const groups = include === 'members' ? await getTaxGroupsWithMembers() : await getTaxGroups();
+        res.status(200).json({ groups });
+    } catch (error) {
+        console.error("Error in getAllTaxGroupsController:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch tax groups" });
+    }
+};
+
+const getTaxGroupByIdController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const group = await getTaxGroupById(id);
+        if (!group) return res.status(404).json({ error: "Tax group not found" });
+        res.status(200).json({ group });
+    } catch (error) {
+        console.error("Error in getTaxGroupByIdController:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch tax group" });
+    }
+};
+
+const createTaxGroupController = async (req, res) => {
+    try {
+        const { groupName, description, taxIds } = req.body;
+        if (!groupName) return res.status(400).json({ error: "Group name is required" });
+        const group = await createTaxGroup({ groupName, description, taxIds });
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'CREATE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: group.group_id, details: { groupName, taxIds } });
+        }
+        res.status(201).json({ message: "Tax group created successfully", group });
+    } catch (error) {
+        console.error("Error in createTaxGroupController:", error);
+        res.status(400).json({ error: error.message || "Failed to create tax group" });
+    }
+};
+
+const updateTaxGroupController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { groupName, description, taxIds } = req.body;
+        const group = await updateTaxGroup(id, { groupName, description, taxIds });
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'UPDATE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: id, details: { groupName, taxIds } });
+        }
+        res.status(200).json({ message: "Tax group updated successfully", group });
+    } catch (error) {
+        console.error("Error in updateTaxGroupController:", error);
+        res.status(400).json({ error: error.message || "Failed to update tax group" });
+    }
+};
+
+const deleteTaxGroupController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await deleteTaxGroup(id);
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'DELETE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: id });
+        }
+        res.status(200).json({ message: "Tax group deleted successfully" });
+    } catch (error) {
+        console.error("Error in deleteTaxGroupController:", error);
+        res.status(400).json({ error: error.message || "Failed to delete tax group" });
+    }
+};
+
+// -------------------- INTRA/INTER DEFAULTS --------------------
+const getDefaultTaxPreferencesController = async (req, res) => {
+    try {
+        const prefs = await getDefaultTaxPreferences();
+        res.status(200).json({ preferences: prefs });
+    } catch (error) {
+        console.error("Error in getDefaultTaxPreferencesController:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch default tax preferences" });
+    }
+};
+
+const setDefaultTaxPreferencesController = async (req, res) => {
+    try {
+        const { intra, inter } = req.body;
+        await setDefaultTaxPreferences({ intra: intra || null, inter: inter || null });
+        const updated = await getDefaultTaxPreferences();
+        if (req.user && req.user.username) {
+            await logActivity({ username: req.user.username, action: 'SET_DEFAULT_TAX_PREFERENCES', resourceType: 'TaxPreference', details: updated });
+        }
+        res.status(200).json({ message: "Default tax preferences updated", preferences: updated });
+    } catch (error) {
+        console.error("Error in setDefaultTaxPreferencesController:", error);
+        res.status(400).json({ error: error.message || "Failed to set default tax preferences" });
+    }
+};
+
 export { 
     getAllTaxes, 
     getTaxByIdController,
@@ -199,5 +299,14 @@ export {
     deleteTax, 
     getDefaultTaxPref, 
     setDefaultTaxPref,
-    getAllActiveTaxRates 
+    getAllActiveTaxRates,
+    // tax groups
+    getAllTaxGroupsController,
+    getTaxGroupByIdController,
+    createTaxGroupController,
+    updateTaxGroupController,
+    deleteTaxGroupController,
+    // intra/inter defaults
+    getDefaultTaxPreferencesController,
+    setDefaultTaxPreferencesController
 };

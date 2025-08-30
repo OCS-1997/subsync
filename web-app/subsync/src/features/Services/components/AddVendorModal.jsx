@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
-import { ToastContainer, toast, Bounce } from "react-toastify";
+import { toast} from "react-toastify";
 import countryList from "react-select-country-list";
 
 import { Button } from "@/components/ui/button";
@@ -355,14 +355,7 @@ const AddVendorModal = ({ isEditing = false, editableVendor = null, onVendorAdde
 
   return (
     <>
-    <ToastContainer 
-      autoClose={2000} 
-      position="top-right" 
-      theme="colored" 
-      transition={Bounce} 
-      pauseOnHover
-      style={{ zIndex: 9999 }}
-    />
+   
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
