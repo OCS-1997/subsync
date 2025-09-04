@@ -161,8 +161,8 @@ const getAllVendors = async ({ search = "", sort = "display_name", order = "asc"
             [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]
         );
 
-        const totalPages = Math.ceil(total / limit);
-        return { vendors, totalPages };
+    const totalPages = Math.ceil(total / limit);
+    return { vendors, totalPages, totalRecords: total };
     } catch (error) {
         console.error("Error fetching vendors:", error);
         throw error;

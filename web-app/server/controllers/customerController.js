@@ -103,15 +103,14 @@ const updateCustomerDetails = async (req, res) => {
  * @returns {Promise<void>}
  */
 const fetchAllCustomers = async (req, res) => {
-    try {
-      const { search = "", sort = "display_name", order = "asc", page = 1, limit = 10 } = req.query;
-      const { customers, totalPages } = await getAllCustomers({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
-  
-      res.status(200).json({ customers, totalPages });
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-      res.status(500).json({ error: "Failed to fetch customers from the database." });
-    }
+        try {
+            const { search = "", sort = "display_name", order = "asc", page = 1, limit = 10 } = req.query;
+            const { customers, totalPages, totalRecords } = await getAllCustomers({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
+            res.status(200).json({ customers, totalPages, totalRecords });
+        } catch (error) {
+            console.error("Error fetching customers:", error);
+            res.status(500).json({ error: "Failed to fetch customers from the database." });
+        }
 };  
 
 /**

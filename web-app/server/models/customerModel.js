@@ -216,8 +216,8 @@ const getAllCustomers = async ({ search = "", sort = "display_name", order = "as
             [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]
         );
 
-        const totalPages = Math.ceil(total / limit);
-        return({customers, totalPages});
+    const totalPages = Math.ceil(total / limit);
+    return { customers, totalPages, totalRecords: total };
     } catch (error) {
       console.error("Error fetching customers:", error);
       throw error;

@@ -45,8 +45,9 @@ const createServiceController = async (req, res) => {
 // READ All Services
 const getAllServicesController = async (req, res) => {
   try {
-    const services = await getAllServices();
-    return res.status(200).json({ services });
+    const { search = "", sort = "service_name", order = "asc", page = 1, limit = 10 } = req.query;
+    const result = await getAllServices({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
+    return res.status(200).json(result); // { services, totalPages, totalRecords }
   } catch (error) {
     console.error("Error fetching services:", error);
     return res.status(500).json({ error: "Internal Server Error" });

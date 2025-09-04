@@ -26,7 +26,8 @@ function Domains() {
   const itemsPerPage = 10;
   const { username } = useParams();
   const dispatch = useDispatch();
-  const { list: domains, loading, error } = useSelector((state) => state.domains);
+  // Update selector to get totalPages and totalRecords from backend
+  const { list: domains, loading, error, totalPages, totalRecords } = useSelector((state) => state.domains);
 
   const headers = [
     { key: "domain_name", label: "Domain Name" },
@@ -138,37 +139,6 @@ function Domains() {
     }
   };
 
-  const filteredDomains = domains
-    .filter((domain) => {
-      const term = search.toLowerCase();
-      return (
-        domain.domain_name?.toLowerCase().includes(term) ||
-        domain.customer_name?.toLowerCase().includes(term) ||
-        domain.registered_with?.toLowerCase().includes(term) ||
-        domain.name_servers?.join(",").toLowerCase().includes(term) ||
-        domain.mail_service_provider?.toLowerCase().includes(term) ||
-        domain.description?.toLowerCase().includes(term)
-      );
-    });
-
-  // Sorting logic
-  const sortedDomains = sortBy
-    ? [...filteredDomains].sort((a, b) => {
-        const aValue = a[sortBy] || "";
-        const bValue = b[sortBy] || "";
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortOrder === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-      })
-    : filteredDomains;
-
-  const totalRecords = sortedDomains.length;
-  const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
-  const paginatedDomains = sortedDomains.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   return (
     
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
@@ -202,11 +172,11 @@ function Domains() {
         <div className="flex justify-center items-center my-10">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
         </div>
-      ) : sortedDomains.length > 0 ? (
+      ) : domains.length > 0 ? (
         <>
           <GenericTable
             headers={headers}
-            data={paginatedDomains.map((domain) => {
+            data={domains.map((domain) => {
               const {
                 domain_id,
                 domain_name,
@@ -283,3 +253,4 @@ function Domains() {
 }
 
 export default Domains;
+                       

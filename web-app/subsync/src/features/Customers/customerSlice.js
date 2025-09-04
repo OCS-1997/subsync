@@ -42,22 +42,59 @@ export const updateCustomer = createAsyncThunk(
   }
 );
 
+export const fetchCustomers = createAsyncThunk(
+  'customers/fetchCustomers',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const res = await api.get('/all-customers', { params });
+      return {
+        customers: res.data.customers,
+        totalPages: res.data.totalPages,
+        totalRecords: res.data.totalRecords,
+      };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to fetch customers';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const customerSlice = createSlice({
   name: 'customers',
   initialState: {
+    list: [],
     currentCustomer: null,
     loading: false,
     error: null,
+    totalPages: 1,
+    totalRecords: 0,
   },
   reducers: {
     clearCustomerState: (state) => {
       state.currentCustomer = null;
       state.loading = false;
       state.error = null;
+      state.list = [];
+      state.totalPages = 1;
+      state.totalRecords = 0;
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchCustomers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCustomers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.list = action.payload.customers;
+        state.totalPages = action.payload.totalPages;
+        state.totalRecords = action.payload.totalRecords;
+      })
+      .addCase(fetchCustomers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(fetchCustomerById.pending, (state) => {
         state.loading = true;
         state.error = null;

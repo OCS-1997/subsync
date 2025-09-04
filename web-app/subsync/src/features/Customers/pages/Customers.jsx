@@ -1,10 +1,10 @@
-import axios from "axios";
 import { saveAs } from "file-saver";
 import { Eye, FileDown, FileUp, UserPlus } from "lucide-react";
 import * as Papa from "papaparse";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -14,9 +14,7 @@ import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
-import useFetchData from "@/hooks/useFetchData.js";
-
-import "jspdf-autotable";
+import { fetchCustomers } from "@/features/Customers/customerSlice.js";
 
 const headers = [
   { key: "first_name", label: "Customer Name" },
@@ -29,6 +27,9 @@ const headers = [
 ];
 
 function Customers() {
+  const dispatch = useDispatch();
+  const { list: customers, loading, error, totalPages, totalRecords } = useSelector((state) => state.customers);
+
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [search, setSearch] = useState("");
@@ -36,7 +37,7 @@ function Customers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [file, setFile] = useState(null);
   const [importData, setImportData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingImport, setLoading] = useState(false);
 
   // Debounce search
   const debounceTimeout = useRef();
@@ -48,14 +49,18 @@ function Customers() {
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
-  const { data = [], error, loading: fetchLoading, totalPages = 0 } = useFetchData(
-    `${import.meta.env.VITE_API_URL}/all-customers`,
-    { search: debouncedSearch, sort: sortBy, order: sortOrder, currentPage }
-  );
-
   useEffect(() => {
     setCurrentPage(1);
   }, [search, sortBy, sortOrder]);
+
+  useEffect(() => {
+    dispatch(fetchCustomers({
+      search: debouncedSearch,
+      sortBy,
+      order: sortOrder,
+      page: currentPage
+    }));
+  }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   const handleSearch = (e) => {
     if (e.key === "Enter") setCurrentPage(1);
@@ -193,36 +198,14 @@ function Customers() {
     </div>
   );
 
-  const filteredData = data
-    .filter((c) => {
-      const term = debouncedSearch.toLowerCase();
-      return (
-        c.customer_id.toString().toLowerCase().includes(term) ||
-        c.salutation.toLowerCase().includes(term) ||
-        c.first_name.toLowerCase().includes(term) ||
-        c.last_name?.toLowerCase().includes(term) ||
-        c.display_name.toLowerCase().includes(term) ||
-        c.company_name.toLowerCase().includes(term) ||
-        c.primary_phone_number.toString().toLowerCase().includes(term) ||
-        c.primary_email.toLowerCase().includes(term) ||
-        c.gst_in?.toLowerCase().includes(term) ||
-        c.customer_status.toLowerCase().includes(term)
-      );
-    })
-    .sort((a, b) => {
-      const aValue = a[sortBy] || "";
-      const bValue = b[sortBy] || "";
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortOrder === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-    });
+  // Use customers from Redux, format for table
+  const paginatedData = customers.map((c) => ({
+    ...c,
+    first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
+    phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
+    actions: renderActions(c.customer_id),
+  }));
 
-  const totalRecords = filteredData.length;
-  const paginatedData = filteredData.slice((currentPage - 1) * 10, currentPage * 10);
-  
   return (
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
       <h1 className="w-full text-3xl font-bold mb-2">Customers</h1>
@@ -273,7 +256,7 @@ function Customers() {
         </Alert>
       )}
 
-      {(fetchLoading || loading) ? (
+      {loading ? (
         <div className="flex justify-center items-center my-8">
           <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
         </div>
@@ -281,12 +264,7 @@ function Customers() {
         <>
           <GenericTable
             headers={headers}
-            data={paginatedData.map((c) => ({
-              ...c,
-              first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
-              phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
-              actions: renderActions(c.customer_id),
-            }))}
+            data={paginatedData}
             primaryKey="customer_id"
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -310,3 +288,4 @@ function Customers() {
 }
 
 export default Customers;
+           

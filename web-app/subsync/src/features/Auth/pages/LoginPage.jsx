@@ -8,11 +8,12 @@ import { loginUser } from '../authSlice';
 
 import 'react-toastify/dist/ReactToastify.css';
 
+
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showForm, setShowForm] = useState(false); // NEW STATE
+  const [showForm, setShowForm] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -52,7 +53,6 @@ function LoginPage() {
 
   return (
     <>
-      
       <div className={`min-h-screen flex items-center justify-center transition-all duration-1000 relative overflow-hidden ${
         showPassword ? 'bg-black' : 'bg-gradient-to-tl from-blue-50 via-blue-100 to-blue-200'
       }`}
@@ -166,19 +166,24 @@ function LoginPage() {
           />
         )}
 
-        {/* Centered Login Button (Morphs into Form) */}
+        {/* Landing Image (replaces Login Button) */}
         <div className="flex items-center justify-center w-full h-full absolute top-0 left-0 z-30">
           {!showForm && (
-            <button
-              className="login-morph-btn bg-gradient-to-r from-white to-gray-50 hover:bg-gray-50 text-blue-700 border border-blue-200 font-bold py-3 px-12 rounded shadow-lg text-xl transition-all duration-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
-              style={{
-                transition: 'all 0.7s cubic-bezier(.68,-0.55,.27,1.55)',
-                // Centered and large
-              }}
-              onClick={() => setShowForm(true)}
-            >
-              Login
-            </button>
+           <img
+            src="../landing_image.png"
+            alt="Landing"
+            className={`landing-img  transition-all duration-700
+              ${showForm ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'}
+            `}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              transition: 'all 0.7s cubic-bezier(.68,-0.55,.27,1.55)'
+            }}
+            onClick={() => setShowForm(true)}
+            />
           )}
         </div>
 
@@ -425,6 +430,13 @@ function LoginPage() {
           opacity: 1;
           pointer-events: auto;
           transform: translate(-50%, -50%) scale(1);
+        }
+
+        .landing-img {
+          box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 1.5px 8px rgba(0,0,0,0.10);
+        }
+        .landing-img:active {
+          filter: brightness(0.97) blur(0.5px);
         }
       `}</style>
     </>

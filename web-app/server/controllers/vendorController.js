@@ -29,8 +29,9 @@ export const createVendorController = async (req, res) => {
 // READ All Vendors
 export const getAllVendorsController = async (req, res) => {
     try {
-        const result = await getAllVendors(req.query);
-        return res.status(200).json(result); // Return {vendors: [], totalPages: number}
+        const { search = "", sort = "display_name", order = "asc", page = 1, limit = 10 } = req.query;
+        const { vendors, totalPages, totalRecords } = await getAllVendors({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
+        return res.status(200).json({ vendors, totalPages, totalRecords });
     } catch (error) {
         console.error("Error fetching all vendors:", error);
         return res.status(500).json({ error: "Internal Server Error" });

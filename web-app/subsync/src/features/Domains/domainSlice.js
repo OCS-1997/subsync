@@ -7,7 +7,12 @@ export const fetchDomains = createAsyncThunk(
   async (params = {}, { rejectWithValue }) => {
     try {
       const res = await api.get('/all-domains', { params });
-      return res.data.domains;
+      // Return the full response, not just domains
+      return {
+        domains: res.data.domains,
+        totalPages: res.data.totalPages,
+        totalRecords: res.data.totalRecords,
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch domains');
     }
@@ -58,12 +63,18 @@ const domainSlice = createSlice({
     currentDomain: null,
     loading: false,
     error: null,
+    totalPages: 1,
+    totalRecords: 0,
   },
   reducers: {
     clearDomainState: (state) => {
       state.currentDomain = null;
       state.loading = false;
       state.error = null;
+      // Resetting list, totalPages, and totalRecords as well
+      state.list = [];
+      state.totalPages = 1;
+      state.totalRecords = 0;
     },
   },
   extraReducers: (builder) => {
@@ -74,7 +85,9 @@ const domainSlice = createSlice({
       })
       .addCase(fetchDomains.fulfilled, (state, action) => {
         state.loading = false;
-        state.list = action.payload;
+        state.list = action.payload.domains;
+        state.totalPages = action.payload.totalPages;
+        state.totalRecords = action.payload.totalRecords;
       })
       .addCase(fetchDomains.rejected, (state, action) => {
         state.loading = false;

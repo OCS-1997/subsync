@@ -44,9 +44,9 @@ const updateDomainDetails = async (req, res) => {
  */
 const fetchAllDomains = async (req, res) => {
     try {
-        const { search = "", sort = "name", order = "asc", page = 1, limit = 10 } = req.query;
-        const { domains, totalPages } = await getAllDomains({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
-        res.status(200).json({ domains, totalPages });
+        const { search = "", sort = "domain_name", order = "asc", page = 1, limit = 10 } = req.query;
+        const { domains, totalPages, totalRecords } = await getAllDomains({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
+        res.status(200).json({ domains, totalPages, totalRecords });
     } catch (error) {
         console.error("Error fetching domains:", error);
         res.status(500).json({ error: "Failed to fetch domains from the database." });

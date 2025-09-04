@@ -15,6 +15,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.set('trust proxy', true);
 
+// To get the real client IP in your routes/middleware:
+// const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+
 // Add request logging
 // app.use((req, res, next) => {
 //     console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);

@@ -28,15 +28,17 @@ const createService = async (service) => {
 }
 
 // READ - All (MODIFIED TO JOIN TABLES FOR DISPLAY NAMES)
-const getAllServices = async () => {
+const getAllServices = async ({ search = "", sort = "service_name", order = "asc", page = 1, limit = 10 } = {}) => {
+  const offset = (page - 1) * limit;
+  const searchQuery = `%${search}%`;
   const query = `
     SELECT
         s.service_id,
         s.service_name,
         s.stock_keepers_unit,
         s.tax_preference,
-        s.item_group AS item_group_id, -- Keep ID for internal use
-        ig.item_group_name, -- Join to get the name
+        s.item_group AS item_group_id,
+        ig.item_group_name,
         s.sales_info,
         s.purchase_info,
         s.preferred_vendor,
@@ -51,10 +53,30 @@ const getAllServices = async () => {
         item_groups ig ON s.item_group = ig.item_group_id
     LEFT JOIN
         vendors v ON s.preferred_vendor = v.vendor_id
-    ORDER BY s.created_at DESC;
+    WHERE (
+      s.service_name LIKE ? OR
+      s.stock_keepers_unit LIKE ? OR
+      ig.item_group_name LIKE ? OR
+      v.display_name LIKE ?
+    )
+    ORDER BY ?? ${order.toUpperCase()}
+    LIMIT ? OFFSET ?;
   `;
-  const [rows] = await appDB.execute(query);
-  return rows;
+  const [rows] = await appDB.query(query, [searchQuery, searchQuery, searchQuery, searchQuery, sort, parseInt(limit), parseInt(offset)]);
+  const [[{ total }]] = await appDB.query(
+    `SELECT COUNT(*) as total FROM services s
+      LEFT JOIN item_groups ig ON s.item_group = ig.item_group_id
+      LEFT JOIN vendors v ON s.preferred_vendor = v.vendor_id
+      WHERE (
+        s.service_name LIKE ? OR
+        s.stock_keepers_unit LIKE ? OR
+        ig.item_group_name LIKE ? OR
+        v.display_name LIKE ?
+      )`,
+    [searchQuery, searchQuery, searchQuery, searchQuery]
+  );
+  const totalPages = Math.ceil(total / limit);
+  return { services: rows, totalPages, totalRecords: total };
 }
 
 // READ - One

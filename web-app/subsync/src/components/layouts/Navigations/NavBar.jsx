@@ -13,6 +13,14 @@ const navItems = [
   { path: "logout", title: "Logout", key: "logout", icon: LogOut },
 ];
 
+function formatIp(ip) {
+  // Remove IPv6 prefix if present
+  if (typeof ip === "string" && ip.startsWith("::ffff:")) {
+    return ip.replace("::ffff:", "");
+  }
+  return ip;
+}
+
 function NavBar({ toggleSidebar }) {
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -23,8 +31,6 @@ function NavBar({ toggleSidebar }) {
   const loginTime = user?.loginTime;
   const role = useSelector(state => state.auth.role);
   const isAdmin = role && role.toLowerCase() === 'admin';
-
- 
 
   const handleLogout = () => {
     dispatch(logout());
@@ -39,22 +45,16 @@ function NavBar({ toggleSidebar }) {
             <span className="material-symbols-outlined">menu</span>
           </Button>
           <div className="flex-shrink-0 flex items-center bg-[#39a0e4] p-2 rounded">
-        
-        
             <img src="/logo.png" alt="" className="h-8 w-auto" />
-         
-     
           </div>
         </div>
-       
-
         <div className="flex items-center">
             {loginIp && loginTime && (
                 <div className="px-3 py-2  justify-end items-end text-xs text-gray-500  mb-2">
-                  <div >IP: {loginIp}</div>
+                  <div>IP: {formatIp(loginIp)}</div>
                   <div>Logged in: {new Date(loginTime).toLocaleString()}</div>
                 </div>
-                )}
+            )}
           <Button
             variant="ghost"
             className="h-6 w-6 p-3 rounded-full hover:bg-gray-100"

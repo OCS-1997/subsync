@@ -7,6 +7,8 @@ export const isAuthenticated = (req, res, next) => {
         jwt.verify(token, process.env.JWT_SECRET || "your_secret_key", (err, user) => {
             if (err) return res.status(403).json({ error: "Invalid or expired token" });
             req.user = user;
+            // Set real client IP (works with Nginx and trust proxy)
+            req.user.ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
             next();
         });
     } else {

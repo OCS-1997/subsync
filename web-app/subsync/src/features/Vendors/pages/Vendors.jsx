@@ -1,7 +1,8 @@
 import { Eye, FileUp, UserPlus } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { toast} from "react-toastify";
+import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -10,7 +11,7 @@ import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
-import useFetchData from "@/hooks/useFetchData.js";
+import { fetchVendors } from "@/features/Services/vendorSlice.js";
 
 const headers = [
   { key: "display_name", label: "Vendor Display Name" },
@@ -24,16 +25,15 @@ const headers = [
 function Vendors() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
+
+  const { list: vendors, loading, error } = useSelector((state) => state.vendors);
+
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [vendors, setVendors] = useState([]);
-  const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [vendorsError, setVendorsError] = useState(null);
 
   // Debounce search
   const debounceTimeout = useRef();
@@ -45,22 +45,23 @@ function Vendors() {
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
-  const { data = [], error, loading: fetchLoading} = useFetchData(
-    `${import.meta.env.VITE_API_URL}/all-vendors`,
-    { search: debouncedSearch, sort: sortBy, order:  sortOrder, currentPage, refreshKey }
-  );
-
-  // console.log("Vendors: useFetchData - data:", data, "error:", error, "loading:", fetchLoading, "totalPages:", totalPages);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [search, sortBy, sortOrder]);
 
+  useEffect(() => {
+    // Dispatch fetchVendors with params for search, sort, pagination
+    dispatch(fetchVendors({
+      search: debouncedSearch,
+      sortBy,
+      order: sortOrder,
+      page: currentPage
+    }));
+  }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
+
   const handleSearch = (e) => {
     if (e.key === "Enter") setCurrentPage(1);
   };
-
-
 
   const handleSort = (key) => {
     if (sortBy === key && sortOrder === "asc") {
@@ -127,62 +128,18 @@ function Vendors() {
     </div>
   );
 
-  const filteredData = data
-    
-    .filter((v) => {
-        const term = search.toLowerCase();
-        return (
-          (v.vendor_id?.toString().toLowerCase().includes(term) || "") ||
-          (v.display_name?.toLowerCase().includes(term) || "") ||
-          (v.company_name?.toLowerCase().includes(term) || "") ||
-          (v.primary_phone_number?.toString().toLowerCase().includes(term) || "") ||
-          (v.primary_email?.toLowerCase().includes(term) || "") ||
-          (v.vendor_status?.toLowerCase().includes(term) || "")
-        );
-      });
-
-  // Sorting logic
-  const sortedData = sortBy
-    ? [...filteredData].sort((a, b) => {
-        const aValue = a[sortBy] || "";
-        const bValue = b[sortBy] || "";
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortOrder === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-      })
-    : filteredData;
-
+  // Filtering and sorting are now handled by backend, but you can still do client-side filtering if needed
+  // For now, just use vendors from Redux
   const itemsPerPage = 10;
-  const totalRecords = sortedData.length;
+  const totalRecords = vendors.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
-  const paginatedData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedData = vendors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleAddVendor = () => {
     const currentPath = location.pathname;
     const userSegment = currentPath.split("/")[1];
     navigate(`/${userSegment}/dashboard/vendors/add`);
   };
-
-  // Fetch all vendors on load or refreshKey change
-  useEffect(() => {
-    const fetchVendors = async () => {
-      setVendorsLoading(true);
-      setVendorsError(null);
-      try {
-        const response = await api.get("/all-vendors");
-        const vendorList = Array.isArray(response.data) ? response.data : response.data.vendors;
-        setVendors(vendorList || []);
-      } catch (err) {
-        setVendorsError("Failed to fetch vendors.");
-      } finally {
-        setVendorsLoading(false);
-      }
-    };
-    fetchVendors();
-  }, [refreshKey]);
 
   return (
     <>
@@ -226,11 +183,11 @@ function Vendors() {
           </Alert>
         )}
 
-        {(fetchLoading || loading || vendorsLoading) ? (
+        {loading ? (
           <div className="flex justify-center items-center my-8">
             <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
           </div>
-        ) : sortedData.length > 0 ? (
+        ) : paginatedData.length > 0 ? (
           <>
             <GenericTable
               headers={headers}
@@ -262,3 +219,4 @@ function Vendors() {
 }
 
 export default Vendors;
+       

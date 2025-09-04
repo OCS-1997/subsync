@@ -124,6 +124,20 @@ const getAllDomains = async ({ search = "", sort = "domain_name", order = "asc",
     }
 
     try {
+        // Get total count first
+        const [[{ total }]] = await appDB.query(
+            `SELECT COUNT(DISTINCT d.domain_id) as total 
+             FROM domains d 
+             WHERE (
+                d.domain_name LIKE ? OR
+                d.customer_name LIKE ? OR
+                d.registered_with LIKE ? OR
+                d.description LIKE ?
+             )`,
+            [searchQuery, searchQuery, searchQuery, searchQuery]
+        );
+
+        // Get paginated data
         const [domains] = await appDB.query(
             `SELECT d.*, GROUP_CONCAT(dns.name_server) as name_servers
              FROM domains d
@@ -145,20 +159,9 @@ const getAllDomains = async ({ search = "", sort = "domain_name", order = "asc",
             domain.name_servers = domain.name_servers ? domain.name_servers.split(',') : [];
         });
 
-        const [[{ total }]] = await appDB.query(
-            `SELECT COUNT(DISTINCT d.domain_id) as total 
-             FROM domains d 
-             WHERE (
-                d.domain_name LIKE ? OR
-                d.customer_name LIKE ? OR
-                d.registered_with LIKE ? OR
-                d.description LIKE ?
-             )`,
-            [searchQuery, searchQuery, searchQuery, searchQuery]
-        );
-
-        const totalPages = Math.ceil(total / limit);
-        return { domains, totalPages };
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+        // console.log("Total records:", total, "Total pages:", totalPages);
+        return { domains, totalPages, totalRecords: total };
     } catch (error) {
         console.error("Error fetching domains:", error);
         throw error;
