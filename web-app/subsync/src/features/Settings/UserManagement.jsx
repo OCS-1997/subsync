@@ -58,19 +58,21 @@ const UserManagement = () => {
   return (
     <div className="py-4 px-2">
   
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white tracking-tight">User Management</h2>
-          {isAdmin && (
-            <button
-              onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user`)}
-              className="inline-flex items-center gap-2 bg-blue-500 text-white px-5 py-2.5 rounded-lg shadow-lg hover:bg-blue-600 transition font-semibold"
-            >
+          
+            {isAdmin && (
+              <button
+                onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user`)}
+                className="inline-flex items-center gap-2 bg-blue-500 text-white px-5 py-2.5 rounded-lg shadow-lg hover:bg-blue-600 transition font-semibold"
+              >
               <UserPlus size={20} />
               Add User
             </button>
           )}
         </div>
+       <hr className="mb-10 border-gray-200 dark:border-gray-700" />
         <div className="flex items-center justify-between mb-6">
           <input
             type="text"

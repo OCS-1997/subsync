@@ -17,7 +17,7 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   return (
     <aside
-      className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-blue-500 text-primary-foreground
+      className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-blue-500 text-primary-foreground 
         transition-all duration-300 ease-in-out
         ${isOpen ? 'w-64' : 'w-16'}
         lg:relative lg:translate-x-0
@@ -45,7 +45,7 @@ function SideBar({ isOpen, toggleSidebar }) {
                   <TooltipTrigger asChild>
                     <Link
                       to={`/${username}/${item.path}`}
-                      className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-primary-foreground/10 transition-colors"
+                      className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-primary-foreground/10 hover:translate-x-3   duration-300 ease-in-out transition-all"
                     >
                       <span className="material-symbols-outlined">{item.icon}</span>
                       {isOpen && <span>{item.title}</span>}

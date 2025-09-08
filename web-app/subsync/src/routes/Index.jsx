@@ -24,6 +24,7 @@ import VendorDetails from '@/features/Vendors/pages/VendorDetails';
 import UserManagement from '@/features/Settings/UserManagement';
 import AddUser from '@/features/Settings/AddUser';
 import AdminActivityLog from '@/features/Settings/AdminActivityLog.jsx';
+import ComingSoon from '@/features/ComingSoon/ComingSoon';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -51,11 +52,13 @@ const router = createBrowserRouter([
       { path: "vendors/add", element: <AddVendor /> },
       { path: "vendors/:id/edit", element: <AddVendor /> },
 
+      {path: "subscriptions", element: <ComingSoon />},
+
       {
         path: "settings",
         element: <Settings />,
         children: [
-          { path: "profile", element: <Settings /> },
+          { path: "profile", element: <ComingSoon /> },
           {
             path: "taxes",
             element: <Taxes />,
@@ -69,6 +72,7 @@ const router = createBrowserRouter([
               { path: "gst-settings", element: <GSTSettings /> },
             ]
           },
+          
           {path: "user-management", element: <UserManagement/>},
           {path: "user-management/add-user", element: <AddUser />},
           {path: "user-management/add-user/:editUsername", element: <AddUser />},

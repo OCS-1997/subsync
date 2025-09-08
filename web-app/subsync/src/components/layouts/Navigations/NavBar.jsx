@@ -1,6 +1,7 @@
 import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import {motion, AnimatePresence} from "framer-motion";
 import { useState } from "react";
 import { ThemeToggle } from "../ThemeToggle";
 import { Button } from "@/components/ui/button.jsx";
@@ -38,14 +39,14 @@ function NavBar({ toggleSidebar }) {
   };
 
   return (
-    <nav className="bg-white shadow-md rounded-b-lg border-b-2 mb-2 border-gray-200">
+    <nav className="bg-white shadow-md rounded-b-lg border-b-2  border-gray-200">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
         <div className="flex">
           <Button variant="ghost" size="icon" className="mr-2 lg:hidden" onClick={toggleSidebar}>
             <span className="material-symbols-outlined">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex items-center bg-[#39a0e4] p-2 rounded">
-            <img src="/logo.png" alt="" className="h-8 w-auto" />
+          <div className="flex-shrink-0 flex items-center p-1 rounded">
+            <img src="/logo.png" alt="" className="h-10 w-auto p-1 rounded-sm bg-[#39a0e4] " />
           </div>
         </div>
         <div className="flex items-center">
@@ -57,10 +58,10 @@ function NavBar({ toggleSidebar }) {
             )}
           <Button
             variant="ghost"
-            className="h-6 w-6 p-3 rounded-full hover:bg-gray-100"
+            className="h-6 w-6 p-3  rounded-full hover:bg-gray-100"
             onClick={() => setSettingsOpen(true)}
           >
-            <Settings className="h-6 w-6" />
+            <Settings className="h-6 w-6 " />
           </Button>
 
           <Popover open={open} onOpenChange={setOpen}>
@@ -75,7 +76,7 @@ function NavBar({ toggleSidebar }) {
                 item.key === "logout" ? (
                   <button
                     key={item.key}
-                    className="flex items-center w-full px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="flex items-center w-full px-2 py-2 text-sm text-red-500 hover:bg-red-100 hover:border hover:translate-x-2 transition-all duration-200 ease-in-out hover:border-red-500 rounded-md"
                     onClick={() => {
                       setOpen(false);
                       handleLogout();
@@ -101,59 +102,84 @@ function NavBar({ toggleSidebar }) {
         </div>
       </div>
 
+      <AnimatePresence>
       {settingsOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setSettingsOpen(false)}>
-          <div
-            className="fixed top-0 right-0 w-80 h-full bg-white shadow-lg z-50 p-4 flex flex-col"
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-end"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setSettingsOpen(false)}
+        >
+          <motion.div
+            className="w-80 h-full bg-white shadow-xl z-50 p-6 flex flex-col"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Settings</h2>
-              <Button variant="ghost" size="icon" onClick={() => setSettingsOpen(false)}>
-                <X className="h-5 w-5" />
+            {/* Header */}
+            <div className="flex justify-between  items-center mb-6 border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Settings className="h-6 w-6" />
+                <h2 className="text-xl font-bold text-gray-800"> Settings</h2>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(false)}
+                className="hover:bg-gray-100"
+              >
+                <X className="h-6 w-6" />
               </Button>
             </div>
 
-            <ul className="flex flex-col space-y-4 text-sm">
+            {/* Links */}
+            <ul className="flex flex-col space-y-4 text-sm font-medium">
               <Link
-                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/profile"
                 onClick={() => setSettingsOpen(false)}
+                className="text-gray-700 hover:text-blue-600  hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
               >
-                <UserRound className="mr-2 h-5 w-5" />
+                <UserRound className="h-5 w-5" />
                 Profile
               </Link>
+
               <Link
-                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/taxes/tax-rates"
                 onClick={() => setSettingsOpen(false)}
+                className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
               >
-                <ReceiptIndianRupeeIcon className="mr-2 h-5 w-5" />
+                <ReceiptIndianRupeeIcon className="h-5 w-5" />
                 Taxes
               </Link>
 
               <Link
-                className="text-gray-700 hover:text-blue-500 flex items-center"
                 to="settings/user-management"
                 onClick={() => setSettingsOpen(false)}
+                className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
               >
-                <UserCog className="mr-2 h-5 w-5" />
-               Users Management
+                <UserCog className="h-5 w-5" />
+                Users Management
               </Link>
+
               {isAdmin && (
                 <Link
-                  className="text-gray-700 hover:text-blue-500 flex items-center"
                   to="settings/activity-logs"
                   onClick={() => setSettingsOpen(false)}
+                  className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                 >
-                  <FileText className="mr-2 h-5 w-5" />
+                  <FileText className="h-5 w-5" />
                   Activity Logs
                 </Link>
               )}
             </ul>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+    </AnimatePresence>
     </nav>
   );
 }

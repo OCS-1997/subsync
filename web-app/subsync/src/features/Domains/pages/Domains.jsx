@@ -89,7 +89,7 @@ function Domains() {
 
   useEffect(() => {
     // Fetch domains whenever search, sort, order, or page changes
-    dispatch(fetchDomains({ search: debouncedSearch, sortBy, order: sortOrder, page: currentPage }));
+    dispatch(fetchDomains({ search: debouncedSearch, sort: sortBy, order: sortOrder, page: currentPage }));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ function Domains() {
       setSortBy(key);
       setSortOrder("asc");
     }
-    setCurrentPage(1);
+    
   };
 
   const fetchDomainsAndExport = async () => {

@@ -43,8 +43,10 @@ const AdminActivityLog = () => {
 
   return (
     <div className="p-2 md:p-6 w-full mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-blue-900 dark:text-blue-200">Activity Logs <span className="text-base font-normal text-gray-500">(Admin Only)</span></h2>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+      <h2 className="text-3xl font-bold  text-gray-800 dark:text-white tracking-tight">Activity Logs <span className="text-base font-normal text-gray-500">(Admin Only)</span></h2>
+      <hr className="mb-10 mt-4  border-gray-200 dark:border-gray-700" />
+      <div className="flex flex-col mt-4 md:flex-row md:items-center md:justify-between mb-4 gap-2">
+        
         <input
           type="text"
           placeholder="Search by username or action..."

@@ -56,7 +56,7 @@ function Customers() {
   useEffect(() => {
     dispatch(fetchCustomers({
       search: debouncedSearch,
-      sortBy,
+      sort: sortBy,
       order: sortOrder,
       page: currentPage
     }));
@@ -185,7 +185,7 @@ function Customers() {
       setSortBy(key);
       setSortOrder("asc");
     }
-    setCurrentPage(1);
+ 
   };
 
   const renderActions = (id) => (
