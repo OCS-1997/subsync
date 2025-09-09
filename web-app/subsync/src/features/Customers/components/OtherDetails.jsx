@@ -53,21 +53,71 @@ const OtherDetails = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // Set GST Treatment value: use customerData.gst_treatment if set, else use defaultTaxType
-  const gstTreatmentValue = customerData.gst_treatment || defaultTaxType || "";
+
+  // GST Treatment options (static, not from tax table)
+  const gstTreatmentOptions = [
+    {
+      value: "Registered Business - Regular",
+      label: "Registered Business - Regular",
+      description: "Business that is registered under GST"
+    },
+    {
+      value: "Registered Business - Composition",
+      label: "Registered Business - Composition",
+      description: "Business that is registered under the Composition Scheme in GST"
+    },
+    {
+      value: "Unregistered Business",
+      label: "Unregistered Business",
+      description: "Business that has not been Registered under GST"
+    },
+    {
+      value: "Consumer",
+      label: "Consumer",
+      description: "A Customer  who is a regular Consumer"
+    },
+    {
+      value: "Overseas",
+      label: "Overseas",
+      description: "Persons with whom you service outside of India"
+    },
+    {
+      value: "Special Economic Zone",
+      label: "Special Economic Zone",
+      description: "A Customer located in a Special Economic Zone"
+    },
+    {
+      value: "Deemed Export",
+      label: "Deemed Export",
+      description: "Transactions that are considered as Exports under GST"
+    },
+    {
+      value: "Tax Deductor",
+      label: "Tax Deductor",
+      description: "Departments of the State/Central government, governmental agencies or local authorities"
+    },
+    {
+      value: "SEZ Developer",
+      label: "SEZ Developer",
+      description: "A person/organisation who owns at least 26% of the equity in creating business units in a Special Economic Zone (SEZ)"
+    },
+    {
+      value: "Input Service Distributor",
+      label: "Input Service Distributor",
+      description: "An office of the supplier of goods and/or services which receives tax invoices for services used by the company in different states under the same PAN"
+    }
+  ];
+
+  // Set GST Treatment value: use customerData.gst_treatment if set, else default to 'Registered Business - Regular'
+  const gstTreatmentValue = customerData.gst_treatment || "Registered Business - Regular";
 
   // Prefill GST Treatment with default if adding (not editing) and not set
   useEffect(() => {
-    if (
-      !customerData.gst_treatment &&
-      defaultTaxType &&
-      (taxRates.length > 0 ? taxRates : fetchedTaxRates).some(t => t.tax_type === defaultTaxType)
-    ) {
-      handleSelectChange("gst_treatment", defaultTaxType);
+    if (!customerData.gst_treatment) {
+      handleSelectChange("gst_treatment", "Registered Business - Regular");
     }
-    // Only run when defaultTaxType is loaded
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultTaxType]);
+  }, []);
 
   // Set default values if not set
   const currencyValue = customerData.currencyCode || "INR";
@@ -75,7 +125,32 @@ const OtherDetails = ({
   return (
     <div className="space-y-6">
       {/* AddressSection is now only in the Address tab, not here */}
+
       <div className="grid md:grid-cols-2 gap-4">
+        {/* GST Treatment full width, all options visible */}
+        <div className="space-y-2 md:col-span-1">
+          <Label>GST Treatment<span className="text-red-800">*</span></Label>
+          <Select
+            value={gstTreatmentValue}
+            onValueChange={(value) => handleSelectChange("gst_treatment", value)}
+          >
+            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300 text-left ">
+              <SelectValue placeholder="Select treatment" className="text-left" />
+            </SelectTrigger>
+            <SelectContent className="w-full min-w-[350px] max-w-full">
+              {gstTreatmentOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="whitespace-normal break-words min-h-[3.5rem] py-2">
+                  <div>
+                    <div className="font-sans ">{opt.label}</div>
+                    <div className="text-xs text-gray-500 whitespace-pre-line">{opt.description}</div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* GSTIN */}
         <div className="space-y-2">
           <Label htmlFor="gstin">
             GSTIN
@@ -98,6 +173,7 @@ const OtherDetails = ({
           )}
         </div>
 
+        {/* Currency Code */}
         <div className="space-y-2">
           <Label>Currency Code<span className="text-red-800">*</span></Label>
           <Select
@@ -114,28 +190,8 @@ const OtherDetails = ({
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>GST Treatment<span className="text-red-800">*</span></Label>
-          <Select
-            value={gstTreatmentValue}
-            onValueChange={(value) => handleSelectChange("gst_treatment", value)}
-          >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300">
-              <SelectValue placeholder="Select treatment" />
-            </SelectTrigger>
-            <SelectContent>
-              {(taxRates.length > 0 ? taxRates : fetchedTaxRates).map((tax) => (
-                <SelectItem key={tax.tax_id} value={tax.tax_type}>
-                  {tax.tax_name} ({tax.tax_type} - {tax.tax_rate}%)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
+        {/* Tax Preference parallel to Currency Code */}
         <div className="space-y-2">
           <Label>Tax Preference<span className="text-red-800">*</span></Label>
           <Select
@@ -153,6 +209,8 @@ const OtherDetails = ({
           </Select>
         </div>
       </div>
+
+  {/* Tax Exemption Reason remains below if needed */}
 
       {customerData.tax_preference === "Tax Exempt" && (
         <div className="space-y-2">

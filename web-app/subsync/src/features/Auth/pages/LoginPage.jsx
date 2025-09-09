@@ -170,8 +170,8 @@ function LoginPage() {
         <div className="flex items-center justify-center w-full h-full absolute top-0 left-0 z-30">
           {!showForm && (
            <img
-            src="../landing_image.png"
-            alt="Landing"
+            src="../landing_image.webp"
+            alt="Landing Image "
             className={`landing-img  transition-all duration-700
               ${showForm ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'}
             `}

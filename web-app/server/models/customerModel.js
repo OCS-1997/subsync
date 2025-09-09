@@ -186,7 +186,7 @@ const getAllCustomers = async ({ search = "", sort = "display_name", order = "as
 
     try {
       const [customers] = await appDB.query(
-            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, country_code, primary_phone_number, primary_email, customer_status
+            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, country_code, primary_phone_number, primary_email, gst_treatment
              FROM customers 
              WHERE (
                 display_name LIKE ? OR

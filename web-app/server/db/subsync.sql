@@ -21,7 +21,7 @@ CREATE TABLE customers (
 	display_name VARCHAR(128) NOT NULL,
 	gst_in VARCHAR(15),
 	currency_code CHAR(3) NOT NULL DEFAULT 'INR',
-	gst_treatment VARCHAR(32) NOT NULL,
+	gst_treatment VARCHAR(128) NOT NULL,
 	tax_preference ENUM('Taxable', 'Tax Exempt') NOT NULL DEFAULT 'Taxable',
 	exemption_reason TEXT,
 	
@@ -42,7 +42,6 @@ CREATE TABLE customers (
 	INDEX idx_company_name (company_name),
 	INDEX idx_display_name (display_name),
 	INDEX idx_primary_phone (primary_phone_number),
-	INDEX idx_customer_status (customer_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create Payment Terms Table
@@ -129,7 +128,7 @@ CREATE TABLE IF NOT EXISTS vendors (
     display_name VARCHAR(100) NOT NULL,
     gst_in VARCHAR(15),
     currency_code CHAR(3) NOT NULL DEFAULT 'INR',
-    gst_treatment VARCHAR(32) NOT NULL,
+    gst_treatment VARCHAR(128) NOT NULL,
     tax_preference ENUM('Taxable', 'Tax Exempt') NOT NULL DEFAULT 'Taxable',
     exemption_reason TEXT,
     payment_terms JSON NOT NULL,
