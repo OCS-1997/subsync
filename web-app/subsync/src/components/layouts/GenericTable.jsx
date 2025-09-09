@@ -22,7 +22,7 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                 <span className="flex items-center gap-1">
                   {header.label}
                   {sortBy === header.key && (
-                    sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                    sortOrder === "asc" ? <ArrowUp className="w-3 h-3 fill-current" /> : <ArrowDown className="w-3 h-3 fill-current" />
                   )}
                 </span>
               </TableCell>
@@ -37,7 +37,7 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                 <TableCell
                   key={`${item[primaryKey]}-${header.key}`}
                   className={
-                    "px-4 py-2 text-left " +
+                    "px-1.5 py-2 text-left text-wrap " +
                     (header.key === "customer_status" || header.key === "vendor_status"
                       ? item[header.key] === "Active"
                         ? "text-green-500 font-bold"

@@ -22,7 +22,7 @@ const headers = [
   { key: "company_name", label: "Company Name" },
   { key: "phone_with_country_code", label: "Phone Number" },
   { key: "primary_email", label: "Email" },
-  { key: "customer_status", label: "Status" },
+  { key: "gst_treatment", label: "GST Treatment" },
   { key: "actions", label: "Actions" },
 ];
 
@@ -203,6 +203,7 @@ function Customers() {
     ...c,
     first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
     phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
+    gst_treatment: c.gst_treatment || "",
     actions: renderActions(c.customer_id),
   }));
 
@@ -221,7 +222,7 @@ function Customers() {
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Link to={`add`}>
-            <Button className="w-full sm:w-aut bg-blue-500 hover:bg-blue-600 text-white"> 
+            <Button className="w-full sm:w-aut bg-blue-500  hover:bg-blue-600 text-white"> 
               <UserPlus /> Add
             </Button>
           </Link>
@@ -262,14 +263,15 @@ function Customers() {
         </div>
       ) : paginatedData.length > 0 ? (
         <>
-          <GenericTable
-            headers={headers}
-            data={paginatedData}
-            primaryKey="customer_id"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
+          
+            <GenericTable
+              headers={headers}
+              data={paginatedData}
+              primaryKey="customer_id"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
           <Pagination
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
