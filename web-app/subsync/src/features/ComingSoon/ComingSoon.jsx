@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ComingSoon.css'; // Make sure to include the CSS file for animations
-
+import { Hamster } from '../../components/animations/Hamster';
 const ComingSoon = () => {
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,8 @@ const ComingSoon = () => {
           <div className="spinner"></div>
         </div>
       ) : (
-        <div className="message">
+        <div className="message flex flex-col justify-center items-center">
+           <Hamster className="flex justify-center items-center" />
           <h1 className="animated-text">Coming Soon!</h1>
           <p>We're working on something exciting. Stay tuned!</p>
         </div>

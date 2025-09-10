@@ -60,10 +60,14 @@ function LoginPage() {
         backgroundImage:
           "radial-gradient(circle at 20% 40%, #e0e7ff 20%, transparent 60%), radial-gradient(circle at 80% 70%, #bae6fd 20%, transparent 60%)",
       }}>
+         <div className="absolute top-4 left-4 w-full flex items-center justify-start z-30">
+          <img src="/logo.png" alt="Logo" className="h-12" />
+        </div>
 
         {/* Enhanced Torch Beam Effect */}
         {showPassword && (
           <div className="absolute inset-0 pointer-events-none z-10">
+             
             {/* Main torch beam cone */}
             <div 
               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-40"
@@ -307,10 +311,10 @@ function LoginPage() {
 
                   <button
                     type="submit"
-                    className={`w-full py-2 px-4 rounded-md font-medium transition-all duration-1000 focus:outline-none focus:ring-2 focus:ring-opacity-50 transform hover:scale-105 ${
+                    className={`w-full py-2 px-4 rounded-md font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 transform hover:scale-105 ${
                       showPassword
                         ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black shadow-[0_0_30px_rgba(255,255,0,0.4)] focus:ring-yellow-400'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white hover:text-xl focus:ring-blue-500'
                     }`}
                     disabled={isLoading}
                   >
