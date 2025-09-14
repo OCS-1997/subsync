@@ -35,23 +35,7 @@ const OtherDetails = ({
 ];
 
   const taxPreferenceOptions = ["Taxable", "Tax Exempt"];
-  const [fetchedTaxRates, setFetchedTaxRates] = useState(taxRates);
-  const [defaultTaxType, setDefaultTaxType] = useState("");
 
-  // Fetch tax rates and default tax preference on mount
-  useEffect(() => {
-    // Only fetch if no taxRates prop and nothing fetched yet
-    if ((!taxRates || taxRates.length === 0) && fetchedTaxRates.length === 0) {
-      api.get("/tax-rates").then(res => setFetchedTaxRates(res.data.taxes || []));
-    }
-    // Fetch default tax preference
-    api.get("/default-tax-preference").then(res => {
-      if (res.data && res.data.defaultTaxPreference && res.data.defaultTaxPreference.tax_type) {
-        setDefaultTaxType(res.data.defaultTaxPreference.tax_type);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
 
 
   // GST Treatment options (static, not from tax table)

@@ -47,12 +47,12 @@ const AddVendor = () => {
     phoneNumber: "",
     secondaryPhoneNumber: "",
     gstin: "",
-    gst_treatment: "CGST & SGST",
+    gst_treatment: "Registered Business - Regular",
     tax_preference: "Taxable",
     exemption_reason: "",
     currencyCode: "INR",
     address: {
-      country: { label: "India", value: "IN" },
+      country: "IN",
       addressLine: "",
       state: null,
       city: "",
@@ -75,12 +75,12 @@ const AddVendor = () => {
       phoneNumber: "",
       secondaryPhoneNumber: "",
       gstin: "",
-      gst_treatment: "CGST & SGST",
+      gst_treatment: "Registered Business - Regular",
       tax_preference: "Taxable",
       exemption_reason: "",
       currencyCode: "INR",
       address: {
-        country: { label: "India", value: "IN" },
+        country: "IN",
         addressLine: "",
         state: null,
         city: "",
@@ -190,7 +190,7 @@ const AddVendor = () => {
         phoneNumber: currentVendor.primary_phone_number || currentVendor.phoneNumber || "",
         secondaryPhoneNumber: currentVendor.secondary_phone_number || currentVendor.secondaryPhoneNumber || "",
         gstin: currentVendor.gst_in || currentVendor.gstin || "",
-        gst_treatment: currentVendor.gst_treatment || "CGST & SGST",
+        gst_treatment: currentVendor.gst_treatment || "Registered Business - Regular",
         tax_preference: currentVendor.tax_preference || "Taxable",
         exemption_reason: currentVendor.exemption_reason || "",
         currencyCode: currentVendor.currency_code?.value || currentVendor.currency_code || "INR",
@@ -327,16 +327,13 @@ const AddVendor = () => {
     }
   };
 
-  useEffect(() => {
-    api.get("/tax-rates").then(res => setTaxRates(res.data.taxes || []));
-  }, []);
 
   if (loading) return <p>Loading vendor details...</p>;
   if (error) return <p className="text-red-500">Error: {typeof error === 'string' ? error : error.message || 'An error occurred'}</p>;
 
   // Determine if country is India for state dropdown logic
   const countryVal =
-    vendorData.address?.country?.value ||
+    vendorData.address?.country?.value || 
     vendorData.address?.country ||
     vendorData.country ||
     "";
