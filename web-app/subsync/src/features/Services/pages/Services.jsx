@@ -3,7 +3,7 @@ import { Eye, FileDown, FileUp, Plus, Trash2 } from 'lucide-react';
 import * as Papa from "papaparse";
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { toast} from "react-toastify";
+import { toast, Bounce} from "react-toastify";
 import { useState, useEffect, useRef } from 'react';
 import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import Hamster from "@/components/animations/Hamster.jsx";
 import api from '@/lib/axiosInstance.js';
 import GenericTable from '@/components/layouts/GenericTable.jsx';
 import Pagination from '@/components/layouts/Pagination.jsx';
@@ -29,17 +30,19 @@ const headers = [
   { key: 'service_name', label: 'Service Name' },
   { key: 'stock_keepers_unit', label: 'SKU' },
   { key: 'item_group_name', label: 'Item Group' },
-  { key: 'tax_preference', label: 'Tax Pref.' },
+  { key: 'selling_price', label: 'Selling Price' },
+  { key: 'tax_rate', label: 'Tax Rate' },
+  { key: 'total_amount', label: 'Amount' },
   { key: 'preferred_vendor_name', label: 'Vendor' },
   { key: 'actions', label: 'Actions' },
 ];
 
 function Services() {
   const dispatch = useDispatch();
-  const { list: services, loading, error } = useSelector((state) => state.services);
+  const { list: services, loading, error, totalRecords, totalPages } = useSelector((state) => state.services);
 
-  const [sortBy, setSortBy] = useState("service_name");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,14 +52,27 @@ function Services() {
   const fileInputRef = useRef(null);
   const debounceTimeout = useRef();
 
-  // Fetch services on component mount or when sort/order/page changes
-  useEffect(() => {
-    dispatch(fetchServices());
-  }, [dispatch]);
-
+  // Reset to first page when search or sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search, sortBy, sortOrder]);
+
+  // Fetch services when parameters change
+  useEffect(() => {
+    const params = {
+      search: debouncedSearch,
+      page: currentPage,
+      limit: 10
+    };
+    
+    // Only add sort parameters if they are not null
+    if (sortBy && sortOrder) {
+      params.sort = sortBy;
+      params.order = sortOrder;
+    }
+    
+    dispatch(fetchServices(params));
+  }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   // Debounce search
   useEffect(() => {
@@ -73,44 +89,23 @@ function Services() {
     setCurrentPage(1);
   };
 
-  const handleSort = (key) => {
-    if (sortBy === key) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+ const handleSort = (key) => {
+    // Don't sort actions column
+    if (key === 'actions') return;
+    
+    if (sortBy === key && sortOrder === "asc") {
+      setSortOrder("desc");
+    } else if (sortBy === key && sortOrder === "desc") {
+      setSortBy(null);
+      setSortOrder(null);
     } else {
       setSortBy(key);
       setSortOrder("asc");
     }
-    setCurrentPage(1);
   };
 
-  const filteredAndSortedServices = services
-    .filter((service) => {
-      const searchTerm = debouncedSearch.toLowerCase();
-      return (
-        service.service_name.toLowerCase().includes(searchTerm) ||
-        service.stock_keepers_unit.toLowerCase().includes(searchTerm) ||
-        service.item_group_name?.toLowerCase().includes(searchTerm) ||
-        service.preferred_vendor_name?.toLowerCase().includes(searchTerm)
-      );
-    })
-    .sort((a, b) => {
-      const aValue = a[sortBy] || "";
-      const bValue = b[sortBy] || "";
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortOrder === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-    });
-
-  const itemsPerPage = 10;
-  const totalRecords = filteredAndSortedServices.length;
-  const totalFilteredPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
-  const paginatedServices = filteredAndSortedServices.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Backend handles all filtering, sorting, and pagination
+  const backendTotalPages = totalPages || Math.max(1, Math.ceil(totalRecords / 10));
 
   const handleDeleteClick = (serviceId) => {
     const service = services.find(s => s.service_id === serviceId);
@@ -123,6 +118,21 @@ function Services() {
 
     try {
       await dispatch(deleteService(serviceToDelete.service_id));
+      // Refresh the services list to get updated pagination
+      const params = {
+        search: debouncedSearch,
+        page: currentPage,
+        limit: 10
+      };
+      
+      // Only add sort parameters if they are not null
+      if (sortBy && sortOrder) {
+        params.sort = sortBy;
+        params.order = sortOrder;
+      }
+      
+      dispatch(fetchServices(params));
+      
       toast.success(`Service "${serviceToDelete.service_name}" deleted successfully!`, {
         position: "top-right",
         autoClose: 2000,
@@ -248,6 +258,76 @@ function Services() {
     }
   };
 
+  const getPrice = (info, key) => {
+    if (!info) return '';
+    try {
+      const obj = typeof info === 'string' ? JSON.parse(info) : info;
+      return obj?.[key] ? `Rs.${parseFloat(obj[key]).toFixed(2)}` : '';
+    } catch {
+      return '';
+    }
+  };
+
+  const getSellingPrice = (salesInfo) => {
+    if (!salesInfo) return 0;
+    try {
+      const obj = typeof salesInfo === 'string' ? JSON.parse(salesInfo) : salesInfo;
+      return parseFloat(obj?.price) || 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const getTaxRate = (service) => {
+    // Use tax_details from the backend enhancement if available
+    if (service.tax_details) {
+      // Prioritize intra-state tax rate for calculation
+      if (service.tax_details.intra && (service.tax_details.intra.tax_rate || service.tax_details.intra.rate)) {
+        return parseFloat(service.tax_details.intra.tax_rate || service.tax_details.intra.rate) || 0;
+      }
+      // Fallback to inter-state tax rate
+      if (service.tax_details.inter && (service.tax_details.inter.tax_rate || service.tax_details.inter.rate)) {
+        return parseFloat(service.tax_details.inter.tax_rate || service.tax_details.inter.rate) || 0;
+      }
+    }
+    
+    // Fallback to old method for backward compatibility
+    if (!service.default_tax_rates) return 0;
+    try {
+      const taxRates = typeof service.default_tax_rates === 'string' ? 
+        JSON.parse(service.default_tax_rates) : service.default_tax_rates;
+      
+      // Use intra state tax rate for calculation
+      if (taxRates.intra && taxRates.intra.rate) {
+        return parseFloat(taxRates.intra.rate) || 0;
+      }
+      
+      return 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const calculateTaxAmount = (sellingPrice, taxRate) => {
+    return (sellingPrice * taxRate) / 100;
+  };
+
+  const calculateTotalAmount = (sellingPrice, taxAmount) => {
+    return sellingPrice + taxAmount;
+  };
+
+  const formatTaxRate = (taxAmount) => {
+    if (taxAmount > 0) {
+      return `Rs.${taxAmount.toFixed(0)}`;
+    }
+    return 'Rs.0';
+  };
+
+  const formatTotalAmount = (totalAmount) => {
+    return totalAmount > 0 ? `Rs.${totalAmount.toFixed(0)}/-` : 'Rs.0/-';
+  };
+
+
   return (
     <>
     
@@ -299,20 +379,30 @@ function Services() {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center my-8">
-          <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
+        <div className="flex flex-col justify-center items-center my-8">
+         <Hamster />
         </div>
-      ) : paginatedServices.length > 0 ? (
+      ) : services.length > 0 ? (
         <>
           <GenericTable
             headers={headers}
-            data={paginatedServices.map((service) => ({
-              ...service,
-              stock_keepers_unit: service.stock_keepers_unit,
-              item_group_name: service.item_group_name || 'N/A',
-              preferred_vendor_name: service.preferred_vendor_name || 'N/A',
-              actions: renderActions(service.service_id),
-            }))}
+            data={services.map((service) => {
+              const sellingPrice = getSellingPrice(service.sales_info);
+              const taxRatePercent = getTaxRate(service);
+              const taxAmount = calculateTaxAmount(sellingPrice, taxRatePercent);
+              const totalAmount = calculateTotalAmount(sellingPrice, taxAmount);
+              
+              return {
+                ...service,
+                stock_keepers_unit: service.stock_keepers_unit,
+                item_group_name: service.item_group_name || 'N/A',
+                preferred_vendor_name: service.preferred_vendor_name || 'N/A',
+                selling_price: getPrice(service.sales_info, 'price'),
+                tax_rate: formatTaxRate(taxAmount),
+                total_amount: formatTotalAmount(totalAmount),
+                actions: renderActions(service.service_id),
+              };
+            })}
             primaryKey="service_id"
             sortBy={sortBy}
             sortOrder={sortOrder}
@@ -321,14 +411,16 @@ function Services() {
           <Pagination
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
-            totalPages={totalFilteredPages}
+            totalPages={backendTotalPages}
             totalRecords={totalRecords}
           />
         </>
       ) : (
         <Alert>
           <AlertTitle>Info</AlertTitle>
-          <AlertDescription>No services available</AlertDescription>
+          <AlertDescription>
+            {debouncedSearch ? `No services found for "${debouncedSearch}"` : "No services available"}
+          </AlertDescription>
         </Alert>
       )}
     </div>
@@ -339,7 +431,7 @@ function Services() {
         <DialogHeader>
           <DialogTitle>Delete Service</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the service &quot;{serviceToDelete?.service_name}&quot;? 
+            Are you sure you want to delete the service &quot; <b className="font-semibold text-black">{serviceToDelete?.service_name}</b>&quot; ? 
             This action cannot be undone.
           </DialogDescription>
         </DialogHeader>

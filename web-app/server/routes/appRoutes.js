@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../middlewares/auth.js';
-import { validateLogin } from '../controllers/loginController.js';
+import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
 import { createCustomer, updateCustomerDetails, fetchAllCustomers,fetchAllCustomerDetails, customerDetailsByID , importCustomers} from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
@@ -21,8 +21,9 @@ router.get('/health', (req, res) => {
     res.status(200).json({ message: 'Server is running' });
 });
 
-// Login
+// Login/Logout
 router.post('/login/user', validateLogin);
+router.post('/logout', isAuthenticated, logoutUser);
 
 // Customers
 router.post('/create-customer', isAuthenticated, createCustomer);

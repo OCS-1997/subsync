@@ -34,7 +34,10 @@ const createServiceController = async (req, res) => {
     return res.status(201).json({ message: "Service created successfully", service_id: result.insertId });
   } catch (error) {
     console.error("Error creating service:", error);
-    // Handle specific database errors if needed (e.g., UNIQUE constraint on service_name)
+    // Handle specific database errors
+    if (error.code === 'SKU_EXISTS') {
+      return res.status(409).json({ error: error.message });
+    }
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: "A service with this name already exists." });
     }
@@ -110,6 +113,9 @@ const updateServiceController = async (req, res) => {
     return res.status(200).json({ message: "Service updated successfully" });
   } catch (error) {
     console.error("Error updating service:", error);
+    if (error.code === 'SKU_EXISTS') {
+      return res.status(409).json({ error: error.message });
+    }
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: "A service with this name already exists." });
     }

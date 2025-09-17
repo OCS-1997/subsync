@@ -97,6 +97,7 @@ export const updateVendorController = async (req, res) => {
             first_name: vendorData.firstName,
             last_name: vendorData.lastName,
             primary_email: vendorData.email,
+            secondary_email: vendorData.secondary_email || "",
             country_code: vendorData.country_code,
             primary_phone_number: vendorData.phoneNumber,
             secondary_phone_number: vendorData.secondaryPhoneNumber,

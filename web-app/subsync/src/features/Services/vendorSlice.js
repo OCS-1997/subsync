@@ -5,12 +5,25 @@ import api from '@/lib/axiosInstance.js';
 
 export const fetchVendors = createAsyncThunk(
     "vendors/fetchVendors",
-    async (_, thunkAPI) => {
+    async (params = {}, thunkAPI) => {
         try {
-            const response = await api.get("/all-vendors");
+            const { search = "", sortBy = "display_name", order = "asc", page = 1, limit = 10 } = params;
+            const queryParams = new URLSearchParams({
+                search,
+                sort: sortBy,
+                order,
+                page: page.toString(),
+                limit: limit.toString()
+            });
+            
+            const response = await api.get(`/all-vendors?${queryParams.toString()}`);
             // console.log("Fetched vendors:", response.data);
-            // The server returns {vendors: [], totalPages: number}
-            return response.data.vendors || [];
+            // The server returns {vendors: [], totalPages: number, totalRecords: number}
+            return {
+                vendors: response.data.vendors || [],
+                totalPages: response.data.totalPages || 1,
+                totalRecords: response.data.totalRecords || 0
+            };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || error.message);
         }
@@ -63,7 +76,6 @@ export const deleteVendor = createAsyncThunk(
     async (id, thunkAPI) => {
         try {
             await api.delete(`/delete-vendor/${id}`);
-            toast.success('Vendor deleted successfully.');
             return id;
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to delete vendor.');
@@ -89,6 +101,8 @@ const vendorSlice = createSlice({
     name: "vendors",
     initialState: {
         list: [],
+        totalRecords: 0,
+        totalPages: 1,
         currentVendor: null,
         loading: false,
         error: null,
@@ -108,7 +122,9 @@ const vendorSlice = createSlice({
             })
             .addCase(fetchVendors.fulfilled, (state, action) => {
                 state.loading = false;
-                state.list = action.payload;
+                state.list = action.payload.vendors;
+                state.totalRecords = action.payload.totalRecords;
+                state.totalPages = action.payload.totalPages;
                 state.error = null;
             })
             .addCase(fetchVendors.rejected, (state, action) => {

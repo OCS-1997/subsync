@@ -8,13 +8,13 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 
-import AddressSection from "@/features/Customers/components/AddressSection.jsx";
-import CompanyDetails from "@/features/Customers/components/CompanyDetails.jsx";
-import ContactPersonsSection from "@/features/Customers/components/ContactPersonsSection.jsx";
-import OtherDetails from "@/features/Customers/components/OtherDetails.jsx";
-import PaymentTermsSection from '@/features/Customers/components/PaymentTermsSection';
-import PersonalDetails from "@/features/Customers/components/PersonalDetails.jsx";
-import RemarksSection from "@/features/Customers/components/RemarksSection.jsx";
+import VendorAddressSection from "@/features/Vendors/components/VendorAddressSection.jsx";
+import VendorCompanyDetails from "@/features/Vendors/components/VendorCompanyDetails.jsx";
+import VendorContactPersonsSection from "@/features/Vendors/components/VendorContactPersonsSection.jsx";
+import VendorOtherDetails from "@/features/Vendors/components/VendorOtherDetails.jsx";
+import VendorPaymentTermsSections from '@/features/Vendors/components/VendorPaymentTermsSections';
+import VendorPersonalDetails from "@/features/Vendors/components/VendorPersonalDetails.jsx";
+import VendorRemarksSection from "@/features/Vendors/components/VendorRemarksSection.jsx";
 
 import { createVendor, updateVendor, fetchVendorById, clearVendorState } from "@/features/Services/vendorSlice.js";
 import { indianStates } from "@/features/Customers/data/statesOfIndia.js";
@@ -43,6 +43,7 @@ const AddVendor = () => {
     companyName: "",
     displayName: "",
     email: "",
+    secondary_email: "",
     country_code: "+91",
     phoneNumber: "",
     secondaryPhoneNumber: "",
@@ -71,6 +72,7 @@ const AddVendor = () => {
       companyName: "",
       displayName: "",
       email: "",
+      secondary_email: "",
       country_code: "+91",
       phoneNumber: "",
       secondaryPhoneNumber: "",
@@ -186,6 +188,7 @@ const AddVendor = () => {
         companyName: currentVendor.company_name || currentVendor.companyName || "",
         displayName: currentVendor.display_name || currentVendor.displayName || "",
         email: currentVendor.primary_email || currentVendor.email || "",
+        secondary_email: currentVendor.secondary_email || "",
         country_code: currentVendor.country_code || "+91",
         phoneNumber: currentVendor.primary_phone_number || currentVendor.phoneNumber || "",
         secondaryPhoneNumber: currentVendor.secondary_phone_number || currentVendor.secondaryPhoneNumber || "",
@@ -243,13 +246,24 @@ const AddVendor = () => {
   const handleSelectChange = (field, value) => {
     const keys = field.split(".");
     if (keys.length > 1) {
-      setVendorData((prevData) => ({
-        ...prevData,
-        [keys[0]]: {
-          ...prevData[keys[0]],
-          [keys[1]]: value?.value || "",
-        },
-      }));
+      // Handle address fields specially to maintain object structure for react-select
+      if (keys[0] === "address" && (keys[1] === "country" || keys[1] === "state")) {
+        setVendorData((prevData) => ({
+          ...prevData,
+          [keys[0]]: {
+            ...prevData[keys[0]],
+            [keys[1]]: value || null, // Keep the full object for react-select
+          },
+        }));
+      } else {
+        setVendorData((prevData) => ({
+          ...prevData,
+          [keys[0]]: {
+            ...prevData[keys[0]],
+            [keys[1]]: value?.value || value || "",
+          },
+        }));
+      }
     } else {
       setVendorData((prevData) => ({
         ...prevData,
@@ -273,6 +287,7 @@ const AddVendor = () => {
         firstName: vendorData.firstName,
         lastName: vendorData.lastName,
         email: vendorData.email,
+        secondary_email: vendorData.secondary_email || "",
         country_code: vendorData.country_code,
         phoneNumber: vendorData.phoneNumber,
         secondaryPhoneNumber: vendorData.secondaryPhoneNumber,
@@ -354,16 +369,18 @@ const AddVendor = () => {
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
 
       <form onSubmit={handleSubmit}>
-        <PersonalDetails
-          customerData={vendorData}
+        <VendorPersonalDetails
+          vendorData={vendorData}
           handleInputChange={handleInputChange}
           handleSelectChange={handleSelectChange}
           handleStatusChange={handleStatusChange}
+          isVendor={true}
         />
-        <CompanyDetails
-          customerData={vendorData}
+        <VendorCompanyDetails
+          vendorData={vendorData}
           handleInputChange={handleInputChange}
           handleSelectChange={handleSelectChange}
+          isVendor={true}
         />
 
         <hr className="mb-4 border-gray-500 border-1 size-auto" />
@@ -393,8 +410,8 @@ const AddVendor = () => {
           </TabsList>
 
           <TabsContent value="address" className="tabs-content-transition">
-            <AddressSection
-              customerData={vendorData}
+            <VendorAddressSection
+              vendorData={vendorData}
               handleInputChange={handleInputChange}
               handleSelectChange={handleSelectChange}
               countries={countries}
@@ -405,8 +422,8 @@ const AddVendor = () => {
           </TabsContent>
 
           <TabsContent value="otherDetails" className="tabs-content-transition">
-            <OtherDetails
-              customerData={vendorData}
+            <VendorOtherDetails
+              vendorData={vendorData}
               handleInputChange={handleInputChange}
               handleSelectChange={handleSelectChange}
               taxRates={taxRates}
@@ -415,7 +432,7 @@ const AddVendor = () => {
               setStates={setStates}
               isIndia={isIndia}
             />
-            <PaymentTermsSection
+            <VendorPaymentTermsSections
               selectedTerm={vendorData.payment_terms}
               onTermChange={handlePaymentTermChange}
               isEditing={isEditing}
@@ -423,15 +440,15 @@ const AddVendor = () => {
           </TabsContent>
 
           <TabsContent value="contactPersons" className="tabs-content-transition">
-            <ContactPersonsSection
+            <VendorContactPersonsSection
               contactPersons={contactPersons}
               setContactPersons={setContactPersons}
             />
           </TabsContent>
 
           <TabsContent value="remarks" className="tabs-content-transition">
-            <RemarksSection
-              customerData={vendorData}
+            <VendorRemarksSection
+              vendorData={vendorData}
               handleInputChange={handleInputChange}
             />
           </TabsContent>

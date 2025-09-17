@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import Hamster from "@/components/animations/Hamster.jsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
@@ -14,11 +15,11 @@ import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import { fetchVendors } from "@/features/Services/vendorSlice.js";
 
 const headers = [
-  { key: "display_name", label: "Vendor Display Name" },
+  { key: "display_name", label: "Vendor Name" },
   { key: "company_name", label: "Company Name" },
   { key: "primary_phone_number", label: "Phone Number" },
   { key: "primary_email", label: "Email" },
-  { key: "vendor_status", label: "Status" },
+  { key: "gst_treatment", label: "GST Treatment" },
   { key: "actions", label: "Actions" },
 ];
 
@@ -27,7 +28,7 @@ function Vendors() {
   const location = useLocation();
   const dispatch = useDispatch();
 
-  const { list: vendors, loading, error } = useSelector((state) => state.vendors);
+ const { list: vendors, loading, error, totalRecords, totalPages } = useSelector((state) => state.vendors);
 
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
@@ -51,12 +52,19 @@ function Vendors() {
 
   useEffect(() => {
     // Dispatch fetchVendors with params for search, sort, pagination
-    dispatch(fetchVendors({
+    const params = {
       search: debouncedSearch,
-      sortBy,
-      order: sortOrder,
-      page: currentPage
-    }));
+      page: currentPage,
+      limit: 10
+    };
+    
+    // Only add sort parameters if they are not null
+    if (sortBy && sortOrder) {
+      params.sortBy = sortBy;
+      params.order = sortOrder;
+    }
+    
+    dispatch(fetchVendors(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   const handleSearch = (e) => {
@@ -92,10 +100,11 @@ function Vendors() {
       // Format for CSV
       const formattedData = vendors.map((v) => ({
         "Vendor ID": v.vendor_id || "",
-        "Display Name": v.display_name || "",
+        "Vendor Name": v.display_name || "",
         "Company Name": v.company_name || "",
-        "Phone Number": v.primary_phone_number || "",
+        "Phone Number": v.country_code && v.primary_phone_number ? `${v.country_code} ${v.primary_phone_number}` : v.primary_phone_number || "",
         "Email": v.primary_email || "",
+        "GST Treatment": v.gst_treatment || "",
         "Status": v.vendor_status || "",
       }));
 
@@ -128,18 +137,16 @@ function Vendors() {
     </div>
   );
 
-  // Filtering and sorting are now handled by backend, but you can still do client-side filtering if needed
-  // For now, just use vendors from Redux
+  // Backend handles pagination, search, and sorting
   const itemsPerPage = 10;
-  const totalRecords = vendors.length;
-  const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
-  const paginatedData = vendors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const backendTotalPages = totalPages || Math.max(1, Math.ceil(totalRecords / itemsPerPage));
 
   const handleAddVendor = () => {
     const currentPath = location.pathname;
     const userSegment = currentPath.split("/")[1];
     navigate(`/${userSegment}/dashboard/vendors/add`);
   };
+
 
   return (
     <>
@@ -184,15 +191,20 @@ function Vendors() {
         )}
 
         {loading ? (
-          <div className="flex justify-center items-center my-8">
-            <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
+          <div className="flex flex-col justify-center items-center my-8">
+            <Hamster />
           </div>
-        ) : paginatedData.length > 0 ? (
+        ) : vendors.length > 0 ? (
           <>
             <GenericTable
               headers={headers}
-              data={paginatedData.map((v) => ({
+              data={vendors.map((v) => ({
                 ...v,
+                display_name:  `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
+                primary_phone_number: v.country_code && v.primary_phone_number
+                    ? `${v.country_code} ${v.primary_phone_number}`
+                    : v.primary_phone_number || "Not provided",
+                gst_treatment: v.gst_treatment || "Not specified",
                 actions: renderActions(v),
               }))}
               primaryKey="vendor_id"
@@ -203,14 +215,16 @@ function Vendors() {
             <Pagination
               currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              totalPages={totalPages}
+              totalPages={backendTotalPages}
               totalRecords={totalRecords}
             />
           </>
         ) : (
           <Alert>
             <AlertTitle>Info</AlertTitle>
-            <AlertDescription>No vendors available</AlertDescription>
+            <AlertDescription>
+              {search ? `No vendors found for "${search}"` : "No vendors available"}
+            </AlertDescription>
           </Alert>
         )}
       </div>

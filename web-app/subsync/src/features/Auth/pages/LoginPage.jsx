@@ -61,7 +61,7 @@ function LoginPage() {
           "radial-gradient(circle at 20% 40%, #e0e7ff 20%, transparent 60%), radial-gradient(circle at 80% 70%, #bae6fd 20%, transparent 60%)",
       }}>
          <div className="absolute top-4 left-4 w-full flex items-center justify-start z-30">
-          <img src="/logo.png" alt="Logo" className="h-12" />
+          <img src="/logo.png" alt="Logo" className="h-12 invert brightness-50" />
         </div>
 
         {/* Enhanced Torch Beam Effect */}
@@ -187,8 +187,11 @@ function LoginPage() {
               transition: 'all 0.7s cubic-bezier(.68,-0.55,.27,1.55)'
             }}
             onClick={() => setShowForm(true)}
+            
             />
+            
           )}
+         
         </div>
 
         {/* Animated Login Form */}

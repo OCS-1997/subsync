@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api from '../../lib/axiosInstance';
 
 import { apiLoginUser } from './services/authAPI';
 
@@ -25,6 +26,20 @@ export const loginUser = createAsyncThunk(
       return userData;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message || 'Login failed.');
+    }
+  }
+);
+
+// Async logout thunk
+export const logoutUser = createAsyncThunk(
+  'auth/logoutUser',
+  async (_, thunkAPI) => {
+    try {
+      // Call the logout endpoint to log the activity
+      await api.post('/logout');
+    } catch (error) {
+      console.warn('Logout logging failed:', error);
+      // Don't fail the logout if the logging fails
     }
   }
 );
@@ -60,6 +75,16 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.error = action.payload;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        // Clear state after successful logout logging
+        state.user = null;
+        state.isAuthenticated = false;
+        state.isLoading = false;
+        state.error = null;
+        state.role = null;
+        sessionStorage.removeItem('subsync_user');
+        sessionStorage.removeItem('subsync_token');
       });
   },
 });

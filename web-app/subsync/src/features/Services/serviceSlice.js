@@ -6,7 +6,6 @@ import api from '@/lib/axiosInstance.js';
 export const addService = createAsyncThunk("services/addService", async (data, thunkAPI) => {
     try {
         const res = await api.post("/create-service", data);
-        toast.success('Service added successfully!');
         return res.data;
     } catch (err) {
         const errorMessage = err.response?.data?.error || err.message || 'Failed to add service.';
@@ -17,10 +16,24 @@ export const addService = createAsyncThunk("services/addService", async (data, t
 
 export const fetchServices = createAsyncThunk(
     "services/fetchServices",
-    async (_, thunkAPI) => {
+    async (params = {}, thunkAPI) => {
         try {
-            const response = await api.get("/all-services");
-            return response.data.services;
+            const { search = "", sort = "service_name", order = "asc", page = 1, limit = 10 } = params;
+            const queryParams = new URLSearchParams({
+                search,
+                sort,
+                order,
+                page: page.toString(),
+                limit: limit.toString()
+            });
+            
+            const response = await api.get(`/all-services?${queryParams.toString()}`);
+            // Backend returns { services, totalPages, totalRecords }
+            return {
+                services: response.data.services || [],
+                totalPages: response.data.totalPages || 1,
+                totalRecords: response.data.totalRecords || 0
+            };
         } catch (error) {
             const errorMessage = error.response?.data?.error || error.message || 'Failed to fetch services.';
             toast.error(errorMessage);
@@ -48,7 +61,6 @@ export const updateService = createAsyncThunk(
     async ({ id, serviceData }, thunkAPI) => {
         try {
             const response = await api.put(`/update-service/${id}`, serviceData);
-            toast.success('Service updated successfully!');
             return response.data;
         } catch (error) {
             const errorMessage = error.response?.data?.error || error.message || 'Failed to update service.';
@@ -63,7 +75,6 @@ export const deleteService = createAsyncThunk(
     async (serviceId, thunkAPI) => {
         try {
             await api.delete(`/delete-service/${serviceId}`);
-            toast.success('Service deleted successfully!');
             return serviceId;
         } catch (error) {
             const errorMessage = error.response?.data?.error || error.message || 'Failed to delete service.';
@@ -77,6 +88,8 @@ const serviceSlice = createSlice({
     name: "services",
     initialState: {
         list: [],
+        totalRecords: 0,
+        totalPages: 1,
         currentService: null,
         loading: false,
         error: null
@@ -112,7 +125,9 @@ const serviceSlice = createSlice({
             })
             .addCase(fetchServices.fulfilled, (state, action) => {
                 state.loading = false;
-                state.list = action.payload;
+                state.list = action.payload.services;
+                state.totalRecords = action.payload.totalRecords;
+                state.totalPages = action.payload.totalPages;
                 state.error = null;
             })
             .addCase(fetchServices.rejected, (state, action) => {

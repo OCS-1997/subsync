@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import BasicDetailsSection from "../components/BasicDetailsSection";
 import PurchaseInfoSection from "../components/PurchaseInfoSection";
 import SalesInfoSection from "../components/SalesInfoSection";
-import TaxSection from "../components/TaxSection";
+import DefaultTaxRatesSection from "../components/DefaultTaxRatesSection";
 
 import {
   addService,
@@ -47,8 +47,11 @@ const AddService = () => {
   });
   const [salesInfo, setSalesInfo] = useState({ price: "", account: "Sales", description: "" });
   const [purchaseInfo, setPurchaseInfo] = useState({ price: "", account: "Cost of Goods Sold", description: "", vendor: "" }); // This will hold the vendor ID as a string
-  const [taxRates, setTaxRates] = useState({ intra: "", inter: "" });
-  const [taxRatesList, setTaxRatesList] = useState([]);
+  // Updated tax rates state structure for new component
+  const [defaultTaxRates, setDefaultTaxRates] = useState({
+    intra: { kind: null, id: null, rate: "0" },
+    inter: { kind: null, id: null, rate: "0" }
+  });
 
   const getBasePath = () => {
     const pathSegments = location.pathname.split('/');
@@ -66,7 +69,6 @@ const AddService = () => {
 
     dispatch(fetchVendors());
     dispatch(fetchItemGroups());
-    api.get("/tax-rates").then(res => setTaxRatesList(res.data.taxes || []));
 
 
     return () => {
@@ -106,40 +108,34 @@ const AddService = () => {
         vendor: String(currentService.preferred_vendor_id || parsedPurchaseInfo?.vendor || ""),
       });
 
-      setTaxRates({
-        intra: parsedTaxRates?.intra || "",
-        inter: parsedTaxRates?.inter || "",
-      });
+      // Handle both old and new tax rate formats
+      if (parsedTaxRates) {
+        if (parsedTaxRates.intra && typeof parsedTaxRates.intra === 'object' && parsedTaxRates.intra.kind) {
+          // New format - structured tax preferences
+          setDefaultTaxRates({
+            intra: {
+              kind: parsedTaxRates.intra.kind || null,
+              id: parsedTaxRates.intra.id || null,
+              rate: parsedTaxRates.intra.rate || "0"
+            },
+            inter: {
+              kind: parsedTaxRates.inter?.kind || null,
+              id: parsedTaxRates.inter?.id || null,
+              rate: parsedTaxRates.inter?.rate || "0"
+            }
+          });
+        } else {
+          // Legacy format - simple rate values
+          setDefaultTaxRates({
+            intra: { kind: null, id: null, rate: parsedTaxRates.intra || "0" },
+            inter: { kind: null, id: null, rate: parsedTaxRates.inter || "0" }
+          });
+        }
+      }
     }
   }, [isEditing, currentService]);
 
-  // When vendor changes, update default tax rates based on vendor GST treatment
-  useEffect(() => {
-    if (!purchaseInfo.vendor || !vendors?.length || !taxRatesList.length) return;
-    const selectedVendor = vendors.find(
-      v => String(v.vendor_id || v.id) === String(purchaseInfo.vendor)
-    );
-    if (!selectedVendor) return;
-    const gstTreatment = selectedVendor.gst_treatment;
-    // Find tax rates matching the vendor's GST treatment
-    let intra = "";
-    let inter = "";
-    if (gstTreatment === "CGST & SGST") {
-      intra = taxRatesList.find(t => t.tax_type === "CGST")?.tax_rate || "";
-      inter = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
-    } else if (gstTreatment === "IGST" || gstTreatment === "iGST") {
-      intra = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
-      inter = taxRatesList.find(t => t.tax_type === "IGST")?.tax_rate || "";
-    } else if (gstTreatment === "SEZ") {
-      intra = taxRatesList.find(t => t.tax_type === "SEZ")?.tax_rate || "";
-      inter = taxRatesList.find(t => t.tax_type === "SEZ")?.tax_rate || "";
-    } else if (gstTreatment === "No GST" || gstTreatment === "NO_TAX") {
-      intra = taxRatesList.find(t => t.tax_type === "NO_TAX")?.tax_rate || "";
-      inter = taxRatesList.find(t => t.tax_type === "NO_TAX")?.tax_rate || "";
-    }
-    setTaxRates({ intra, inter });
-  // eslint-disable-next-line
-  }, [purchaseInfo.vendor, vendors, taxRatesList]);
+  // Note: Tax rate auto-selection based on vendor is now handled by DefaultTaxRatesSection component
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -176,9 +172,16 @@ const AddService = () => {
       // console.log("Validation Failed: Preferred Vendor");
       return;
     }
-    if (!taxRates.intra || !taxRates.inter) {
-      toast.error("Both Intra-state and Inter-state Tax Rates are required.");
-      // console.log("Validation Failed: Tax Rates");
+    // Validate structured tax preferences - both kind and id should be consistent
+    console.log("Default Tax Rates Debug:", { defaultTaxRates });
+    
+    // For new structured format, validate that selections are made (allow null for "No Tax")
+    const isIntraValid = defaultTaxRates.intra.rate !== undefined && defaultTaxRates.intra.rate !== '';
+    const isInterValid = defaultTaxRates.inter.rate !== undefined && defaultTaxRates.inter.rate !== '';
+    
+    if (!isIntraValid || !isInterValid) {
+      toast.error("Please configure tax rates for both Intra-state and Inter-state (you can select 'No Tax' if applicable).");
+      console.log("Validation Failed: Tax Rates not configured", { defaultTaxRates, isIntraValid, isInterValid });
       return;
     }
     // console.log("Client-side validation passed.");
@@ -191,7 +194,7 @@ const AddService = () => {
         ...purchaseInfo,
         preferred_vendor: purchaseInfo.vendor,
       },
-      default_tax_rates: taxRates,
+      default_tax_rates: defaultTaxRates,
     };
 
     // console.log("Payload being sent:", payload);
@@ -225,7 +228,10 @@ const AddService = () => {
     });
     setSalesInfo({ price: "", account: "Sales", description: "" });
     setPurchaseInfo({ price: "", account: "Cost of Goods Sold", description: "", vendor: "" });
-    setTaxRates({ intra: "", inter: "" });
+    setDefaultTaxRates({
+      intra: { kind: null, id: null, rate: "0" },
+      inter: { kind: null, id: null, rate: "0" }
+    });
     dispatch(clearServiceError());
     dispatch(clearCurrentService());
     navigate(`${servicesBasePath}`);
@@ -241,7 +247,7 @@ const AddService = () => {
   const handleBack = () => {
     const currentPath = location.pathname;
     const userSegment = currentPath.split("/")[1];
-    navigate(`/${userSegment}/dashboard/customers`);
+    navigate(`/${userSegment}/dashboard/services`);
   };
 
   return (
@@ -249,10 +255,10 @@ const AddService = () => {
    
     <button
           onClick={handleBack}
-          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+          className="mb-1 mt-3 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:translate-x-3 transition-all duration-200 animate-slideInLeft ease-in-out"
           disabled={loading}
         >
-          <ArrowLeft size={20} className="animate-bounce-x" />
+          <ArrowLeft size={20} className="animate-bounce-x  " />
           <span className="font-medium">Back</span>
         </button>
     <form className="space-y-6 p-6" onSubmit={handleSubmit}>
@@ -273,13 +279,14 @@ const AddService = () => {
             vendors={vendors}
             isLoadingVendors={isLoadingVendors}
             vendorsError={vendorsError}
+            fetchVendors={() => dispatch(fetchVendors())}
           />
         </div>
       </div>
 
       <hr className="mb-4 border-gray-500 border-1 size-auto" />
 
-      <TaxSection taxRates={taxRates} setTaxRates={setTaxRates} taxRatesList={taxRatesList} />
+      <DefaultTaxRatesSection defaultTaxRates={defaultTaxRates} setDefaultTaxRates={setDefaultTaxRates} />
 
       <div className="flex justify-end gap-4 pt-4">
         <Button type="submit" className="bg-blue-500"  disabled={isSubmittingService}>

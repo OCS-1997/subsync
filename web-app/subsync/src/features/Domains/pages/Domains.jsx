@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import Hamster from "@/components/animations/Hamster.jsx";
 import GenericTable from "@/components/layouts/GenericTable";
 import Pagination from "@/components/layouts/Pagination";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm";
@@ -29,6 +29,7 @@ function Domains() {
   // Update selector to get totalPages and totalRecords from backend
   const { list: domains, loading, error, totalPages, totalRecords } = useSelector((state) => state.domains);
 
+  //  const loading = true;
   const headers = [
     { key: "domain_name", label: "Domain Name" },
     { key: "customer_name", label: "Customer Name" },
@@ -140,6 +141,8 @@ function Domains() {
   };
 
   return (
+
+    
     
     <div className="flex flex-col p-6 rounded-lg shadow-lg">
 
@@ -169,8 +172,8 @@ function Domains() {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center my-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
+        <div className="flex flex-col justify-center items-center my-10">
+          <Hamster />
         </div>
       ) : domains.length > 0 ? (
         <>

@@ -7,7 +7,7 @@ import { ThemeToggle } from "../ThemeToggle";
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
 
-import { logout } from "@/features/Auth/authSlice";
+import { logoutUser } from "@/features/Auth/authSlice";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -33,20 +33,25 @@ function NavBar({ toggleSidebar }) {
   const role = useSelector(state => state.auth.role);
   const isAdmin = role && role.toLowerCase() === 'admin';
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (error) {
+      console.warn('Logout logging failed, proceeding with logout:', error);
+    } finally {
+      navigate('/');
+    }
   };
 
   return (
-    <nav className="bg-white shadow-md rounded-b-lg border-b-2  border-gray-200">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-        <div className="flex">
+    <nav className="bg-white shadow-md rounded-b-l border-b-2  border-gray-200">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex  justify-between items-center h-16">
+        <div className="flex w-full items-start p-2 m-1">
           <Button variant="ghost" size="icon" className="mr-2 lg:hidden" onClick={toggleSidebar}>
             <span className="material-symbols-outlined">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex items-center p-1 rounded">
-            <img src="/logo.png" alt="" className="h-10 w-auto p-1 rounded-sm bg-[#39a0e4] " />
+          <div className="flex-shrink-0 flex justify-end p-1 rounded">
+            <img src="/logo.png" alt="" className="h-12  p-1 invert brightness-50" />
           </div>
         </div>
         <div className="flex items-center">

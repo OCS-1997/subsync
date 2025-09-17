@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS vendors (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     primary_email VARCHAR(100) NOT NULL,
+    secondary_email VARCHAR(100),
     country_code VARCHAR(5) NOT NULL DEFAULT '+91',
     primary_phone_number VARCHAR(15) NOT NULL,
     secondary_phone_number VARCHAR(15),
@@ -238,6 +239,7 @@ CREATE TABLE activity_logs (
     action VARCHAR(50) NOT NULL,
     resource_type VARCHAR(50),
     resource_id VARCHAR(50),
+    ip_address VARCHAR(45),
     details TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );

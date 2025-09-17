@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ComingSoon.css'; // Make sure to include the CSS file for animations
-import { Hamster } from '../../components/animations/Hamster';
+import Hamster from '@/components/animations/Hamster.jsx';
 const ComingSoon = () => {
   const [loading, setLoading] = useState(false);
 

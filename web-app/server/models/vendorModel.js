@@ -79,12 +79,12 @@ const createVendor = async (vendor) => {
 
         const query = `
             INSERT INTO vendors (
-                vendor_id, salutation, first_name, last_name, primary_email, country_code,
+                vendor_id, salutation, first_name, last_name, primary_email, secondary_email, country_code,
                 primary_phone_number, secondary_phone_number, vendor_address, other_contacts,
                 company_name, display_name, gst_in, currency_code, gst_treatment,
                 tax_preference, exemption_reason, payment_terms, notes, vendor_status,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const values = [
@@ -93,6 +93,7 @@ const createVendor = async (vendor) => {
             vendor.firstName,
             vendor.lastName,
             vendor.email,
+            vendor.secondary_email || "",
             vendor.country_code,
             vendor.phoneNumber,
             vendor.secondaryPhoneNumber || null,
@@ -125,14 +126,29 @@ const createVendor = async (vendor) => {
  * @param {Object} params - Query parameters for filtering and pagination
  * @returns {Promise<{vendors: Array, totalPages: number}>} Array of vendor objects and total pages
  */
-const getAllVendors = async ({ search = "", sort = "display_name", order = "asc", page = 1, limit = 10 } = {}) => {
+const getAllVendors = async ({
+    search = "",
+    sort = "display_name",
+    order = "asc",
+    page = 1,
+    limit = 10
+} = {}) => {
     const offset = (page - 1) * limit;
     const searchQuery = `%${search}%`;
+
+    // Ensure sort is valid and not null/undefined
+    const allowedSortColumns = [
+        'vendor_id', 'display_name', 'company_name', 'primary_phone_number', 
+        'primary_email', 'gst_treatment', 'vendor_status', 'first_name', 'last_name'
+    ];
+    
+    const validSort = sort && sort.trim() !== '' && allowedSortColumns.includes(sort) ? sort : 'display_name';
+    const validOrder = order && ['asc', 'desc'].includes(order.toLowerCase()) ? order.toUpperCase() : 'ASC';
 
     try {
         const [vendors] = await appDB.query(
             `SELECT vendor_id, salutation, first_name, last_name, display_name, company_name, 
-                    primary_phone_number, primary_email, vendor_status
+                    primary_phone_number, primary_email, gst_treatment, vendor_status
              FROM vendors 
              WHERE (
                 display_name LIKE ? OR
@@ -141,11 +157,17 @@ const getAllVendors = async ({ search = "", sort = "display_name", order = "asc"
                 company_name LIKE ? OR
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
+                gst_treatment LIKE ? OR
                 vendor_id LIKE ?
              )
-             ORDER BY ?? ${order.toUpperCase()} 
+             ORDER BY ?? ${validOrder}
              LIMIT ? OFFSET ?`,
-            [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, sort, parseInt(limit), parseInt(offset)]
+            [
+                searchQuery, searchQuery, searchQuery, searchQuery,
+                searchQuery, searchQuery, searchQuery, searchQuery, // 8 placeholders for WHERE
+                validSort,                                          // goes into ORDER BY ??
+                parseInt(limit), parseInt(offset)                   // LIMIT & OFFSET
+            ]
         );
 
         const [[{ total }]] = await appDB.query(
@@ -156,13 +178,18 @@ const getAllVendors = async ({ search = "", sort = "display_name", order = "asc"
                 company_name LIKE ? OR
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
+                gst_treatment LIKE ? OR
                 vendor_id LIKE ?
             )`,
-            [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery]
+            [
+                searchQuery, searchQuery, searchQuery, searchQuery,
+                searchQuery, searchQuery, searchQuery, searchQuery // 8 placeholders, 8 bindings
+            ]
         );
 
-    const totalPages = Math.ceil(total / limit);
-    return { vendors, totalPages, totalRecords: total };
+        const totalPages = Math.ceil(total / limit);
+        return { vendors, totalPages, totalRecords: total };
+
     } catch (error) {
         console.error("Error fetching vendors:", error);
         throw error;
@@ -189,7 +216,7 @@ const getVendorById = async (vendorId) => {
 const updateVendor = async (vendorId, updatedData) => {
     try {
         const {
-            salutation, first_name, last_name, primary_email, country_code, primary_phone_number,
+            salutation, first_name, last_name, primary_email,secondary_email, country_code, primary_phone_number,
             secondary_phone_number, vendor_address, company_name, display_name, gst_in,
             currency_code, gst_treatment, other_contacts, tax_preference, exemption_reason,
             payment_terms, notes, vendor_status
@@ -224,7 +251,7 @@ const updateVendor = async (vendorId, updatedData) => {
 
         const query = `
             UPDATE vendors SET
-                salutation = ?, first_name = ?, last_name = ?, primary_email = ?, country_code = ?,
+                salutation = ?, first_name = ?, last_name = ?, primary_email = ?, secondary_email = ?, country_code = ?,
                 primary_phone_number = ?, secondary_phone_number = ?, vendor_address = ?, other_contacts = ?,
                 company_name = ?, display_name = ?, gst_in = ?, currency_code = ?, gst_treatment = ?,
                 tax_preference = ?, exemption_reason = ?, payment_terms = ?, notes = ?, vendor_status = ?,
@@ -233,7 +260,7 @@ const updateVendor = async (vendorId, updatedData) => {
         `;
 
         const values = [
-            salutation, first_name, last_name, primary_email, country_code,
+            salutation, first_name, last_name, primary_email, secondary_email, country_code,
             primary_phone_number, secondary_phone_number || null,
             serializedAddress, serializedContacts, company_name, display_name, gst_in,
             currency_code, gst_treatment, tax_preference, exemption_reason || "",

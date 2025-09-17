@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
-
+import Hamster from "@/components/animations/Hamster.jsx";
 import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
@@ -258,8 +258,8 @@ function Customers() {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center my-8">
-          <span className="animate-spin w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full"></span>
+        <div className="flex flex-col justify-center items-center my-8">
+         <Hamster />
         </div>
       ) : paginatedData.length > 0 ? (
         <>

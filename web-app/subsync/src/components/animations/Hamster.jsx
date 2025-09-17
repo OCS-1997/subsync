@@ -1,7 +1,7 @@
 import './Hamster.css'
-export const Hamster = () => {
+const Hamster = () => {
     return(
-        <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster flex justify-center items-center">
+        <div aria-label="Orange and tan hamster running in a metal wheel" role="img" className="wheel-and-hamster flex-auto justify-center items-center">
 	<div className="wheel"></div>
 	<div className="hamster">
 		<div className="hamster__body">
@@ -21,4 +21,6 @@ export const Hamster = () => {
     </div>
     );
 }
+
+export default Hamster;
 
