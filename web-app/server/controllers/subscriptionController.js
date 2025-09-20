@@ -15,7 +15,7 @@ const createSubscription = async (req, res) => {
     if (success) {
       // Log activity
       if (req.user && req.user.username) {
-        await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', details: subscription });
+        await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', ipAddress: req.ip, details: subscription });
       }
       res.status(201).json({ message: "Subscription added successfully!" });
     } else {

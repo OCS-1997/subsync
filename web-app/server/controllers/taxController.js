@@ -67,7 +67,7 @@ const createTax = async (req, res) => {
 
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_TAX', resourceType: 'Tax', details: { taxName, taxType, taxRate, description } });
+            await logActivity({ username: req.user.username, action: 'CREATE_TAX', resourceType: 'Tax', ipAddress: req.ip, details: { taxName, taxType, taxRate, description } });
         }
 
         res.status(201).json({ 
@@ -106,7 +106,7 @@ const editTax = async (req, res) => {
 
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_TAX', resourceType: 'Tax', resourceId: id, details: { taxName, taxType, taxRate, description } });
+            await logActivity({ username: req.user.username, action: 'UPDATE_TAX', resourceType: 'Tax', resourceId: id, ipAddress: req.ip, details: { taxName, taxType, taxRate, description } });
         }
 
         res.status(200).json({ 
@@ -134,7 +134,7 @@ const deleteTax = async (req, res) => {
 
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'DELETE_TAX', resourceType: 'Tax', resourceId: id });
+            await logActivity({ username: req.user.username, action: 'DELETE_TAX', ipAddress: req.ip, resourceType: 'Tax', resourceId: id });
         }
 
         res.status(200).json({ message: "Tax deleted successfully" });
@@ -227,7 +227,7 @@ const createTaxGroupController = async (req, res) => {
         if (!groupName) return res.status(400).json({ error: "Group name is required" });
         const group = await createTaxGroup({ groupName, description, taxIds });
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: group.group_id, details: { groupName, taxIds } });
+            await logActivity({ username: req.user.username, action: 'CREATE_TAX_GROUP', resourceType: 'TaxGroup', ipAddress: req.ip, resourceId: group.group_id, details: { groupName, taxIds } });
         }
         res.status(201).json({ message: "Tax group created successfully", group });
     } catch (error) {
@@ -242,7 +242,7 @@ const updateTaxGroupController = async (req, res) => {
         const { groupName, description, taxIds } = req.body;
         const group = await updateTaxGroup(id, { groupName, description, taxIds });
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: id, details: { groupName, taxIds } });
+            await logActivity({ username: req.user.username, action: 'UPDATE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: id, ipAddress: req.ip, details: { groupName, taxIds } });
         }
         res.status(200).json({ message: "Tax group updated successfully", group });
     } catch (error) {
@@ -256,7 +256,7 @@ const deleteTaxGroupController = async (req, res) => {
         const { id } = req.params;
         await deleteTaxGroup(id);
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'DELETE_TAX_GROUP', resourceType: 'TaxGroup', resourceId: id });
+            await logActivity({ username: req.user.username, action: 'DELETE_TAX_GROUP', resourceType: 'TaxGroup', ipAddress: req.ip, resourceId: id });
         }
         res.status(200).json({ message: "Tax group deleted successfully" });
     } catch (error) {
@@ -282,7 +282,7 @@ const setDefaultTaxPreferencesController = async (req, res) => {
         await setDefaultTaxPreferences({ intra: intra || null, inter: inter || null });
         const updated = await getDefaultTaxPreferences();
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'SET_DEFAULT_TAX_PREFERENCES', resourceType: 'TaxPreference', details: updated });
+            await logActivity({ username: req.user.username, action: 'SET_DEFAULT_TAX_PREFERENCES', resourceType: 'TaxPreference', ipAddress: req.ip, details: updated });
         }
         res.status(200).json({ message: "Default tax preferences updated", preferences: updated });
     } catch (error) {

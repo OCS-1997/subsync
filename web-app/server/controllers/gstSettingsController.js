@@ -36,7 +36,7 @@ const updateGSTSettingsController = async (req, res) => {
 
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_GST_SETTINGS', resourceType: 'GSTSettings', details: newSettings });
+            await logActivity({ username: req.user.username, action: 'UPDATE_GST_SETTINGS', resourceType: 'GSTSettings',ipAddress: req.ip, details: newSettings });
         }
 
         res.status(200).json({ message: "GST settings updated successfully" });

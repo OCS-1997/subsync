@@ -10,7 +10,7 @@ const createDomain = async (req, res) => {
         await addDomain(req.body);
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_DOMAIN', resourceType: 'Domain', details: req.body });
+            await logActivity({ username: req.user.username, action: 'CREATE_DOMAIN', resourceType: 'Domain', ipAddress: req.ip, details: req.body });
         }
         res.status(201).json({ message: 'Domain created successfully!' });
     } catch (error) {
@@ -30,7 +30,7 @@ const updateDomainDetails = async (req, res) => {
         const updatedDomain = await getDomainById(did); // after update
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did, details: req.body });
+            await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did,ipAddress: req.ip, details: req.body });
         }
         res.json(updatedDomain);
     } catch (error) {

@@ -29,6 +29,9 @@ const createVendor = async (vendor) => {
                     : vendor.address?.state,
         };
 
+        // Determine if country is India
+        const isIndia = address.country === "IN" || address.country === "India";
+
         // Validate required fields (use extracted values)
         const validationErrors = [];
         
@@ -41,19 +44,17 @@ const createVendor = async (vendor) => {
         if (!address.state) validationErrors.push("address.state");
         if (!vendor.companyName) validationErrors.push("companyName");
         if (!vendor.displayName) validationErrors.push("displayName");
-        if (!vendor.gstin) validationErrors.push("gstin");
+        if (isIndia && !vendor.gstin) validationErrors.push("gstin");
         if (!currencyCode) validationErrors.push("currencyCode");
         if (!vendor.gst_treatment) validationErrors.push("gst_treatment");
         if (!vendor.tax_preference) validationErrors.push("tax_preference");
 
         if (validationErrors.length > 0) {
-            // console.log("Vendor validation failed. Missing fields:", validationErrors);
-            // console.log("Vendor data received:", JSON.stringify(vendor, null, 2));
-            // console.log("Extracted address:", JSON.stringify(address, null, 2));
             throw new Error(`Missing required fields: ${validationErrors.join(', ')}. Please ensure all required fields are filled.`);
         }
 
-        if (!isValidGSTIN(vendor.gstin)) {
+        // GSTIN validation only for India
+        if (isIndia && !isValidGSTIN(vendor.gstin)) {
             throw new Error("Invalid GSTIN format.");
         }
 
@@ -67,6 +68,12 @@ const createVendor = async (vendor) => {
 
         if (vendor.secondaryPhoneNumber && !isValidPhoneNumber(vendor.secondaryPhoneNumber)) {
             throw new Error("Invalid secondary phone number format.");
+        }
+
+        // For non-India, set GSTIN to "GST_NA" if not provided
+        let gstinValue = vendor.gstin;
+        if (!isIndia) {
+            gstinValue = vendor.gstin && vendor.gstin.trim() !== "" ? vendor.gstin : "GST_NA";
         }
 
         const currentTime = getCurrentTime();
@@ -101,7 +108,7 @@ const createVendor = async (vendor) => {
             otherContacts,
             vendor.companyName,
             vendor.displayName,
-            vendor.gstin,
+            gstinValue,
             currencyCode,
             vendor.gst_treatment,
             vendor.tax_preference,

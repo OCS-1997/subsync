@@ -106,6 +106,19 @@ const VendorOtherDetails = ({
   // Set default values if not set
   const currencyValue = vendorData.currencyCode || "INR";
 
+  // GSTIN field logic
+  useEffect(() => {
+    // If not India, set GSTIN to "GST_NA" automatically
+    if (!isIndia && vendorData.gstin !== "GST_NA") {
+      handleInputChange({ target: { name: "gstin", value: "GST_NA" } });
+    }
+    // If India, clear GSTIN if it was set to GST_NA
+    if (isIndia && vendorData.gstin === "GST_NA") {
+      handleInputChange({ target: { name: "gstin", value: "" } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndia]);
+
   return (
     <div className="space-y-6">
       {/* AddressSection is now only in the Address tab, not here */}
@@ -147,7 +160,7 @@ const VendorOtherDetails = ({
             onChange={handleInputChange}
             required={isIndia}
             disabled={!isIndia}
-            placeholder={isIndia ? "Enter GSTIN" : "Not required for non-India"}
+            placeholder={isIndia ? "Enter GSTIN" : "GST not required for non-India"}
             className="rounded-xl px-4 py-3 text-base border border-gray-300"
           />
           {isIndia && (

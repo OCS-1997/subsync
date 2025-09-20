@@ -37,7 +37,7 @@ export const createUserController = async (req, res) => {
         await createUser({ username, name, email, password: hashedPassword, role, is_active });
         // Log activity (admin creates user)
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_USER', resourceType: 'User', resourceId: username, details: { name, email, role, is_active } });
+            await logActivity({ username: req.user.username, action: 'CREATE_USER', resourceType: 'User', resourceId: username, ipAddress: req.ip, details: { name, email, role, is_active } });
         }
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
@@ -58,7 +58,7 @@ export const updateUserController = async (req, res) => {
         await updateUser(username, updateData);
         // Log activity (admin updates user)
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_USER', resourceType: 'User', resourceId: username, details: updateData });
+            await logActivity({ username: req.user.username, action: 'UPDATE_USER', resourceType: 'User', resourceId: username, ipAddress: req.ip, details: updateData });
         }
         res.json({ message: "User updated successfully" });
     } catch (error) {
@@ -75,7 +75,7 @@ export const deleteUserController = async (req, res) => {
         await deleteUser(username);
         // Log activity (admin deletes user)
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'DELETE_USER', resourceType: 'User', resourceId: username });
+            await logActivity({ username: req.user.username, action: 'DELETE_USER', resourceType: 'User', ipAddress: req.ip, resourceId: username });
         }
         res.json({ message: "User deleted successfully" });
     } catch (error) {

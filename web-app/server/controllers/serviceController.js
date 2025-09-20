@@ -28,7 +28,7 @@ const createServiceController = async (req, res) => {
     const result = await createService(serviceData);
     // Log activity
     if (req.user && req.user.username) {
-      await logActivity({ username: req.user.username, action: 'CREATE_SERVICE', resourceType: 'Service', resourceId: result.insertId, details: serviceData });
+      await logActivity({ username: req.user.username, action: 'CREATE_SERVICE', resourceType: 'Service', resourceId: result.insertId, ipAddress: req.ip, details: serviceData });
     }
     // The newly created ID is in result.insertId
     return res.status(201).json({ message: "Service created successfully", service_id: result.insertId });
@@ -103,7 +103,7 @@ const updateServiceController = async (req, res) => {
     const result = await updateService(id, updatedData);
     // Log activity
     if (req.user && req.user.username) {
-      await logActivity({ username: req.user.username, action: 'UPDATE_SERVICE', resourceType: 'Service', resourceId: id, details: updatedData });
+      await logActivity({ username: req.user.username, action: 'UPDATE_SERVICE', resourceType: 'Service', resourceId: id, ipAddress: req.ip, details: updatedData });
     }
 
     if (result.affectedRows === 0) {
@@ -136,7 +136,7 @@ const deleteServiceController = async (req, res) => {
     const result = await deleteService(id);
     // Log activity
     if (req.user && req.user.username) {
-      await logActivity({ username: req.user.username, action: 'DELETE_SERVICE', resourceType: 'Service', resourceId: id });
+      await logActivity({ username: req.user.username, action: 'DELETE_SERVICE', resourceType: 'Service', ipAddress: req.ip, resourceId: id });
     }
 
     if (result.affectedRows === 0) {

@@ -29,7 +29,7 @@ const VendorPersonalDetails = ({ vendorData, handleInputChange, handleSelectChan
           target: { name: "country_code", value: phoneNumberObj.countryCallingCode ? `+${phoneNumberObj.countryCallingCode}` : "" }
         });
         handleInputChange({
-          target: { name: type === 'primary' ? "phoneNumber" : "secondaryPhoneNumber", value: phoneNumberObj.nationalNumber || "" }
+          target: { name: type === 'primary' ? "phoneNumber" : "secondaryPhoneNumber", value: phoneNumberObj.nationalNumber ? String(phoneNumberObj.nationalNumber) : "" }
         });
       } else {
         handleInputChange({ target: { name: "country_code", value: "" } });

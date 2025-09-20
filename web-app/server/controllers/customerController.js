@@ -13,7 +13,7 @@ const createCustomer = async (req, res) => {
         addCustomer(req.body);
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', details: req.body });
+            await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', ipAddress: req.ip, details: req.body });
         }
         res.status(201).json({ message: 'Customer created successfully!' });
     } catch (error) {
@@ -87,7 +87,7 @@ const updateCustomerDetails = async (req, res) => {
       await updateCustomer(cid, updatedData);  // Await the async call
       // Log activity
       if (req.user && req.user.username) {
-          await logActivity({ username: req.user.username, action: 'UPDATE_CUSTOMER', resourceType: 'Customer', resourceId: cid, details: updatedData });
+          await logActivity({ username: req.user.username, action: 'UPDATE_CUSTOMER', resourceType: 'Customer', resourceId: cid, ipAddress: req.ip, details: updatedData });
       }
       res.status(200).json({ message: "Customer updated successfully!" });
   } catch (error) {

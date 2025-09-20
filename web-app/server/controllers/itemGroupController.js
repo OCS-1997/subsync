@@ -25,7 +25,7 @@ export const createItemGroupController = async (req, res) => {
         const result = await createItemGroup({ item_group_name });
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'CREATE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: result.insertId, details: { item_group_name } });
+            await logActivity({ username: req.user.username, action: 'CREATE_ITEM_GROUP', resourceType: 'ItemGroup', ipAddress: req.ip, resourceId: result.insertId, details: { item_group_name } });
         }
         // result.insertId will contain the newly generated item_group_id
         return res.status(201).json({ message: "Item group created successfully", item_group_id: result.insertId });
@@ -91,7 +91,7 @@ export const updateItemGroupController = async (req, res) => {
         const result = await updateItemGroup(id, { item_group_name });
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: id, details: { item_group_name } });
+            await logActivity({ username: req.user.username, action: 'UPDATE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: id, ipAddress: req.ip, details: { item_group_name } });
         }
 
         if (result.affectedRows === 0) {
@@ -122,7 +122,7 @@ export const deleteItemGroupController = async (req, res) => {
         const result = await deleteItemGroup(id);
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'DELETE_ITEM_GROUP', resourceType: 'ItemGroup', resourceId: id });
+            await logActivity({ username: req.user.username, action: 'DELETE_ITEM_GROUP', resourceType: 'ItemGroup',ipAddress: req.ip, resourceId: id });
         }
 
         if (result.affectedRows === 0) {
