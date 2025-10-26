@@ -20,10 +20,6 @@ const validateCustomerData = (customerData) => {
     throw new Error("First name is required and must contain only alphabets.");
   }
 
-  if (!customerData.lastName || !/^[a-zA-Z ]+$/.test(customerData.lastName)) {
-    throw new Error("Last name is required and must contain only alphabets.");
-  }
-
   if (!isValidEmail(customerData.email)) {
     throw new Error("Invalid email address format.");
   }

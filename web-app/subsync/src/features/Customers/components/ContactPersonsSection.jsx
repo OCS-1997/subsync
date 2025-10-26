@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 
 const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   const handleInputChange = (index, field, value) => {
@@ -14,7 +15,7 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   const addContactPerson = () => {
     setContactPersons([
       ...contactPersons,
-      { salutation: "Mr.", designation: "", first_name: "", last_name: "", email: "", phone_number: "" },
+      { salutation: "Mr.", designation: "", first_name: "", last_name: "", email: "", include_in_communication: false, phone_number: "", birthday: "", email_send: false },
     ]);
   };
 
@@ -33,8 +34,20 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
               <th className="px-4 py-2 border-r">First Name</th>
               <th className="px-4 py-2 border-r">Last Name</th>
               <th className="px-4 py-2 border-r">Designation</th>
-              <th className="px-4 py-2 border-r">Email Address</th>
+              <th className="px-4 py-2 border-r">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="underline decoration-dotted">
+                      Email Address (i)
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Check box to select if communication had to go to that email id too
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </th>
               <th className="px-4 py-2 border-r">Phone</th>
+              <th className="px-4 py-2 border-r">Birthday</th>
               <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
@@ -76,11 +89,18 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
-                  <Input
-                    type="email"
-                    value={person.email}
-                    onChange={(e) => handleInputChange(index, "email", e.target.value)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!person.include_in_communication}
+                      onChange={(e) => handleInputChange(index, "include_in_communication", e.target.checked)}
+                    />
+                    <Input
+                      type="email"
+                      value={person.email}
+                      onChange={(e) => handleInputChange(index, "email", e.target.value)}
+                    />
+                  </div>
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
@@ -88,14 +108,31 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     onChange={(e) => handleInputChange(index, "phone_number", e.target.value)}
                   />
                 </td>
+                <td className="px-4 py-2 border-r">
+                  <Input
+                    type="date"
+                    value={person.birthday || ""}
+                    onChange={(e) => handleInputChange(index, "birthday", e.target.value)}
+                  />
+                </td>
                 <td className="px-4 py-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteContactPerson(index)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={!!person.email_send}
+                        onChange={(e) => handleInputChange(index, "email_send", e.target.checked)}
+                      />
+                      <span>Email Send</span>
+                    </label>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteContactPerson(index)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

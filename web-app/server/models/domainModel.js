@@ -19,12 +19,12 @@ async function addDomain(domain) {
         
         // Execute SQL query
         const [result] = await appDB.query(
-            "INSERT INTO domains (domain_id,customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, created_at, updated_at) " +
-            "VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "INSERT INTO domains (domain_id,customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, domain_status, created_at, updated_at) " +
+            "VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             [
                 did, domain.customer_id, domain.customer_name, domain.domain_name, domain.registration_date,
                 domain.registered_with, domain.other_provider || "", domain.description || "", 
-                domain.mail_service_provider || "", domain.other_mail_service_details || "", currentTime, currentTime
+                domain.mail_service_provider || "", domain.other_mail_service_details || "", domain.domain_status || "Active", currentTime, currentTime
             ]
         );
 
@@ -56,7 +56,7 @@ async function addDomain(domain) {
  * @returns {Promise<*>}
  */
 async function updateDomain(domainId, updatedData) {
-    const {customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, name_servers } = updatedData;
+    const {customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, domain_status, name_servers } = updatedData;
     
     // console.log("Updated data received:", updatedData);
     
@@ -71,12 +71,12 @@ async function updateDomain(domainId, updatedData) {
         const [result] = await appDB.query(
             `UPDATE domains 
              SET customer_id=?, customer_name=?, domain_name = ?, registration_date = ?, registered_with = ?, 
-                 other_provider = ?, description = ?, mail_service_provider = ?, other_mail_service_details = ?, updated_at = ? 
+                 other_provider = ?, description = ?, mail_service_provider = ?, other_mail_service_details = ?, domain_status = ?, updated_at = ? 
              WHERE domain_id = ?;`,
             [
                customer_id,customer_name, domain_name, registration_date, registered_with, 
                 other_provider || "", description || "", 
-                mail_service_provider || "", other_mail_service_details || "", currentTime, domainId
+                mail_service_provider || "", other_mail_service_details || "", domain_status || "Active", currentTime, domainId
             ]
         );
 

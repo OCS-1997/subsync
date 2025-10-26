@@ -76,11 +76,13 @@ CREATE TABLE IF NOT EXISTS domains (
     other_mail_service_details VARCHAR(255) DEFAULT NULL,
     name_server VARCHAR(255),
     description TEXT,
+    domain_status ENUM('Active','Expired') NOT NULL DEFAULT 'Active',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE domain_name_servers (
     id INT AUTO_INCREMENT PRIMARY KEY,

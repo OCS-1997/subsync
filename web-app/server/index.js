@@ -15,6 +15,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.set('trust proxy', true);
 
+// Global process-level error handlers (prevent crashes)
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Promise Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
 // To get the real client IP in your routes/middleware:
 // const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
 
@@ -51,10 +59,18 @@ app.use(cors({
 // app.use(limiter);
 app.use("/api", router);
 
+// 404 handler for unknown routes
+app.use((req, res, next) => {
+    return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
+});
 
+// Centralized error handler (last)
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    const status = err.status || err.statusCode || 500;
+    const code = err.code || (status >= 500 ? 'INTERNAL_ERROR' : 'ERROR');
+    const message = err.message || 'Internal Server Error';
+    console.error('Error:', { status, code, message });
+    return res.status(status).json({ success: false, error: { code, message } });
 });
 
 app.listen(process.env.NODE_PORT || 3000, () => {

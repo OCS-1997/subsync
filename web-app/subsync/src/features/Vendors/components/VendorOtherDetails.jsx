@@ -106,18 +106,29 @@ const VendorOtherDetails = ({
   // Set default values if not set
   const currencyValue = vendorData.currencyCode || "INR";
 
+  // Determine if GSTIN is required based on country and GST treatment
+  const treatmentsRequireGSTIN = new Set([
+    "Registered Business - Regular",
+    "Registered Business - Composition",
+    "Input Service Distributor",
+    "Tax Deductor",
+    "SEZ Developer",
+    "Special Economic Zone",
+  ]);
+  const requiresGSTIN = isIndia && treatmentsRequireGSTIN.has(gstTreatmentValue);
+
   // GSTIN field logic
   useEffect(() => {
-    // If not India, set GSTIN to "GST_NA" automatically
-    if (!isIndia && vendorData.gstin !== "GST_NA") {
+    // If GSTIN not required, default to GST_NA
+    if (!requiresGSTIN && vendorData.gstin !== "GST_NA") {
       handleInputChange({ target: { name: "gstin", value: "GST_NA" } });
     }
-    // If India, clear GSTIN if it was set to GST_NA
-    if (isIndia && vendorData.gstin === "GST_NA") {
+    // If GSTIN required and was GST_NA, clear it for user input
+    if (requiresGSTIN && vendorData.gstin === "GST_NA") {
       handleInputChange({ target: { name: "gstin", value: "" } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isIndia]);
+  }, [requiresGSTIN]);
 
   return (
     <div className="space-y-6">
@@ -151,21 +162,21 @@ const VendorOtherDetails = ({
         <div className="space-y-2">
           <Label htmlFor="gstin">
             GSTIN
-            {isIndia && <span className="text-red-800">*</span>}
+            {requiresGSTIN && <span className="text-red-800">*</span>}
           </Label>
           <Input
             id="gstin"
             name="gstin"
             value={vendorData.gstin}
             onChange={handleInputChange}
-            required={isIndia}
-            disabled={!isIndia}
-            placeholder={isIndia ? "Enter GSTIN" : "GST not required for non-India"}
+            required={requiresGSTIN}
+            disabled={!requiresGSTIN}
+            placeholder={requiresGSTIN ? "Enter GSTIN" : "GSTIN not required"}
             className="rounded-xl px-4 py-3 text-base border border-gray-300"
           />
-          {isIndia && (
+          {!requiresGSTIN && (
             <p className="text-sm text-gray-500 ml-2">
-              Enter "GST_NA" if not applicable
+              GSTIN not required for selected treatment/country (using GST_NA)
             </p>
           )}
         </div>

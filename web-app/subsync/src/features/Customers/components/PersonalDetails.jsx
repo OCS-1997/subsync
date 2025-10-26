@@ -154,14 +154,14 @@ const PersonalDetails = ({ customerData, handleInputChange, handleSelectChange, 
         </div>
 
         <div className="flex flex-col mb-4 md:col-span-5">
-          <Label htmlFor="lastName" className="mb-2">Last Name<span className="text-red-800">*</span></Label>
+          <Label htmlFor="lastName" className="mb-2">Last Name</Label>
           <Input
             id="lastName"
             type="text"
             name="lastName"
             value={customerData.lastName}
             onChange={handleInputChange}
-            required
+            
             className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" // Shadcn Input classes
           />
         </div>

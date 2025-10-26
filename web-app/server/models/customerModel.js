@@ -11,7 +11,7 @@ import { isValidGSTIN, isValidEmail, isValidPhoneNumber } from "../middlewares/v
 async function addCustomer(customer) {
     try {
         // Validate required fields
-        if (!customer.salutation || !customer.firstName || !customer.lastName || !customer.email || !customer.phoneNumber || !customer.address ||
+        if (!customer.salutation || !customer.firstName|| !customer.email || !customer.phoneNumber || !customer.address ||
             !customer.address.state || !customer.companyName || !customer.displayName || !customer.gstin || !customer.currencyCode || !customer.gst_treatment || !customer.tax_preference) {
             throw new Error("All required fields must be provided.");
         }
@@ -109,7 +109,7 @@ async function updateCustomer(customerId, updatedData) {
     // console.log("Updated data received:", updatedData);
 
     // Validation
-    if (!salutation || !first_name || !last_name || !primary_email || !primary_phone_number || !customer_address ||
+    if (!salutation || !first_name || !primary_email || !primary_phone_number || !customer_address ||
         !company_name || !display_name || !gst_in || !currency_code || !gst_treatment || !tax_preference) {
         throw new Error("All required fields must be provided.");
     }

@@ -12,4 +12,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Normalize error responses
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Request failed';
+    // Attach a normalized message for consumers
+    error.normalizedMessage = message;
+    error.normalizedStatus = status;
+    return Promise.reject(error);
+  }
+);
+
 export default api;

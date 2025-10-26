@@ -29,50 +29,66 @@ const createVendor = async (vendor) => {
                     : vendor.address?.state,
         };
 
-        // Determine if country is India
-        const isIndia = address.country === "IN" || address.country === "India";
+        // Normalize and determine if country is India
+        const countryVal = (address?.country || "").toString();
+        const isIndia = countryVal === "IN" || countryVal === "India";
+
+        // Determine if GSTIN is required based on GST treatment and country
+        const treatmentsRequireGSTIN = new Set([
+            "Registered Business - Regular",
+            "Registered Business - Composition",
+            "Input Service Distributor",
+            "Tax Deductor",
+            "SEZ Developer",
+            "Special Economic Zone",
+        ]);
+        const requiresGSTIN = isIndia && treatmentsRequireGSTIN.has(vendor.gst_treatment);
 
         // Validate required fields (use extracted values)
         const validationErrors = [];
         
         if (!vendor.salutation) validationErrors.push("salutation");
         if (!vendor.firstName) validationErrors.push("firstName");
-        if (!vendor.lastName) validationErrors.push("lastName");
         if (!vendor.email) validationErrors.push("email");
         if (!vendor.phoneNumber) validationErrors.push("phoneNumber");
         if (!address) validationErrors.push("address object");
-        if (!address.state) validationErrors.push("address.state");
+        if (isIndia && !address.state) validationErrors.push("address.state");
         if (!vendor.companyName) validationErrors.push("companyName");
         if (!vendor.displayName) validationErrors.push("displayName");
-        if (isIndia && !vendor.gstin) validationErrors.push("gstin");
+        if (requiresGSTIN && !vendor.gstin) validationErrors.push("gstin");
         if (!currencyCode) validationErrors.push("currencyCode");
         if (!vendor.gst_treatment) validationErrors.push("gst_treatment");
         if (!vendor.tax_preference) validationErrors.push("tax_preference");
+        if (vendor.tax_preference === "Tax Exempt" && !vendor.exemption_reason) validationErrors.push("exemption_reason");
 
         if (validationErrors.length > 0) {
             throw new Error(`Missing required fields: ${validationErrors.join(', ')}. Please ensure all required fields are filled.`);
         }
 
-        // GSTIN validation only for India
-        if (isIndia && !isValidGSTIN(vendor.gstin)) {
-            throw new Error("Invalid GSTIN format.");
-        }
-
+        // Email & phone format validation
         if (!isValidEmail(vendor.email)) {
             throw new Error("Invalid email address format.");
         }
-
         if (!isValidPhoneNumber(vendor.phoneNumber)) {
             throw new Error("Invalid primary phone number format.");
         }
-
         if (vendor.secondaryPhoneNumber && !isValidPhoneNumber(vendor.secondaryPhoneNumber)) {
             throw new Error("Invalid secondary phone number format.");
         }
 
-        // For non-India, set GSTIN to "GST_NA" if not provided
+        // GSTIN validation (only validate when provided OR required)
+        if (requiresGSTIN) {
+            if (!isValidGSTIN(vendor.gstin)) {
+                throw new Error("Invalid GSTIN format.");
+            }
+        } else if (vendor.gstin && vendor.gstin.trim() !== "" && !isValidGSTIN(vendor.gstin)) {
+            // If not required but provided, it must still be valid
+            throw new Error("Invalid GSTIN format.");
+        }
+
+        // Derive GSTIN value: when not required or non-India, default to GST_NA
         let gstinValue = vendor.gstin;
-        if (!isIndia) {
+        if (!requiresGSTIN) {
             gstinValue = vendor.gstin && vendor.gstin.trim() !== "" ? vendor.gstin : "GST_NA";
         }
 
@@ -230,7 +246,7 @@ const updateVendor = async (vendorId, updatedData) => {
         } = updatedData;
 
         // Validation
-        if (!salutation || !first_name || !last_name || !primary_email || !primary_phone_number ||
+        if (!salutation || !first_name || !primary_email || !primary_phone_number ||
             !vendor_address || !company_name || !display_name || !gst_in || !currency_code ||
             !gst_treatment || !tax_preference) {
             throw new Error("All required fields must be provided.");

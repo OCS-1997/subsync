@@ -388,6 +388,11 @@ const AddVendor = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
           <TabsList className="flex flex-wrap justify-start w-fit border-1 border-gray-300 bg-gray-200 mb-4 gap-2">
             <TabsTrigger
+              value="contactPersons"
+              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              Contacts
+            </TabsTrigger>
+            <TabsTrigger
               value="address"
               className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
               Address
@@ -398,16 +403,18 @@ const AddVendor = () => {
               Tax Details
             </TabsTrigger>
             <TabsTrigger
-              value="contactPersons"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-              Contact Persons
-            </TabsTrigger>
-            <TabsTrigger
               value="remarks"
               className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-              Remarks
+              Notes / Instructions
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="contactPersons" className="tabs-content-transition">
+            <VendorContactPersonsSection
+              contactPersons={contactPersons}
+              setContactPersons={setContactPersons}
+            />
+          </TabsContent>
 
           <TabsContent value="address" className="tabs-content-transition">
             <VendorAddressSection
@@ -436,13 +443,6 @@ const AddVendor = () => {
               selectedTerm={vendorData.payment_terms}
               onTermChange={handlePaymentTermChange}
               isEditing={isEditing}
-            />
-          </TabsContent>
-
-          <TabsContent value="contactPersons" className="tabs-content-transition">
-            <VendorContactPersonsSection
-              contactPersons={contactPersons}
-              setContactPersons={setContactPersons}
             />
           </TabsContent>
 

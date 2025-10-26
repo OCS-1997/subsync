@@ -29,7 +29,8 @@ function AddDomain() {
     otherProvider: "",
     nameServers: [""],
     mailServices: "",
-    mailServicesOther: ""
+    mailServicesOther: "",
+    domainStatus: "Active"
   });
 
   const [allCustomers, setAllCustomers] = useState([]);
@@ -67,15 +68,15 @@ function AddDomain() {
     if (!dateString) return "";
     // If it's already in yyyy-MM-dd format, return as is
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
-    
+
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return "";
-    
+
     // Get the date in local timezone
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   };
 
@@ -121,7 +122,8 @@ function AddDomain() {
           ? d.name_servers.filter(Boolean)
           : d.name_servers?.split(",").map(ns => ns.trim()).filter(Boolean) || [""],
         mailServices: d.mail_service_provider || "",
-        mailServicesOther: d.other_mail_service_details || ""
+        mailServicesOther: d.other_mail_service_details || "",
+        domainStatus: d.domain_status || "Active"
       });
       setSelectedCustomer({ value: d.customer_id, label: d.customer_name });
     } else if (domainId) {
@@ -142,7 +144,8 @@ function AddDomain() {
           ? currentDomain.name_servers.filter(Boolean)
           : currentDomain.name_servers?.split(",").map(ns => ns.trim()).filter(Boolean) || [""],
         mailServices: currentDomain.mail_service_provider || "",
-        mailServicesOther: currentDomain.other_mail_service_details || ""
+        mailServicesOther: currentDomain.other_mail_service_details || "",
+        domainStatus: currentDomain.domain_status || "Active"
       });
       setSelectedCustomer({ value: currentDomain.customer_id, label: currentDomain.customer_name });
     }
@@ -163,7 +166,8 @@ function AddDomain() {
       name_servers: formData.nameServers.filter(ns => ns.trim() !== ""),
       description: formData.description,
       mail_service_provider: formData.mailServices,
-      mail_services_other: formData.mailServices === "Others" ? formData.mailServicesOther : ""
+      mail_services_other: formData.mailServices === "Others" ? formData.mailServicesOther : "",
+      domain_status: formData.domainStatus || "Active"
     };
     console.log("Submitting payload:", payload);
     try {
@@ -228,15 +232,15 @@ function AddDomain() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-     
+
       <button
-          onClick={handleBack}
-          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
-          disabled={loading}
-        >
-          <ArrowLeft size={20} className="animate-bounce-x" />
-          <span className="font-medium">Back</span>
-        </button>
+        onClick={handleBack}
+        className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
+        disabled={loading}
+      >
+        <ArrowLeft size={20} className="animate-bounce-x" />
+        <span className="font-medium">Back</span>
+      </button>
       <div className="flex items-center gap-2 mb-2">
         <h1 className="text-3xl font-bold">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
         <button
@@ -269,6 +273,27 @@ function AddDomain() {
       <hr className="mb-6 border-blue-500" />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
+          <Label>Status<span className="text-red-800">*</span></Label>
+          <div className="flex flex-row rounded-md shadow-sm w-max mt-2" role="group">
+            <Button
+              type="button"
+              variant={formData.domainStatus === "Active" ? "default" : "outline"}
+              className={`rounded-r-none ${formData.domainStatus === "Active" ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-50'}`}
+              onClick={() => setFormData({ ...formData, domainStatus: "Active" })}
+            >
+              Active
+            </Button>
+            <Button
+              type="button"
+              variant={formData.domainStatus === "Expired" ? "destructive" : "outline"}
+              className={`rounded-l-none ${formData.domainStatus === "Expired" ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-50'}`}
+              onClick={() => setFormData({ ...formData, domainStatus: "Expired" })}
+            >
+              Expired
+            </Button>
+          </div>
+        </div>
+        <div>
           <Label>Customer Name<span className="text-red-800">*</span></Label>
           <Select
             options={filteredCustomers}
@@ -280,7 +305,7 @@ function AddDomain() {
             onChange={(s) => {
               setFormData({ ...formData, customerId: s?.value || "" });
               setSelectedCustomer(s || null);
-              setSearchTerm(""); 
+              setSearchTerm("");
             }}
             value={selectedCustomer}
             placeholder="Search customer"
@@ -322,6 +347,7 @@ function AddDomain() {
               <Input value={formData.otherProvider} onChange={(e) => setFormData({ ...formData, otherProvider: e.target.value })} />
             </div>
           )}
+
         </div>
 
         <div>

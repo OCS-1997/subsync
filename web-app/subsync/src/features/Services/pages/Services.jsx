@@ -3,7 +3,7 @@ import { Eye, FileDown, FileUp, Plus, Trash2 } from 'lucide-react';
 import * as Papa from "papaparse";
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { toast, Bounce} from "react-toastify";
+import { toast, Bounce } from "react-toastify";
 import { useState, useEffect, useRef } from 'react';
 import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 
@@ -64,13 +64,13 @@ function Services() {
       page: currentPage,
       limit: 10
     };
-    
+
     // Only add sort parameters if they are not null
     if (sortBy && sortOrder) {
       params.sort = sortBy;
       params.order = sortOrder;
     }
-    
+
     dispatch(fetchServices(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
@@ -89,10 +89,10 @@ function Services() {
     setCurrentPage(1);
   };
 
- const handleSort = (key) => {
+  const handleSort = (key) => {
     // Don't sort actions column
     if (key === 'actions') return;
-    
+
     if (sortBy === key && sortOrder === "asc") {
       setSortOrder("desc");
     } else if (sortBy === key && sortOrder === "desc") {
@@ -124,15 +124,15 @@ function Services() {
         page: currentPage,
         limit: 10
       };
-      
+
       // Only add sort parameters if they are not null
       if (sortBy && sortOrder) {
         params.sort = sortBy;
         params.order = sortOrder;
       }
-      
+
       dispatch(fetchServices(params));
-      
+
       toast.success(`Service "${serviceToDelete.service_name}" deleted successfully!`, {
         position: "top-right",
         autoClose: 2000,
@@ -258,14 +258,19 @@ function Services() {
     }
   };
 
-  const getPrice = (info, key) => {
-    if (!info) return '';
+  const getPriceNumber = (info, key) => {
+    if (!info) return 0;
     try {
       const obj = typeof info === 'string' ? JSON.parse(info) : info;
-      return obj?.[key] ? `Rs.${parseFloat(obj[key]).toFixed(2)}` : '';
+      return obj?.[key] ? parseFloat(obj[key]) : 0;
     } catch {
-      return '';
+      return 0;
     }
+  };
+
+  const formatCurrency = (num) => {
+    const n = Number(num) || 0;
+    return `Rs.${n.toFixed(2)}`;
   };
 
   const getSellingPrice = (salesInfo) => {
@@ -290,18 +295,18 @@ function Services() {
         return parseFloat(service.tax_details.inter.tax_rate || service.tax_details.inter.rate) || 0;
       }
     }
-    
+
     // Fallback to old method for backward compatibility
     if (!service.default_tax_rates) return 0;
     try {
-      const taxRates = typeof service.default_tax_rates === 'string' ? 
+      const taxRates = typeof service.default_tax_rates === 'string' ?
         JSON.parse(service.default_tax_rates) : service.default_tax_rates;
-      
+
       // Use intra state tax rate for calculation
       if (taxRates.intra && taxRates.intra.rate) {
         return parseFloat(taxRates.intra.rate) || 0;
       }
-      
+
       return 0;
     } catch {
       return 0;
@@ -316,141 +321,145 @@ function Services() {
     return sellingPrice + taxAmount;
   };
 
-  const formatTaxRate = (taxAmount) => {
-    if (taxAmount > 0) {
-      return `Rs.${taxAmount.toFixed(0)}`;
-    }
-    return 'Rs.0';
+  const formatPercent = (rate) => {
+    const r = Number(rate) || 0;
+    return `${r.toFixed(2)}%`;
   };
 
   const formatTotalAmount = (totalAmount) => {
-    return totalAmount > 0 ? `Rs.${totalAmount.toFixed(0)}/-` : 'Rs.0/-';
+    return formatCurrency(totalAmount);
   };
 
 
   return (
     <>
-    
-    <div className="flex flex-col p-6 rounded-lg shadow-lg">
-      <h1 className="w-full text-3xl font-bold mb-2">Services</h1>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
-        <div className="flex flex-col sm:flex-row w-full items-center gap-3">
-          <SearchFilterForm
-            search={search}
-            setSearch={setSearch}
-            handleSearch={(e) => setSearch(e.target.value)}
-          />
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link to={`add`}>
-            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
-              <Plus /> Add
+      <div className="flex flex-col p-6 rounded-lg shadow-lg">
+        <h1 className="w-full text-3xl font-bold mb-2">Services</h1>
+        <hr className="mb-4 border-blue-500 border-3 size-auto" />
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
+          <div className="flex flex-col sm:flex-row w-full items-center gap-3">
+            <SearchFilterForm
+              search={search}
+              setSearch={setSearch}
+              handleSearch={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Link to={`add`}>
+              <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
+                <Plus /> Add
+              </Button>
+            </Link>
+
+            <Button className="sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+              <FileDown /> Import
             </Button>
-          </Link>
 
-          <Button className="sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
-            <FileDown /> Import
-          </Button>
+            <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
+                    <FileUp /> Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={fetchServicesAndExport}>Export as CSV</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white">
-                  <FileUp /> Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={fetchServicesAndExport}>Export as CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
+              <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
+            </div>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading ? (
+          <div className="flex flex-col justify-center items-center my-8">
+            <Hamster />
+          </div>
+        ) : services.length > 0 ? (
+          <>
+            <GenericTable
+              headers={headers}
+              data={services.map((service) => {
+                const sellingPrice = getSellingPrice(service.sales_info);
+                const taxRatePercent = getTaxRate(service);
+                const taxAmount = calculateTaxAmount(sellingPrice, taxRatePercent);
+                const totalAmount = calculateTotalAmount(sellingPrice, taxAmount);
+
+                return {
+                  ...service,
+                  stock_keepers_unit: service.stock_keepers_unit,
+                  item_group_name: service.item_group_name || 'N/A',
+                  preferred_vendor_name: service.preferred_vendor_name || 'N/A',
+                  selling_price: (
+                    <span className="inline-block text-right pr-4 tabular-nums">{formatCurrency(getPriceNumber(service.sales_info, 'price'))}</span>
+                  ),
+                  tax_rate: (
+                    <span className="inline-block text-right pr-4 tabular-nums">{formatPercent(taxRatePercent)}</span>
+                  ),
+                  total_amount: (
+                    <span className="inline-block text-right pr-4 tabular-nums">{formatTotalAmount(totalAmount)}</span>
+                  ),
+                  actions: renderActions(service.service_id),
+                };
+              })}
+              primaryKey="service_id"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={backendTotalPages}
+              totalRecords={totalRecords}
+            />
+          </>
+        ) : (
+          <Alert>
+            <AlertTitle>Info</AlertTitle>
+            <AlertDescription>
+              {debouncedSearch ? `No services found for "${debouncedSearch}"` : "No services available"}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {loading ? (
-        <div className="flex flex-col justify-center items-center my-8">
-         <Hamster />
-        </div>
-      ) : services.length > 0 ? (
-        <>
-          <GenericTable
-            headers={headers}
-            data={services.map((service) => {
-              const sellingPrice = getSellingPrice(service.sales_info);
-              const taxRatePercent = getTaxRate(service);
-              const taxAmount = calculateTaxAmount(sellingPrice, taxRatePercent);
-              const totalAmount = calculateTotalAmount(sellingPrice, taxAmount);
-              
-              return {
-                ...service,
-                stock_keepers_unit: service.stock_keepers_unit,
-                item_group_name: service.item_group_name || 'N/A',
-                preferred_vendor_name: service.preferred_vendor_name || 'N/A',
-                selling_price: getPrice(service.sales_info, 'price'),
-                tax_rate: formatTaxRate(taxAmount),
-                total_amount: formatTotalAmount(totalAmount),
-                actions: renderActions(service.service_id),
-              };
-            })}
-            primaryKey="service_id"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
-          <Pagination
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            totalPages={backendTotalPages}
-            totalRecords={totalRecords}
-          />
-        </>
-      ) : (
-        <Alert>
-          <AlertTitle>Info</AlertTitle>
-          <AlertDescription>
-            {debouncedSearch ? `No services found for "${debouncedSearch}"` : "No services available"}
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-
-    {/* Delete Confirmation Dialog */}
-    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Service</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete the service &quot; <b className="font-semibold text-black">{serviceToDelete?.service_name}</b>&quot; ? 
-            This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => setDeleteDialogOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            variant="destructive" 
-            onClick={handleDeleteConfirm}
-          >
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the service &quot; <b className="font-semibold text-black">{serviceToDelete?.service_name}</b>&quot; ?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
