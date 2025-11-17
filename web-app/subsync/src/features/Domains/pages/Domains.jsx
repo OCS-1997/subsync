@@ -38,6 +38,7 @@ function Domains() {
     { key: "mail_service_provider", label: "Mail Services" },
     { key: "description", label: "Description" },
     { key: "registration_date", label: "Registration Date" },
+    { key: "domain_status", label: "Status" },
     { key: "actions", label: "Actions" }
   ];
 
@@ -141,27 +142,25 @@ function Domains() {
   };
 
   return (
-
-    
-    
-    <div className="flex flex-col p-6 rounded-lg shadow-lg">
-
-      <h1 className="w-full text-3xl font-bold mb-2">Domains</h1>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold">Domains</h1>
+        <Link to="add">
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
+            <Plus /> Add
+          </Button>
+        </Link>
+      </div>
+      <hr className="mb-6 border-blue-500 border-1" />
+      <div className="flex items-center gap-3 mb-3">
         <SearchFilterForm
           search={search}
           setSearch={setSearch}
           handleSearch={handleSearch}
         />
-        <Link to="add">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-full sm:w-auto">
-            <Plus /> Add
-          </Button>
-        </Link>
-        <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchDomainsAndExport}>
-              <FileUp /> Export
-            </Button>
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchDomainsAndExport}>
+          <FileUp /> Export
+        </Button>
       </div>
 
       {error && (
@@ -172,7 +171,7 @@ function Domains() {
       )}
 
       {loading ? (
-        <div className="flex flex-col justify-center items-center my-10">
+        <div className="p-6 flex flex-col justify-center items-center">
           <Hamster />
         </div>
       ) : domains.length > 0 ? (
@@ -194,10 +193,12 @@ function Domains() {
                 registration_date
               } = domain;
 
+              const isExpired = domain.domain_status === 'Expired';
               return {
                 ...domain,
                 name_servers: formatNameServers(domain.name_servers),
                 registration_date: formatDateForInput(domain.registration_date),
+                _rowClassName: isExpired ? 'bg-red-50 hover:bg-red-100' : '',
                 actions: (
                   <TooltipProvider>
                     <Tooltip>
@@ -216,7 +217,8 @@ function Domains() {
                               mail_service_provider,
                               other_mail_service_details,
                               description,
-                              registration_date
+                              registration_date,
+                              domain_status: domain.domain_status
                             }
                           }}
                         >
@@ -246,10 +248,22 @@ function Domains() {
           />
         </>
       ) : (
-        <Alert>
-          <AlertTitle>Info</AlertTitle>
-          <AlertDescription>No domains available</AlertDescription>
-        </Alert>
+        <div className="p-10 border rounded-md bg-white text-center">
+          {debouncedSearch ? (
+            <>
+              <div className="text-lg font-semibold mb-2">No results found</div>
+              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+            </>
+          ) : (
+            <>
+              <div className="text-lg font-semibold mb-2">No domains yet</div>
+              <div className="text-sm text-gray-600 mb-4">Create your first domain to get started.</div>
+              <Link to="add">
+                <Button><Plus className="w-4 h-4" /> Add Domain</Button>
+              </Link>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

@@ -25,6 +25,9 @@ import UserManagement from '@/features/Settings/UserManagement';
 import AddUser from '@/features/Settings/AddUser';
 import AdminActivityLog from '@/features/Settings/AdminActivityLog.jsx';
 import ComingSoon from '@/features/ComingSoon/ComingSoon';
+import SubscriptionsPage from '@/features/Subscriptions/pages/SubscriptionsPage.jsx';
+import AddSubscription from '@/features/Subscriptions/pages/AddSubscription.jsx';
+import EditSubscription from '@/features/Subscriptions/pages/EditSubscription.jsx';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -52,7 +55,9 @@ const router = createBrowserRouter([
       { path: "vendors/add", element: <AddVendor /> },
       { path: "vendors/:id/edit", element: <AddVendor /> },
 
-      {path: "subscriptions", element: <ComingSoon />},
+      { path: "subscriptions", element: <SubscriptionsPage /> },
+      { path: "subscriptions/add", element: <AddSubscription /> },
+      { path: "subscriptions/:id/edit", element: <EditSubscription /> },
 
       {
         path: "settings",

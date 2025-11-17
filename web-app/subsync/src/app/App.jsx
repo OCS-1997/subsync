@@ -9,11 +9,25 @@ import ErrorBoundary from './ErrorBoundary.jsx'
 function App() {
   useEffect(() => {
     const handleOffline = () => {
-      toast.error('You are offline. Please check your internet connection.', { toastId: 'offline' });
+      toast.error('You are offline. Please check your internet connection.', { 
+        toastId: 'offline',
+        autoClose: false, 
+        hideProgressBar: true, 
+        closeOnClick: false, 
+        draggable: false, 
+        pauseOnHover: false, 
+      });
     };
     const handleOnline = () => {
+      // Dismiss offline snackbar first
       toast.dismiss('offline');
-      toast.success('You are back online!', { toastId: 'online', autoClose: 2000 });
+      // Show quick success animation
+      toast.success('You are back online!', { 
+        toastId: 'online', 
+        autoClose: 1500,
+        hideProgressBar: false,
+        transition: Bounce,
+      });
     };
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);

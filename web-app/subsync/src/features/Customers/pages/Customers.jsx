@@ -199,55 +199,56 @@ function Customers() {
   );
 
   // Use customers from Redux, format for table
-  const paginatedData = customers.map((c) => ({
-    ...c,
-    first_name: c.salutation + " " + c.first_name + " " + c.last_name || "",
-    phone_with_country_code: `${c.country_code || ""} ${c.primary_phone_number}`,
-    gst_treatment: c.gst_treatment || "",
-    actions: renderActions(c.customer_id),
-  }));
+  const paginatedData = customers.map((c) => {
+    const isInactive = (c.customer_status || '').toLowerCase() === 'inactive';
+    // Ensure phone number is always a string, handle null/undefined/object cases
+    const countryCode = typeof c.country_code === 'string' ? c.country_code : (c.country_code ? String(c.country_code) : '');
+    const phoneNumber = typeof c.primary_phone_number === 'string' ? c.primary_phone_number : (c.primary_phone_number ? String(c.primary_phone_number) : '');
+    const phoneDisplay = countryCode && phoneNumber ? `${countryCode} ${phoneNumber}` : (phoneNumber || countryCode || 'N/A');
+    
+    return {
+      ...c,
+      first_name: (c.salutation ? c.salutation + " " : "") + (c.first_name || "") + " " + (c.last_name || ""),
+      phone_with_country_code: phoneDisplay,
+      gst_treatment: c.gst_treatment || "",
+      actions: renderActions(c.customer_id),
+      _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100' : '',
+    };
+  });
 
   return (
-    <div className="flex flex-col p-6 rounded-lg shadow-lg">
-      <h1 className="w-full text-3xl font-bold mb-2">Customers</h1>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
-        <div className="flex flex-col sm:flex-row w-full items-center gap-3">
-          <SearchFilterForm
-            search={search}
-            setSearch={setSearch}
-            handleSearch={handleSearch}
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link to={`add`}>
-            <Button className="w-full sm:w-aut bg-blue-500  hover:bg-blue-600 text-white"> 
-              <UserPlus /> Add
-            </Button>
-          </Link>
-
-          <Button
-          disabled
-          className="sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
-            <FileDown /> Import
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold">Customers</h1>
+        <Link to={`add`}>
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40"> 
+            <UserPlus /> Add
           </Button>
-
-          <div className="flex flex-col md:flex-row gap-2 sm:w-auto">
-            <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
-              <FileUp /> Export
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={fetchCustomersAndExport}>Export as CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
-          </div>
-        </div>
+        </Link>
+      </div>
+      <hr className="mb-6 border-blue-500 border-1" />
+      <div className="flex items-center gap-3 mb-3">
+        <SearchFilterForm
+          search={search}
+          setSearch={setSearch}
+          handleSearch={handleSearch}
+        />
+        <Button
+          disabled
+          className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+          <FileDown /> Import
+        </Button>
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
+          <FileUp /> Export
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={fetchCustomersAndExport}>Export as CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
       </div>
 
       {error && (
@@ -258,20 +259,19 @@ function Customers() {
       )}
 
       {loading ? (
-        <div className="flex flex-col justify-center items-center my-8">
-         <Hamster />
+        <div className="p-6 flex flex-col justify-center items-center">
+          <Hamster />
         </div>
       ) : paginatedData.length > 0 ? (
         <>
-          
-            <GenericTable
-              headers={headers}
-              data={paginatedData}
-              primaryKey="customer_id"
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-            />
+          <GenericTable
+            headers={headers}
+            data={paginatedData}
+            primaryKey="customer_id"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+          />
           <Pagination
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
@@ -280,10 +280,22 @@ function Customers() {
           />
         </>
       ) : (
-        <Alert>
-          <AlertTitle>Info</AlertTitle>
-          <AlertDescription>No customers available</AlertDescription>
-        </Alert>
+        <div className="p-10 border rounded-md bg-white text-center">
+          {debouncedSearch ? (
+            <>
+              <div className="text-lg font-semibold mb-2">No results found</div>
+              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+            </>
+          ) : (
+            <>
+              <div className="text-lg font-semibold mb-2">No customers yet</div>
+              <div className="text-sm text-gray-600 mb-4">Create your first customer to get started.</div>
+              <Link to="add">
+                <Button><UserPlus className="w-4 h-4" /> Add Customer</Button>
+              </Link>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

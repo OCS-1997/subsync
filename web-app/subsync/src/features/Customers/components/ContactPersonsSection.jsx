@@ -7,9 +7,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   const handleInputChange = (index, field, value) => {
-    const updatedPersons = [...contactPersons];
-    updatedPersons[index][field] = value;
-    setContactPersons(updatedPersons);
+    setContactPersons(prev => {
+      const updatedPersons = [...prev];
+      if (!updatedPersons[index]) {
+        updatedPersons[index] = { salutation: "Mr.", designation: "", first_name: "", last_name: "", email: "", include_in_communication: false, phone_number: "", birthday: "", email_send: false, country_code: "+91" };
+      }
+      updatedPersons[index] = { ...updatedPersons[index], [field]: value };
+      return updatedPersons;
+    });
   };
 
   const addContactPerson = () => {
@@ -25,9 +30,9 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border border-gray-300 rounded-md overflow-hidden">
+        <table className="w-full text-sm text-left border border-gray-300 rounded-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-4 py-2 border-r">Salutation</th>
@@ -53,7 +58,7 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
           </thead>
           <tbody>
             {contactPersons.map((person, index) => (
-              <tr key={index} className="even:bg-gray-50">
+              <tr key={`contact-${index}-${person.email || index}`} className="even:bg-gray-50">
                 <td className="px-4 py-2 border-r">
                   <Select
                     value={person.salutation || "Mr."}
@@ -72,20 +77,38 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
-                    value={person.first_name}
+                    value={person.first_name || ""}
                     onChange={(e) => handleInputChange(index, "first_name", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
-                    value={person.last_name}
+                    value={person.last_name || ""}
                     onChange={(e) => handleInputChange(index, "last_name", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
-                    value={person.designation}
+                    value={person.designation || ""}
                     onChange={(e) => handleInputChange(index, "designation", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
@@ -93,19 +116,38 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     <input
                       type="checkbox"
                       checked={!!person.include_in_communication}
-                      onChange={(e) => handleInputChange(index, "include_in_communication", e.target.checked)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleInputChange(index, "include_in_communication", e.target.checked);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                     <Input
                       type="email"
-                      value={person.email}
+                      value={person.email || ""}
                       onChange={(e) => handleInputChange(index, "email", e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
                     />
                   </div>
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
-                    value={person.phone_number}
+                    value={person.phone_number || ""}
                     onChange={(e) => handleInputChange(index, "phone_number", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
@@ -113,6 +155,12 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     type="date"
                     value={person.birthday || ""}
                     onChange={(e) => handleInputChange(index, "birthday", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -121,14 +169,24 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                       <input
                         type="checkbox"
                         checked={!!person.email_send}
-                        onChange={(e) => handleInputChange(index, "email_send", e.target.checked)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleInputChange(index, "email_send", e.target.checked);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
                       />
                       <span>Email Send</span>
                     </label>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteContactPerson(index)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteContactPerson(index);
+                      }}
                     >
                       Delete
                     </Button>

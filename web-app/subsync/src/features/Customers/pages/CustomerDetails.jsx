@@ -260,7 +260,19 @@ function CustomerDetails() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Email</label>
-                          <p className="text-lg text-gray-900 dark:text-white">{contact.email || "Not provided"}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-lg text-gray-900 dark:text-white">{contact.email || "Not provided"}</p>
+                            {contact.include_in_communication && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                Include in Communication
+                              </span>
+                            )}
+                            {contact.email_send && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Email Send
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Phone</label>
@@ -268,6 +280,14 @@ function CustomerDetails() {
                             {contact.country_code} {contact.phone_number || "Not provided"}
                           </p>
                         </div>
+                        {contact.birthday && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Birthday</label>
+                            <p className="text-lg text-gray-900 dark:text-white">
+                              {new Date(contact.birthday).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

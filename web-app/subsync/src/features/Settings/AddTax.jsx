@@ -139,20 +139,29 @@ function AddTax() {
         <>
 
             <div className="w-full max-w-2xl mx-auto">
-                <div className="flex items-center gap-4 mb-6">
-                    <Button 
-                        variant="ghost" 
-                        onClick={goBack}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft size={16} />
-                        Back to Taxes
-                    </Button>
+                {/* Breadcrumb */}
+                <div className="mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Button 
+                            variant="ghost" 
+                            onClick={goBack}
+                            className="inline-flex items-center gap-2 p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                            <ArrowLeft size={16} />
+                        </Button>
+                        <span>Settings</span>
+                        <span>{`>`}</span>
+                        <span>Taxes</span>
+                        <span>{`>`}</span>
+                        <span>Tax Rates</span>
+                        <span>{`>`}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
+                    </div>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Add New Tax</CardTitle>
+                        <CardTitle>{isEditing ? "Edit Tax" : "Add New Tax"}</CardTitle>
                         <CardDescription>
                             Create a new tax rate for your business. Fill in the details below.
                         </CardDescription>

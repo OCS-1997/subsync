@@ -252,15 +252,21 @@ const AddService = () => {
 
   return (
     <>
-   
-    <button
-          onClick={handleBack}
-          className="mb-1 mt-3 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:translate-x-3 transition-all duration-200 animate-slideInLeft ease-in-out"
-          disabled={loading}
-        >
-          <ArrowLeft size={20} className="animate-bounce-x  " />
-          <span className="font-medium">Back</span>
-        </button>
+      {/* Breadcrumb */}
+      <div className="mb-4 mt-3">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+            disabled={loading}
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <span>Services</span>
+          <span>{`>`}</span>
+          <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
+        </div>
+      </div>
     <form className="space-y-6 p-6" onSubmit={handleSubmit}>
       <h1 className="text-3xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
       <hr className="mb-2 border-blue-500 border-1 size-auto" />

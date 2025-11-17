@@ -149,39 +149,35 @@ function Vendors() {
 
 
   return (
-    <>
-      <div className="flex flex-col p-6 rounded-lg shadow-lg">
-        <h1 className="w-full text-3xl font-bold mb-2">Vendors</h1>
-        <hr className="mb-4 border-blue-500 border-3 size-auto" />
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 w-full">
-          <div className="flex flex-col sm:flex-row w-full items-center gap-3">
-            <SearchFilterForm
-              search={search}
-              setSearch={setSearch}
-              handleSearch={handleSearch}
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto ">
-            <Button 
-              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white" 
-              onClick={handleAddVendor}
-            >
-              <UserPlus /> Add
-            </Button>
-            <Button className="w-full sm:w-auto  bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
-              <FileUp /> Export
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <span />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={fetchVendorsAndExport}>Export as CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold">Vendors</h1>
+        <Button 
+          className="bg-blue-500 hover:bg-blue-600 text-white w-40" 
+          onClick={handleAddVendor}
+        >
+          <UserPlus /> Add
+        </Button>
+      </div>
+      <hr className="mb-6 border-blue-500 border-1" />
+      <div className="flex items-center gap-3 mb-3">
+        <SearchFilterForm
+          search={search}
+          setSearch={setSearch}
+          handleSearch={handleSearch}
+        />
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
+          <FileUp /> Export
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <span />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={fetchVendorsAndExport}>Export as CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -191,22 +187,36 @@ function Vendors() {
         )}
 
         {loading ? (
-          <div className="flex flex-col justify-center items-center my-8">
+          <div className="p-6 flex flex-col justify-center items-center">
             <Hamster />
           </div>
         ) : vendors.length > 0 ? (
           <>
             <GenericTable
               headers={headers}
-              data={vendors.map((v) => ({
-                ...v,
-                display_name:  `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
-                primary_phone_number: v.country_code && v.primary_phone_number
-                    ? `${v.country_code} ${v.primary_phone_number}`
-                    : v.primary_phone_number || "Not provided",
-                gst_treatment: v.gst_treatment || "Not specified",
-                actions: renderActions(v),
-              }))}
+              data={vendors.map((v) => {
+                const isInactive = (v.vendor_status || '').toLowerCase() === 'inactive';
+                // Ensure phone number is always a string and includes country code
+                const countryCode = typeof v.country_code === 'string' ? v.country_code : (v.country_code ? String(v.country_code) : '');
+                const phoneNumber = typeof v.primary_phone_number === 'string' ? v.primary_phone_number : (v.primary_phone_number ? String(v.primary_phone_number) : '');
+                // Format: country code + phone number, or just phone number, or "Not provided"
+                let phoneDisplay = "Not provided";
+                if (countryCode && phoneNumber) {
+                  phoneDisplay = `${countryCode} ${phoneNumber}`;
+                } else if (phoneNumber) {
+                  phoneDisplay = phoneNumber;
+                } else if (countryCode) {
+                  phoneDisplay = countryCode;
+                }
+                return {
+                  ...v,
+                  display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
+                  primary_phone_number: phoneDisplay,
+                  gst_treatment: v.gst_treatment || "Not specified",
+                  actions: renderActions(v),
+                  _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : '',
+                };
+              })}
               primaryKey="vendor_id"
               sortBy={sortBy}
               sortOrder={sortOrder}
@@ -220,15 +230,22 @@ function Vendors() {
             />
           </>
         ) : (
-          <Alert>
-            <AlertTitle>Info</AlertTitle>
-            <AlertDescription>
-              {search ? `No vendors found for "${search}"` : "No vendors available"}
-            </AlertDescription>
-          </Alert>
+          <div className="p-10 border rounded-md bg-white text-center">
+            {debouncedSearch ? (
+              <>
+                <div className="text-lg font-semibold mb-2">No results found</div>
+                <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold mb-2">No vendors yet</div>
+                <div className="text-sm text-gray-600 mb-4">Create your first vendor to get started.</div>
+                <Button onClick={handleAddVendor}><UserPlus className="w-4 h-4" /> Add Vendor</Button>
+              </>
+            )}
+          </div>
         )}
-      </div>
-    </>
+    </div>
   );
 }
 
