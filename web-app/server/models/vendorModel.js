@@ -171,13 +171,14 @@ const getAllVendors = async ({
     try {
         const [vendors] = await appDB.query(
             `SELECT vendor_id, salutation, first_name, last_name, display_name, company_name, 
-                    primary_phone_number, primary_email, gst_treatment, vendor_status
+                    country_code, primary_phone_number, primary_email, gst_treatment, vendor_status
              FROM vendors 
              WHERE (
                 display_name LIKE ? OR
                 first_name LIKE ? OR
                 last_name LIKE ? OR
                 company_name LIKE ? OR
+                country_code LIKE ? OR
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
                 gst_treatment LIKE ? OR
@@ -187,7 +188,7 @@ const getAllVendors = async ({
              LIMIT ? OFFSET ?`,
             [
                 searchQuery, searchQuery, searchQuery, searchQuery,
-                searchQuery, searchQuery, searchQuery, searchQuery, // 8 placeholders for WHERE
+                searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, // 9 placeholders for WHERE
                 validSort,                                          // goes into ORDER BY ??
                 parseInt(limit), parseInt(offset)                   // LIMIT & OFFSET
             ]
@@ -199,6 +200,7 @@ const getAllVendors = async ({
                 first_name LIKE ? OR
                 last_name LIKE ? OR
                 company_name LIKE ? OR
+                country_code LIKE ? OR
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
                 gst_treatment LIKE ? OR
@@ -206,7 +208,7 @@ const getAllVendors = async ({
             )`,
             [
                 searchQuery, searchQuery, searchQuery, searchQuery,
-                searchQuery, searchQuery, searchQuery, searchQuery // 8 placeholders, 8 bindings
+                searchQuery, searchQuery, searchQuery, searchQuery, searchQuery // 9 placeholders, 9 bindings
             ]
         );
 

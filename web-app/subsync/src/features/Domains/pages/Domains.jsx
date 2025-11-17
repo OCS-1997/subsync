@@ -113,7 +113,7 @@ function Domains() {
 
   const fetchDomainsAndExport = async () => {
     try {
-      console.log("Fetching all domains for export...");
+      //console.log("Fetching all domains for export...");
       const response = await api.get(`/all-domains`);
       const data = response.data;
 

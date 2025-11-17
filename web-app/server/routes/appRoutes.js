@@ -2,13 +2,13 @@ import express from 'express';
 import { isAuthenticated } from '../middlewares/auth.js';
 import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
-import { createCustomer, updateCustomerDetails, fetchAllCustomers,fetchAllCustomerDetails, customerDetailsByID , importCustomers} from '../controllers/customerController.js';
+import { createCustomer, updateCustomerDetails, fetchAllCustomers,fetchAllCustomerDetails, customerDetailsByID , importCustomers, addCustomerContactController} from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains } from '../controllers/domainController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
-import { getSubscriptionsController, createSubscription } from '../controllers/subscriptionController.js';
+import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController } from '../controllers/subscriptionController.js';
 import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref, getAllActiveTaxRates, getAllTaxGroupsController, getTaxGroupByIdController, createTaxGroupController, updateTaxGroupController, deleteTaxGroupController, getDefaultTaxPreferencesController, setDefaultTaxPreferencesController } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
@@ -32,6 +32,7 @@ router.get('/customer/:cid', isAuthenticated, customerDetailsByID);
 router.get('/all-customer-details', isAuthenticated, fetchAllCustomerDetails);
 router.put('/update-customer/:cid', isAuthenticated, updateCustomerDetails);
 router.post('/import-customers', isAuthenticated, importCustomers);
+router.post('/customer/:cid/contacts', isAuthenticated, addCustomerContactController);
 
 // Payment Terms
 router.get('/payment-terms', isAuthenticated, getPaymentTerms);
@@ -70,8 +71,12 @@ router.put('/update-item-group/:id', isAuthenticated, updateItemGroupController)
 router.delete('/delete-item-group/:id', isAuthenticated, deleteItemGroupController);
 
 // Subscriptions
-router.get('/all-subscriptions', isAuthenticated, getSubscriptionsController);
-router.post('/add-subscription', isAuthenticated, createSubscription);
+router.post('/subscription/:id/reminder', isAuthenticated, sendReminderController);
+router.get('/subscriptions', isAuthenticated, getSubscriptionsController);
+router.post('/subscriptions', isAuthenticated, createSubscription);
+router.get('/subscriptions/:id', isAuthenticated, getSubscriptionByIdController);
+router.put('/subscriptions/:id', isAuthenticated, updateSubscriptionController);
+router.delete('/subscriptions/:id', isAuthenticated, deleteSubscriptionController);
 
 // Taxes Rates
 router.get('/all-taxes', isAuthenticated, getAllTaxes);

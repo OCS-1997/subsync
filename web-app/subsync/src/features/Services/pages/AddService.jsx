@@ -173,7 +173,7 @@ const AddService = () => {
       return;
     }
     // Validate structured tax preferences - both kind and id should be consistent
-    console.log("Default Tax Rates Debug:", { defaultTaxRates });
+   // console.log("Default Tax Rates Debug:", { defaultTaxRates });
     
     // For new structured format, validate that selections are made (allow null for "No Tax")
     const isIntraValid = defaultTaxRates.intra.rate !== undefined && defaultTaxRates.intra.rate !== '';
@@ -181,7 +181,7 @@ const AddService = () => {
     
     if (!isIntraValid || !isInterValid) {
       toast.error("Please configure tax rates for both Intra-state and Inter-state (you can select 'No Tax' if applicable).");
-      console.log("Validation Failed: Tax Rates not configured", { defaultTaxRates, isIntraValid, isInterValid });
+    // console.log("Validation Failed: Tax Rates not configured", { defaultTaxRates, isIntraValid, isInterValid });
       return;
     }
     // console.log("Client-side validation passed.");

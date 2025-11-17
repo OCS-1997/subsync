@@ -1,0 +1,1 @@
+ALTER TABLE domains ADD COLUMN domain_status ENUM('Active','Expired') NOT NULL DEFAULT 'Active';

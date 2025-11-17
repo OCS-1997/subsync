@@ -8,7 +8,7 @@ export const fetchItemGroups = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const response = await api.get("/all-item-groups");
-            console.log("Fetched item groups:", response.data);
+           // console.log("Fetched item groups:", response.data);
             return response.data;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || error.message);

@@ -169,7 +169,7 @@ function AddDomain() {
       mail_services_other: formData.mailServices === "Others" ? formData.mailServicesOther : "",
       domain_status: formData.domainStatus || "Active"
     };
-    console.log("Submitting payload:", payload);
+    //console.log("Submitting payload:", payload);
     try {
       if (isEditing) {
         await dispatch(updateDomain({ id: domainId, payload })).unwrap();

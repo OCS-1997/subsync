@@ -49,7 +49,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
     
     setIsDeletingVendor(true);
     try {
-      console.log("Deleting vendor with ID:", vendorId);
+      //console.log("Deleting vendor with ID:", vendorId);
       
       // The deleteVendor action already handles toast notifications and state updates
       await dispatch(deleteVendor(vendorId)).unwrap();
@@ -62,7 +62,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
       // Close the delete confirmation dialog
       setDeleteTarget(null);
       
-      console.log("Vendor deleted successfully");
+      //console.log("Vendor deleted successfully");
     } catch (err) {
       console.error("Error deleting vendor:", err);
       // Error toast is already handled by the Redux action
@@ -179,7 +179,7 @@ const ManageVendorsModal = ({ onVendorsUpdated }) => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log("Setting delete target:", vendor);
+                          //console.log("Setting delete target:", vendor);
                           setDeleteTarget(vendor);
                         }}
                         disabled={loading || isDeletingVendor}

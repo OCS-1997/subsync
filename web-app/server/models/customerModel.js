@@ -295,4 +295,32 @@ const getCustomerById = async (customerId) => {
 };
 
 
-export { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData };
+async function appendCustomerContact(customerId, contact) {
+    try {
+        const [rows] = await appDB.query(`SELECT other_contacts FROM customers WHERE customer_id = ?`, [customerId]);
+        if (!rows.length) throw new Error('Customer not found');
+        let contacts = [];
+        try { contacts = typeof rows[0].other_contacts === 'string' ? JSON.parse(rows[0].other_contacts || '[]') : (rows[0].other_contacts || []); } catch { contacts = []; }
+        const toPush = {
+            salutation: contact.salutation || '',
+            first_name: contact.first_name || contact.firstName || '',
+            last_name: contact.last_name || contact.lastName || '',
+            email: contact.email,
+            mobile: contact.mobile || contact.phone || contact.phoneNumber || '',
+            designation: contact.designation || '',
+            is_subscriptions_recipient: contact.is_subscriptions_recipient !== false,
+            created_at: getCurrentTime()
+        };
+        if (!toPush.first_name || !toPush.email) {
+            throw new Error('Name and email are required');
+        }
+        contacts.push(toPush);
+        await appDB.query(`UPDATE customers SET other_contacts = ? WHERE customer_id = ?`, [JSON.stringify(contacts), customerId]);
+        return contacts;
+    } catch (e) {
+        console.error('appendCustomerContact error:', e);
+        throw e;
+    }
+}
+
+export { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData, appendCustomerContact };

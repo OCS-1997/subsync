@@ -172,4 +172,20 @@ const importCustomers = async (req, res) => {
     }
 };
 
-export { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers };
+import { appendCustomerContact } from "../models/customerModel.js";
+
+const addCustomerContactController = async (req, res) => {
+  try {
+    const { cid } = req.params;
+    const contacts = await appendCustomerContact(cid, req.body || {});
+    // Log activity
+    if (req.user && req.user.username) {
+      await logActivity({ username: req.user.username, action: 'ADD_CUSTOMER_CONTACT', resourceType: 'Customer', resourceId: cid, ipAddress: req.ip, details: req.body });
+    }
+    res.status(200).json({ contacts });
+  } catch (e) {
+    res.status(400).json({ error: e.message || 'Failed to add contact' });
+  }
+};
+
+export { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController };
