@@ -14,6 +14,7 @@ const AddressSection = ({
   states = [],
   setStates = () => {}, // fallback to no-op if not provided
   isIndia = false, // new prop
+  setCustomerData = () => {}, // Add this prop
 }) => {
   const countryOptions = countries && Array.isArray(countries) && countries.length > 0
     ? countries
@@ -23,11 +24,17 @@ const AddressSection = ({
     handleSelectChange("address.country", selectedOption);
     handleSelectChange("address.state", null);
 
-    // Always update states if setStates is available
+    // Auto-set GSTIN based on country selection
     if (selectedOption && selectedOption.value === "IN") {
       setStates(indianStates);
+      // GSTIN will be filled manually for India
     } else {
       setStates([]);
+      // Set GSTIN to GST_NA for non-India countries
+      setCustomerData(prev => ({
+        ...prev,
+        gstin: "GST_NA"
+      }));
     }
   };
 

@@ -18,7 +18,7 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
   try {
     const validSortColumns = [
       "s.sub_id", "s.customer_id", "s.start_date", "s.end_date", "s.status", "s.domain_name",
-      "c.display_name", "s.total"
+      "c.display_name", "s.total", "s.updated_at", "s.created_at"
     ];
 
     if (sort && !validSortColumns.includes(sort)) {
@@ -77,10 +77,10 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
       countQuery += whereStr;
     }
 
-    if (sort && order) {
+    if (sort && order && validSortColumns.includes(sort)) {
       baseQuery += ` ORDER BY ${sort} ${order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'}`;
     } else {
-      baseQuery += ` ORDER BY s.start_date DESC`;
+      baseQuery += ` ORDER BY s.updated_at DESC, s.start_date DESC`;
     }
 
     const offset = (page - 1) * limit;

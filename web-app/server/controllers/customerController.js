@@ -10,7 +10,7 @@ import { logActivity } from "../models/activityLogModel.js";
 const createCustomer = async (req, res) => {
     try {
         // console.log("Received Data", req.body)
-        addCustomer(req.body);
+        await addCustomer(req.body);
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', ipAddress: req.ip, details: req.body });

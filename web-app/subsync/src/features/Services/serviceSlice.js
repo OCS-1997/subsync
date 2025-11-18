@@ -18,11 +18,18 @@ export const fetchServices = createAsyncThunk(
     "services/fetchServices",
     async (params = {}, thunkAPI) => {
         try {
-            const { search = "", sort = "service_name", order = "asc", page = 1, limit = 10 } = params;
+            const { search = "", sort, order, page = 1, limit = 10 } = params;
+            const hasCustomSort = typeof sort === "string" && sort.trim() !== "";
+            const sortField = hasCustomSort ? sort : "updated_at";
+            let sortDirection = "desc";
+            if (hasCustomSort && typeof order === "string") {
+                sortDirection = order.toLowerCase() === "asc" ? "asc" : "desc";
+            }
+
             const queryParams = new URLSearchParams({
                 search,
-                sort,
-                order,
+                sort: sortField,
+                order: sortDirection,
                 page: page.toString(),
                 limit: limit.toString()
             });

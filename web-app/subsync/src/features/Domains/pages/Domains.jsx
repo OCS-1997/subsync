@@ -90,8 +90,16 @@ function Domains() {
   }, [search]);
 
   useEffect(() => {
+    const params = {
+      search: debouncedSearch,
+      page: currentPage
+    };
+    if (sortBy && sortOrder) {
+      params.sort = sortBy;
+      params.order = sortOrder;
+    }
     // Fetch domains whenever search, sort, order, or page changes
-    dispatch(fetchDomains({ search: debouncedSearch, sort: sortBy, order: sortOrder, page: currentPage }));
+    dispatch(fetchDomains(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   useEffect(() => {

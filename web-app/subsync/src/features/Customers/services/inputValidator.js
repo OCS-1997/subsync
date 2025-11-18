@@ -1,14 +1,36 @@
+const normalizePhoneNumber = (phone) => {
+  if (phone === null || phone === undefined) return "";
+  return String(phone).replace(/[^\d]/g, "");
+};
+
 const isValidGSTIN = (gstin) => {
-  if (gstin.toLowerCase() === "gst_na") return true;
+  if (typeof gstin !== "string") return false;
+  if (gstin.toLowerCase() === "gst_na" || gstin.toLowerCase() === "na") return true;
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(gstin);
 };
 
 const isValidEmail = (email) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (typeof email !== "string") return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 };
 
 const isValidPhoneNumber = (phone) => {
-  return /^\+?[1-9]\d{0,2}[-.\s]?\d{6,14}$/.test(phone);
+  const digits = normalizePhoneNumber(phone);
+  return digits.length >= 6 && digits.length <= 14;
+};
+
+const normalizeCountryValue = (country) => {
+  if (!country) return "";
+  if (typeof country === "string") return country;
+  if (typeof country === "object") return country.value || country.label || "";
+  return "";
+};
+
+const isAddressInIndia = (address) => {
+  if (!address) return true;
+  const normalizedCountry = normalizeCountryValue(address.country).trim().toUpperCase();
+  if (!normalizedCountry) return true;
+  return normalizedCountry === "IN" || normalizedCountry === "INDIA";
 };
 
 const validateCustomerData = (customerData) => {
@@ -35,6 +57,11 @@ const validateCustomerData = (customerData) => {
   const { address } = customerData;
   if (!address || !address.addressLine || !address.city || !address.state || !address.zipCode || !address.country) {
     throw new Error("Complete address is required.");
+  }
+
+  const customerInIndia = isAddressInIndia(address);
+  if (!customerInIndia) {
+    customerData.gstin = customerData.gstin || "GST_NA";
   }
 
   if (!customerData.companyName || customerData.companyName.length > 100) {
@@ -81,4 +108,4 @@ const validateCustomerData = (customerData) => {
   }
 };
 
-export { validateCustomerData, isValidEmail, isValidPhoneNumber, isValidGSTIN };
+export { validateCustomerData, isValidEmail, isValidPhoneNumber, isValidGSTIN, normalizePhoneNumber };

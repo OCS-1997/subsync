@@ -113,21 +113,21 @@ const AddCustomer = () => {
       dispatch(fetchCustomerById(editableCustomerId));
     }
     return () => {
-      dispatch(clearCustomerState()); 
+      dispatch(clearCustomerState());
     };
   }, [editableCustomerId, dispatch]);
 
   useEffect(() => {
-  // Fetch payment terms for matching
-  const fetchTerms = async () => {
-    try {
-      const response = await api.get('/payment-terms');
-      setPaymentTermsList(response.data || []);
-    } catch (e) {
-      setPaymentTermsList([]);
-    }
-  };
-  fetchTerms();
+    // Fetch payment terms for matching
+    const fetchTerms = async () => {
+      try {
+        const response = await api.get('/payment-terms');
+        setPaymentTermsList(response.data || []);
+      } catch (e) {
+        setPaymentTermsList([]);
+      }
+    };
+    fetchTerms();
   }, []);
 
   useEffect(() => {
@@ -140,7 +140,7 @@ const AddCustomer = () => {
         companyName: currentCustomer.company_name,
         displayName: currentCustomer.display_name,
         email: currentCustomer.primary_email,
-        secondary_email: currentCustomer.secondary_email ,
+        secondary_email: currentCustomer.secondary_email,
         country_code: currentCustomer.country_code,
         phoneNumber: currentCustomer.primary_phone_number,
         secondaryPhoneNumber: currentCustomer.secondary_phone_number,
@@ -171,10 +171,10 @@ const AddCustomer = () => {
       const matchedTerm = paymentTermsList.find(
         t => t.term_id === currentCustomer.payment_terms?.term_id
       );
-      
+
       // console.log('AddCustomer: currentCustomer.payment_terms:', currentCustomer.payment_terms);
       // console.log('AddCustomer: matchedTerm:', matchedTerm);
-      
+
       if (matchedTerm) {
         setCustomerData(prev => ({
           ...prev,
@@ -280,7 +280,8 @@ const AddCustomer = () => {
         notes: customerData.notes || "",
         customerStatus: customerData.customerStatus || "Active"
       };
-      
+      console.log("Submitting payload:", payload);
+
 
       let actionResult;
       if (isEditing) {
@@ -310,7 +311,7 @@ const AddCustomer = () => {
       toast.error(errorMessage);
     }
   };
-  
+
   const handleBack = () => {
     const currentPath = location.pathname;
     const userSegment = currentPath.split("/")[1];
@@ -403,6 +404,7 @@ const AddCustomer = () => {
               states={states}
               setStates={setStates}
               isIndia={isIndia}
+              setCustomerData={setCustomerData}
             />
           </TabsContent>
 

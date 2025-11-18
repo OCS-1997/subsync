@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { useEffect, useMemo, useState, useRef, Fragment } from "react";
 import { toast } from "react-toastify";
 import { ArrowLeft, Mail, Plus, Trash2, X, Building2, CreditCard, FileText, Users, Loader2 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -27,10 +27,10 @@ function clampNumber(n, min, max = Infinity) {
   return Math.min(Math.max(num, min), max);
 }
 
-function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, customerSelected }) {
+function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, customerSelected, isNew }) {
   const svc = services.find(s => String(s.id) === String(item.service_id));
   return (
-    <TableRow className="hover:bg-gray-50">
+    <TableRow className={`hover:bg-gray-50 ${isNew ? "item-row-slide-in" : ""}`}>
       <TableCell className="w-2/5">
         <ReactSelect
           classNamePrefix="rs"
@@ -87,29 +87,29 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
         />
       </TableCell>
       <TableCell className="w-24">
-        <Input 
-          type="number" 
-          min="1" 
-          value={item.quantity || 1} 
+        <Input
+          type="number"
+          min="1"
+          value={item.quantity || 1}
           onChange={e => onChange(idx, { quantity: clampNumber(e.target.value, 1) })}
           className="h-9"
         />
       </TableCell>
       <TableCell className="w-32">
-        <Input 
-          type="number" 
-          min="0" 
-          value={item.rate ?? (svc?.price || 0)} 
+        <Input
+          type="number"
+          min="0"
+          value={item.rate ?? (svc?.price || 0)}
           onChange={e => onChange(idx, { rate: clampNumber(e.target.value, 0) })}
           className="h-9"
         />
       </TableCell>
       <TableCell className="w-24">
         <div className="flex items-center gap-1">
-          <Input 
-            type="number" 
-            min="0" 
-            value={item.tax_percent || 0} 
+          <Input
+            type="number"
+            min="0"
+            value={item.tax_percent || 0}
             className="h-9"
             readOnly
             disabled={!customerSelected}
@@ -122,9 +122,9 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
         ₹{(Number(item.quantity || 0) * Number(item.rate || 0)).toFixed(2)}
       </TableCell>
       <TableCell className="text-right w-12">
-        <Button 
-          size="icon" 
-          variant="ghost" 
+        <Button
+          size="icon"
+          variant="ghost"
           onClick={() => onRemove(idx)}
           className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
         >
@@ -153,6 +153,10 @@ export default function AddEditSubscription({ onBack, editId }) {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [inlineAddRowVisible, setInlineAddRowVisible] = useState(true);
+  const [inlineAddRowKey, setInlineAddRowKey] = useState(0);
+  const inlineRowTimerRef = useRef(null);
+  const [recentlyAddedIndex, setRecentlyAddedIndex] = useState(null);
 
   // Initialize with default dates
   const getDefaultDates = () => {
@@ -174,7 +178,7 @@ export default function AddEditSubscription({ onBack, editId }) {
     endDate: defaultDates.end,
     never_expires: false,
     repeat_every_value: "1",
-    repeat_every_unit: "months",
+    repeat_every_unit: "years",
     currency: "INR",
     discount_type: "amount",
     discount_value: 0,
@@ -193,7 +197,7 @@ export default function AddEditSubscription({ onBack, editId }) {
           api.get('/all-customer-details'),
           api.get('/all-services?limit=1000'),
           api.get('/all-domains?limit=1000'),
-          api.get('/get-gst-settings').catch(() => ({ data: { } })),
+          api.get('/get-gst-settings').catch(() => ({ data: {} })),
           api.get('/default-tax-preferences').catch(() => ({ data: { preferences: { intra: null, inter: null } } })),
           api.get('/tax-groups?include=members').catch(() => ({ data: { groups: [] } })),
           api.get('/all-taxes').catch(() => ({ data: { taxes: [] } }))
@@ -227,7 +231,7 @@ export default function AddEditSubscription({ onBack, editId }) {
         const roundingVal = Number(sub.rounding || 0);
         const rounding_sign = roundingVal >= 0 ? '+' : '-';
         const rounding_abs = Math.abs(roundingVal);
-        
+
         setForm({
           domain_name: sub.domain_name || "",
           customerID: sub.customer_id,
@@ -235,7 +239,7 @@ export default function AddEditSubscription({ onBack, editId }) {
           endDate: sub.never_expires ? "" : fromTimestamp(sub.end_date),
           never_expires: !!sub.never_expires,
           repeat_every_value: sub.repeat_every_value ? String(sub.repeat_every_value) : "1",
-          repeat_every_unit: sub.repeat_every_unit || "months",
+          repeat_every_unit: sub.repeat_every_unit || "years",
           currency: sub.currency || "INR",
           discount_type: sub.discount_type || "amount",
           discount_value: sub.discount_value || 0,
@@ -246,14 +250,14 @@ export default function AddEditSubscription({ onBack, editId }) {
           email_list: Array.isArray(sub.email_list) ? sub.email_list : [],
           items: (sub.items || []).map(it => ({ service_id: it.service_id, service_name: it.service_name, quantity: it.quantity, rate: it.rate, tax_percent: it.tax_percent || 0 })),
         });
-        
+
         // Load customer details for tax calculation
         if (sub.customer_id) {
           try {
             const custRes = await api.get(`/customer/${sub.customer_id}`);
             setSelectedCustomerDetails(custRes.data.customer);
             // Tax recalculation will be handled by the useEffect that watches selectedCustomerDetails
-          } catch {}
+          } catch { }
         }
       } catch (e) {
         toast.error(e.normalizedMessage || 'Failed to load subscription');
@@ -278,16 +282,16 @@ export default function AddEditSubscription({ onBack, editId }) {
     })();
     const cust = selectedCustomerDetails;
     if (!cust) return { scope: 'unknown', isIntra: false, intraRate: 0, interRate: 0 };
-    const addr = (() => { 
-      try { 
-        const addrValue = typeof cust.customer_address === 'string' 
-          ? JSON.parse(cust.customer_address) 
-          : (cust.customer_address || {}); 
+    const addr = (() => {
+      try {
+        const addrValue = typeof cust.customer_address === 'string'
+          ? JSON.parse(cust.customer_address)
+          : (cust.customer_address || {});
         // Handle case where state might be an object with value/label
         const stateVal = addrValue?.state;
         const stateStr = typeof stateVal === 'object' ? (stateVal?.value || stateVal?.label || '') : stateVal;
         return { ...addrValue, state: stateStr || addrValue?.state || '' };
-      } catch { return {}; } 
+      } catch { return {}; }
     })();
     const state = (addr?.state || '').trim();
     const countryVal = addr?.country;
@@ -298,10 +302,10 @@ export default function AddEditSubscription({ onBack, editId }) {
     }
     // Check if customer state matches company state (Tamil Nadu)
     const isIntra = state.toLowerCase().includes('tamil nadu') || state.toLowerCase().includes(companyState.toLowerCase());
-    
+
     // Get tax rates from default preferences
     let intraRate = 0, interRate = 0;
-    
+
     // Calculate intra-state rate (from tax group or tax)
     if (defaultTaxPreferences.intra && defaultTaxPreferences.intra.kind === 'group') {
       const group = taxGroups.find(g => g.group_id === defaultTaxPreferences.intra.id);
@@ -313,13 +317,13 @@ export default function AddEditSubscription({ onBack, editId }) {
       const tax = taxes.find(t => t.tax_id === defaultTaxPreferences.intra.id);
       intraRate = parseFloat(tax?.tax_rate || 0);
     }
-    
+
     // Calculate inter-state rate (from IGST tax)
     if (defaultTaxPreferences.inter && defaultTaxPreferences.inter.kind === 'tax') {
       const tax = taxes.find(t => t.tax_id === defaultTaxPreferences.inter.id);
       interRate = parseFloat(tax?.tax_rate || 0);
     }
-    
+
     return { scope: isIntra ? 'intra' : 'inter', isIntra, intraRate, interRate };
   }, [selectedCustomerDetails, gstSettings, defaultTaxPreferences, taxGroups, taxes]);
 
@@ -372,7 +376,24 @@ export default function AddEditSubscription({ onBack, editId }) {
     setForm(f => ({ ...f, items: f.items.map((it, i) => i === idx ? { ...it, ...norm } : it) }));
   };
   const addItem = () => {
-    setForm(f => ({ ...f, items: [...f.items, { service_id: "", quantity: 1, rate: 0, tax_percent: 0 }] }));
+    let nextIndex = 0;
+    setForm(f => {
+      const updatedItems = [...f.items, { service_id: "", quantity: 1, rate: 0, tax_percent: 0 }];
+      nextIndex = updatedItems.length - 1;
+      return { ...f, items: updatedItems };
+    });
+    setRecentlyAddedIndex(nextIndex);
+  };
+  const handleAnimatedAddItem = () => {
+    setInlineAddRowVisible(false);
+    addItem();
+    if (inlineRowTimerRef.current) {
+      clearTimeout(inlineRowTimerRef.current);
+    }
+    inlineRowTimerRef.current = setTimeout(() => {
+      setInlineAddRowKey(prev => prev + 1);
+      setInlineAddRowVisible(true);
+    }, 350);
   };
   const removeItem = (idx) => {
     setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
@@ -391,6 +412,20 @@ export default function AddEditSubscription({ onBack, editId }) {
       })
     }));
   }, [selectedCustomerDetails, geoInfo.isIntra, geoInfo.intraRate, geoInfo.interRate, taxGroups, taxes]);
+
+  useEffect(() => {
+    return () => {
+      if (inlineRowTimerRef.current) {
+        clearTimeout(inlineRowTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (recentlyAddedIndex === null) return;
+    const timer = setTimeout(() => setRecentlyAddedIndex(null), 600);
+    return () => clearTimeout(timer);
+  }, [recentlyAddedIndex]);
 
   const validateForm = () => {
     const next = {};
@@ -485,7 +520,7 @@ export default function AddEditSubscription({ onBack, editId }) {
   const [addEmailOpen, setAddEmailOpen] = useState(false);
   const [newEmail, setNewEmail] = useState(initNewEmail);
   const [chipEmail, setChipEmail] = useState('');
-  
+
   const addChip = (val) => {
     const email = String(val || '').trim();
     if (!email) return;
@@ -494,7 +529,7 @@ export default function AddEditSubscription({ onBack, editId }) {
     setForm(f => ({ ...f, email_list: Array.from(new Set([...(f.email_list || []), email])) }));
     setChipEmail('');
   };
-  
+
   const goBack = () => {
     if (onBack) return onBack();
     const username = params.username || (location.pathname.split('/')?.[1] || '');
@@ -508,7 +543,7 @@ export default function AddEditSubscription({ onBack, editId }) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center">
             <div className="flex items-center gap-3 flex-1">
-              <button 
+              <button
                 onClick={goBack}
                 className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                 aria-label="Go back"
@@ -533,35 +568,35 @@ export default function AddEditSubscription({ onBack, editId }) {
           <Fragment>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                <div className="h-5 w-40 bg-gray-200 rounded mb-4"></div>
-                <div className="h-10 bg-gray-100 rounded mb-4"></div>
-                <div className="h-24 bg-gray-100 rounded"></div>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                <div className="h-5 w-48 bg-gray-200 rounded mb-4"></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="h-10 bg-gray-100 rounded"></div>
-                  <div className="h-10 bg-gray-100 rounded"></div>
-                  <div className="h-10 bg-gray-100 rounded"></div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                  <div className="h-5 w-40 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-10 bg-gray-100 rounded mb-4"></div>
+                  <div className="h-24 bg-gray-100 rounded"></div>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                  <div className="h-5 w-48 bg-gray-200 rounded mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                  <div className="h-5 w-40 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-40 bg-gray-100 rounded"></div>
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                <div className="h-5 w-40 bg-gray-200 rounded mb-4"></div>
-                <div className="h-40 bg-gray-100 rounded"></div>
-              </div>
-            </div>
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse sticky top-24">
-                <div className="h-5 w-24 bg-gray-200 rounded mb-6"></div>
-                <div className="space-y-3">
-                  <div className="h-10 bg-gray-100 rounded"></div>
-                  <div className="h-10 bg-gray-100 rounded"></div>
-                  <div className="h-10 bg-gray-100 rounded"></div>
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse sticky top-24">
+                  <div className="h-5 w-24 bg-gray-200 rounded mb-6"></div>
+                  <div className="space-y-3">
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 rounded"></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </Fragment>
         ) : (
           <Fragment>
@@ -570,563 +605,576 @@ export default function AddEditSubscription({ onBack, editId }) {
               <div className="space-y-6">
                 {/* Domain Selection Card */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Domain & Customer</h2>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2">Domain Name</Label>
-                <ReactSelect
-                  classNamePrefix="rs"
-                  placeholder="Search and select a domain..."
-                  value={(() => { 
-                    const d = domains.find(x => x.name === form.domain_name); 
-                    return d ? { value: d.id, label: d.name } : (form.domain_name ? { value: form.domain_name, label: form.domain_name } : null); 
-                  })()}
-                  onChange={async (opt) => {
-                    if (!opt) {
-                      setSelectedCustomerDetails(null);
-                      setForm(f => ({ ...f, domain_name: "", customerID: "", email_list: [] }));
-                      return;
-                    }
-                    const match = domains.find(d => String(d.id) === String(opt?.value));
-                    setForm(f => ({ ...f, domain_name: match?.name || "", customerID: match?.customer_id || f.customerID }));
-                    if (match?.customer_id) {
-                      try {
-                        const res = await api.get(`/customer/${match.customer_id}`);
-                        const cust = res.data.customer;
-                        setSelectedCustomerDetails(cust);
-                        setForm(f => ({ ...f, currency: (cust.currency_code?.value || cust.currency_code || f.currency), email_list: Array.isArray(cust.other_contacts) ? [cust.primary_email, ...cust.other_contacts.map(o=>o.email).filter(Boolean)] : [cust.primary_email] }));
-                      } catch {}
-                    }
-                  }}
-                  options={domainOptions}
-                  isClearable
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      minHeight: '42px',
-                      borderColor: '#e5e7eb',
-                      '&:hover': { borderColor: '#d1d5db' }
-                    })
-                  }}
-                />
-                {errors.domain_name && <div className="text-xs text-red-600 mt-1">{errors.domain_name}</div>}
-              </div>
-
-              {selectedCustomerDetails && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Company</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {selectedCustomerDetails.company_name || selectedCustomerDetails.display_name}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Email</div>
-                      <div className="text-sm text-gray-700">{selectedCustomerDetails.primary_email}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Number</div>
-                      <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_in || 'N/A'}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Treatment</div>
-                      <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_treatment}</div>
-                    </div>
-                    <div className="col-span-2">
-                      <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Address</div>
-                      <div className="text-sm text-gray-700">
-                        {(() => { 
-                          try { 
-                            const a = typeof selectedCustomerDetails.customer_address === 'string' 
-                              ? JSON.parse(selectedCustomerDetails.customer_address) 
-                              : selectedCustomerDetails.customer_address; 
-                            return [a?.address, a?.city, a?.state, a?.zip].filter(Boolean).join(', ');
-                          } catch { return 'N/A' } 
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Subscription Period Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Subscription Period</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">Start Date</Label>
-                  <Input 
-                    type="date" 
-                    value={form.startDate} 
-                    onChange={e => {
-                      const newStartDate = e.target.value;
-                      // Auto-update end date to 1 year later if never_expires is false
-                      if (!form.never_expires && newStartDate) {
-                        const startDate = new Date(newStartDate);
-                        const endDate = new Date(startDate);
-                        endDate.setFullYear(startDate.getFullYear() + 1);
-                        setForm({ 
-                          ...form, 
-                          startDate: newStartDate,
-                          endDate: endDate.toISOString().slice(0, 10)
-                        });
-                      } else {
-                        setForm({ ...form, startDate: newStartDate });
-                      }
-                    }}
-                    className="h-10"
-                  />
-                  {errors.startDate && <div className="text-xs text-red-600 mt-1">{errors.startDate}</div>}
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">End Date</Label>
-                  <Input 
-                    type="date" 
-                    value={form.endDate} 
-                    onChange={e => setForm({ ...form, endDate: e.target.value })} 
-                    disabled={form.never_expires}
-                    min={form.startDate || undefined}
-                    className="h-10"
-                  />
-                  {!form.never_expires && errors.endDate && <div className="text-xs text-red-600 mt-1">{errors.endDate}</div>}
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">Currency</Label>
-                  <div className="h-10 flex items-center px-3 border rounded-md bg-gray-50 text-gray-700 font-medium">
-                    {form.currency}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <label className="flex items-center gap-2 mb-3">
-                  <input 
-                    type="checkbox" 
-                    checked={form.never_expires} 
-                    onChange={e => setForm({ ...form, never_expires: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Never Expires</span>
-                </label>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-sm font-medium text-gray-700">Repeat Every</span>
-                  <Input 
-                    className="w-24 h-9 bg-white" 
-                    type="number" 
-                    value={form.repeat_every_value || ""} 
-                    onChange={e => {
-                      const val = e.target.value;
-                      // Allow empty string and any numeric value
-                      if (val === "" || (!isNaN(Number(val)) && Number(val) >= 0)) {
-                        setForm({ ...form, repeat_every_value: val });
-                      }
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value.trim();
-                      // If empty or invalid, set to 1
-                      if (!val || isNaN(Number(val)) || Number(val) < 1) {
-                        setForm({ ...form, repeat_every_value: "1" });
-                      }
-                    }}
-                  />
-                  {errors.repeat_every_value && <div className="text-xs text-red-600">{errors.repeat_every_value}</div>}
-                  <select 
-                    className="border border-gray-300 rounded-md h-9 px-3 bg-white text-sm" 
-                    value={form.repeat_every_unit} 
-                    onChange={e => setForm({ ...form, repeat_every_unit: e.target.value })}
-                  >
-                    <option value="days">Days</option>
-                    <option value="weeks">Weeks</option>
-                    <option value="months">Months</option>
-                    <option value="years">Years</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Items Table Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Items Table <span className="text-sm font-normal text-gray-500">({form.items.length})</span>
-                  </h2>
-                </div>
-                <Button 
-                  size="sm" 
-                  onClick={addItem}
-                  className="bg-blue-600 hover:bg-blue-700 h-9"
-                  disabled={loadingInitial}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Item
-                </Button>
-              </div>
-              {errors.items && <div className="text-xs text-red-600 mb-2">{errors.items}</div>}
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableCell as="th" className="font-semibold text-gray-700">Item Details</TableCell>
-                      <TableCell as="th" className="font-semibold text-gray-700">Qty</TableCell>
-                      <TableCell as="th" className="font-semibold text-gray-700">Rate</TableCell>
-                      <TableCell as="th" className="font-semibold text-gray-700">Tax %</TableCell>
-                      <TableCell as="th" className="text-right font-semibold text-gray-700">Amount</TableCell>
-                      <TableCell as="th" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {form.items.map((it, idx) => {
-                      const itemErrors = Object.keys(errors).filter(k => k.startsWith(`item_${idx}_`));
-                      return (
-                        <Fragment key={idx}>
-                          <ItemRow 
-                            idx={idx} 
-                            item={it} 
-                            services={services} 
-                            onChange={(i,p) => updateItem(i,p)} 
-                            onRemove={removeItem} 
-                            resolveDefaults={resolveServiceDefaults} 
-                            customerSelected={!!selectedCustomerDetails}
-                          />
-                          {itemErrors.length > 0 && (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-xs text-red-600 bg-red-50">
-                                {itemErrors.map(k => errors[k]).join(', ')}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </Fragment>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Summary (moved below Items) */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left: Inputs */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2">Discount</Label>
-                    <div className="flex gap-2">
-                      <select 
-                        className="border border-gray-300 rounded-md h-10 px-3 bg-white text-sm w-24" 
-                        value={form.discount_type} 
-                        onChange={e => setForm({ ...form, discount_type: e.target.value })}
-                      >
-                        <option value="amount">₹</option>
-                        <option value="percent">%</option>
-                      </select>
-                      <Input 
-                        type="number" 
-                        value={form.discount_value} 
-                        onChange={e => setForm({ ...form, discount_value: e.target.value })}
-                        className="h-10 flex-1 "
-                        placeholder="0.00"
-                        min={form.discount_type === 'percent' ? 0 : undefined}
-                        max={form.discount_type === 'percent' ? 100 : undefined}
-                      />
-                    </div>
-                    {errors.discount_value && <div className="text-xs text-red-600 mt-1">{errors.discount_value}</div>}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Building2 className="w-5 h-5 text-blue-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Domain & Customer</h2>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2">Round Off</Label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-3 border border-gray-300 rounded-md px-3 h-10 bg-white">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input 
-                            type="radio" 
-                            name="roundsign" 
-                            checked={form.rounding_sign === '+'} 
-                            onChange={() => setForm({ ...form, rounding_sign: '+' })}
-                            className="w-4 h-4 text-blue-600"
-                          />
-                          <span className="text-sm font-medium">+</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input 
-                            type="radio" 
-                            name="roundsign" 
-                            checked={form.rounding_sign === '-'} 
-                            onChange={() => setForm({ ...form, rounding_sign: '-' })}
-                            className="w-4 h-4 text-blue-600"
-                          />
-                          <span className="text-sm font-medium">-</span>
-                        </label>
-                      </div>
-                      <Input 
-                        className="flex-1 h-10" 
-                        type="number" 
-                        value={form.rounding} 
-                        onChange={e => setForm({ ...form, rounding: e.target.value })}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Right: Totals */}
-                <div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Sub Total</span>
-                      <span className="font-medium text-gray-900">₹{totals.subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Discount</span>
-                      <span className="font-medium text-gray-900">{form.discount_type === 'percent' ? `${Number(form.discount_value || 0).toFixed(2)}%` : `₹${Number(form.discount_value || 0).toFixed(2)}`}</span>
-                    </div>
-                    {totals.nonTaxable ? (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">Tax</span>
-                        <span className="font-medium text-gray-900">₹0.00</span>
-                      </div>
-                    ) : (
-                      <>
-                        {geoInfo.isIntra ? (
-                          <>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600">CGST</span>
-                              <span className="font-medium text-gray-900">₹{totals.cgst.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600">SGST</span>
-                              <span className="font-medium text-gray-900">₹{totals.sgst.toFixed(2)}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">IGST</span>
-                            <span className="font-medium text-gray-900">₹{totals.igst.toFixed(2)}</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {Number(form.rounding) !== 0 && (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">Round Off</span>
-                        <span className="font-medium text-gray-900">{form.rounding_sign}{Math.abs(Number(form.rounding)).toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                      <span className="text-base font-semibold text-gray-900">Total ({form.currency})</span>
-                      <span className="text-xl font-bold text-blue-600">₹{totals.total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-2">Payment Terms</div>
-                    <div className="text-sm text-gray-700">
-                      {form.repeat_every_value && form.repeat_every_unit ? (
-                        <span>Recurring every {form.repeat_every_value} {form.repeat_every_unit}</span>
-                      ) : (
-                        <span className="text-gray-400">Not configured</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes, Terms & Recipients Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">Notes / Instructions</Label>
-                  <textarea 
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
-                    rows={4} 
-                    placeholder="Add any additional notes or instructions..."
-                    value={form.notes} 
-                    onChange={e => setForm({ ...form, notes: e.target.value })} 
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2">Terms & Conditions</Label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    rows={4}
-                    placeholder="Add terms and conditions..."
-                    value={form.terms_conditions || ''}
-                    onChange={e => setForm({ ...form, terms_conditions: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600" />
-                      <Label className="text-sm font-medium text-gray-700">Email Recipients</Label>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium" 
-                      onClick={() => setAddEmailOpen(true)}
-                    >
-                      + Add New
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 border border-gray-300 rounded-lg p-3 min-h-[60px] bg-gray-50">
-                    {(form.email_list || []).map((em, i) => (
-                      <span 
-                        key={i} 
-                        className="inline-flex items-center gap-2 rounded-md bg-blue-100 border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-900"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>{em}</span>
-                        <button 
-                          type="button" 
-                          className="text-blue-700 hover:text-blue-900" 
-                          onClick={() => setForm(f => ({ ...f, email_list: (f.email_list || []).filter(x => x !== em) }))}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                    <input
-                      className="flex-1 min-w-[200px] outline-none bg-transparent text-sm placeholder-gray-400"
-                      placeholder="Type email and press Enter..."
-                      value={chipEmail}
-                      onChange={e => setChipEmail(e.target.value)}
-                      onKeyDown={e => { 
-                        if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') { 
-                          e.preventDefault(); 
-                          addChip(chipEmail.replace(/,+$/, '')); 
-                        } 
-                      }}
-                      onBlur={() => addChip(chipEmail.replace(/,+$/, ''))}
-                    />
-                  </div>
-                </div>
-
-                {addEmailOpen && (
-                  <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                    <h3 className="font-semibold text-gray-900 mb-4">Add New Recipient</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">First Name *</Label>
-                        <Input 
-                          value={newEmail.first_name} 
-                          onChange={e => setNewEmail({ ...newEmail, first_name: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">Last Name</Label>
-                        <Input 
-                          value={newEmail.last_name} 
-                          onChange={e => setNewEmail({ ...newEmail, last_name: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">Email *</Label>
-                        <Input 
-                          type="email" 
-                          value={newEmail.email} 
-                          onChange={e => setNewEmail({ ...newEmail, email: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">Mobile</Label>
-                        <Input 
-                          value={newEmail.mobile} 
-                          onChange={e => setNewEmail({ ...newEmail, mobile: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">Salutation</Label>
-                        <Input 
-                          value={newEmail.salutation} 
-                          onChange={e => setNewEmail({ ...newEmail, salutation: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-1">Designation</Label>
-                        <Input 
-                          value={newEmail.designation} 
-                          onChange={e => setNewEmail({ ...newEmail, designation: e.target.value })}
-                          className="h-10"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-3 justify-end mt-4">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => { setAddEmailOpen(false); setNewEmail(initNewEmail); }}
-                        className="h-10"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="button" 
-                        onClick={async () => {
-                          if (!selectedCustomerDetails) { toast.error('Select a domain/customer first'); return; }
-                          if (!newEmail.first_name || !newEmail.email) { toast.error('Name and email are required'); return; }
+                    <Label className="text-sm font-medium text-gray-700 mb-2">Domain Name</Label>
+                    <ReactSelect
+                      classNamePrefix="rs"
+                      placeholder="Search and select a domain..."
+                      value={(() => {
+                        const d = domains.find(x => x.name === form.domain_name);
+                        return d ? { value: d.id, label: d.name } : (form.domain_name ? { value: form.domain_name, label: form.domain_name } : null);
+                      })()}
+                      onChange={async (opt) => {
+                        if (!opt) {
+                          setSelectedCustomerDetails(null);
+                          setForm(f => ({ ...f, domain_name: "", customerID: "", email_list: [] }));
+                          return;
+                        }
+                        const match = domains.find(d => String(d.id) === String(opt?.value));
+                        setForm(f => ({ ...f, domain_name: match?.name || "", customerID: match?.customer_id || f.customerID }));
+                        if (match?.customer_id) {
                           try {
-                            const res = await api.post(`/customer/${selectedCustomerDetails.customer_id || selectedCustomerDetails.customerId || form.customerID}/contacts`, {
-                              ...newEmail,
-                              is_subscriptions_recipient: true,
+                            const res = await api.get(`/customer/${match.customer_id}`);
+                            const cust = res.data.customer;
+                            setSelectedCustomerDetails(cust);
+                            setForm(f => ({ ...f, currency: (cust.currency_code?.value || cust.currency_code || f.currency), email_list: Array.isArray(cust.other_contacts) ? [cust.primary_email, ...cust.other_contacts.map(o => o.email).filter(Boolean)] : [cust.primary_email] }));
+                          } catch { }
+                        }
+                      }}
+                      options={domainOptions}
+                      isClearable
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          minHeight: '42px',
+                          borderColor: '#e5e7eb',
+                          '&:hover': { borderColor: '#d1d5db' }
+                        })
+                      }}
+                    />
+                    {errors.domain_name && <div className="text-xs text-red-600 mt-1">{errors.domain_name}</div>}
+                  </div>
+
+                  {selectedCustomerDetails && (
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Company</div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {selectedCustomerDetails.company_name || selectedCustomerDetails.display_name}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Email</div>
+                          <div className="text-sm text-gray-700">{selectedCustomerDetails.primary_email}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Number</div>
+                          <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_in || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Treatment</div>
+                          <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_treatment}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Address</div>
+                          <div className="text-sm text-gray-700">
+                            {(() => {
+                              try {
+                                const a = typeof selectedCustomerDetails.customer_address === 'string'
+                                  ? JSON.parse(selectedCustomerDetails.customer_address)
+                                  : selectedCustomerDetails.customer_address;
+                                return [a?.address, a?.city, a?.state, a?.zip].filter(Boolean).join(', ');
+                              } catch { return 'N/A' }
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Subscription Period Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Subscription Period</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">Start Date</Label>
+                      <Input
+                        type="date"
+                        value={form.startDate}
+                        onChange={e => {
+                          const newStartDate = e.target.value;
+                          // Auto-update end date to 1 year later if never_expires is false
+                          if (!form.never_expires && newStartDate) {
+                            const startDate = new Date(newStartDate);
+                            const endDate = new Date(startDate);
+                            endDate.setFullYear(startDate.getFullYear() + 1);
+                            setForm({
+                              ...form,
+                              startDate: newStartDate,
+                              endDate: endDate.toISOString().slice(0, 10)
                             });
-                            const contacts = res.data.contacts || [];
-                            const emails = [selectedCustomerDetails.primary_email, ...contacts.map(c => c.email).filter(Boolean)];
-                            setForm(f => ({ ...f, email_list: emails }));
-                            setAddEmailOpen(false);
-                            setNewEmail(initNewEmail);
-                            toast.success('Recipient added');
-                          } catch (e) {
-                            toast.error(e.normalizedMessage || 'Failed to add recipient');
+                          } else {
+                            setForm({ ...form, startDate: newStartDate });
                           }
                         }}
-                        className="h-10 bg-blue-600 hover:bg-blue-700"
-                      >
-                        Save Recipient
-                      </Button>
+                        className="h-10"
+                      />
+                      {errors.startDate && <div className="text-xs text-red-600 mt-1">{errors.startDate}</div>}
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">End Date</Label>
+                      <Input
+                        type="date"
+                        value={form.endDate}
+                        onChange={e => setForm({ ...form, endDate: e.target.value })}
+                        disabled={form.never_expires}
+                        min={form.startDate || undefined}
+                        className="h-10"
+                      />
+                      {!form.never_expires && errors.endDate && <div className="text-xs text-red-600 mt-1">{errors.endDate}</div>}
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">Currency</Label>
+                      <div className="h-10 flex items-center px-3 border rounded-md bg-gray-50 text-gray-700 font-medium">
+                        {form.currency}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-            </div>
 
-            {/* Action Buttons - Below Recipients Section */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 py-4 px-6 -mx-6 mt-6 shadow-lg z-20">
-              <div className="flex items-center justify-end gap-3 max-w-7xl mx-auto">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleSave(false)}
-                  className="h-10 px-6"
-                  disabled={isSaving || loadingInitial}
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Save
-                </Button>
-                <Button 
-                  onClick={() => handleSave(true)}
-                  className="h-10 px-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
-                  disabled={isSaving || loadingInitial}
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                  Save & Send
-                </Button>
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <label className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={form.never_expires}
+                        onChange={e => setForm({ ...form, never_expires: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Never Expires</span>
+                    </label>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium text-gray-700">Repeat Every</span>
+                      <Input
+                        className="w-24 h-9 bg-white"
+                        type="number"
+                        value={form.repeat_every_value || ""}
+                        onChange={e => {
+                          const val = e.target.value;
+                          // Allow empty string and any numeric value
+                          if (val === "" || (!isNaN(Number(val)) && Number(val) >= 0)) {
+                            setForm({ ...form, repeat_every_value: val });
+                          }
+                        }}
+                        onBlur={e => {
+                          const val = e.target.value.trim();
+                          // If empty or invalid, set to 1
+                          if (!val || isNaN(Number(val)) || Number(val) < 1) {
+                            setForm({ ...form, repeat_every_value: "1" });
+                          }
+                        }}
+                      />
+                      {errors.repeat_every_value && <div className="text-xs text-red-600">{errors.repeat_every_value}</div>}
+                      <select
+                        className="border border-gray-300 rounded-md h-9 px-3 bg-white text-sm"
+                        value={form.repeat_every_unit}
+                        onChange={e => setForm({ ...form, repeat_every_unit: e.target.value })}
+                      >
+                        <option value="days">Days</option>
+                        <option value="weeks">Weeks</option>
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Table Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Items Table <span className="text-sm font-normal text-gray-500">({form.items.length})</span>
+                      </h2>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleAnimatedAddItem}
+                      className="bg-blue-600 hover:bg-blue-700 h-9"
+                      disabled={loadingInitial}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Item
+                    </Button>
+                  </div>
+                  {errors.items && <div className="text-xs text-red-600 mb-2">{errors.items}</div>}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableCell as="th" className="font-semibold text-gray-700">Item Details</TableCell>
+                          <TableCell as="th" className="font-semibold text-gray-700">Qty</TableCell>
+                          <TableCell as="th" className="font-semibold text-gray-700">Rate</TableCell>
+                          <TableCell as="th" className="font-semibold text-gray-700">Tax %</TableCell>
+                          <TableCell as="th" className="text-right font-semibold text-gray-700">Amount</TableCell>
+                          <TableCell as="th" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {form.items.map((it, idx) => {
+                          const itemErrors = Object.keys(errors).filter(k => k.startsWith(`item_${idx}_`));
+                          return (
+                            <Fragment key={idx}>
+                              <ItemRow
+                                idx={idx}
+                                item={it}
+                                services={services}
+                                onChange={(i, p) => updateItem(i, p)}
+                                onRemove={removeItem}
+                                resolveDefaults={resolveServiceDefaults}
+                                customerSelected={!!selectedCustomerDetails}
+                                isNew={idx === recentlyAddedIndex}
+                              />
+                              {itemErrors.length > 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={6} className="text-xs text-red-600 bg-red-50">
+                                    {itemErrors.map(k => errors[k]).join(', ')}
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {inlineAddRowVisible && (
+                    <button
+                      key={inlineAddRowKey}
+                      type="button"
+                      onClick={handleAnimatedAddItem}
+                      className="inline-add-row mt-4  rounded-lg border border-dashed border-blue-300 bg-blue-50/70 py-3 px-4 text-blue-700 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+                      disabled={loadingInitial}
+                    >
+                      <Plus className="w-4 h-4" />
+
+                    </button>
+                  )}
+                </div>
+
+                {/* Summary (moved below Items) */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Summary</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left: Inputs */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2">Discount</Label>
+                        <div className="flex gap-2">
+                          <select
+                            className="border border-gray-300 rounded-md h-10 px-3 bg-white text-sm w-24"
+                            value={form.discount_type}
+                            onChange={e => setForm({ ...form, discount_type: e.target.value })}
+                          >
+                            <option value="amount">₹</option>
+                            <option value="percent">%</option>
+                          </select>
+                          <Input
+                            type="number"
+                            value={form.discount_value}
+                            onChange={e => setForm({ ...form, discount_value: e.target.value })}
+                            className="h-10 flex-1 "
+                            placeholder="0.00"
+                            min={form.discount_type === 'percent' ? 0 : undefined}
+                            max={form.discount_type === 'percent' ? 100 : undefined}
+                          />
+                        </div>
+                        {errors.discount_value && <div className="text-xs text-red-600 mt-1">{errors.discount_value}</div>}
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2">Round Off</Label>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3 border border-gray-300 rounded-md px-3 h-10 bg-white">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="roundsign"
+                                checked={form.rounding_sign === '+'}
+                                onChange={() => setForm({ ...form, rounding_sign: '+' })}
+                                className="w-4 h-4 text-blue-600"
+                              />
+                              <span className="text-sm font-medium">+</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="roundsign"
+                                checked={form.rounding_sign === '-'}
+                                onChange={() => setForm({ ...form, rounding_sign: '-' })}
+                                className="w-4 h-4 text-blue-600"
+                              />
+                              <span className="text-sm font-medium">-</span>
+                            </label>
+                          </div>
+                          <Input
+                            className="flex-1 h-10"
+                            type="number"
+                            value={form.rounding}
+                            onChange={e => setForm({ ...form, rounding: e.target.value })}
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Right: Totals */}
+                    <div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Sub Total</span>
+                          <span className="font-medium text-gray-900">₹{totals.subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Discount</span>
+                          <span className="font-medium text-gray-900">{form.discount_type === 'percent' ? `${Number(form.discount_value || 0).toFixed(2)}%` : `₹${Number(form.discount_value || 0).toFixed(2)}`}</span>
+                        </div>
+                        {totals.nonTaxable ? (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Tax</span>
+                            <span className="font-medium text-gray-900">₹0.00</span>
+                          </div>
+                        ) : (
+                          <>
+                            {geoInfo.isIntra ? (
+                              <>
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-gray-600">CGST</span>
+                                  <span className="font-medium text-gray-900">₹{totals.cgst.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-gray-600">SGST</span>
+                                  <span className="font-medium text-gray-900">₹{totals.sgst.toFixed(2)}</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600">IGST</span>
+                                <span className="font-medium text-gray-900">₹{totals.igst.toFixed(2)}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {Number(form.rounding) !== 0 && (
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">Round Off</span>
+                            <span className="font-medium text-gray-900">{form.rounding_sign}{Math.abs(Number(form.rounding)).toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                          <span className="text-base font-semibold text-gray-900">Total ({form.currency})</span>
+                          <span className="text-xl font-bold text-blue-600">₹{totals.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-2">Payment Terms</div>
+                        <div className="text-sm text-gray-700">
+                          {form.repeat_every_value && form.repeat_every_unit ? (
+                            <span>Recurring every {form.repeat_every_value} {form.repeat_every_unit}</span>
+                          ) : (
+                            <span className="text-gray-400">Not configured</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes, Terms & Recipients Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">Notes / Instructions</Label>
+                      <textarea
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        rows={4}
+                        placeholder="Add any additional notes or instructions..."
+                        value={form.notes}
+                        onChange={e => setForm({ ...form, notes: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2">Terms & Conditions</Label>
+                      <textarea
+                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        rows={4}
+                        placeholder="Add terms and conditions..."
+                        value={form.terms_conditions || ''}
+                        onChange={e => setForm({ ...form, terms_conditions: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <Label className="text-sm font-medium text-gray-700">Email Recipients</Label>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          onClick={() => setAddEmailOpen(true)}
+                        >
+                          + Add New
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 border border-gray-300 rounded-lg p-3 min-h-[60px] bg-gray-50">
+                        {(form.email_list || []).map((em, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-2 rounded-md bg-blue-100 border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-900"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>{em}</span>
+                            <button
+                              type="button"
+                              className="text-blue-700 hover:text-blue-900"
+                              onClick={() => setForm(f => ({ ...f, email_list: (f.email_list || []).filter(x => x !== em) }))}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          className="flex-1 min-w-[200px] outline-none bg-transparent text-sm placeholder-gray-400"
+                          placeholder="Type email and press Enter..."
+                          value={chipEmail}
+                          onChange={e => setChipEmail(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+                              e.preventDefault();
+                              addChip(chipEmail.replace(/,+$/, ''));
+                            }
+                          }}
+                          onBlur={() => addChip(chipEmail.replace(/,+$/, ''))}
+                        />
+                      </div>
+                    </div>
+
+                    {addEmailOpen && (
+                      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                        <h3 className="font-semibold text-gray-900 mb-4">Add New Recipient</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">First Name *</Label>
+                            <Input
+                              value={newEmail.first_name}
+                              onChange={e => setNewEmail({ ...newEmail, first_name: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Last Name</Label>
+                            <Input
+                              value={newEmail.last_name}
+                              onChange={e => setNewEmail({ ...newEmail, last_name: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Email *</Label>
+                            <Input
+                              type="email"
+                              value={newEmail.email}
+                              onChange={e => setNewEmail({ ...newEmail, email: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Mobile</Label>
+                            <Input
+                              value={newEmail.mobile}
+                              onChange={e => setNewEmail({ ...newEmail, mobile: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Salutation</Label>
+                            <Input
+                              value={newEmail.salutation}
+                              onChange={e => setNewEmail({ ...newEmail, salutation: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700 mb-1">Designation</Label>
+                            <Input
+                              value={newEmail.designation}
+                              onChange={e => setNewEmail({ ...newEmail, designation: e.target.value })}
+                              className="h-10"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-3 justify-end mt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => { setAddEmailOpen(false); setNewEmail(initNewEmail); }}
+                            className="h-10"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={async () => {
+                              if (!selectedCustomerDetails) { toast.error('Select a domain/customer first'); return; }
+                              if (!newEmail.first_name || !newEmail.email) { toast.error('Name and email are required'); return; }
+                              try {
+                                const res = await api.post(`/customer/${selectedCustomerDetails.customer_id || selectedCustomerDetails.customerId || form.customerID}/contacts`, {
+                                  ...newEmail,
+                                  is_subscriptions_recipient: true,
+                                });
+                                const contacts = res.data.contacts || [];
+                                const emails = [selectedCustomerDetails.primary_email, ...contacts.map(c => c.email).filter(Boolean)];
+                                setForm(f => ({ ...f, email_list: emails }));
+                                setAddEmailOpen(false);
+                                setNewEmail(initNewEmail);
+                                toast.success('Recipient added');
+                              } catch (e) {
+                                toast.error(e.normalizedMessage || 'Failed to add recipient');
+                              }
+                            }}
+                            className="h-10 bg-blue-600 hover:bg-blue-700"
+                          >
+                            Save Recipient
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Below Recipients Section */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 py-4 px-6 -mx-6 mt-6 shadow-lg z-20">
+                <div className="flex items-center justify-end gap-3 max-w-7xl mx-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSave(false)}
+                    className="h-10 px-6"
+                    disabled={isSaving || loadingInitial}
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => handleSave(true)}
+                    className="h-10 px-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
+                    disabled={isSaving || loadingInitial}
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                    Save & Send
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
           </Fragment>
         )}
       </div>

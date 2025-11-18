@@ -30,9 +30,9 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   };
 
   return (
-    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
+    <div className="space-y-6">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border border-gray-300 rounded-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <table className="w-full text-sm text-left border border-gray-300 rounded-md overflow-hidden">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-4 py-2 border-r">Salutation</th>
@@ -125,10 +125,12 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     />
                     <Input
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={person.email || ""}
                       onChange={(e) => handleInputChange(index, "email", e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.stopPropagation()}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -140,6 +142,8 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
+                    type="tel"
+                    inputMode="tel"
                     value={person.phone_number || ""}
                     onChange={(e) => handleInputChange(index, "phone_number", e.target.value)}
                     onKeyDown={(e) => {

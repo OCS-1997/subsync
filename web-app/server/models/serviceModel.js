@@ -60,7 +60,7 @@ const createService = async (service) => {
 }
 
 // READ - All (MODIFIED TO JOIN TABLES FOR DISPLAY NAMES)
-const getAllServices = async ({ search = "", sort = "service_name", order = "asc", page = 1, limit = 10 } = {}) => {
+const getAllServices = async ({ search = "", sort = "updated_at", order = "desc", page = 1, limit = 10 } = {}) => {
   const offset = (page - 1) * limit;
   const searchQuery = `%${search}%`;
   
@@ -70,8 +70,12 @@ const getAllServices = async ({ search = "", sort = "service_name", order = "asc
     'item_group_name', 'preferred_vendor_name', 'selling_price', 'created_at', 'updated_at'
   ];
   
-  const validSort = sort && sort.trim() !== '' && allowedSortColumns.includes(sort) ? sort : 'service_name';
-  const validOrder = order && ['asc', 'desc'].includes(order.toLowerCase()) ? order.toUpperCase() : 'ASC';
+  const hasValidSort = sort && sort.trim() !== '' && allowedSortColumns.includes(sort);
+  const validSort = hasValidSort ? sort : 'updated_at';
+  let validOrder = 'DESC';
+  if (hasValidSort && order && ['asc', 'desc'].includes(order.toLowerCase())) {
+    validOrder = order.toUpperCase();
+  }
   const query = `
     SELECT
         s.service_id,

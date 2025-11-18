@@ -112,15 +112,20 @@ async function updateDomain(domainId, updatedData) {
  * @param {Number} limit The number of data to be displayed per page
  * @returns {Promise<{totalPages: number, domains: *}>}
  */
-const validSortColumns = ["customer_name", "domain_name", "registration_date", "expiry_date", "registered_with", "name_server", "description"];
+const validSortColumns = ["customer_name", "domain_name", "registration_date", "expiry_date", "registered_with", "name_server", "description", "created_at", "updated_at"];
 
-const getAllDomains = async ({ search = "", sort = "domain_name", order = "asc", page = 1, limit = 10 }) => {
+const getAllDomains = async ({ search = "", sort = "updated_at", order = "desc", page = 1, limit = 10 }) => {
     const offset = (page - 1) * limit;
     const searchQuery = `%${search}%`;
 
     // Ensure `sort` is a valid column, otherwise fallback to "domain_name"
-    if (!validSortColumns.includes(sort)) {
-        sort = "domain_name";
+    const hasValidSort = sort && validSortColumns.includes(sort);
+    const normalizedSort = hasValidSort ? sort : "updated_at";
+    let normalizedOrder = "DESC";
+    if (hasValidSort && typeof order === "string") {
+        const lower = order.toLowerCase();
+        if (lower === "asc") normalizedOrder = "ASC";
+        else if (lower === "desc") normalizedOrder = "DESC";
     }
 
     try {
@@ -149,7 +154,7 @@ const getAllDomains = async ({ search = "", sort = "domain_name", order = "asc",
                 d.description LIKE ?
              )
              GROUP BY d.domain_id
-             ORDER BY ${sort} ${order.toUpperCase()} 
+             ORDER BY ${normalizedSort} ${normalizedOrder} 
              LIMIT ? OFFSET ?`,
             [searchQuery, searchQuery, searchQuery, searchQuery, parseInt(limit), parseInt(offset)]
         );
