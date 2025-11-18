@@ -19,6 +19,9 @@ import VendorRemarksSection from "@/features/Vendors/components/VendorRemarksSec
 import { createVendor, updateVendor, fetchVendorById, clearVendorState } from "@/features/Services/vendorSlice.js";
 import { indianStates } from "@/features/Customers/data/statesOfIndia.js";
 import api from '@/lib/axiosInstance.js';
+import { normalizePhoneNumber } from "@/features/Customers/services/inputValidator.js";
+
+const sanitizePhoneNumber = (value) => normalizePhoneNumber(value);
 
 const AddVendor = () => {
   const navigate = useNavigate();
@@ -282,6 +285,8 @@ const AddVendor = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const primaryPhoneNumber = sanitizePhoneNumber(vendorData.phoneNumber);
+      const secondaryPhoneNumber = sanitizePhoneNumber(vendorData.secondaryPhoneNumber);
       const payload = {
         salutation: vendorData.salutation,
         firstName: vendorData.firstName,
@@ -289,8 +294,8 @@ const AddVendor = () => {
         email: vendorData.email,
         secondary_email: vendorData.secondary_email || "",
         country_code: vendorData.country_code,
-        phoneNumber: vendorData.phoneNumber,
-        secondaryPhoneNumber: vendorData.secondaryPhoneNumber,
+        phoneNumber: primaryPhoneNumber,
+        secondaryPhoneNumber,
         companyName: vendorData.companyName,
         displayName: vendorData.displayName,
         gstin: vendorData.gstin,
@@ -312,7 +317,7 @@ const AddVendor = () => {
           first_name: person.first_name || "",
           last_name: person.last_name || "",
           email: person.email || "",
-          phone_number: person.phone_number || "",
+          phone_number: sanitizePhoneNumber(person.phone_number || person.phoneNumber),
           country_code: person.country_code || "+91"
         })),
         payment_terms: vendorData.payment_terms || { term_name: "Due on Receipt", days: 0, is_default: true },

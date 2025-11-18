@@ -31,7 +31,7 @@ function Customers() {
   const { list: customers, loading, error, totalPages, totalRecords } = useSelector((state) => state.customers);
 
   const [sortBy, setSortBy] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortOrder, setSortOrder] = useState(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,12 +54,15 @@ function Customers() {
   }, [search, sortBy, sortOrder]);
 
   useEffect(() => {
-    dispatch(fetchCustomers({
+    const params = {
       search: debouncedSearch,
-      sort: sortBy,
-      order: sortOrder,
       page: currentPage
-    }));
+    };
+    if (sortBy && sortOrder) {
+      params.sort = sortBy;
+      params.order = sortOrder;
+    }
+    dispatch(fetchCustomers(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
   const handleSearch = (e) => {

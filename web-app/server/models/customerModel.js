@@ -1,7 +1,26 @@
 import appDB from "../db/subsyncDB.js";
 import { getCurrentTime } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
-import { isValidGSTIN, isValidEmail, isValidPhoneNumber } from "../middlewares/validations.js";
+import { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber } from "../middlewares/validations.js";
+
+const sanitizePhoneNumber = (value) => normalizePhoneNumber(value);
+
+const sanitizeContactPersons = (contacts = []) => {
+    if (!Array.isArray(contacts)) return [];
+    return contacts.map((person = {}) => ({
+        ...person,
+        phone_number: sanitizePhoneNumber(person.phone_number || person.phoneNumber || ""),
+        country_code: person.country_code || "+91",
+    }));
+};
+
+const normalizeAddressValue = (value) => {
+    if (!value) return "";
+    if (typeof value === "object") {
+        return value.value || value.label || "";
+    }
+    return String(value);
+};
 
 /**
  * Function to add a customer into the database
@@ -10,9 +29,18 @@ import { isValidGSTIN, isValidEmail, isValidPhoneNumber } from "../middlewares/v
  */
 async function addCustomer(customer) {
     try {
+        const normalizedAddress = {
+            ...(customer.address || {}),
+            country: normalizeAddressValue(customer.address?.country || "IN"),
+            state: normalizeAddressValue(customer.address?.state),
+        };
+        const primaryPhone = sanitizePhoneNumber(customer.phoneNumber);
+        const secondaryPhone = sanitizePhoneNumber(customer.secondaryPhoneNumber);
+        const contactPersons = sanitizeContactPersons(customer.contactPersons || []);
+
         // Validate required fields
-        if (!customer.salutation || !customer.firstName|| !customer.email || !customer.phoneNumber || !customer.address ||
-            !customer.address.state || !customer.companyName || !customer.displayName || !customer.gstin || !customer.currencyCode || !customer.gst_treatment || !customer.tax_preference) {
+        if (!customer.salutation || !customer.firstName|| !customer.email || !primaryPhone || !normalizedAddress ||
+            !normalizedAddress.state || !customer.companyName || !customer.displayName || !customer.gstin || !customer.currencyCode || !customer.gst_treatment || !customer.tax_preference) {
             throw new Error("All required fields must be provided.");
         }
 
@@ -24,20 +52,20 @@ async function addCustomer(customer) {
             throw new Error("Invalid email address format.");
         }
 
-        if (customer.secondaryEmail && !isValidEmail(customer.secondaryEmail)) {
+        if (customer.secondary_email && !isValidEmail(customer.secondary_email)) {
             throw new Error("Invalid secondary email address format.");
         }
 
-        if (!isValidPhoneNumber(customer.phoneNumber)) {
+        if (!isValidPhoneNumber(primaryPhone)) {
             throw new Error("Invalid primary phone number format.");
         }
 
-        if (customer.secondaryPhoneNumber && !isValidPhoneNumber(customer.secondaryPhoneNumber)) {
+        if (secondaryPhone && !isValidPhoneNumber(secondaryPhone)) {
             throw new Error("Invalid secondary phone number format.");
         }
 
         // Additional address validation
-        if (!customer.address.state.trim()) {
+        if (!normalizedAddress.state || !normalizedAddress.state.trim()) {
             throw new Error("State cannot be empty in the address.");
         }
 
@@ -54,8 +82,8 @@ async function addCustomer(customer) {
         const cid = generateID("CID");
 
         // Serialize JSON fields
-        const customerAddress = JSON.stringify(customer.address);
-        const otherContacts = JSON.stringify(customer.contactPersons) || JSON.stringify([]);
+        const customerAddress = JSON.stringify(normalizedAddress);
+        const otherContacts = JSON.stringify(contactPersons);
         const paymentTerms = JSON.stringify(customer.payment_terms) || JSON.stringify({ term_name: "Due on Receipt", days: 0, is_default: true });
 
         // Execute SQL query
@@ -68,8 +96,8 @@ async function addCustomer(customer) {
                 cid, customer.salutation, customer.firstName, customer.lastName, customer.email,
                 customer.secondary_email || null,
                 customer.country_code,
-                Number(customer.phoneNumber),
-                customer.secondaryPhoneNumber ? Number(customer.secondaryPhoneNumber) : null,
+                primaryPhone,
+                secondaryPhone || null,
                 customerAddress, otherContacts, customer.companyName, customer.displayName, customer.gstin,
                 customer.currencyCode, customer.gst_treatment, customer.tax_preference, customer.exemption_reason || "",
                 paymentTerms, customer.notes || "", customer.customerStatus, currentTime, currentTime,
@@ -107,9 +135,17 @@ async function updateCustomer(customerId, updatedData) {
     } = updatedData;
 
     // console.log("Updated data received:", updatedData);
+    const normalizedPrimaryPhone = sanitizePhoneNumber(primary_phone_number);
+    const normalizedSecondaryPhone = sanitizePhoneNumber(secondary_phone_number);
+    const normalizedAddress = {
+        ...(customer_address || {}),
+        country: normalizeAddressValue(customer_address?.country),
+        state: normalizeAddressValue(customer_address?.state),
+    };
+    const sanitizedContacts = sanitizeContactPersons(other_contacts || []);
 
     // Validation
-    if (!salutation || !first_name || !primary_email || !primary_phone_number || !customer_address ||
+    if (!salutation || !first_name || !primary_email || !normalizedPrimaryPhone || !normalizedAddress ||
         !company_name || !display_name || !gst_in || !currency_code || !gst_treatment || !tax_preference) {
         throw new Error("All required fields must be provided.");
     }
@@ -123,24 +159,23 @@ async function updateCustomer(customerId, updatedData) {
     if (secondary_email && !isValidEmail(secondary_email)) {
         throw new Error("Invalid secondary email address format.");
     }
-    if (!isValidPhoneNumber(primary_phone_number)) {
+    if (!isValidPhoneNumber(normalizedPrimaryPhone)) {
         throw new Error("Invalid primary phone number format.");
     }
-    if (secondary_phone_number && !isValidPhoneNumber(secondary_phone_number)) {
+    if (normalizedSecondaryPhone && !isValidPhoneNumber(normalizedSecondaryPhone)) {
         throw new Error("Invalid secondary phone number format.");
+    }
+    if (!normalizedAddress.state || !normalizedAddress.state.trim()) {
+        throw new Error("State cannot be empty in the address.");
     }
 
     try {
         const currentTime = getCurrentTime();
 
         // Serialize JSON fields
-        const serializedAddress = JSON.stringify(customer_address);
-        const serializedContacts = JSON.stringify(other_contacts);
+        const serializedAddress = JSON.stringify(normalizedAddress);
+        const serializedContacts = JSON.stringify(sanitizedContacts);
         const serializedPaymentTerms = JSON.stringify(payment_terms) || JSON.stringify({ term_name: "Due on Receipt", days: 0, is_default: true });
-
-        // Convert phone numbers to proper format
-        const formattedPrimaryPhone = Number(primary_phone_number);
-        const formattedSecondaryPhone = secondary_phone_number ? Number(secondary_phone_number) : null;
 
         const [result] = await appDB.query(
             `UPDATE customers SET 
@@ -152,7 +187,7 @@ async function updateCustomer(customerId, updatedData) {
             WHERE customer_id = ?`,
             [
                 salutation, first_name, last_name, primary_email, secondary_email || null, country_code,
-                formattedPrimaryPhone, formattedSecondaryPhone, serializedAddress, serializedContacts,
+                normalizedPrimaryPhone, normalizedSecondaryPhone || null, serializedAddress, serializedContacts,
                 company_name, display_name, gst_in, currency_code, gst_treatment,
                 tax_preference, exemption_reason, serializedPaymentTerms, notes, customer_status,
                 currentTime, customerId
@@ -180,9 +215,31 @@ async function updateCustomer(customerId, updatedData) {
  * @param {Number} limit  The number of data to be displayed in a page
  * @returns {Promise<{totalPages: number, customers: *}>}
  */
-const getAllCustomers = async ({ search = "", sort = "display_name", order = "asc", page = 1, limit = 10 }) => {
+const getAllCustomers = async ({ search = "", sort = "updated_at", order = "desc", page = 1, limit = 10 }) => {
     const offset = (page - 1) * limit;
     const searchQuery = `%${search}%`;
+    const allowedSortColumns = [
+        'customer_id',
+        'salutation',
+        'first_name',
+        'last_name',
+        'display_name',
+        'company_name',
+        'country_code',
+        'primary_phone_number',
+        'primary_email',
+        'gst_treatment',
+        'customer_status',
+        'created_at',
+        'updated_at'
+    ];
+    const hasValidSort = sort && allowedSortColumns.includes(sort);
+    const normalizedSort = hasValidSort ? sort : 'updated_at';
+    let normalizedOrder = 'DESC';
+    if (hasValidSort && typeof order === 'string') {
+        if (order.toLowerCase() === 'asc') normalizedOrder = 'ASC';
+        else if (order.toLowerCase() === 'desc') normalizedOrder = 'DESC';
+    }
 
     try {
       const [customers] = await appDB.query(
@@ -197,8 +254,8 @@ const getAllCustomers = async ({ search = "", sort = "display_name", order = "as
                 primary_phone_number LIKE ? OR
                 primary_email LIKE ? OR
                 customer_id LIKE ?
-             )
-             ORDER BY ${sort} ${order.toUpperCase()} 
+            )
+             ORDER BY ${normalizedSort} ${normalizedOrder} 
              LIMIT ? OFFSET ?`, 
             [searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, searchQuery, parseInt(limit), parseInt(offset)]
         );

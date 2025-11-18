@@ -7,11 +7,18 @@ export const fetchVendors = createAsyncThunk(
     "vendors/fetchVendors",
     async (params = {}, thunkAPI) => {
         try {
-            const { search = "", sortBy = "display_name", order = "asc", page = 1, limit = 10 } = params;
+            const { search = "", sortBy, order, page = 1, limit = 10 } = params;
+            const hasCustomSort = typeof sortBy === "string" && sortBy.trim() !== "";
+            const sortField = hasCustomSort ? sortBy : "updated_at";
+            let sortDirection = "desc";
+            if (hasCustomSort && typeof order === "string") {
+                sortDirection = order.toLowerCase() === "asc" ? "asc" : "desc";
+            }
+
             const queryParams = new URLSearchParams({
                 search,
-                sort: sortBy,
-                order,
+                sort: sortField,
+                order: sortDirection,
                 page: page.toString(),
                 limit: limit.toString()
             });

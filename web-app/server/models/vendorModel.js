@@ -1,7 +1,26 @@
 import appDB from "../db/subsyncDB.js";
 import { getCurrentTime } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
-import { isValidGSTIN, isValidEmail, isValidPhoneNumber } from "../middlewares/validations.js";
+import { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber } from "../middlewares/validations.js";
+
+const sanitizePhoneNumber = (value) => normalizePhoneNumber(value);
+
+const sanitizeContactPersons = (contacts = []) => {
+    if (!Array.isArray(contacts)) return [];
+    return contacts.map((person = {}) => ({
+        ...person,
+        phone_number: sanitizePhoneNumber(person.phone_number || person.phoneNumber || ""),
+        country_code: person.country_code || "+91",
+    }));
+};
+
+const normalizeAddressValue = (value) => {
+    if (!value) return "";
+    if (typeof value === "object") {
+        return value.value || value.label || "";
+    }
+    return String(value);
+};
 
 /**
  * Creates a new vendor in the database.
@@ -10,6 +29,9 @@ import { isValidGSTIN, isValidEmail, isValidPhoneNumber } from "../middlewares/v
  */
 const createVendor = async (vendor) => {
     try {
+        const primaryPhone = sanitizePhoneNumber(vendor.phoneNumber);
+        const secondaryPhone = sanitizePhoneNumber(vendor.secondaryPhoneNumber);
+        const contactPersons = sanitizeContactPersons(vendor.contactPersons || []);
         // Defensive: extract .value for select fields if needed
         const currencyCode =
             typeof vendor.currencyCode === "object"
@@ -19,14 +41,8 @@ const createVendor = async (vendor) => {
         // Defensive: extract .value for address country/state if needed
         const address = {
             ...vendor.address,
-            country:
-                vendor.address && typeof vendor.address.country === "object"
-                    ? vendor.address.country.value
-                    : vendor.address?.country,
-            state:
-                vendor.address && typeof vendor.address.state === "object"
-                    ? vendor.address.state.value
-                    : vendor.address?.state,
+            country: normalizeAddressValue(vendor.address?.country || "IN"),
+            state: normalizeAddressValue(vendor.address?.state),
         };
 
         // Normalize and determine if country is India
@@ -50,7 +66,7 @@ const createVendor = async (vendor) => {
         if (!vendor.salutation) validationErrors.push("salutation");
         if (!vendor.firstName) validationErrors.push("firstName");
         if (!vendor.email) validationErrors.push("email");
-        if (!vendor.phoneNumber) validationErrors.push("phoneNumber");
+        if (!primaryPhone) validationErrors.push("phoneNumber");
         if (!address) validationErrors.push("address object");
         if (isIndia && !address.state) validationErrors.push("address.state");
         if (!vendor.companyName) validationErrors.push("companyName");
@@ -69,10 +85,10 @@ const createVendor = async (vendor) => {
         if (!isValidEmail(vendor.email)) {
             throw new Error("Invalid email address format.");
         }
-        if (!isValidPhoneNumber(vendor.phoneNumber)) {
+        if (!isValidPhoneNumber(primaryPhone)) {
             throw new Error("Invalid primary phone number format.");
         }
-        if (vendor.secondaryPhoneNumber && !isValidPhoneNumber(vendor.secondaryPhoneNumber)) {
+        if (secondaryPhone && !isValidPhoneNumber(secondaryPhone)) {
             throw new Error("Invalid secondary phone number format.");
         }
 
@@ -97,7 +113,7 @@ const createVendor = async (vendor) => {
 
         // Serialize JSON fields
         const vendorAddress = JSON.stringify(address);
-        const otherContacts = JSON.stringify(vendor.contactPersons || []);
+        const otherContacts = JSON.stringify(contactPersons);
         const paymentTerms = JSON.stringify(vendor.payment_terms || { term_name: "Due on Receipt", days: 0, is_default: true });
 
         const query = `
@@ -118,8 +134,8 @@ const createVendor = async (vendor) => {
             vendor.email,
             vendor.secondary_email || "",
             vendor.country_code,
-            vendor.phoneNumber,
-            vendor.secondaryPhoneNumber || null,
+            primaryPhone,
+            secondaryPhone || null,
             vendorAddress,
             otherContacts,
             vendor.companyName,
@@ -162,11 +178,16 @@ const getAllVendors = async ({
     // Ensure sort is valid and not null/undefined
     const allowedSortColumns = [
         'vendor_id', 'display_name', 'company_name', 'primary_phone_number', 
-        'primary_email', 'gst_treatment', 'vendor_status', 'first_name', 'last_name'
+        'primary_email', 'gst_treatment', 'vendor_status', 'first_name', 'last_name',
+        'created_at', 'updated_at'
     ];
     
-    const validSort = sort && sort.trim() !== '' && allowedSortColumns.includes(sort) ? sort : 'display_name';
-    const validOrder = order && ['asc', 'desc'].includes(order.toLowerCase()) ? order.toUpperCase() : 'ASC';
+    const hasValidSort = sort && sort.trim() !== '' && allowedSortColumns.includes(sort);
+    const validSort = hasValidSort ? sort : 'updated_at';
+    let validOrder = 'DESC';
+    if (hasValidSort && order && ['asc', 'desc'].includes(order.toLowerCase())) {
+        validOrder = order.toUpperCase();
+    }
 
     try {
         const [vendors] = await appDB.query(
@@ -247,9 +268,18 @@ const updateVendor = async (vendorId, updatedData) => {
             payment_terms, notes, vendor_status
         } = updatedData;
 
+        const normalizedPrimaryPhone = sanitizePhoneNumber(primary_phone_number);
+        const normalizedSecondaryPhone = sanitizePhoneNumber(secondary_phone_number);
+        const sanitizedContacts = sanitizeContactPersons(other_contacts || []);
+        const normalizedAddress = {
+            ...(vendor_address || {}),
+            country: normalizeAddressValue(vendor_address?.country),
+            state: normalizeAddressValue(vendor_address?.state),
+        };
+
         // Validation
-        if (!salutation || !first_name || !primary_email || !primary_phone_number ||
-            !vendor_address || !company_name || !display_name || !gst_in || !currency_code ||
+        if (!salutation || !first_name || !primary_email || !normalizedPrimaryPhone ||
+            !normalizedAddress || !company_name || !display_name || !gst_in || !currency_code ||
             !gst_treatment || !tax_preference) {
             throw new Error("All required fields must be provided.");
         }
@@ -260,18 +290,18 @@ const updateVendor = async (vendorId, updatedData) => {
         if (!isValidEmail(primary_email)) {
             throw new Error("Invalid email address format.");
         }
-        if (!isValidPhoneNumber(primary_phone_number)) {
+        if (!isValidPhoneNumber(normalizedPrimaryPhone)) {
             throw new Error("Invalid primary phone number format.");
         }
-        if (secondary_phone_number && !isValidPhoneNumber(secondary_phone_number)) {
+        if (normalizedSecondaryPhone && !isValidPhoneNumber(normalizedSecondaryPhone)) {
             throw new Error("Invalid secondary phone number format.");
         }
 
         const currentTime = getCurrentTime();
 
         // Serialize JSON fields
-        const serializedAddress = JSON.stringify(vendor_address);
-        const serializedContacts = JSON.stringify(other_contacts || []);
+        const serializedAddress = JSON.stringify(normalizedAddress);
+        const serializedContacts = JSON.stringify(sanitizedContacts);
         const serializedPaymentTerms = JSON.stringify(payment_terms) || JSON.stringify({ term_name: "Due on Receipt", days: 0, is_default: true });
 
         const query = `
@@ -286,7 +316,7 @@ const updateVendor = async (vendorId, updatedData) => {
 
         const values = [
             salutation, first_name, last_name, primary_email, secondary_email, country_code,
-            primary_phone_number, secondary_phone_number || null,
+            normalizedPrimaryPhone, normalizedSecondaryPhone || null,
             serializedAddress, serializedContacts, company_name, display_name, gst_in,
             currency_code, gst_treatment, tax_preference, exemption_reason || "",
             serializedPaymentTerms, notes || "", vendor_status || "Active",

@@ -78,12 +78,18 @@ const VendorContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                 <td className="px-4 py-2 border-r">
                   <Input
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={person.email}
                     onChange={(e) => handleInputChange(index, "email", e.target.value)}
                   />
                 </td>
                 <td className="px-4 py-2 border-r">
                   <Input
+                    type="tel"
+                    inputMode="tel"
                     value={person.phone_number}
                     onChange={(e) => handleInputChange(index, "phone_number", e.target.value)}
                   />

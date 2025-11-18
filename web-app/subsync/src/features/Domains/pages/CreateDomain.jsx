@@ -83,10 +83,10 @@ function AddDomain() {
   useEffect(() => {
     async function fetchAllCustomers() {
       try {
-        const res = await api.get("/all-customers");
+        const res = await api.get("/all-customer-details");
         const options = res.data.customers?.map(c => ({
           value: c.customer_id,
-          label: c.company_name,
+          label: c.company_name || c.display_name || `${c.first_name || ""} ${c.last_name || ""}`.trim(),
         })) || [];
         setAllCustomers(options);
         setFilteredCustomers(options);

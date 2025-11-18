@@ -3,7 +3,13 @@
  * @param   {string}  gstno The GST number to be validated
  * @returns {boolean}       The result of validation
  */
+function normalizePhoneNumber(phoneNumber) {
+    if (phoneNumber === null || phoneNumber === undefined) return "";
+    return String(phoneNumber).replace(/[^\d]/g, "");
+}
+
 function isValidGSTIN(gstno) {
+    if (typeof gstno !== "string") return false;
     if (gstno.toLowerCase() === "gst_na") return true;
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$/;
     return gstRegex.test(gstno);
@@ -25,8 +31,8 @@ function isValidEmail(email) {
  * @returns {boolean}             The result of validation
  */
 function isValidPhoneNumber(phoneNumber) {
-    const phoneRegex = /^[0-9]{10,13}$/;
-    return phoneRegex.test(phoneNumber);
+    const digits = normalizePhoneNumber(phoneNumber);
+    return digits.length >= 6 && digits.length <= 14;
 }
 
-export { isValidGSTIN, isValidEmail, isValidPhoneNumber }
+export { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber }

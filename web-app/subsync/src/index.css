@@ -143,3 +143,33 @@ input[type="number"] {
   background: transparent;
   padding-left: 0;
 }
+
+@keyframes inlineAddRowSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes itemRowSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inline-add-row {
+  animation: inlineAddRowSlide 0.35s ease-out;
+}
+
+.item-row-slide-in {
+  animation: itemRowSlideIn 0.35s ease-out;
+}
