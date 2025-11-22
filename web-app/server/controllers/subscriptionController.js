@@ -1,10 +1,13 @@
 import { getSubscriptions, addSubscription, getSubscriptionById, updateSubscriptionById, deleteSubscriptionById } from "../models/subscriptionModel.js";
+import { getSubscriptionHistory, getSubscriptionHistoryCount } from "../models/subscriptionHistoryModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 
 // RESTful: POST /subscriptions
 const createSubscription = async (req, res) => {
   try {
-    const result = await addSubscription(req.body);
+    const username = req.user?.username || null;
+    const ipAddress = req.ip || null;
+    const result = await addSubscription(req.body, username, ipAddress);
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: result.subId, ipAddress: req.ip, details: req.body });
     }
@@ -65,7 +68,9 @@ const getSubscriptionByIdController = async (req, res) => {
 const updateSubscriptionController = async (req, res) => {
   try {
     const { id } = req.params;
-    await updateSubscriptionById(id, req.body);
+    const username = req.user?.username || null;
+    const ipAddress = req.ip || null;
+    await updateSubscriptionById(id, req.body, username, ipAddress);
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'UPDATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip, details: req.body });
     }
@@ -103,4 +108,40 @@ const sendReminderController = async (req, res) => {
   }
 };
 
-export { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController };
+// GET /subscriptions/:id/history
+const getSubscriptionHistoryController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 50 } = req.query;
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    
+    const [history, totalCount] = await Promise.all([
+      getSubscriptionHistory(id, { limit: parseInt(limit, 10), offset }),
+      getSubscriptionHistoryCount(id)
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        history: history || [],
+        count: totalCount || 0
+      }
+    });
+  } catch (error) {
+    console.error("Error in getSubscriptionHistoryController:", error.message);
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Failed to fetch subscription history' 
+    });
+  }
+};
+
+export { 
+  getSubscriptionsController, 
+  createSubscription, 
+  getSubscriptionByIdController, 
+  updateSubscriptionController, 
+  deleteSubscriptionController, 
+  sendReminderController, 
+  getSubscriptionHistoryController 
+};

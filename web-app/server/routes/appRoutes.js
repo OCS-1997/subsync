@@ -8,7 +8,7 @@ import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, 
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
-import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController } from '../controllers/subscriptionController.js';
+import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController, getSubscriptionHistoryController } from '../controllers/subscriptionController.js';
 import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref, getAllActiveTaxRates, getAllTaxGroupsController, getTaxGroupByIdController, createTaxGroupController, updateTaxGroupController, deleteTaxGroupController, getDefaultTaxPreferencesController, setDefaultTaxPreferencesController } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
@@ -75,6 +75,7 @@ router.post('/subscription/:id/reminder', isAuthenticated, sendReminderControlle
 router.get('/subscriptions', isAuthenticated, getSubscriptionsController);
 router.post('/subscriptions', isAuthenticated, createSubscription);
 router.get('/subscriptions/:id', isAuthenticated, getSubscriptionByIdController);
+router.get('/subscriptions/:id/history', isAuthenticated, getSubscriptionHistoryController);
 router.put('/subscriptions/:id', isAuthenticated, updateSubscriptionController);
 router.delete('/subscriptions/:id', isAuthenticated, deleteSubscriptionController);
 

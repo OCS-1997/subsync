@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import { Mail, Plus, RotateCcw } from "lucide-react";
+import { Mail, Plus, RotateCcw, History } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 
 import api from "@/lib/axiosInstance.js";
@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
+import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
 
 const sortMap = {
   domain_name: 's.domain_name',
@@ -46,6 +48,8 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState(''); // UI key
   const [sortOrder, setSortOrder] = useState(''); // 'asc' | 'desc' | ''
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedSubId, setSelectedSubId] = useState(null);
   const debounceTimeout = useRef();
 
   // Debounce search
@@ -179,6 +183,16 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
         }}>
           <Mail className="w-4 h-4" /> Reminder
         </Button>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => {
+            setSelectedSubId(row.sub_id);
+            setHistoryDialogOpen(true);
+          }}
+        >
+          <History className="w-4 h-4 mr-1" /> View History
+        </Button>
       </div>
     )
   }));
@@ -238,6 +252,18 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
       )}
 
       <Pagination currentPage={page} setCurrentPage={setPage} totalPages={totalPages} totalRecords={totalRecords} />
+
+      {/* History Dialog */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          {selectedSubId && (
+            <SubscriptionHistory 
+              subId={selectedSubId} 
+              onClose={() => setHistoryDialogOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

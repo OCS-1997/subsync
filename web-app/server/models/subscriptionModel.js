@@ -1,6 +1,7 @@
 import appDB from "../db/subsyncDB.js";
 import { getCurrentTime, addDaysToTimestamp } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
+import { logSubscriptionChanges, compareSubscriptionData } from "./subscriptionHistoryModel.js";
 
 // Helper to compute dynamic status based on dates
 function computeStatus(startDate, endDate, soonDays = 30) {
@@ -98,7 +99,7 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
         if (r.items_json) {
           items = typeof r.items_json === 'string' ? JSON.parse(r.items_json) : r.items_json;
         }
-      } catch {}
+      } catch { }
       return { ...r, dynamic_status: status, days_to_expiry: daysToExpiry, items: items || [] };
     });
 
@@ -124,7 +125,7 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
   }
 }
 
-async function addSubscription(payload) {
+async function addSubscription(payload, changedBy = null, ipAddress = null) {
   const conn = await appDB.getConnection();
   try {
     await conn.beginTransaction();
@@ -159,7 +160,7 @@ async function addSubscription(payload) {
       const [crow] = await conn.query(`SELECT tax_preference FROM customers WHERE customer_id = ?`, [customerID]);
       const pref = (crow?.[0]?.tax_preference || '').toLowerCase();
       if (pref && pref !== 'taxable') applyTax = false;
-    } catch {}
+    } catch { }
 
     // Compute totals
     let subtotal = 0, tax_total = 0, grand_total = 0;
@@ -211,7 +212,7 @@ async function addSubscription(payload) {
         try {
           const [s] = await conn.query('SELECT service_name FROM services WHERE service_id = ?', [it.service_id]);
           if (s.length) serviceName = s[0].service_name;
-        } catch {}
+        } catch { }
       }
       const qty = Number(it.quantity || 0);
       const rate = Number(it.rate || 0);
@@ -232,6 +233,21 @@ async function addSubscription(payload) {
       `INSERT INTO subscription_items (sub_id, service_id, service_name, quantity, rate, tax_percent, amount) VALUES ?`,
       [resolvedValues]
     );
+
+    // Log CREATE event to history (use existing connection to avoid deadlock)
+    if (changedBy) {
+      const { logFieldChange } = await import('./subscriptionHistoryModel.js');
+      await logFieldChange({
+        subId,
+        changedBy,
+        fieldName: null,
+        oldValue: null,
+        newValue: null,
+        changeType: 'CREATE',
+        ipAddress,
+        conn // Pass existing connection to use same transaction
+      });
+    }
 
     await conn.commit();
     return { subId };
@@ -273,10 +289,48 @@ async function getSubscriptionById(subId) {
   return { ...header, items };
 }
 
-async function updateSubscriptionById(subId, payload) {
+async function updateSubscriptionById(subId, payload, changedBy = null, ipAddress = null) {
   const conn = await appDB.getConnection();
   try {
     await conn.beginTransaction();
+
+    // Fetch old data for comparison
+    const [oldRows] = await conn.query(
+      `SELECT s.*, 
+        (SELECT JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'service_id', si.service_id,
+            'service_name', si.service_name,
+            'quantity', si.quantity,
+            'rate', si.rate,
+            'tax_percent', si.tax_percent
+          )
+        ) FROM subscription_items si WHERE si.sub_id = s.sub_id) AS items_json
+       FROM subscriptions s WHERE s.sub_id = ?`,
+      [subId]
+    );
+
+    if (!oldRows.length) {
+      throw new Error('Subscription not found');
+    }
+
+    const oldData = oldRows[0];
+    // Parse items from old data
+    let oldItems = [];
+    try {
+      if (oldData.items_json) {
+        oldItems = typeof oldData.items_json === 'string' ? JSON.parse(oldData.items_json) : oldData.items_json;
+      }
+    } catch { }
+    oldData.items = oldItems || [];
+
+    // Parse email_list
+    try {
+      oldData.email_list = typeof oldData.email_list === 'string' ? JSON.parse(oldData.email_list || '[]') : (oldData.email_list || []);
+    } catch {
+      oldData.email_list = [];
+    }
+
     const {
       domain_name,
       customerID,
@@ -301,7 +355,7 @@ async function updateSubscriptionById(subId, payload) {
       const [crow] = await conn.query(`SELECT tax_preference FROM customers WHERE customer_id = ?`, [customerID]);
       const pref = (crow?.[0]?.tax_preference || '').toLowerCase();
       if (pref && pref !== 'taxable') applyTax = false;
-    } catch {}
+    } catch { }
 
     // Recompute totals from items
     let subtotal = 0, tax_total = 0, grand_total = 0;
@@ -315,29 +369,55 @@ async function updateSubscriptionById(subId, payload) {
     if (!isFinite(discountAmt)) discountAmt = 0;
     grand_total = Math.max(0, subtotal + tax_total - discountAmt + Number(rounding || 0));
 
+    // Prepare new data for comparison
+    // Preserve status from old data if not provided in payload
+    const status = payload.status !== undefined ? payload.status : (oldData.status || 'active');
+    
+    const newData = {
+      domain_name: domain_name || null,
+      customer_id: customerID,
+      start_date: startDate,
+      end_date: endDate || null,
+      never_expires: !!never_expires,
+      repeat_every_value,
+      repeat_every_unit,
+      currency,
+      subtotal,
+      tax_total,
+      discount_type,
+      discount_value,
+      rounding,
+      total: grand_total,
+      notes: notes || '',
+      terms_and_conditions: terms_conditions || '',
+      email_list: email_list || [],
+      status: status,
+      items: items || []
+    };
+
     await conn.query(
       `UPDATE subscriptions SET 
         domain_name=?, customer_id=?, start_date=?, end_date=?, never_expires=?, repeat_every_value=?, repeat_every_unit=?,
         currency=?, subtotal=?, tax_total=?, discount_type=?, discount_value=?, rounding=?, total=?, notes=?, terms_and_conditions=?, email_list=?, updated_at=CURRENT_TIMESTAMP
        WHERE sub_id = ?`,
       [
-        domain_name || null,
-        customerID,
-        startDate,
-        endDate || null,
-        !!never_expires,
-        repeat_every_value,
-        repeat_every_unit,
-        currency,
-        subtotal,
-        tax_total,
-        discount_type,
-        discount_value,
-        rounding,
-        grand_total,
-        notes || '',
-        terms_conditions || '',
-        JSON.stringify(email_list || []),
+        newData.domain_name,
+        newData.customer_id,
+        newData.start_date,
+        newData.end_date,
+        newData.never_expires,
+        newData.repeat_every_value,
+        newData.repeat_every_unit,
+        newData.currency,
+        newData.subtotal,
+        newData.tax_total,
+        newData.discount_type,
+        newData.discount_value,
+        newData.rounding,
+        newData.total,
+        newData.notes,
+        newData.terms_and_conditions,
+        JSON.stringify(newData.email_list),
         subId,
       ]
     );
@@ -358,6 +438,22 @@ async function updateSubscriptionById(subId, payload) {
         `INSERT INTO subscription_items (sub_id, service_id, service_name, quantity, rate, tax_percent, amount) VALUES ?`,
         [values]
       );
+    }
+
+    // Log changes to history (use existing connection to avoid deadlock)
+    if (changedBy) {
+      const { compareSubscriptionData, logSubscriptionChanges } = await import('./subscriptionHistoryModel.js');
+      const changes = compareSubscriptionData(oldData, newData);
+      if (changes.length > 0) {
+        await logSubscriptionChanges({
+          subId,
+          changedBy,
+          changes,
+          changeType: 'UPDATE',
+          ipAddress,
+          conn // Pass existing connection to use same transaction
+        });
+      }
     }
 
     await conn.commit();
