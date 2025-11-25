@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { History, Loader2, ArrowLeft } from "lucide-react";
+import { History, Loader2, ArrowLeft, X } from "lucide-react";
 import api from "@/lib/axiosInstance.js";
 import { Button } from "@/components/ui/button.jsx";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table.jsx";
@@ -139,8 +139,7 @@ export default function SubscriptionHistory({ subId, onClose }) {
                 </div>
                 {onClose && (
                     <Button variant="outline" onClick={onClose}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
+                        <X className="w-4 h-4" />
                     </Button>
                 )}
             </div>

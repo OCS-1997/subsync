@@ -5,12 +5,16 @@ import { apiLoginUser } from './services/authAPI';
 
 const storedUser = sessionStorage.getItem('subsync_user');
 
+const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
 const initialState = {
-  user: storedUser ? JSON.parse(storedUser) : null,
-  isAuthenticated: !!storedUser,
+  user: parsedUser,
+  isAuthenticated: !!parsedUser,
   isLoading: false,
   error: null,
-  role: storedUser ? JSON.parse(storedUser).role : null,
+  role: parsedUser?.role || null,
+  roleKey: parsedUser?.roleKey || null,
+  permissions: parsedUser?.permissions || [],
 };
 
 export const loginUser = createAsyncThunk(
@@ -54,6 +58,8 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.error = null;
       state.role = null;
+      state.roleKey = null;
+      state.permissions = [];
       sessionStorage.removeItem('subsync_user');
       sessionStorage.removeItem('subsync_token');
     },
@@ -69,6 +75,8 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
         state.role = action.payload.role;
+        state.roleKey = action.payload.roleKey;
+        state.permissions = action.payload.permissions || [];
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -83,6 +91,8 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         state.role = null;
+        state.roleKey = null;
+        state.permissions = [];
         sessionStorage.removeItem('subsync_user');
         sessionStorage.removeItem('subsync_token');
       });

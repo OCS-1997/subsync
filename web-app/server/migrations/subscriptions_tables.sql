@@ -7,6 +7,7 @@ CREATE TABLE subscriptions (
   never_expires TINYINT(1) NOT NULL DEFAULT 0,
   repeat_every_value INT NULL,
   repeat_every_unit ENUM('days','weeks','months','years') NULL,
+  billing_cycle_type ENUM('contract','financial_year','calendar_year') NOT NULL DEFAULT 'contract',
   currency VARCHAR(3) NOT NULL DEFAULT 'INR',
   subtotal DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   tax_total DECIMAL(12,2) NOT NULL DEFAULT 0.00,

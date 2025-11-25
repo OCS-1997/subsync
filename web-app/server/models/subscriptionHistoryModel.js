@@ -305,6 +305,7 @@ function compareSubscriptionData(oldData, newData) {
     'never_expires',
     'repeat_every_value', 
     'repeat_every_unit', 
+    'billing_cycle_type',
     'currency', 
     'subtotal', 
     'tax_total',

@@ -28,60 +28,82 @@ import ComingSoon from '@/features/ComingSoon/ComingSoon';
 import SubscriptionsPage from '@/features/Subscriptions/pages/SubscriptionsPage.jsx';
 import AddSubscription from '@/features/Subscriptions/pages/AddSubscription.jsx';
 import EditSubscription from '@/features/Subscriptions/pages/EditSubscription.jsx';
+import RoleManagement from '@/features/Settings/RoleManagement.jsx';
+import PermissionGate from '@/components/auth/PermissionGate.jsx';
+import { PERMISSIONS } from '@/constants/permissions.js';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
   {
     path: "/:username/dashboard",
-    element: <Dashboard />,
+    element: (
+      <PermissionGate required={PERMISSIONS.DASHBOARD_VIEW}>
+        <Dashboard />
+      </PermissionGate>
+    ),
     children: [
-      { index: true, element: <Home /> },
-      { path: "customers", element: <Customers /> },
-      { path: "customers/:id", element: <CustomerDetails /> },
-      { path: "customers/add", element: <AddCustomer /> },
-      { path: "customers/:id/edit", element: <AddCustomer /> },
+      { index: true, element: <PermissionGate required={PERMISSIONS.DASHBOARD_VIEW}><Home /></PermissionGate> },
+      { path: "customers", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_VIEW}><Customers /></PermissionGate> },
+      { path: "customers/:id", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_VIEW}><CustomerDetails /></PermissionGate> },
+      { path: "customers/add", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_CREATE}><AddCustomer /></PermissionGate> },
+      { path: "customers/:id/edit", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_UPDATE}><AddCustomer /></PermissionGate> },
 
-      { path: "domains", element: <Domains /> },
-      { path: "domains/:id", element: <CreateDomain /> },
-      { path: "domains/edit/:domainId", element: <CreateDomain /> },
+      { path: "domains", element: <PermissionGate required={PERMISSIONS.DOMAINS_VIEW}><Domains /></PermissionGate> },
+      { path: "domains/:id", element: <PermissionGate required={PERMISSIONS.DOMAINS_VIEW}><CreateDomain /></PermissionGate> },
+      { path: "domains/edit/:domainId", element: <PermissionGate required={PERMISSIONS.DOMAINS_UPDATE}><CreateDomain /></PermissionGate> },
 
-      { path: "services", element: <Services /> },
-      { path: "services/:id", element: <ServiceDetails /> },
-      { path: "services/add", element: <AddService /> },
-      { path: "services/:id/edit", element: <AddService /> },
+      { path: "services", element: <PermissionGate required={PERMISSIONS.SERVICES_VIEW}><Services /></PermissionGate> },
+      { path: "services/:id", element: <PermissionGate required={PERMISSIONS.SERVICES_VIEW}><ServiceDetails /></PermissionGate> },
+      { path: "services/add", element: <PermissionGate required={PERMISSIONS.SERVICES_CREATE}><AddService /></PermissionGate> },
+      { path: "services/:id/edit", element: <PermissionGate required={PERMISSIONS.SERVICES_UPDATE}><AddService /></PermissionGate> },
 
-      { path: "vendors", element: <Vendors /> },
-      { path: "vendors/:id", element: <VendorDetails /> },
-      { path: "vendors/add", element: <AddVendor /> },
-      { path: "vendors/:id/edit", element: <AddVendor /> },
+      { path: "vendors", element: <PermissionGate required={PERMISSIONS.VENDORS_VIEW}><Vendors /></PermissionGate> },
+      { path: "vendors/:id", element: <PermissionGate required={PERMISSIONS.VENDORS_VIEW}><VendorDetails /></PermissionGate> },
+      { path: "vendors/add", element: <PermissionGate required={PERMISSIONS.VENDORS_CREATE}><AddVendor /></PermissionGate> },
+      { path: "vendors/:id/edit", element: <PermissionGate required={PERMISSIONS.VENDORS_UPDATE}><AddVendor /></PermissionGate> },
 
-      { path: "subscriptions", element: <SubscriptionsPage /> },
-      { path: "subscriptions/add", element: <AddSubscription /> },
-      { path: "subscriptions/:id/edit", element: <EditSubscription /> },
+      { path: "subscriptions", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
+      { path: "subscriptions/add", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_CREATE}><AddSubscription /></PermissionGate> },
+      { path: "subscriptions/:id/edit", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_UPDATE}><EditSubscription /></PermissionGate> },
 
       {
         path: "settings",
-        element: <Settings />,
+        element: (
+          <PermissionGate any={[
+            PERMISSIONS.SETTINGS_MANAGE,
+            PERMISSIONS.USERS_VIEW,
+            PERMISSIONS.ROLES_VIEW,
+            PERMISSIONS.ACTIVITY_LOGS_VIEW,
+            PERMISSIONS.TAXES_VIEW,
+          ]}>
+            <Settings />
+          </PermissionGate>
+        ),
         children: [
           { path: "profile", element: <ComingSoon /> },
           {
             path: "taxes",
-            element: <Taxes />,
+            element: (
+              <PermissionGate required={PERMISSIONS.TAXES_VIEW}>
+                <Taxes />
+              </PermissionGate>
+            ),
             children: [
-              { path: "tax-rates", element: <AllTaxes /> },
-              { path: "tax-rates/add", element: <AddTax /> },
-              { path: "tax-groups/add", element: <AddTaxGroup /> },
-              { path: "tax-groups/edit/:id", element: <AddTaxGroup /> },
-              { path: "tax-rates/edit/:id", element: <AddTax /> },
-              { path: "default-tax-pref", element: <DefaultTaxPreference /> },
-              { path: "gst-settings", element: <GSTSettings /> },
+              { path: "tax-rates", element: <PermissionGate required={PERMISSIONS.TAXES_VIEW}><AllTaxes /></PermissionGate> },
+              { path: "tax-rates/add", element: <PermissionGate required={PERMISSIONS.TAXES_CREATE}><AddTax /></PermissionGate> },
+              { path: "tax-groups/add", element: <PermissionGate required={PERMISSIONS.TAXES_CREATE}><AddTaxGroup /></PermissionGate> },
+              { path: "tax-groups/edit/:id", element: <PermissionGate required={PERMISSIONS.TAXES_UPDATE}><AddTaxGroup /></PermissionGate> },
+              { path: "tax-rates/edit/:id", element: <PermissionGate required={PERMISSIONS.TAXES_UPDATE}><AddTax /></PermissionGate> },
+              { path: "default-tax-pref", element: <PermissionGate required={PERMISSIONS.TAXES_CONFIGURE}><DefaultTaxPreference /></PermissionGate> },
+              { path: "gst-settings", element: <PermissionGate required={PERMISSIONS.TAXES_CONFIGURE}><GSTSettings /></PermissionGate> },
             ]
           },
           
-          {path: "user-management", element: <UserManagement/>},
-          {path: "user-management/add-user", element: <AddUser />},
-          {path: "user-management/add-user/:editUsername", element: <AddUser />},
-          {path: "activity-logs", element: <AdminActivityLog />},
+          {path: "user-management", element: <PermissionGate required={PERMISSIONS.USERS_VIEW}><UserManagement/></PermissionGate>},
+          {path: "user-management/add-user", element: <PermissionGate required={PERMISSIONS.USERS_CREATE}><AddUser /></PermissionGate>},
+          {path: "user-management/add-user/:editUsername", element: <PermissionGate required={PERMISSIONS.USERS_UPDATE}><AddUser /></PermissionGate>},
+          {path: "activity-logs", element: <PermissionGate required={PERMISSIONS.ACTIVITY_LOGS_VIEW}><AdminActivityLog /></PermissionGate>},
+          {path: "roles", element: <PermissionGate required={PERMISSIONS.ROLES_VIEW}><RoleManagement /></PermissionGate>},
         ]
       }
     ]

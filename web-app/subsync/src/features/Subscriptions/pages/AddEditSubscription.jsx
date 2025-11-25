@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table.jsx";
 import ReactSelect from "react-select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 
 function toTimestamp(dateStr) {
   if (!dateStr) return null;
@@ -157,6 +158,9 @@ export default function AddEditSubscription({ onBack, editId }) {
   const [inlineAddRowKey, setInlineAddRowKey] = useState(0);
   const inlineRowTimerRef = useRef(null);
   const [recentlyAddedIndex, setRecentlyAddedIndex] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize with default dates
   const getDefaultDates = () => {
@@ -179,6 +183,7 @@ export default function AddEditSubscription({ onBack, editId }) {
     never_expires: false,
     repeat_every_value: "1",
     repeat_every_unit: "years",
+    billing_cycle_type: "contract",
     currency: "INR",
     discount_type: "amount",
     discount_value: 0,
@@ -240,6 +245,7 @@ export default function AddEditSubscription({ onBack, editId }) {
           never_expires: !!sub.never_expires,
           repeat_every_value: sub.repeat_every_value ? String(sub.repeat_every_value) : "1",
           repeat_every_unit: sub.repeat_every_unit || "years",
+          billing_cycle_type: sub.billing_cycle_type || "contract",
           currency: sub.currency || "INR",
           discount_type: sub.discount_type || "amount",
           discount_value: sub.discount_value || 0,
@@ -516,6 +522,22 @@ export default function AddEditSubscription({ onBack, editId }) {
     }
   };
 
+  const handleDeleteSubscription = async () => {
+    if (!id) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/subscriptions/${id}`);
+      toast.success("Subscription deleted");
+      setDeleteDialogOpen(false);
+      const username = params.username || (location.pathname.split('/')?.[1] || '');
+      navigate(`/${username}/dashboard/subscriptions`);
+    } catch (e) {
+      toast.error(e.normalizedMessage || "Failed to delete subscription");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const initNewEmail = { salutation: '', first_name: '', last_name: '', email: '', mobile: '', designation: '' };
   const [addEmailOpen, setAddEmailOpen] = useState(false);
   const [newEmail, setNewEmail] = useState(initNewEmail);
@@ -783,6 +805,21 @@ export default function AddEditSubscription({ onBack, editId }) {
                         <option value="years">Years</option>
                       </select>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <Label className="text-sm font-medium text-gray-700 mb-2">Billing Cycle Type</Label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md h-10 px-3 bg-white text-sm"
+                      value={form.billing_cycle_type || "contract"}
+                      onChange={e => setForm({ ...form, billing_cycle_type: e.target.value })}
+                    >
+                      <option value="contract">Contract-Based (default)</option>
+                      <option value="financial_year">Financial Year (Apr–Mar)</option>
+                      <option value="calendar_year">Calendar Year (Jan–Dec)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select how billing periods should be calculated for this subscription.
+                    </p>
                   </div>
                 </div>
 
@@ -1155,6 +1192,19 @@ export default function AddEditSubscription({ onBack, editId }) {
               {/* Action Buttons - Below Recipients Section */}
               <div className="sticky bottom-0 bg-white border-t border-gray-200 py-4 px-6 -mx-6 mt-6 shadow-lg z-20">
                 <div className="flex items-center justify-end gap-3 max-w-7xl mx-auto">
+                {isEdit && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setDeleteConfirmValue("");
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="h-10 px-6 mr-auto"
+                    disabled={isSaving || isDeleting}
+                  >
+                    Delete
+                  </Button>
+                )}
                   <Button
                     variant="outline"
                     onClick={() => handleSave(false)}
@@ -1178,6 +1228,45 @@ export default function AddEditSubscription({ onBack, editId }) {
           </Fragment>
         )}
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={(open) => {
+        if (!open) setDeleteDialogOpen(false);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Subscription</DialogTitle>
+            <DialogDescription>
+              Type the subscription domain name <strong>{form.domain_name || "subscription"}</strong> to confirm deletion. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <Label htmlFor="delete-subscription-confirm">Subscription Name</Label>
+            <Input
+              id="delete-subscription-confirm"
+              value={deleteConfirmValue}
+              onChange={(e) => setDeleteConfirmValue(e.target.value)}
+              placeholder="Enter subscription name"
+            />
+          </div>
+          <DialogFooter className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSubscription}
+              disabled={
+                isDeleting ||
+                !form.domain_name ||
+                deleteConfirmValue.trim().toLowerCase() !== form.domain_name.trim().toLowerCase()
+              }
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

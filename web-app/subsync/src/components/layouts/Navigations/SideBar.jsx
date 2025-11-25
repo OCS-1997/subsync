@@ -2,18 +2,33 @@ import { Link, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { usePermissions } from '@/context/PermissionsContext.jsx';
+import { PERMISSIONS } from '@/constants/permissions.js';
 
 const sidebarItems = [
-  { path: 'dashboard', title: 'Home', icon: 'home' },
-  { path: 'dashboard/customers', title: 'Customers', icon: 'person' },
-  { path: 'dashboard/domains', title: 'Domains', icon: 'language' },
-  { path: 'dashboard/services', title: 'Services', icon: 'shop' },
-  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business' },
-  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions' },
+  { path: 'dashboard', title: 'Home', icon: 'home', permission: PERMISSIONS.DASHBOARD_VIEW },
+  { path: 'dashboard/customers', title: 'Customers', icon: 'person', permission: PERMISSIONS.CUSTOMERS_VIEW },
+  { path: 'dashboard/domains', title: 'Domains', icon: 'language', permission: PERMISSIONS.DOMAINS_VIEW },
+  { path: 'dashboard/services', title: 'Services', icon: 'shop', permission: PERMISSIONS.SERVICES_VIEW },
+  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', permission: PERMISSIONS.VENDORS_VIEW },
+  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW },
+  // { 
+  //   path: 'dashboard/settings',
+  //   title: 'Settings',
+  //   icon: 'settings',
+  //   permission: [
+  //     PERMISSIONS.SETTINGS_MANAGE,
+  //     PERMISSIONS.USERS_VIEW,
+  //     PERMISSIONS.ROLES_VIEW,
+  //     PERMISSIONS.ACTIVITY_LOGS_VIEW,
+  //     PERMISSIONS.TAXES_VIEW,
+  //   ]
+  // },
 ];
 
 function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
+  const { hasAnyPermission } = usePermissions();
 
   return (
     <aside
@@ -39,26 +54,28 @@ function SideBar({ isOpen, toggleSidebar }) {
       <nav className="h-[calc(100%-4rem)] overflow-y-auto">
         <ul className="py-2">
           <TooltipProvider>
-            {sidebarItems.map((item) => (
-              <li key={item.title || item.path}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={`/${username}/${item.path}`}
-                      className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-primary-foreground/10 hover:translate-x-3   duration-300 ease-in-out transition-all"
-                    >
-                      <span className="material-symbols-outlined">{item.icon}</span>
-                      {isOpen && <span>{item.title}</span>}
-                    </Link>
-                  </TooltipTrigger>
-                  {!isOpen && (
-                    <TooltipContent side="right">
-                      {item.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </li>
-            ))}
+            {sidebarItems
+              .filter((item) => !item.permission || hasAnyPermission(item.permission))
+              .map((item) => (
+                <li key={item.title || item.path}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={`/${username}/${item.path}`}
+                        className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-primary-foreground/10 hover:translate-x-3   duration-300 ease-in-out transition-all"
+                      >
+                        <span className="material-symbols-outlined">{item.icon}</span>
+                        {isOpen && <span>{item.title}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!isOpen && (
+                      <TooltipContent side="right">
+                        {item.title}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </li>
+              ))}
           </TooltipProvider>
         </ul>
       </nav>

@@ -9,13 +9,28 @@ import bcrypt from "bcrypt";
  */
 async function checkLogin(username, inputPassword) {
     try {
-        const [rows] = await appDB.query("SELECT * FROM users WHERE username = ?;", [username]);
+        const [rows] = await appDB.query(
+            `SELECT 
+                u.username,
+                u.name,
+                u.email,
+                u.password,
+                u.is_active AS isActive,
+                u.role_id AS roleId,
+                r.name AS roleName,
+                r.role_key AS roleKey
+             FROM users u
+             LEFT JOIN roles r ON r.id = u.role_id
+             WHERE u.username = ?;`,
+            [username]
+        );
         if (!rows || rows.length === 0) { return null; }
         const user = rows[0];
         const match = await bcrypt.compare(inputPassword.trim(), user.password.trim());
         if (!match) return null;
         // Remove password before returning
         delete user.password;
+        user.role = user.roleName || user.role;
         return user;
     }
     catch (err) {

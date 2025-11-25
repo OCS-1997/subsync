@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import { UserPlus, UserRoundPen, UserRoundMinus, Search } from "lucide-react";
+import { UserPlus, UserRoundPen, UserRoundMinus, Search, Mail, Shield, Calendar, MoreVertical, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import { useNavigate, useParams, Outlet } from "react-router-dom";
 import api from "@/lib/axiosInstance";
-import { useSelector } from 'react-redux';
+import { usePermissions } from "@/context/PermissionsContext.jsx";
+import { PERMISSIONS } from "@/constants/permissions.js";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
-import { Label } from "@/components/ui/label.jsx";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
-import GenericTable from "@/components/layouts/GenericTable.jsx";
-import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
+import { motion, AnimatePresence } from "framer-motion";
 import Hamster from "@/components/animations/Hamster.jsx";
 
 const UserManagement = () => {
@@ -22,8 +21,10 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { username } = useParams();
-  const role = useSelector(state => state.auth.role);
-  const isAdmin = role === 'Admin';
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(PERMISSIONS.USERS_CREATE);
+  const canEdit = hasPermission(PERMISSIONS.USERS_UPDATE);
+  const canDelete = hasPermission(PERMISSIONS.USERS_DELETE);
   const debounceTimeout = useRef();
 
   // Debounce search
@@ -74,140 +75,186 @@ const UserManagement = () => {
       u.username?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
-  const headers = [
-    { key: "username", label: "Username" },
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-    { key: "role", label: "Role" },
-    { key: "status", label: "Status" },
-    { key: "created_at", label: "Created" },
-    { key: "updated_at", label: "Updated" },
-    ...(isAdmin ? [{ key: "actions", label: "Actions" }] : [])
-  ];
-
-  const tableData = filteredUsers.map(user => ({
-    ...user,
-    role: (
-      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-        user.role === "Admin"
-          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-          : user.role === "Manager"
-            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-      }`}>
-        {user.role}
-      </span>
-    ),
-    status: (
-      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-        user.is_active
-          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      }`}>
-        {user.is_active ? 'Active' : 'Inactive'}
-      </span>
-    ),
-    created_at: user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : "-",
-    updated_at: user.updated_at ? new Date(user.updated_at).toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }) : "-",
-    actions: isAdmin ? (
-      <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })}
-          className="h-8 w-8 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
-          title="Edit"
-        >
-          <UserRoundPen className="w-4 h-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => { setUserToDelete(user); setShowDeleteDialog(true); }}
-          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-          title="Delete"
-        >
-          <UserRoundMinus className="w-4 h-4" />
-        </Button>
-      </div>
-    ) : null
-  }));
-
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        {isAdmin && (
+    <div className="p-6 max-w-[1600px] mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <span>Settings</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-foreground font-medium">User Management</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            User Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage user accounts, roles, and access levels.
+          </p>
+        </div>
+        {canCreate && (
           <Button
             onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user`)}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0"
           >
-            <UserPlus className="w-4 h-4" /> Add User
+            <UserPlus className="w-4 h-4 mr-2" /> Add User
           </Button>
         )}
       </div>
-      <hr className="mb-6 border-blue-500 border-1" />
-      <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm
-          search={search}
-          setSearch={setSearch}
-          handleSearch={() => {}}
-        />
-      </div>
 
-      {loading ? (
-        <div className="p-6 flex flex-col justify-center items-center">
-          <Hamster />
+      <div className="bg-card/50 backdrop-blur-xl border border-border/50 rounded-2xl p-6 shadow-sm min-h-[600px] flex flex-col">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users by name, email, or role..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 bg-background/50 border-border/50 focus:bg-background transition-all"
+            />
+          </div>
         </div>
-      ) : filteredUsers.length > 0 ? (
-        <GenericTable
-          headers={headers}
-          data={tableData}
-          primaryKey="username"
-        />
-      ) : (
-        <div className="p-10 border rounded-md bg-white text-center">
-          {debouncedSearch ? (
-            <>
-              <div className="text-lg font-semibold mb-2">No results found</div>
-              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
-            </>
-          ) : (
-            <>
-              <div className="text-lg font-semibold mb-2">No users yet</div>
-              <div className="text-sm text-gray-600 mb-4">Create your first user to get started.</div>
-              {isAdmin && (
-                <Button onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user`)}>
-                  <UserPlus className="w-4 h-4" /> Add User
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+
+        {loading ? (
+          <div className="flex-1 flex flex-col justify-center items-center">
+            <Hamster />
+            <p className="text-muted-foreground mt-4 animate-pulse">Loading users...</p>
+          </div>
+        ) : filteredUsers.length > 0 ? (
+          <div className="rounded-xl border border-border/50 overflow-hidden bg-background/40">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50 bg-muted/50 text-left">
+                  <th className="p-4 font-medium text-muted-foreground">User</th>
+                  <th className="p-4 font-medium text-muted-foreground">Role</th>
+                  <th className="p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="p-4 font-medium text-muted-foreground">Joined</th>
+                  {(canEdit || canDelete) && <th className="p-4 font-medium text-muted-foreground text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {filteredUsers.map((user) => (
+                    <motion.tr
+                      key={user.username}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="group border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            {user.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{user.name}</p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Mail className="w-3 h-3" />
+                              {user.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-indigo-500" />
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            ${user.role === 'Admin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                              user.role === 'Manager' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}
+                          `}>
+                            {user.role}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          {user.is_active ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500" />
+                          )}
+                          <span className={`text-xs font-medium ${user.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {user.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
+                        </div>
+                      </td>
+                      {(canEdit || canDelete) && (
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {canEdit && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })}
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                title="Edit"
+                              >
+                                <UserRoundPen className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => { setUserToDelete(user); setShowDeleteDialog(true); }}
+                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                title="Delete"
+                              >
+                                <UserRoundMinus className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-10">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <Search className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold">No users found</h3>
+            <p className="text-muted-foreground max-w-sm mt-2">
+              {debouncedSearch ? "Try adjusting your search terms." : "Get started by adding a new user to the system."}
+            </p>
+            {!debouncedSearch && canCreate && (
+              <Button
+                onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user`)}
+                className="mt-6"
+              >
+                <UserPlus className="w-4 h-4 mr-2" /> Add First User
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete user <strong>{userToDelete?.name}</strong>? This action cannot be undone.
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <UserRoundMinus className="w-5 h-5" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Are you sure you want to delete user <span className="font-semibold text-foreground">{userToDelete?.name}</span>?
+              <br /><br />
+              This action cannot be undone and will remove their access to the system immediately.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
@@ -218,7 +265,7 @@ const UserManagement = () => {
               variant="destructive"
               onClick={confirmDelete}
             >
-              Delete
+              Delete User
             </Button>
           </DialogFooter>
         </DialogContent>

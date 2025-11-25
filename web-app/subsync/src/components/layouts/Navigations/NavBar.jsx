@@ -1,13 +1,14 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import {motion, AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { ThemeToggle } from "../ThemeToggle";
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
 
 import { logoutUser } from "@/features/Auth/authSlice";
+import { usePermissions } from "@/context/PermissionsContext.jsx";
+import { PERMISSIONS } from "@/constants/permissions.js";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -30,8 +31,7 @@ function NavBar({ toggleSidebar }) {
   const user = useSelector(state => state.auth.user);
   const loginIp = user?.ip;
   const loginTime = user?.loginTime;
-  const role = useSelector(state => state.auth.role);
-  const isAdmin = role && role.toLowerCase() === 'admin';
+  const { hasPermission } = usePermissions();
 
   const handleLogout = async () => {
     try {
@@ -41,6 +41,11 @@ function NavBar({ toggleSidebar }) {
     } finally {
       navigate('/');
     }
+  };
+
+  const handleCalculatorToggle = () => {
+    // Trigger calculator toggle via custom event
+    window.dispatchEvent(new CustomEvent('toggleCalculator'));
   };
 
   return (
@@ -54,29 +59,47 @@ function NavBar({ toggleSidebar }) {
             <img src="/logo.png" alt="" className="h-12  p-1 invert brightness-50" />
           </div>
         </div>
-        <div className="flex items-center">
-            {loginIp && loginTime && (
-                <div className="px-3 py-2  justify-end items-end text-xs text-gray-500  mb-2">
-                  <div>IP: {formatIp(loginIp)}</div>
-                  <div>Logged in: {new Date(loginTime).toLocaleString()}</div>
-                </div>
-            )}
+        <div className="flex items-center gap-3">
+          {loginIp && loginTime && (
+            <div className="px-4 py-2 text-xs text-gray-600 border-r border-gray-200">
+              <div className="font-medium">IP: {formatIp(loginIp)}</div>
+              <div className="text-gray-500">Logged in: {new Date(loginTime).toLocaleString()}</div>
+            </div>
+          )}
+
           <Button
             variant="ghost"
-            className="h-6 w-6 p-3  rounded-full hover:bg-gray-100"
-            onClick={() => setSettingsOpen(true)}
+            size="icon"
+            className="h-10 w-10 rounded-full hover:bg-blue-100 hover:text-blue-600 transition-colors"
+            onClick={handleCalculatorToggle}
+            title="Calculator (Ctrl+Shift+C)"
           >
-            <Settings className="h-6 w-6 " />
+            <Calculator className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => setSettingsOpen(true)}
+            title="Settings"
+          >
+            <Settings className="h-5 w-5" />
           </Button>
 
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-3 rounded-full border-1 border-gray-300">
-                <User />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors"
+                title="User Menu"
+              >
+                <User className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48" align="end">
-             
+
               {navItems.map((item) => (
                 item.key === "logout" ? (
                   <button
@@ -108,83 +131,98 @@ function NavBar({ toggleSidebar }) {
       </div>
 
       <AnimatePresence>
-      {settingsOpen && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-end"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setSettingsOpen(false)}
-        >
+        {settingsOpen && (
           <motion.div
-            className="w-80 h-full bg-white shadow-xl z-50 p-6 flex flex-col"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSettingsOpen(false)}
           >
-            {/* Header */}
-            <div className="flex justify-between  items-center mb-6 border-b pb-3">
-              <div className="flex items-center gap-2">
-                <Settings className="h-6 w-6" />
-                <h2 className="text-xl font-bold text-gray-800"> Settings</h2>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsOpen(false)}
-                className="hover:bg-gray-100"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
+            <motion.div
+              className="w-80 h-full bg-white shadow-xl z-50 p-6 flex flex-col"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex justify-between  items-center mb-6 border-b pb-3">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-6 w-6" />
+                  <h2 className="text-xl font-bold text-gray-800"> Settings</h2>
+                </div>
 
-            {/* Links */}
-            <ul className="flex flex-col space-y-4 text-sm font-medium">
-              <Link
-                to="settings/profile"
-                onClick={() => setSettingsOpen(false)}
-                className="text-gray-700 hover:text-blue-600  hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-              >
-                <UserRound className="h-5 w-5" />
-                Profile
-              </Link>
-
-              <Link
-                to="settings/taxes/tax-rates"
-                onClick={() => setSettingsOpen(false)}
-                className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-              >
-                <ReceiptIndianRupeeIcon className="h-5 w-5" />
-                Taxes
-              </Link>
-
-              <Link
-                to="settings/user-management"
-                onClick={() => setSettingsOpen(false)}
-                className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-              >
-                <UserCog className="h-5 w-5" />
-                Users Management
-              </Link>
-
-              {isAdmin && (
-                <Link
-                  to="settings/activity-logs"
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSettingsOpen(false)}
-                  className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  className="hover:bg-gray-100"
                 >
-                  <FileText className="h-5 w-5" />
-                  Activity Logs
+                  <X className="h-6 w-6" />
+                </Button>
+              </div>
+
+              {/* Links */}
+              <ul className="flex flex-col space-y-4 text-sm font-medium">
+                <Link
+                  to="settings/profile"
+                  onClick={() => setSettingsOpen(false)}
+                  className="text-gray-700 hover:text-blue-600  hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                >
+                  <UserRound className="h-5 w-5" />
+                  Profile
                 </Link>
-              )}
-            </ul>
+
+                {hasPermission(PERMISSIONS.TAXES_VIEW) && (
+                  <Link
+                    to="settings/taxes/tax-rates"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <ReceiptIndianRupeeIcon className="h-5 w-5" />
+                    Taxes
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.USERS_VIEW) && (
+                  <Link
+                    to="settings/user-management"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <UserCog className="h-5 w-5" />
+                    Users Management
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.ACTIVITY_LOGS_VIEW) && (
+                  <Link
+                    to="settings/activity-logs"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <FileText className="h-5 w-5" />
+                    Activity Logs
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.ROLES_VIEW) && (
+                  <Link
+                    to="settings/roles"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Shield className="h-5 w-5" />
+                    Roles & Permissions
+                  </Link>
+                )}
+              </ul>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

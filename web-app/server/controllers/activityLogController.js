@@ -1,10 +1,11 @@
-// Controller for admin-only activity log viewing
+// Controller for permission-gated activity log viewing
 import { getActivityLogs, getActivityLogsCount } from "../models/activityLogModel.js";
+import { PERMISSIONS } from "../constants/permissions.js";
 
-// Admin-only: get activity logs with pagination
+// Activity log listing
 export const getLogs = async (req, res) => {
-    if (!req.user || !req.user.role || req.user.role.toLowerCase() !== "admin") {
-        return res.status(403).json({ error: "Access denied. Admins only." });
+    if (!req.user || !req.user.permissions?.includes(PERMISSIONS.ACTIVITY_LOGS_VIEW)) {
+        return res.status(403).json({ error: "Access denied. Missing permission." });
     }
     try {
         const { 

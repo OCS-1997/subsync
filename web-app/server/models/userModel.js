@@ -1,73 +1,107 @@
 import appDB from "../db/subsyncDB.js";
 
-const getAllUsers = async () => {
-    try {
-        const [users] = await appDB.query("SELECT * FROM users");
-        return users || [];
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        throw error;
-    }
-}
+const userProjection = `
+    u.username,
+    u.name,
+    u.email,
+    u.role_id AS roleId,
+    u.role,
+    u.is_active AS isActive,
+    u.created_at AS createdAt,
+    u.updated_at AS updatedAt,
+    r.name AS roleName,
+    r.role_key AS roleKey
+`;
 
-const getUserByUsername = async (username) => {
-    try {
-        const [users] = await appDB.query("SELECT * FROM users WHERE username = ?", [username]);
-        return users[0] || null;
-    } catch (error) {
-        console.error("Error fetching user by username:", error);
-        throw error;
-    }
+const mapUserRow = (row = {}) => ({
+    username: row.username,
+    name: row.name,
+    email: row.email,
+    roleId: row.roleId,
+    role: row.roleName || row.role || null,
+    roleKey: row.roleKey || null,
+    is_active: row.isActive === undefined ? undefined : !!row.isActive,
+    isActive: row.isActive === undefined ? undefined : !!row.isActive,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
+});
+
+const getAllUsers = async () => {
+    const [rows] = await appDB.query(
+        `SELECT ${userProjection}
+         FROM users u
+         LEFT JOIN roles r ON r.id = u.role_id
+         ORDER BY u.created_at DESC`
+    );
+    return rows.map(mapUserRow);
 };
 
-const createUser = async (user) => {
-    try {
-        const { username, name, email, password, role, is_active } = user;
-        const [result] = await appDB.query(
-            `INSERT INTO users (username, name, email, password, role, is_active, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            [username, name, email, password, role, is_active]
-        );
-        return result.insertId;
-    } catch (error) {
-        console.error("Error creating user:", error);
-        throw error;
-    }
+const getUserByUsername = async (username) => {
+    const [rows] = await appDB.query(
+        `SELECT ${userProjection}
+         FROM users u
+         LEFT JOIN roles r ON r.id = u.role_id
+         WHERE u.username = ?
+         LIMIT 1`,
+        [username]
+    );
+    return rows.length ? mapUserRow(rows[0]) : null;
+};
+
+const getUserAuthProfile = async (username) => {
+    const [rows] = await appDB.query(
+        `SELECT 
+            u.username,
+            u.name,
+            u.email,
+            u.role_id AS roleId,
+            u.role,
+            u.is_active AS isActive,
+            r.name AS roleName,
+            r.role_key AS roleKey
+         FROM users u
+         LEFT JOIN roles r ON r.id = u.role_id
+         WHERE u.username = ?
+         LIMIT 1`,
+        [username]
+    );
+    return rows.length ? mapUserRow(rows[0]) : null;
+};
+
+const createUser = async ({ username, name, email, password, roleName, roleId, is_active }) => {
+    const [result] = await appDB.query(
+        `INSERT INTO users (username, name, email, password, role, role_id, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [username, name, email, password, roleName, roleId || null, is_active]
+    );
+    return result.insertId;
 };
 
 const updateUser = async (username, user) => {
-    try {
-        const fields = [];
-        const values = [];
-        if (user.name !== undefined) { fields.push('name = ?'); values.push(user.name); }
-        if (user.email !== undefined) { fields.push('email = ?'); values.push(user.email); }
-        if (user.password !== undefined) { fields.push('password = ?'); values.push(user.password); }
-        if (user.role !== undefined) { fields.push('role = ?'); values.push(user.role); }
-        if (user.is_active !== undefined) { fields.push('is_active = ?'); values.push(user.is_active); }
-        fields.push('updated_at = NOW()');
-        const sql = `UPDATE users SET ${fields.join(', ')} WHERE username = ?`;
-        values.push(username);
-        const [result] = await appDB.query(sql, values);
-        return result.affectedRows;
-    } catch (error) {
-        console.error("Error updating user:", error);
-        throw error;
-    }
+    const fields = [];
+    const values = [];
+    if (user.name !== undefined) { fields.push('name = ?'); values.push(user.name); }
+    if (user.email !== undefined) { fields.push('email = ?'); values.push(user.email); }
+    if (user.password !== undefined) { fields.push('password = ?'); values.push(user.password); }
+    if (user.roleName !== undefined) { fields.push('role = ?'); values.push(user.roleName); }
+    if (user.roleId !== undefined) { fields.push('role_id = ?'); values.push(user.roleId); }
+    if (user.is_active !== undefined) { fields.push('is_active = ?'); values.push(user.is_active); }
+    fields.push('updated_at = NOW()');
+    const sql = `UPDATE users SET ${fields.join(', ')} WHERE username = ?`;
+    values.push(username);
+    const [result] = await appDB.query(sql, values);
+    return result.affectedRows;
 };
 
 const deleteUser = async (username) => {
-    try {
-        const [result] = await appDB.query("DELETE FROM users WHERE username = ?", [username]);
-        return result.affectedRows;
-    } catch (error) {
-        console.error("Error deleting user:", error);
-        throw error;
-    }
+    const [result] = await appDB.query("DELETE FROM users WHERE username = ?", [username]);
+    return result.affectedRows;
 };
 
 export {
     getAllUsers,
     getUserByUsername,
+    getUserAuthProfile,
     createUser,
     updateUser,
     deleteUser

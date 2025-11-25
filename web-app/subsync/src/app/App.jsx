@@ -5,26 +5,28 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Bounce } from 'react-toastify';
 import router from '@/routes/Index'
 import ErrorBoundary from './ErrorBoundary.jsx'
+
+import { PermissionsProvider } from '@/context/PermissionsContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
 
 function App() {
   useEffect(() => {
     const handleOffline = () => {
-      toast.error('You are offline. Please check your internet connection.', { 
+      toast.error('You are offline. Please check your internet connection.', {
         toastId: 'offline',
-        autoClose: false, 
-        hideProgressBar: true, 
-        closeOnClick: false, 
-        draggable: false, 
-        pauseOnHover: false, 
+        autoClose: false,
+        hideProgressBar: true,
+        closeOnClick: false,
+        draggable: false,
+        pauseOnHover: false,
       });
     };
     const handleOnline = () => {
       // Dismiss offline snackbar first
       toast.dismiss('offline');
       // Show quick success animation
-      toast.success('You are back online!', { 
-        toastId: 'online', 
+      toast.success('You are back online!', {
+        toastId: 'online',
         autoClose: 1500,
         hideProgressBar: false,
         transition: Bounce,
@@ -41,7 +43,9 @@ function App() {
   return (
     <>
       <ErrorBoundary>
-        <RouterProvider router={router} />
+        <PermissionsProvider>
+          <RouterProvider router={router} />
+        </PermissionsProvider>
       </ErrorBoundary>
       <ToastContainer position="top-right" theme="colored" transition={Bounce} autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <FloatingCalculator />

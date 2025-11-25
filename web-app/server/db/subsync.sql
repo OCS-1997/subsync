@@ -218,20 +218,175 @@ CREATE TABLE gst_settings (
 );
 
 -- Create the Users table
-CREATE TABLE users (
-    username VARCHAR(32) PRIMARY KEY,
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_key VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
-    password TEXT NOT NULL,
-    role ENUM('Admin', 'Manager', 'User') NOT NULL DEFAULT 'User',
-    email VARCHAR(255) UNIQUE NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
+    description VARCHAR(255),
+    is_system TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    permission_key VARCHAR(100) NOT NULL UNIQUE,
+    resource VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE role_permissions (
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (role_id, permission_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE users (
+    username VARCHAR(32) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    password TEXT NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'Viewer',
+    role_id INT,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_users_role FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- Seed roles
+INSERT INTO roles (role_key, name, description, is_system) VALUES
+('admin', 'Admin', 'Full access administrator role', 1),
+('manager', 'Manager', 'Manages most business objects except security', 1),
+('sales', 'Sales', 'Handles customer acquisition and renewals', 1),
+('support', 'Support', 'Handles service & subscription support operations', 1),
+('viewer', 'Viewer', 'Read-only access', 1);
+
+-- Seed permissions
+INSERT INTO permissions (permission_key, resource, action, description) VALUES
+('dashboard.view', 'dashboard', 'view', 'Access to dashboard widgets'),
+('customers.view', 'customers', 'view', 'View customers'),
+('customers.create', 'customers', 'create', 'Create customers'),
+('customers.update', 'customers', 'update', 'Update customers'),
+('customers.delete', 'customers', 'delete', 'Delete customers'),
+('domains.view', 'domains', 'view', 'View domains'),
+('domains.create', 'domains', 'create', 'Create domains'),
+('domains.update', 'domains', 'update', 'Update domains'),
+('domains.delete', 'domains', 'delete', 'Delete domains'),
+('services.view', 'services', 'view', 'View services'),
+('services.create', 'services', 'create', 'Create services'),
+('services.update', 'services', 'update', 'Update services'),
+('services.delete', 'services', 'delete', 'Delete services'),
+('vendors.view', 'vendors', 'view', 'View vendors'),
+('vendors.create', 'vendors', 'create', 'Create vendors'),
+('vendors.update', 'vendors', 'update', 'Update vendors'),
+('vendors.delete', 'vendors', 'delete', 'Delete vendors'),
+('subscriptions.view', 'subscriptions', 'view', 'View subscriptions'),
+('subscriptions.create', 'subscriptions', 'create', 'Create subscriptions'),
+('subscriptions.update', 'subscriptions', 'update', 'Update subscriptions'),
+('subscriptions.delete', 'subscriptions', 'delete', 'Delete subscriptions'),
+('subscriptions.send_reminder', 'subscriptions', 'notify', 'Send renewal reminders'),
+('taxes.view', 'taxes', 'view', 'View tax configurations'),
+('taxes.create', 'taxes', 'create', 'Create tax records'),
+('taxes.update', 'taxes', 'update', 'Update tax records'),
+('taxes.delete', 'taxes', 'delete', 'Delete tax records'),
+('taxes.configure', 'taxes', 'configure', 'Manage tax preferences'),
+('users.view', 'users', 'view', 'View users'),
+('users.create', 'users', 'create', 'Create users'),
+('users.update', 'users', 'update', 'Update users'),
+('users.delete', 'users', 'delete', 'Delete users'),
+('users.assign_roles', 'users', 'assign', 'Assign roles to users'),
+('roles.view', 'roles', 'view', 'View roles'),
+('roles.create', 'roles', 'create', 'Create roles'),
+('roles.update', 'roles', 'update', 'Update roles'),
+('roles.delete', 'roles', 'delete', 'Delete roles'),
+('roles.assign_permissions', 'roles', 'assign', 'Assign permissions to roles'),
+('activity_logs.view', 'activity_logs', 'view', 'View activity logs'),
+('reports.view', 'reports', 'view', 'View reports'),
+('settings.manage', 'settings', 'manage', 'Manage application settings');
+
+-- Assign permissions to roles
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r CROSS JOIN permissions p WHERE r.role_key = 'admin';
+
+-- Manager permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.permission_key IN (
+    'dashboard.view',
+    'customers.view','customers.create','customers.update',
+    'domains.view','domains.create','domains.update',
+    'services.view','services.create','services.update',
+    'vendors.view','vendors.create','vendors.update',
+    'subscriptions.view','subscriptions.create','subscriptions.update','subscriptions.send_reminder',
+    'taxes.view','taxes.update','taxes.configure',
+    'reports.view',
+    'settings.manage'
+)
+WHERE r.role_key = 'manager';
+
+-- Sales permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.permission_key IN (
+    'dashboard.view',
+    'customers.view','customers.create','customers.update',
+    'subscriptions.view','subscriptions.create','subscriptions.update','subscriptions.send_reminder',
+    'reports.view'
+)
+WHERE r.role_key = 'sales';
+
+-- Support permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.permission_key IN (
+    'dashboard.view',
+    'customers.view',
+    'domains.view',
+    'services.view',
+    'subscriptions.view','subscriptions.send_reminder'
+)
+WHERE r.role_key = 'support';
+
+-- Viewer permissions
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id
+FROM roles r
+JOIN permissions p ON p.permission_key IN (
+    'dashboard.view',
+    'customers.view',
+    'domains.view',
+    'services.view',
+    'vendors.view',
+    'subscriptions.view',
+    'taxes.view',
+    'reports.view'
+)
+WHERE r.role_key = 'viewer';
+
 -- Default user data (username: admin, password: admin123)
-INSERT INTO users (username, name, password, role, email, is_active) VALUES 
-('admin', 'Admin', '$2a$15$4NbEZKOhHJtwE..L2peByOQjdFnt0cRdAkO.xJy2BBlnMhNeo0Amy', 'Admin', 'admin123@gmail.com', TRUE);
+INSERT INTO users (username, name, password, role, role_id, email, is_active)
+VALUES (
+    'admin',
+    'Admin',
+    '$2a$15$4NbEZKOhHJtwE..L2peByOQjdFnt0cRdAkO.xJy2BBlnMhNeo0Amy',
+    'Admin',
+    (SELECT id FROM roles WHERE role_key = 'admin'),
+    'admin123@gmail.com',
+    TRUE
+);
 
 -- Activity Log Table
 CREATE TABLE activity_logs (

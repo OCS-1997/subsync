@@ -9,20 +9,19 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 
-const ROLES = ["Admin", "Manager", "User"];
-
 const AddUser = () => {
   const { editUsername } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const editing = !!editUsername;
   const [loading, setLoading] = useState(false);
+  const [roleOptions, setRoleOptions] = useState([]);
   const [form, setForm] = useState({
     username: "",
     name: "",
     email: "",
     password: "",
-    role: "User",
+    roleKey: "",
     is_active: true,
   });
 
@@ -34,11 +33,26 @@ const AddUser = () => {
         name: "",
         email: "",
         password: "",
-        role: "User",
+        roleKey: "",
         is_active: true,
       });
       setLoading(false);
     }
+  }, [editing]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const { data } = await api.get("/rbac/roles");
+        setRoleOptions(data);
+        if (!editing) {
+          setForm((prev) => ({ ...prev, roleKey: data.find((role) => role.roleKey === 'viewer')?.roleKey || data[0]?.roleKey || "" }));
+        }
+      } catch (error) {
+        toast.error("Failed to load roles");
+      }
+    };
+    fetchRoles();
   }, [editing]);
 
   useEffect(() => {
@@ -50,7 +64,7 @@ const AddUser = () => {
         name: user.name,
         email: user.email,
         password: "",
-        role: user.role,
+        roleKey: user.roleKey || "",
         is_active: !!user.is_active,
       });
     } else {
@@ -62,7 +76,7 @@ const AddUser = () => {
             name: res.data.name,
             email: res.data.email,
             password: "",
-            role: res.data.role,
+            roleKey: res.data.roleKey || "",
             is_active: !!res.data.is_active,
           });
         })
@@ -189,17 +203,18 @@ const AddUser = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="roleKey">Role</Label>
                   <select
-                    id="role"
-                    name="role"
-                    value={form.role}
+                    id="roleKey"
+                    name="roleKey"
+                    value={form.roleKey}
                     onChange={handleChange}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required
                   >
-                    {ROLES.map(role => (
-                      <option key={role} value={role}>{role}</option>
+                    <option value="" disabled>Select a role</option>
+                    {roleOptions.map(role => (
+                      <option key={role.id} value={role.roleKey}>{role.name}</option>
                     ))}
                   </select>
                 </div>

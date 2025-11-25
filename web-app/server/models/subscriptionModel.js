@@ -137,6 +137,7 @@ async function addSubscription(payload, changedBy = null, ipAddress = null) {
       never_expires = false,
       repeat_every_value = null,
       repeat_every_unit = null,
+      billing_cycle_type = 'contract',
       currency = 'INR',
       discount_type = 'amount',
       discount_value = 0,
@@ -177,9 +178,9 @@ async function addSubscription(payload, changedBy = null, ipAddress = null) {
     const subId = generateID('SUB');
     const [res] = await conn.query(
       `INSERT INTO subscriptions (
-        sub_id, domain_name, customer_id, start_date, end_date, never_expires, repeat_every_value, repeat_every_unit,
+        sub_id, domain_name, customer_id, start_date, end_date, never_expires, repeat_every_value, repeat_every_unit, billing_cycle_type,
         currency, subtotal, tax_total, discount_type, discount_value, rounding, total, notes, terms_and_conditions, email_list, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
       [
         subId,
         domain_name || null,
@@ -189,6 +190,7 @@ async function addSubscription(payload, changedBy = null, ipAddress = null) {
         !!never_expires,
         repeat_every_value,
         repeat_every_unit,
+        billing_cycle_type || 'contract',
         currency,
         subtotal,
         tax_total,
@@ -339,6 +341,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
       never_expires = false,
       repeat_every_value = null,
       repeat_every_unit = null,
+      billing_cycle_type = 'contract',
       currency = 'INR',
       discount_type = 'amount',
       discount_value = 0,
@@ -372,7 +375,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
     // Prepare new data for comparison
     // Preserve status from old data if not provided in payload
     const status = payload.status !== undefined ? payload.status : (oldData.status || 'active');
-    
+
     const newData = {
       domain_name: domain_name || null,
       customer_id: customerID,
@@ -397,7 +400,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
 
     await conn.query(
       `UPDATE subscriptions SET 
-        domain_name=?, customer_id=?, start_date=?, end_date=?, never_expires=?, repeat_every_value=?, repeat_every_unit=?,
+        domain_name=?, customer_id=?, start_date=?, end_date=?, never_expires=?, repeat_every_value=?, repeat_every_unit=?, billing_cycle_type=?,
         currency=?, subtotal=?, tax_total=?, discount_type=?, discount_value=?, rounding=?, total=?, notes=?, terms_and_conditions=?, email_list=?, updated_at=CURRENT_TIMESTAMP
        WHERE sub_id = ?`,
       [
@@ -408,6 +411,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
         newData.never_expires,
         newData.repeat_every_value,
         newData.repeat_every_unit,
+        billing_cycle_type || 'contract',
         newData.currency,
         newData.subtotal,
         newData.tax_total,

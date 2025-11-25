@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import { Mail, Plus, RotateCcw, History } from "lucide-react";
+import { Mail, Plus, RotateCcw, History, Trash2 } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
+import { usePermissions } from "@/context/PermissionsContext.jsx";
+import { PERMISSIONS } from "@/constants/permissions.js";
 
 import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
@@ -11,8 +13,9 @@ import { Button } from "@/components/ui/button.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
+import { Input } from "@/components/ui/input.jsx";
 
 const sortMap = {
   domain_name: 's.domain_name',
@@ -38,6 +41,7 @@ const StatusPill = ({ status }) => {
 };
 
 export default function ListSubscriptions({ onAddNew, onEdit }) {
+  const { hasPermission } = usePermissions();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -50,7 +54,31 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   const [sortOrder, setSortOrder] = useState(''); // 'asc' | 'desc' | ''
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedSubId, setSelectedSubId] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, subId: null, domain: "" });
+  const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
   const debounceTimeout = useRef();
+
+  const openDeleteDialog = (subId, domainName) => {
+    setDeleteDialog({ open: true, subId, domain: domainName || "" });
+    setDeleteConfirmValue("");
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog({ open: false, subId: null, domain: "" });
+    setDeleteConfirmValue("");
+  };
+
+  const handleDelete = async () => {
+    if (!deleteDialog.subId) return;
+    try {
+      await api.delete(`/subscriptions/${deleteDialog.subId}`);
+      toast.success('Subscription deleted successfully');
+      closeDeleteDialog();
+      fetchData(); // Refresh the list
+    } catch (e) {
+      toast.error(e.normalizedMessage || 'Failed to delete subscription');
+    }
+  };
 
   // Debounce search
   useEffect(() => {
@@ -79,7 +107,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
       let rows = res.data.dataArray || [];
       // client-side sort for non-server keys
       if (!serverSort && sortBy && sortOrder) {
-        rows = [...rows].sort((a,b) => {
+        rows = [...rows].sort((a, b) => {
           const av = a[sortBy]; const bv = b[sortBy];
           const na = Number(av); const nb = Number(bv);
           const bothNums = !isNaN(na) && !isNaN(nb);
@@ -169,9 +197,9 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     start_date: formatDate(row.start_date),
     end_date: formatDate(row.end_date),
     dynamic_status: <StatusPill status={row.dynamic_status || row.status || '-'} />,
-    total:  `₹${row.total ? Number(row.total).toFixed(2) : '-'}`,
+    total: `₹${row.total ? Number(row.total).toFixed(2) : '-'}`,
     actions: (
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button size="sm" variant="outline" onClick={() => onEdit && onEdit(row.sub_id)}>Edit</Button>
         <Button size="sm" variant="ghost" onClick={async () => {
           try {
@@ -183,9 +211,9 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
         }}>
           <Mail className="w-4 h-4" /> Reminder
         </Button>
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           onClick={() => {
             setSelectedSubId(row.sub_id);
             setHistoryDialogOpen(true);
@@ -193,6 +221,16 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
         >
           <History className="w-4 h-4 mr-1" /> View History
         </Button>
+        {hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE) && (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => openDeleteDialog(row.sub_id, row.domain_name)}
+            title="Delete Subscription"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     )
   }));
@@ -201,14 +239,14 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">All Subscriptions</h1>
-        
+
         <Button onClick={onAddNew}><Plus className="w-4 h-4" /> Add Subscription</Button>
-        
+
       </div>
-       <hr className="mb-4 border-blue-500 border-3 size-auto" />
+      <hr className="mb-4 border-blue-500 border-3 size-auto" />
 
       <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => {}} />
+        <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} />
         <div className="flex items-center gap-2">
           <Label>Status</Label>
           <select className="border rounded-md h-9 px-2" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
@@ -225,8 +263,8 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
 
       {loading ? (
         <div className="flex flex-col justify-center items-center my-8">
-        <Hamster />
-       </div>
+          <Hamster />
+        </div>
       ) : rows.length === 0 ? (
         <div className="p-10 border rounded-md bg-white text-center">
           {debouncedSearch || statusFilter ? (
@@ -257,11 +295,48 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           {selectedSubId && (
-            <SubscriptionHistory 
-              subId={selectedSubId} 
-              onClose={() => setHistoryDialogOpen(false)} 
+            <SubscriptionHistory
+              subId={selectedSubId}
+              onClose={() => setHistoryDialogOpen(false)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => {
+        if (!open) closeDeleteDialog();
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Subscription</DialogTitle>
+            <DialogDescription>
+              Type the subscription domain name <strong>{deleteDialog.domain || "subscription"}</strong> to confirm deletion. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <Label htmlFor="delete-confirm-input">Subscription Name</Label>
+            <Input
+              id="delete-confirm-input"
+              value={deleteConfirmValue}
+              onChange={(e) => setDeleteConfirmValue(e.target.value)}
+              placeholder="Enter subscription name"
+            />
+          </div>
+          <DialogFooter className="flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={closeDeleteDialog}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={
+                !deleteDialog.domain ||
+                deleteConfirmValue.trim().toLowerCase() !== deleteDialog.domain.trim().toLowerCase()
+              }
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

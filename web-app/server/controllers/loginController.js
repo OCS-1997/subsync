@@ -1,6 +1,7 @@
 import { checkLogin } from '../models/loginModel.js';
 import jwt from 'jsonwebtoken';
 import { logActivity } from '../models/activityLogModel.js';
+import { buildUserContext } from '../services/rbacService.js';
 
 /**
  * Function to be executed when user login details are sent for validation
@@ -15,11 +16,23 @@ const validateLogin = async (req, res) => {
         const user = await checkLogin(username, password);
 
         if (user) {
-            const token = jwt.sign({ username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const token = jwt.sign({ username: user.username, roleId: user.roleId }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const authContext = await buildUserContext(user.username);
             const loginTime = new Date().toISOString();
             // Log successful login
             await logActivity({ username: user.username, action: 'LOGIN_SUCCESS', ipAddress: req.ip, details: { loginTime } });
-            return res.status(200).json({ success: true, message: "Validation successful.", token, username: user.username, name: user.name, role: user.role, ip: req.ip, loginTime });
+            return res.status(200).json({
+                success: true,
+                message: "Validation successful.",
+                token,
+                username: authContext.username,
+                name: authContext.name,
+                role: authContext.role,
+                roleKey: authContext.roleKey,
+                permissions: authContext.permissions,
+                ip: req.ip,
+                loginTime
+            });
         }
         else {
             // Log failed login

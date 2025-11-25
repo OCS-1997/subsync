@@ -85,14 +85,25 @@ function AddTaxGroup() {
     return (
         <div className="w-full max-w-2xl mx-auto">
             <div className="flex items-center gap-4 mb-6">
-                <Button 
-                    variant="ghost" 
-                    onClick={goBack}
-                    className="flex items-center gap-2"
-                >
-                    <ArrowLeft size={16} />
-                    Back to Taxes
-                </Button>
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <span>Settings</span>
+                        <span>{`>`}</span>
+                        <span>Taxes</span>
+                        <span>{`>`}</span>
+                        <span>Tax Groups</span>
+                        <span>{`>`}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        onClick={goBack}
+                        className="flex items-center gap-2 w-fit p-0 h-auto text-blue-600 hover:text-blue-700 hover:bg-transparent"
+                    >
+                        <ArrowLeft size={16} />
+                        Back to Taxes
+                    </Button>
+                </div>
             </div>
             <Card>
                 <CardHeader>

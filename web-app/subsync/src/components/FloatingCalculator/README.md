@@ -1,92 +1,223 @@
-# Floating Calculator Widget
+# 🧮 Floating Calculator Widget
 
-A production-grade floating calculator widget with advanced features including standard calculator operations, memory functions, and currency conversion.
+A modern, draggable floating calculator widget for the Subsync application with complex mathematical operations and live currency conversion.
 
-## Features
+## ✨ Features
 
-- **Standard Calculator**: Full arithmetic operations (addition, subtraction, multiplication, division)
-- **Advanced Operations**: Parentheses, percentage calculations
-- **Memory Functions**: M+, M-, MC, MR
-- **Currency Converter**: Live exchange rates with 9 supported currencies
-- **Keyboard Support**: Full keyboard input support
-- **Smooth Animations**: Slide-up panel with backdrop blur
-- **Responsive Design**: Works on desktop and mobile devices
+### Calculator Mode
+- **Basic Operations**: Addition (+), Subtraction (−), Multiplication (×), Division (÷)
+- **Complex Calculations**: 
+  - Support for brackets/parentheses for order of operations
+  - Extended calculations (chained operations)
+  - Decimal point support
+  - Percentage calculations
+- **Functions**:
+  - Clear (C) and Clear Entry (CE)
+  - Backspace/Delete functionality
+  - Memory functions (M+, M-, MR, MC)
+- **Keyboard Support**: Full keyboard input for numbers, operators, and functions
 
-## Installation
+### Currency Converter Mode
+- **Top 10 Currencies**:
+  - USD - US Dollar
+  - EUR - Euro
+  - GBP - British Pound
+  - INR - Indian Rupee ⭐
+  - ERN - Eritrean Nakfa ⭐
+  - JPY - Japanese Yen
+  - AUD - Australian Dollar
+  - CAD - Canadian Dollar
+  - CHF - Swiss Franc
+  - CNY - Chinese Yuan
 
-Before using the calculator, install the required dependency:
+- **Live Exchange Rates**: Fetched from exchangerate-api.com
+- **Real-time Conversion**: Updates as you type
+- **Swap Currencies**: Quick button to swap from/to currencies
+- **Caching**: Rates cached for 1 hour in localStorage
+- **Offline Mode**: Uses cached rates when offline
+- **Last Updated Timestamp**: Shows when rates were last fetched
+- **Manual Refresh**: Button to force refresh rates
 
-```bash
-npm install mathjs
+### Drag & Drop
+- **Smooth Dragging**: Zero delay, butter-smooth drag experience
+- **Drag Handle**: Drag by clicking the header/title bar
+- **Visual Feedback**: Shadow elevation increases during drag
+- **Boundary Constraints**: Stays within viewport
+- **Position Persistence**: Saves position to localStorage
+- **Responsive**: Handles window resize gracefully
+
+### UI/UX
+- **Modern Glassmorphism**: Semi-transparent background with backdrop blur
+- **Smooth Animations**: 
+  - Genie-like open/close animation
+  - Button press animations
+  - Ripple effects on clicks
+  - Micro-animations on hover
+- **Tab Switcher**: Easy toggle between Calculator and Currency modes
+- **Responsive Design**: Works on all screen sizes
+- **Theme Integration**: Matches Subsync design system
+
+## 🎯 Usage
+
+### Opening the Calculator
+1. **NavBar Button**: Click the calculator icon in the navigation bar (near IP/login info)
+2. **Keyboard Shortcut**: Press `Ctrl + Shift + C`
+3. **Toggle Button**: Click the floating purple button
+
+### Calculator Operations
+- **Numbers**: Click buttons or use keyboard (0-9)
+- **Operators**: Click +, −, ×, ÷ buttons or use keyboard (+, -, *, /)
+- **Decimal**: Click . button or press .
+- **Brackets**: Click () button
+- **Equals**: Click = button or press Enter
+- **Clear**: Click C button or press Delete
+- **Clear Entry**: Click CE button
+- **Backspace**: Click ⌫ button or press Backspace
+
+### Memory Functions
+- **M+**: Add current display to memory
+- **M-**: Subtract current display from memory
+- **MR**: Recall memory value
+- **MC**: Clear memory
+
+### Currency Conversion
+1. Switch to "Currency" tab
+2. Select "From" currency
+3. Enter amount
+4. Select "To" currency
+5. View converted amount in real-time
+6. Use swap button to reverse currencies
+7. Click "Refresh Rates" to update exchange rates
+
+### Dragging
+- Click and hold the header (purple gradient area)
+- Drag to desired position
+- Release to drop
+- Position is automatically saved
+
+## 🎨 Design
+
+### Colors
+- **Primary Gradient**: Purple (#667eea) to Violet (#764ba2)
+- **Number Buttons**: White with subtle shadow
+- **Operator Buttons**: Blue gradient
+- **Equals Button**: Green gradient
+- **Function Buttons**: Gray gradient
+- **Clear Button**: Red gradient
+
+### Animations
+- **Open/Close**: Scale + fade with spring physics
+- **Button Press**: Scale down on click with ripple effect
+- **Hover**: Subtle scale and shadow increase
+- **Drag**: Shadow elevation increase
+
+## 🔧 Technical Details
+
+### Component Structure
+```
+FloatingCalculator/
+├── FloatingCalculator.jsx       # Main component
+├── FloatingCalculator.css       # Styles
+├── CalculatorDisplay.jsx        # Display component
+├── CalculatorButtons.jsx        # Button grid
+├── CurrencyConverter.jsx        # Currency tab
+├── useDraggable.js             # Dragging hook
+├── useCalculator.js            # Calculator logic
+├── useCurrencyConverter.js     # Currency logic
+└── index.js                    # Exports
 ```
 
-## Usage
+### State Management
+- **LocalStorage Keys**:
+  - `calculator-position`: { x, y }
+  - `calculator-last-mode`: 'calculator' | 'currency'
+  - `currency-rates-cache`: { data, timestamp }
 
-The calculator is already integrated into `App.jsx` and will appear as a floating button in the bottom-right corner of the application.
+### API
+- **Exchange Rates**: https://api.exchangerate-api.com/v4/latest/USD
+- **Cache Duration**: 1 hour
+- **Fallback**: Uses cached rates if API fails
 
-### Manual Integration
+### Keyboard Shortcuts
+- `Ctrl + Shift + C`: Toggle calculator
+- `Escape`: Close calculator
+- `0-9`: Input numbers
+- `+ - * /`: Input operators
+- `.`: Decimal point
+- `Enter`: Calculate result
+- `Backspace`: Delete last character
+- `Delete`: Clear all
 
-If you need to add it to a different location:
+## 🚀 Integration
 
-```jsx
-import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx';
+The calculator is integrated into the Subsync application:
 
-function YourComponent() {
-  return (
-    <>
-      {/* Your other components */}
-      <FloatingCalculator />
-    </>
-  );
+1. **App.jsx**: FloatingCalculator component rendered globally
+2. **NavBar.jsx**: Calculator icon button triggers custom event
+3. **Custom Event**: `toggleCalculator` event toggles calculator visibility
+
+## 📱 Responsive Behavior
+
+- **Desktop**: Full 340px width
+- **Mobile**: Adapts to 320px width
+- **Position**: Adjusts on window resize to stay in viewport
+- **Touch**: Supports touch events for dragging
+
+## 🎯 Accessibility
+
+- **Keyboard Navigation**: Full keyboard support
+- **ARIA Labels**: All buttons have proper labels
+- **Focus Management**: Proper focus handling
+- **Screen Reader**: Friendly for screen readers
+
+## 🐛 Error Handling
+
+- **Division by Zero**: Shows "Error"
+- **Invalid Expression**: Shows "Error"
+- **API Failure**: Falls back to cached rates
+- **Offline Mode**: Indicator shows offline status
+- **Network Error**: Graceful degradation
+
+## 💾 Data Persistence
+
+- **Position**: Saved to localStorage on drag end
+- **Last Mode**: Remembers calculator/currency tab
+- **Exchange Rates**: Cached for 1 hour
+- **Auto-restore**: Position and mode restored on mount
+
+## 🎨 Customization
+
+To customize colors, edit `FloatingCalculator.css`:
+
+```css
+.calculator-toggle-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.calculator-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 ```
 
-## Component Structure
+## 📝 Notes
 
-```
-/components/FloatingCalculator/
-    ├── FloatingCalculator.jsx      # Main component with floating button
-    ├── CalculatorPanel.jsx         # Slide-up panel container
-    ├── StandardCalculator.jsx      # Calculator with math operations
-    ├── CurrencyConverter.jsx       # Currency conversion feature
-    ├── styles.css                  # Component styles
-    ├── currency-rates.json         # Fallback exchange rates
-    └── README.md                   # This file
-```
+- Calculator uses safe expression evaluation (no eval)
+- Currency rates update automatically every hour
+- Position is constrained to viewport boundaries
+- Smooth 60fps dragging with requestAnimationFrame
+- Glassmorphism effect requires modern browser support
 
-## Currency Support
+## 🔮 Future Enhancements
 
-The currency converter supports:
-- USD (US Dollar)
-- INR (Indian Rupee)
-- EUR (Euro)
-- GBP (British Pound)
-- AED (UAE Dirham)
-- AUD (Australian Dollar)
-- CAD (Canadian Dollar)
-- JPY (Japanese Yen)
-- SGD (Singapore Dollar)
+- [ ] Scientific calculator mode
+- [ ] Calculation history
+- [ ] More currencies
+- [ ] Custom themes
+- [ ] Export calculations
+- [ ] Unit converter
+- [ ] Tip calculator
+- [ ] Tax calculator
 
-The converter attempts to fetch live rates from an API and falls back to the JSON file if the API is unavailable.
+---
 
-## Keyboard Shortcuts
-
-- **Numbers (0-9)**: Input numbers
-- **Operators (+, -, *, /)**: Mathematical operations
-- **Enter or =**: Calculate result
-- **Escape or C**: Clear calculator
-- **Backspace**: Delete last character
-- **%**: Calculate percentage
-- **( )**: Parentheses for complex expressions
-
-## Styling
-
-The component uses CSS classes defined in `styles.css`. You can customize the appearance by modifying the CSS file or overriding classes with Tailwind CSS utilities.
-
-## Notes
-
-- The calculator uses `mathjs` for safe expression evaluation
-- Currency rates are fetched from a free API with JSON fallback
-- The panel closes on ESC key or click outside
-- Body scroll is disabled when the panel is open
-
+**Built with ❤️ for Subsync**

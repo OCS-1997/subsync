@@ -39,14 +39,20 @@ async function insertUsers() {
       const hashedPassword = await bcrypt.hash(user.password, 10);
 
       // Insert into the database
+      const [roleRows] = await appDB.query(
+        `SELECT id, name FROM roles WHERE role_key = ? OR name = ? LIMIT 1`,
+        [user.role.toLowerCase(), user.role]
+      );
+      const role = roleRows[0];
       await appDB.query(
-        `INSERT INTO users (username, name, password, role, email, is_active)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO users (username, name, password, role, role_id, email, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           user.username,
           user.name,
           hashedPassword,
-          user.role,
+          role?.name || user.role,
+          role?.id || null,
           user.email,
           user.is_active,
         ]

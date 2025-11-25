@@ -1,25 +1,47 @@
 import jwt from 'jsonwebtoken';
+import { buildUserContext } from '../services/rbacService.js';
 
-export const isAuthenticated = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+export const isAuthenticated = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: "No token provided" });
+        }
         const token = authHeader.split(' ')[1];
-        jwt.verify(token, process.env.JWT_SECRET || "your_secret_key", (err, user) => {
-            if (err) return res.status(403).json({ error: "Invalid or expired token" });
-            req.user = user;
-            // Set real client IP (works with Nginx and trust proxy)
-            req.user.ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
-            next();
-        });
-    } else {
-        res.status(401).json({ error: "No token provided" });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_secret_key");
+        const userContext = await buildUserContext(decoded.username);
+        if (!userContext) {
+            return res.status(401).json({ error: "Invalid user context" });
+        }
+        userContext.ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+        req.user = userContext;
+        next();
+    } catch (error) {
+        console.error("Auth middleware error:", error);
+        return res.status(403).json({ error: "Invalid or expired token" });
     }
 };
 
-export const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role && req.user.role.toLowerCase() === 'admin') {
-        next();
-    } else {
-        res.status(403).json({ error: 'Access denied. Admins only.' });
-    }
+export const authorize = (requiredPermissions = [], options = { match: 'all' }) => {
+    const normalized = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
+    return (req, res, next) => {
+        if (!normalized.length) {
+            return next();
+        }
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        // Admin bypass
+        if (req.user.roleKey === 'admin') {
+            return next();
+        }
+        const userPermissions = req.user.permissions || [];
+        const hasPermission = options?.match === 'any'
+            ? normalized.some((perm) => userPermissions.includes(perm))
+            : normalized.every((perm) => userPermissions.includes(perm));
+        if (!hasPermission) {
+            return res.status(403).json({ error: "Forbidden: insufficient permissions" });
+        }
+        return next();
+    };
 };

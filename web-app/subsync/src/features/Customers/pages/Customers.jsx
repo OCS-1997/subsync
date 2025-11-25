@@ -15,6 +15,8 @@ import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import { fetchCustomers } from "@/features/Customers/customerSlice.js";
+import PermissionCheck from "@/components/auth/PermissionCheck.jsx";
+import { PERMISSIONS } from "@/constants/permissions.js";
 
 const headers = [
   { key: "first_name", label: "Customer Name" },
@@ -223,11 +225,13 @@ function Customers() {
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Customers</h1>
-        <Link to={`add`}>
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40"> 
-            <UserPlus /> Add
-          </Button>
-        </Link>
+        <PermissionCheck required={PERMISSIONS.CUSTOMERS_CREATE}>
+          <Link to={`add`}>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40"> 
+              <UserPlus /> Add
+            </Button>
+          </Link>
+        </PermissionCheck>
       </div>
       <hr className="mb-6 border-blue-500 border-1" />
       <div className="flex items-center gap-3 mb-3">
@@ -236,14 +240,17 @@ function Customers() {
           setSearch={setSearch}
           handleSearch={handleSearch}
         />
-        <Button
-          disabled
-          className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
-          <FileDown /> Import
-        </Button>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
-          <FileUp /> Export
-        </Button>
+        <PermissionCheck required={PERMISSIONS.CUSTOMERS_CREATE}>
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+            <FileDown /> Import
+          </Button>
+        </PermissionCheck>
+        <PermissionCheck required={PERMISSIONS.CUSTOMERS_VIEW}>
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchCustomersAndExport}>
+            <FileUp /> Export
+          </Button>
+        </PermissionCheck>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
           </DropdownMenuTrigger>
@@ -293,9 +300,11 @@ function Customers() {
             <>
               <div className="text-lg font-semibold mb-2">No customers yet</div>
               <div className="text-sm text-gray-600 mb-4">Create your first customer to get started.</div>
-              <Link to="add">
-                <Button><UserPlus className="w-4 h-4" /> Add Customer</Button>
-              </Link>
+              <PermissionCheck required={PERMISSIONS.CUSTOMERS_CREATE}>
+                <Link to="add">
+                  <Button><UserPlus className="w-4 h-4" /> Add Customer</Button>
+                </Link>
+              </PermissionCheck>
             </>
           )}
         </div>
