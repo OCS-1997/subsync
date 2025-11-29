@@ -151,6 +151,7 @@ export default function AddEditSubscription({ onBack, editId }) {
   const [defaultTaxPreferences, setDefaultTaxPreferences] = useState({ intra: null, inter: null });
   const [taxGroups, setTaxGroups] = useState([]);
   const [taxes, setTaxes] = useState([]);
+  const [reminderPolicies, setReminderPolicies] = useState([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -193,19 +194,21 @@ export default function AddEditSubscription({ onBack, editId }) {
     terms_conditions: "",
     email_list: [],
     items: [{ service_id: "", quantity: 1, rate: 0, tax_percent: 0 }],
+    reminder_policy_id: null,
   });
 
   useEffect(() => {
     (async () => {
       try {
-        const [cRes, sRes, dRes, gRes, taxPrefRes, taxGroupsRes, taxesRes] = await Promise.all([
+        const [cRes, sRes, dRes, gRes, taxPrefRes, taxGroupsRes, taxesRes, policiesRes] = await Promise.all([
           api.get('/all-customer-details'),
           api.get('/all-services?limit=1000'),
           api.get('/all-domains?limit=1000'),
           api.get('/get-gst-settings').catch(() => ({ data: {} })),
           api.get('/default-tax-preferences').catch(() => ({ data: { preferences: { intra: null, inter: null } } })),
           api.get('/tax-groups?include=members').catch(() => ({ data: { groups: [] } })),
-          api.get('/all-taxes').catch(() => ({ data: { taxes: [] } }))
+          api.get('/all-taxes').catch(() => ({ data: { taxes: [] } })),
+          api.get('/reminder-policies').catch(() => ({ data: [] }))
         ]);
         const cs = (cRes.data.customers || []).map(c => ({ id: c.customer_id, name: c.display_name, primary_email: c.primary_email, other_contacts: typeof c.other_contacts === 'string' ? JSON.parse(c.other_contacts || '[]') : (c.other_contacts || []) }));
         const ss = (sRes.data.services || []).map(s => ({ id: s.service_id, name: s.service_name, price: parseFloat((s.selling_price ?? 0)), tax_details: s.tax_details || {} }));
@@ -217,6 +220,7 @@ export default function AddEditSubscription({ onBack, editId }) {
         setDefaultTaxPreferences((taxPrefRes.data.preferences || { intra: null, inter: null }));
         setTaxGroups((taxGroupsRes.data.groups || []));
         setTaxes((taxesRes.data.taxes || []));
+        setReminderPolicies((policiesRes.data || []));
       } catch (e) {
         toast.error(e.normalizedMessage || 'Failed to load form data');
       } finally {
@@ -255,6 +259,7 @@ export default function AddEditSubscription({ onBack, editId }) {
           terms_conditions: sub.terms_and_conditions || "",
           email_list: Array.isArray(sub.email_list) ? sub.email_list : [],
           items: (sub.items || []).map(it => ({ service_id: it.service_id, service_name: it.service_name, quantity: it.quantity, rate: it.rate, tax_percent: it.tax_percent || 0 })),
+          reminder_policy_id: sub.reminder_policy_id || null,
         });
 
         // Load customer details for tax calculation
@@ -819,6 +824,24 @@ export default function AddEditSubscription({ onBack, editId }) {
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       Select how billing periods should be calculated for this subscription.
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <Label className="text-sm font-medium text-gray-700 mb-2">Reminder Policy</Label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md h-10 px-3 bg-white text-sm"
+                      value={form.reminder_policy_id || ""}
+                      onChange={e => setForm({ ...form, reminder_policy_id: e.target.value ? parseInt(e.target.value, 10) : null })}
+                    >
+                      <option value="">Default Policy (Auto)</option>
+                      {reminderPolicies.map(policy => (
+                        <option key={policy.id} value={policy.id}>
+                          {policy.name} {policy.is_default ? "(Default)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Select a reminder policy to schedule renewal notifications. Leave as "Default" to use the system default policy.
                     </p>
                   </div>
                 </div>

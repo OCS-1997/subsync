@@ -39,6 +39,20 @@ export const PERMISSIONS = Object.freeze({
   ACTIVITY_LOGS_VIEW: 'activity_logs.view',
   REPORTS_VIEW: 'reports.view',
   SETTINGS_MANAGE: 'settings.manage',
+  REMINDER_POLICIES_VIEW: 'reminder_policies.view',
+  REMINDER_POLICIES_CREATE: 'reminder_policies.create',
+  REMINDER_POLICIES_UPDATE: 'reminder_policies.update',
+  REMINDER_POLICIES_DELETE: 'reminder_policies.delete',
+  EMAIL_TEMPLATES_VIEW: 'email_templates.view',
+  EMAIL_TEMPLATES_CREATE: 'email_templates.create',
+  EMAIL_TEMPLATES_UPDATE: 'email_templates.update',
+  EMAIL_TEMPLATES_DELETE: 'email_templates.delete',
+  NOTIFICATION_LOGS_VIEW: 'notification_logs.view',
+  DCR_VIEW: 'dcr.view',
+  DCR_CREATE: 'dcr.create',
+  DCR_UPDATE: 'dcr.update',
+  DCR_DELETE: 'dcr.delete',
+  DCR_SEND_REPORT: 'dcr.send_report',
 });
 
 export const PAGE_PERMISSIONS = {

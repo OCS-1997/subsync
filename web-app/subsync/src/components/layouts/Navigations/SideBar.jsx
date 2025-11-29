@@ -12,6 +12,7 @@ const sidebarItems = [
   { path: 'dashboard/services', title: 'Services', icon: 'shop', permission: PERMISSIONS.SERVICES_VIEW },
   { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', permission: PERMISSIONS.VENDORS_VIEW },
   { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW },
+  { path: 'dashboard/dcr', title: 'DCR', icon: 'call', permission: PERMISSIONS.DCR_VIEW },
   // { 
   //   path: 'dashboard/settings',
   //   title: 'Settings',

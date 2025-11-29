@@ -39,6 +39,20 @@ export const PERMISSIONS = Object.freeze({
     ACTIVITY_LOGS_VIEW: 'activity_logs.view',
     REPORTS_VIEW: 'reports.view',
     SETTINGS_MANAGE: 'settings.manage',
+    REMINDER_POLICIES_VIEW: 'reminder_policies.view',
+    REMINDER_POLICIES_CREATE: 'reminder_policies.create',
+    REMINDER_POLICIES_UPDATE: 'reminder_policies.update',
+    REMINDER_POLICIES_DELETE: 'reminder_policies.delete',
+    EMAIL_TEMPLATES_VIEW: 'email_templates.view',
+    EMAIL_TEMPLATES_CREATE: 'email_templates.create',
+    EMAIL_TEMPLATES_UPDATE: 'email_templates.update',
+    EMAIL_TEMPLATES_DELETE: 'email_templates.delete',
+    NOTIFICATION_LOGS_VIEW: 'notification_logs.view',
+    DCR_VIEW: 'dcr.view',
+    DCR_CREATE: 'dcr.create',
+    DCR_UPDATE: 'dcr.update',
+    DCR_DELETE: 'dcr.delete',
+    DCR_SEND_REPORT: 'dcr.send_report',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -82,6 +96,20 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.ACTIVITY_LOGS_VIEW, resource: 'activity_logs', action: 'view', description: 'View activity logs' },
     { key: PERMISSIONS.REPORTS_VIEW, resource: 'reports', action: 'view', description: 'View reports' },
     { key: PERMISSIONS.SETTINGS_MANAGE, resource: 'settings', action: 'manage', description: 'Manage global settings' },
+    { key: PERMISSIONS.REMINDER_POLICIES_VIEW, resource: 'reminder_policies', action: 'view', description: 'View reminder policies' },
+    { key: PERMISSIONS.REMINDER_POLICIES_CREATE, resource: 'reminder_policies', action: 'create', description: 'Create reminder policies' },
+    { key: PERMISSIONS.REMINDER_POLICIES_UPDATE, resource: 'reminder_policies', action: 'update', description: 'Update reminder policies' },
+    { key: PERMISSIONS.REMINDER_POLICIES_DELETE, resource: 'reminder_policies', action: 'delete', description: 'Delete reminder policies' },
+    { key: PERMISSIONS.EMAIL_TEMPLATES_VIEW, resource: 'email_templates', action: 'view', description: 'View email templates' },
+    { key: PERMISSIONS.EMAIL_TEMPLATES_CREATE, resource: 'email_templates', action: 'create', description: 'Create email templates' },
+    { key: PERMISSIONS.EMAIL_TEMPLATES_UPDATE, resource: 'email_templates', action: 'update', description: 'Update email templates' },
+    { key: PERMISSIONS.EMAIL_TEMPLATES_DELETE, resource: 'email_templates', action: 'delete', description: 'Delete email templates' },
+    { key: PERMISSIONS.NOTIFICATION_LOGS_VIEW, resource: 'notification_logs', action: 'view', description: 'View notification logs' },
+    { key: PERMISSIONS.DCR_VIEW, resource: 'dcr', action: 'view', description: 'View DCR entries' },
+    { key: PERMISSIONS.DCR_CREATE, resource: 'dcr', action: 'create', description: 'Create DCR entries' },
+    { key: PERMISSIONS.DCR_UPDATE, resource: 'dcr', action: 'update', description: 'Update DCR entries' },
+    { key: PERMISSIONS.DCR_DELETE, resource: 'dcr', action: 'delete', description: 'Delete DCR entries' },
+    { key: PERMISSIONS.DCR_SEND_REPORT, resource: 'dcr', action: 'send_report', description: 'Send DCR daily reports' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -109,6 +137,10 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TAXES_CONFIGURE,
         PERMISSIONS.REPORTS_VIEW,
         PERMISSIONS.SETTINGS_MANAGE,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.DCR_UPDATE,
+        PERMISSIONS.DCR_SEND_REPORT,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -120,6 +152,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.SUBSCRIPTIONS_UPDATE,
         PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER,
         PERMISSIONS.REPORTS_VIEW,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.DCR_UPDATE,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -128,6 +163,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.SERVICES_VIEW,
         PERMISSIONS.SUBSCRIPTIONS_VIEW,
         PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.DCR_UPDATE,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,

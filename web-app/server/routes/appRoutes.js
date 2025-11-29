@@ -2,18 +2,39 @@ import express from 'express';
 import { isAuthenticated, authorize } from '../middlewares/auth.js';
 import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
-import { createCustomer, updateCustomerDetails, fetchAllCustomers,fetchAllCustomerDetails, customerDetailsByID , importCustomers, addCustomerContactController} from '../controllers/customerController.js';
+import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains } from '../controllers/domainController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
 import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController, getSubscriptionHistoryController } from '../controllers/subscriptionController.js';
+import { renewSubscriptionController, archiveSubscriptionController, enqueueRemindersController } from '../controllers/subscriptionReminderController.js';
+import { listReminderPoliciesController, getReminderPolicyController, createReminderPolicyController, updateReminderPolicyController, deleteReminderPolicyController } from '../controllers/reminderPolicyController.js';
+import { listEmailTemplatesController, getEmailTemplateController, upsertEmailTemplateController, updateEmailTemplateController, deleteEmailTemplateController, previewEmailTemplateController } from '../controllers/emailTemplateController.js';
+import { listNotificationLogsController, getNotificationLogController } from '../controllers/notificationLogController.js';
 import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDefaultTaxPref, setDefaultTaxPref, getAllActiveTaxRates, getAllTaxGroupsController, getTaxGroupByIdController, createTaxGroupController, updateTaxGroupController, deleteTaxGroupController, getDefaultTaxPreferencesController, setDefaultTaxPreferencesController } from '../controllers/taxController.js';
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
-import {getallUsers, getUser, createUserController, updateUserController, deleteUserController} from '../controllers/userController.js';
+import { getallUsers, getUser, createUserController, updateUserController, deleteUserController } from '../controllers/userController.js';
 import { getLogs } from '../controllers/activityLogController.js';
 import { listRolesController, createRoleController, updateRoleController, deleteRoleController, assignPermissionsController, listPermissionsController } from '../controllers/rbacController.js';
+import {
+    createDcrEntryController,
+    listDcrEntriesController,
+    getDcrEntryController,
+    updateDcrEntryController,
+    deleteDcrEntryController,
+    getDcrStatsController,
+    exportDcrEntriesController,
+    sendDailyReportController,
+    getDcrCategoriesController
+} from '../controllers/dcrController.js';
+import {
+    getDashboardController,
+    getRenewalsController,
+    getExpiredServicesController,
+    getBirthdaysController
+} from '../controllers/dashboardController.js';
 import { PERMISSIONS } from '../constants/permissions.js';
 
 const router = express.Router();
@@ -42,7 +63,7 @@ router.get('/payment-terms/:id', isAuthenticated, authorize(PERMISSIONS.SETTINGS
 router.post('/payment-terms', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), createPaymentTerm);
 router.put('/payment-terms/:id', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), updatePaymentTermById);
 router.delete('/payment-terms/:id', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), deletePaymentTermById);
-router.put('/payment-terms/:id/default', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), setDefaultPaymentTerm )
+router.put('/payment-terms/:id/default', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), setDefaultPaymentTerm)
 
 //Domain
 router.post('/create-domain', isAuthenticated, authorize(PERMISSIONS.DOMAINS_CREATE), createDomain);
@@ -80,6 +101,28 @@ router.get('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIP
 router.get('/subscriptions/:id/history', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionHistoryController);
 router.put('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), updateSubscriptionController);
 router.delete('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_DELETE), deleteSubscriptionController);
+router.post('/subscriptions/:id/renew', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), renewSubscriptionController);
+router.post('/subscriptions/:id/archive', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), archiveSubscriptionController);
+router.post('/subscriptions/:id/enqueue-reminders', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), enqueueRemindersController);
+
+// Reminder Policies
+router.get('/reminder-policies', isAuthenticated, authorize(PERMISSIONS.REMINDER_POLICIES_VIEW), listReminderPoliciesController);
+router.get('/reminder-policies/:id', isAuthenticated, authorize(PERMISSIONS.REMINDER_POLICIES_VIEW), getReminderPolicyController);
+router.post('/reminder-policies', isAuthenticated, authorize(PERMISSIONS.REMINDER_POLICIES_CREATE), createReminderPolicyController);
+router.put('/reminder-policies/:id', isAuthenticated, authorize(PERMISSIONS.REMINDER_POLICIES_UPDATE), updateReminderPolicyController);
+router.delete('/reminder-policies/:id', isAuthenticated, authorize(PERMISSIONS.REMINDER_POLICIES_DELETE), deleteReminderPolicyController);
+
+// Email Templates
+router.get('/email-templates', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), listEmailTemplatesController);
+router.get('/email-templates/:id', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), getEmailTemplateController);
+router.post('/email-templates', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_CREATE), upsertEmailTemplateController);
+router.put('/email-templates/:id', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_UPDATE), updateEmailTemplateController);
+router.delete('/email-templates/:id', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_DELETE), deleteEmailTemplateController);
+router.post('/email-templates/:id/preview', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), previewEmailTemplateController);
+
+// Notification Logs
+router.get('/notification-logs', isAuthenticated, authorize(PERMISSIONS.NOTIFICATION_LOGS_VIEW), listNotificationLogsController);
+router.get('/notification-logs/:id', isAuthenticated, authorize(PERMISSIONS.NOTIFICATION_LOGS_VIEW), getNotificationLogController);
 
 // Taxes Rates
 router.get('/all-taxes', isAuthenticated, authorize(PERMISSIONS.TAXES_VIEW), getAllTaxes);
@@ -108,9 +151,11 @@ router.put('/update-gst-settings', isAuthenticated, authorize(PERMISSIONS.TAXES_
 
 // User Management
 router.get('/users', isAuthenticated, authorize(PERMISSIONS.USERS_VIEW), getallUsers);
-router.get('/users/:username', isAuthenticated, authorize(PERMISSIONS.USERS_VIEW), getUser);
+// Allow self-view without USERS_VIEW permission (handled in controller)
+router.get('/users/:username', isAuthenticated, getUser);
 router.post('/users', isAuthenticated, authorize([PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_ASSIGN_ROLES]), createUserController);
-router.put('/users/:username', isAuthenticated, authorize(PERMISSIONS.USERS_UPDATE), updateUserController);
+// Allow self-updates without USERS_UPDATE permission (handled in controller)
+router.put('/users/:username', isAuthenticated, updateUserController);
 router.delete('/users/:username', isAuthenticated, authorize(PERMISSIONS.USERS_DELETE), deleteUserController);
 
 // Activity Logs (admin only)
@@ -123,5 +168,23 @@ router.put('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_U
 router.delete('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_DELETE), deleteRoleController);
 router.put('/rbac/roles/:roleId/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), assignPermissionsController);
 router.get('/rbac/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), listPermissionsController);
+
+// DCR (Daily Call Register)
+router.post('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createDcrEntryController);
+// Allow users with either DCR_VIEW or DCR_CREATE to list entries (users who can create should see their entries)
+router.get('/dcr', isAuthenticated, authorize([PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE], { match: 'any' }), listDcrEntriesController);
+router.get('/dcr/categories', isAuthenticated, authorize([PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE], { match: 'any' }), getDcrCategoriesController);
+router.get('/dcr/stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrStatsController);
+router.get('/dcr/export', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), exportDcrEntriesController);
+router.get('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrEntryController);
+router.put('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_UPDATE), updateDcrEntryController);
+router.delete('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_DELETE), deleteDcrEntryController);
+router.post('/dcr/send-daily-report', isAuthenticated, authorize(PERMISSIONS.DCR_SEND_REPORT), sendDailyReportController);
+
+// Dashboard
+router.get('/dashboard', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getDashboardController);
+router.get('/dashboard/renewals', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getRenewalsController);
+router.get('/dashboard/expired-services', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getExpiredServicesController);
+router.get('/dashboard/birthdays', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getBirthdaysController);
 
 export default router;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import { Mail, Plus, RotateCcw, History, Trash2 } from "lucide-react";
+import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu.jsx";
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
 import { Input } from "@/components/ui/input.jsx";
 
@@ -199,39 +200,61 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     dynamic_status: <StatusPill status={row.dynamic_status || row.status || '-'} />,
     total: `₹${row.total ? Number(row.total).toFixed(2) : '-'}`,
     actions: (
-      <div className="flex gap-2 flex-wrap">
-        <Button size="sm" variant="outline" onClick={() => onEdit && onEdit(row.sub_id)}>Edit</Button>
-        <Button size="sm" variant="ghost" onClick={async () => {
-          try {
-            await api.post(`/subscription/${row.sub_id}/reminder`);
-            toast.success('Reminder queued');
-          } catch (e) {
-            toast.error(e.normalizedMessage || 'Failed to queue reminder');
-          }
-        }}>
-          <Mail className="w-4 h-4" /> Reminder
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit && onEdit(row.sub_id)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={async () => {
+            try {
+              await api.post(`/subscription/${row.sub_id}/reminder`);
+              toast.success('Reminder queued');
+            } catch (e) {
+              toast.error(e.normalizedMessage || 'Failed to queue reminder');
+            }
+          }}>
+            <Mail className="mr-2 h-4 w-4" />
+            Send Reminder
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => {
             setSelectedSubId(row.sub_id);
             setHistoryDialogOpen(true);
-          }}
-        >
-          <History className="w-4 h-4 mr-1" /> View History
-        </Button>
-        {hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE) && (
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => openDeleteDialog(row.sub_id, row.domain_name)}
-            title="Delete Subscription"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+          }}>
+            <History className="mr-2 h-4 w-4" />
+            View History
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={async () => {
+            try {
+              await api.post(`/subscriptions/${row.sub_id}/archive`);
+              toast.success('Subscription archived');
+              fetchData();
+            } catch (e) {
+              toast.error(e.normalizedMessage || 'Failed to archive subscription');
+            }
+          }}>
+            <Archive className="mr-2 h-4 w-4" />
+            Archive
+          </DropdownMenuItem>
+          {hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => openDeleteDialog(row.sub_id, row.domain_name)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }));
 

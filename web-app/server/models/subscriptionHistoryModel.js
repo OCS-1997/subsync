@@ -257,11 +257,20 @@ function normalizeValueForComparison(value, fieldName) {
   if (value === null || value === undefined) return null;
   
   // Handle dates - normalize to ISO string or null
+  // Also normalize date strings to consistent format (YYYY-MM-DD HH:MM:SS)
   if (fieldName && (fieldName.includes('date') || fieldName.includes('Date'))) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
     try {
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
-        return date.toISOString();
+        // Normalize to ISO string, but only compare date part for consistency
+        // This prevents false positives from timezone differences
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
       }
     } catch {}
     return null;
@@ -281,9 +290,14 @@ function normalizeValueForComparison(value, fieldName) {
     return value;
   }
   
-  // Handle strings - trim whitespace
+  // Handle strings - trim whitespace and treat empty strings as null for certain fields
   if (typeof value === 'string') {
-    return value.trim();
+    const trimmed = value.trim();
+    // For certain fields, empty string should be treated as null
+    if (trimmed === '' && (fieldName === 'billing_cycle_type' || fieldName === 'repeat_every_unit')) {
+      return null;
+    }
+    return trimmed;
   }
   
   return value;
@@ -372,10 +386,11 @@ function compareSubscriptionData(oldData, newData) {
   const newItems = Array.isArray(newData.items) ? newData.items : [];
   
   // Normalize items for comparison (remove item_id, sort)
+  // Quantity should be whole numbers (no floating point)
   const normalizeItem = (item) => ({
     service_id: item.service_id || null,
     service_name: item.service_name || null,
-    quantity: Number(item.quantity || 0),
+    quantity: Math.round(Number(item.quantity || 0)), // Round to whole number
     rate: Number(item.rate || 0),
     tax_percent: Number(item.tax_percent || 0)
   });

@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -216,6 +216,39 @@ function NavBar({ toggleSidebar }) {
                   >
                     <Shield className="h-5 w-5" />
                     Roles & Permissions
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.REMINDER_POLICIES_VIEW) && (
+                  <Link
+                    to="settings/reminder-policies"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Bell className="h-5 w-5" />
+                    Reminder Policies
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.EMAIL_TEMPLATES_VIEW) && (
+                  <Link
+                    to="settings/email-templates"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Mail className="h-5 w-5" />
+                    Email Templates
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.NOTIFICATION_LOGS_VIEW) && (
+                  <Link
+                    to="settings/notification-logs"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <FileText className="h-5 w-5" />
+                    Notification Logs
                   </Link>
                 )}
               </ul>

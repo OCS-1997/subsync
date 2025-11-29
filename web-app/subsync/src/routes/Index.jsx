@@ -13,7 +13,8 @@ import Dashboard from '@/features/Dashboard/pages/Dashboard.jsx';
 import DefaultTaxPreference from '@/features/Settings/DefaultTaxPreference.jsx';
 import Domains from '@/features/Domains/pages/Domains.jsx';
 import GSTSettings from '@/features/Settings/GSTSettings.jsx';
-import Home from '@/features/Dashboard/components/Home.jsx';
+import Home from '@/features/Dashboard/components/Home.jsx'
+import DashboardHome from '@/features/Dashboard/pages/DashboardHome.jsx';
 import LoginPage from '@/features/Auth/pages/LoginPage';
 import ServiceDetails from '@/features/Services/pages/ServiceDetails.jsx';
 import Services from '@/features/Services/pages/Services.jsx';
@@ -24,11 +25,21 @@ import VendorDetails from '@/features/Vendors/pages/VendorDetails';
 import UserManagement from '@/features/Settings/UserManagement';
 import AddUser from '@/features/Settings/AddUser';
 import AdminActivityLog from '@/features/Settings/AdminActivityLog.jsx';
+import Profile from '@/features/Settings/Profile.jsx';
 import ComingSoon from '@/features/ComingSoon/ComingSoon';
 import SubscriptionsPage from '@/features/Subscriptions/pages/SubscriptionsPage.jsx';
 import AddSubscription from '@/features/Subscriptions/pages/AddSubscription.jsx';
 import EditSubscription from '@/features/Subscriptions/pages/EditSubscription.jsx';
+import ArchivedSubscriptions from '@/features/Subscriptions/pages/ArchivedSubscriptions.jsx';
 import RoleManagement from '@/features/Settings/RoleManagement.jsx';
+import ReminderPolicies from '@/features/Settings/ReminderPolicies.jsx';
+import EmailTemplates from '@/features/Settings/EmailTemplates.jsx';
+import NotificationLogs from '@/features/Settings/NotificationLogs.jsx';
+import DCRList from '@/features/DCR/pages/DCRList.jsx';
+import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
+import DCRStats from '@/features/DCR/pages/DCRStats.jsx';
+import AdminDCRActions from '@/features/DCR/pages/AdminDCRActions.jsx';
+import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermissions.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -42,7 +53,7 @@ const router = createBrowserRouter([
       </PermissionGate>
     ),
     children: [
-      { index: true, element: <PermissionGate required={PERMISSIONS.DASHBOARD_VIEW}><Home /></PermissionGate> },
+      { index: true, element: <PermissionGate required={PERMISSIONS.DASHBOARD_VIEW}><DashboardHome /></PermissionGate> },
       { path: "customers", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_VIEW}><Customers /></PermissionGate> },
       { path: "customers/:id", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_VIEW}><CustomerDetails /></PermissionGate> },
       { path: "customers/add", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_CREATE}><AddCustomer /></PermissionGate> },
@@ -62,9 +73,15 @@ const router = createBrowserRouter([
       { path: "vendors/add", element: <PermissionGate required={PERMISSIONS.VENDORS_CREATE}><AddVendor /></PermissionGate> },
       { path: "vendors/:id/edit", element: <PermissionGate required={PERMISSIONS.VENDORS_UPDATE}><AddVendor /></PermissionGate> },
 
-      { path: "subscriptions", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
+      { path: "subscriptions/*", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
       { path: "subscriptions/add", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_CREATE}><AddSubscription /></PermissionGate> },
       { path: "subscriptions/:id/edit", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_UPDATE}><EditSubscription /></PermissionGate> },
+
+      { path: "dcr", element: <PermissionGate any={[PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE]}><DCRList /></PermissionGate> },
+      { path: "dcr/add", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/edit/:id", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/stats", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DCRStats /></PermissionGate> },
+      { path: "dcr/admin", element: <PermissionGate required={PERMISSIONS.DCR_SEND_REPORT}><AdminDCRActions /></PermissionGate> },
 
       {
         path: "settings",
@@ -75,12 +92,15 @@ const router = createBrowserRouter([
             PERMISSIONS.ROLES_VIEW,
             PERMISSIONS.ACTIVITY_LOGS_VIEW,
             PERMISSIONS.TAXES_VIEW,
+            PERMISSIONS.REMINDER_POLICIES_VIEW,
+            PERMISSIONS.EMAIL_TEMPLATES_VIEW,
+            PERMISSIONS.NOTIFICATION_LOGS_VIEW,
           ]}>
             <Settings />
           </PermissionGate>
         ),
         children: [
-          { path: "profile", element: <ComingSoon /> },
+          { path: "profile", element: <Profile /> },
           {
             path: "taxes",
             element: (
@@ -98,12 +118,16 @@ const router = createBrowserRouter([
               { path: "gst-settings", element: <PermissionGate required={PERMISSIONS.TAXES_CONFIGURE}><GSTSettings /></PermissionGate> },
             ]
           },
-          
-          {path: "user-management", element: <PermissionGate required={PERMISSIONS.USERS_VIEW}><UserManagement/></PermissionGate>},
-          {path: "user-management/add-user", element: <PermissionGate required={PERMISSIONS.USERS_CREATE}><AddUser /></PermissionGate>},
-          {path: "user-management/add-user/:editUsername", element: <PermissionGate required={PERMISSIONS.USERS_UPDATE}><AddUser /></PermissionGate>},
-          {path: "activity-logs", element: <PermissionGate required={PERMISSIONS.ACTIVITY_LOGS_VIEW}><AdminActivityLog /></PermissionGate>},
-          {path: "roles", element: <PermissionGate required={PERMISSIONS.ROLES_VIEW}><RoleManagement /></PermissionGate>},
+
+          { path: "user-management", element: <PermissionGate required={PERMISSIONS.USERS_VIEW}><UserManagement /></PermissionGate> },
+          { path: "user-management/add-user", element: <PermissionGate required={PERMISSIONS.USERS_CREATE}><AddUser /></PermissionGate> },
+          { path: "user-management/add-user/:editUsername", element: <PermissionGate required={PERMISSIONS.USERS_UPDATE}><AddUser /></PermissionGate> },
+          { path: "activity-logs", element: <PermissionGate required={PERMISSIONS.ACTIVITY_LOGS_VIEW}><AdminActivityLog /></PermissionGate> },
+          { path: "roles", element: <PermissionGate required={PERMISSIONS.ROLES_VIEW}><RoleManagement /></PermissionGate> },
+          { path: "reminder-policies", element: <PermissionGate required={PERMISSIONS.REMINDER_POLICIES_VIEW}><ReminderPolicies /></PermissionGate> },
+          { path: "email-templates", element: <PermissionGate required={PERMISSIONS.EMAIL_TEMPLATES_VIEW}><EmailTemplates /></PermissionGate> },
+          { path: "notification-logs", element: <PermissionGate required={PERMISSIONS.NOTIFICATION_LOGS_VIEW}><NotificationLogs /></PermissionGate> },
+          { path: "widget-permissions", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><AdminWidgetPermissions /></PermissionGate> },
         ]
       }
     ]

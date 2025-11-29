@@ -16,7 +16,15 @@ export const getallUsers = async (req, res) => {
 
 export const getUser = async (req, res) => {
     try {
-        const user = await getUserByUsername(req.params.username);
+        const { username } = req.params;
+        const isSelfView = req.user.username === username;
+        
+        // Allow users to view their own profile without USERS_VIEW permission
+        if (!isSelfView && !req.user.permissions?.includes(PERMISSIONS.USERS_VIEW) && req.user.roleKey !== 'admin') {
+            return res.status(403).json({ message: "Insufficient permission to view other users" });
+        }
+        
+        const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
         res.json(user);
     } catch (error) {
@@ -72,12 +80,14 @@ export const createUserController = async (req, res) => {
 export const updateUserController = async (req, res) => {
     try {
         const { username } = req.params;
+        const isSelfUpdate = req.user.username === username;
         const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
+        
         const updateData = { ...req.body };
-        if (updateData.password) {
-            updateData.password = await bcrypt.hash(updateData.password, 10);
-        }
+        
+        // Allow self-updates for name, email, and password without USERS_UPDATE permission
+        // But require permission for role changes or updating other users
         if (updateData.roleKey || updateData.roleId) {
             if (!req.user.permissions?.includes(PERMISSIONS.USERS_ASSIGN_ROLES) && req.user.roleKey !== 'admin') {
                 return res.status(403).json({ message: "Insufficient permission to assign roles" });
@@ -89,15 +99,40 @@ export const updateUserController = async (req, res) => {
             updateData.roleName = role.name;
             updateData.roleId = role.id;
         }
+        
+        // For non-self updates, require USERS_UPDATE permission (unless it's just role assignment)
+        if (!isSelfUpdate && !updateData.roleKey && !updateData.roleId) {
+            if (!req.user.permissions?.includes(PERMISSIONS.USERS_UPDATE) && req.user.roleKey !== 'admin') {
+                return res.status(403).json({ message: "Insufficient permission to update other users" });
+            }
+        }
+        
+        // For self-updates, only allow name, email, and password
+        if (isSelfUpdate) {
+            const allowedFields = ['name', 'email', 'password'];
+            Object.keys(updateData).forEach(key => {
+                if (!allowedFields.includes(key)) {
+                    delete updateData[key];
+                }
+            });
+        }
+        
+        if (updateData.password) {
+            updateData.password = await bcrypt.hash(updateData.password, 10);
+        }
+        
         await updateUser(username, updateData);
         if (req.user && req.user.username) {
             await logActivity({
                 username: req.user.username,
-                action: 'UPDATE_USER',
+                action: isSelfUpdate ? 'UPDATE_OWN_PROFILE' : 'UPDATE_USER',
                 resourceType: 'User',
                 resourceId: username,
                 ipAddress: req.ip,
-                details: updateData
+                details: Object.keys(updateData).reduce((acc, key) => {
+                    if (key !== 'password') acc[key] = updateData[key];
+                    return acc;
+                }, {})
             });
         }
         res.json({ message: "User updated successfully" });

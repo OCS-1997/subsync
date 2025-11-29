@@ -1,13 +1,24 @@
 import { getSubscriptions, addSubscription, getSubscriptionById, updateSubscriptionById, deleteSubscriptionById } from "../models/subscriptionModel.js";
 import { getSubscriptionHistory, getSubscriptionHistoryCount } from "../models/subscriptionHistoryModel.js";
 import { logActivity } from "../models/activityLogModel.js";
+import { enqueueReminders, cancelPendingReminderJobs } from "../services/reminderService.js";
 
 // RESTful: POST /subscriptions
 const createSubscription = async (req, res) => {
   try {
     const username = req.user?.username || null;
     const ipAddress = req.ip || null;
+    const userId = req.user?.id || null;
     const result = await addSubscription(req.body, username, ipAddress);
+    
+    // Enqueue reminders if subscription has end_date
+    try {
+      await enqueueReminders(result.subId, userId);
+    } catch (reminderError) {
+      console.error('Error enqueueing reminders for new subscription:', reminderError);
+      // Don't fail the subscription creation if reminder enqueueing fails
+    }
+    
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: result.subId, ipAddress: req.ip, details: req.body });
     }
@@ -20,7 +31,7 @@ const createSubscription = async (req, res) => {
 // GET /subscriptions
 const getSubscriptionsController = async (req, res) => {
   try {
-    const { searchType, search, sort, order, page = 1, statusFilter, soonDays } = req.query;
+    const { searchType, search, sort, order, page = 1, statusFilter, soonDays, archivedOnly } = req.query;
 
     const limit = 10;
     const { dataArray, totalCount } = await getSubscriptions({
@@ -31,7 +42,8 @@ const getSubscriptionsController = async (req, res) => {
       page: parseInt(page, 10),
       limit,
       statusFilter,
-      soonDays: soonDays ? parseInt(soonDays, 10) : 30
+      soonDays: soonDays ? parseInt(soonDays, 10) : 30,
+      archivedOnly: archivedOnly === 'true'
     });
 
     const totalPages = Math.ceil((totalCount || 0) / limit);
@@ -70,7 +82,32 @@ const updateSubscriptionController = async (req, res) => {
     const { id } = req.params;
     const username = req.user?.username || null;
     const ipAddress = req.ip || null;
+    const userId = req.user?.id || null;
+    
+    // Check if end_date or reminder_policy_id is being updated
+    const needsRequeue = req.body.end_date !== undefined || req.body.reminder_policy_id !== undefined;
+    
+    if (needsRequeue) {
+      // Cancel existing pending jobs
+      try {
+        await cancelPendingReminderJobs(id);
+      } catch (cancelError) {
+        console.error('Error cancelling pending reminder jobs:', cancelError);
+      }
+    }
+    
     await updateSubscriptionById(id, req.body, username, ipAddress);
+    
+    // Re-enqueue reminders if end_date or reminder_policy_id changed
+    if (needsRequeue) {
+      try {
+        await enqueueReminders(id, userId);
+      } catch (reminderError) {
+        console.error('Error re-enqueueing reminders after update:', reminderError);
+        // Don't fail the update if reminder enqueueing fails
+      }
+    }
+    
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'UPDATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip, details: req.body });
     }

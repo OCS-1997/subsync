@@ -15,7 +15,7 @@ function computeStatus(startDate, endDate, soonDays = 30) {
   return { status: "Active", daysToExpiry: days };
 }
 
-async function getSubscriptions({ searchType, search, sort, order, page = 1, limit = 10, statusFilter = null, soonDays = 30 }) {
+async function getSubscriptions({ searchType, search, sort, order, page = 1, limit = 10, statusFilter = null, soonDays = 30, archivedOnly = false }) {
   try {
     const validSortColumns = [
       "s.sub_id", "s.customer_id", "s.start_date", "s.end_date", "s.status", "s.domain_name",
@@ -51,6 +51,14 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
 
     const whereClauses = [];
     const params = [];
+
+    // Filter by archived status
+    if (archivedOnly) {
+      whereClauses.push(`s.archived_at IS NOT NULL`);
+    } else {
+      // By default, exclude archived subscriptions unless explicitly requested
+      whereClauses.push(`s.archived_at IS NULL`);
+    }
 
     // Support optional searchType on physical columns, otherwise generic search across names/ids
     if (searchType && search) {
@@ -153,7 +161,30 @@ async function addSubscription(payload, changedBy = null, ipAddress = null) {
 
     const currentTime = getCurrentTime();
     const start = startDate || currentTime;
-    const end = endDate || addDaysToTimestamp(start, 365);
+
+    // Calculate end_date based on never_expires and repeat_every
+    let end = endDate;
+    if (never_expires && repeat_every_value && repeat_every_unit) {
+      // When never_expires is checked and repeat_every is set, calculate end_date from start_date + repeat_every
+      const startDateObj = new Date(start);
+      const calculatedEnd = new Date(startDateObj);
+
+      const value = parseInt(repeat_every_value, 10);
+      if (repeat_every_unit === 'days') {
+        calculatedEnd.setDate(calculatedEnd.getDate() + value);
+      } else if (repeat_every_unit === 'weeks') {
+        calculatedEnd.setDate(calculatedEnd.getDate() + (value * 7));
+      } else if (repeat_every_unit === 'months') {
+        calculatedEnd.setMonth(calculatedEnd.getMonth() + value);
+      } else if (repeat_every_unit === 'years') {
+        calculatedEnd.setFullYear(calculatedEnd.getFullYear() + value);
+      }
+
+      end = calculatedEnd.toISOString().slice(0, 19).replace('T', ' ');
+    } else if (!end) {
+      // Default to 1 year if no end_date provided
+      end = addDaysToTimestamp(start, 365);
+    }
 
     // Determine if customer is taxable
     let applyTax = true;
@@ -372,6 +403,27 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
     if (!isFinite(discountAmt)) discountAmt = 0;
     grand_total = Math.max(0, subtotal + tax_total - discountAmt + Number(rounding || 0));
 
+    // Calculate end_date based on never_expires and repeat_every (same logic as addSubscription)
+    let calculatedEndDate = endDate;
+    if (never_expires && repeat_every_value && repeat_every_unit && startDate) {
+      // When never_expires is checked and repeat_every is set, calculate end_date from start_date + repeat_every
+      const startDateObj = new Date(startDate);
+      const calculatedEnd = new Date(startDateObj);
+
+      const value = parseInt(repeat_every_value, 10);
+      if (repeat_every_unit === 'days') {
+        calculatedEnd.setDate(calculatedEnd.getDate() + value);
+      } else if (repeat_every_unit === 'weeks') {
+        calculatedEnd.setDate(calculatedEnd.getDate() + (value * 7));
+      } else if (repeat_every_unit === 'months') {
+        calculatedEnd.setMonth(calculatedEnd.getMonth() + value);
+      } else if (repeat_every_unit === 'years') {
+        calculatedEnd.setFullYear(calculatedEnd.getFullYear() + value);
+      }
+
+      calculatedEndDate = calculatedEnd.toISOString().slice(0, 19).replace('T', ' ');
+    }
+
     // Prepare new data for comparison
     // Preserve status from old data if not provided in payload
     const status = payload.status !== undefined ? payload.status : (oldData.status || 'active');
@@ -380,7 +432,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
       domain_name: domain_name || null,
       customer_id: customerID,
       start_date: startDate,
-      end_date: endDate || null,
+      end_date: calculatedEndDate || null,
       never_expires: !!never_expires,
       repeat_every_value,
       repeat_every_unit,
@@ -407,7 +459,7 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
         newData.domain_name,
         newData.customer_id,
         newData.start_date,
-        newData.end_date,
+        calculatedEndDate, // Use calculated end_date
         newData.never_expires,
         newData.repeat_every_value,
         newData.repeat_every_unit,

@@ -6,6 +6,12 @@ import rateLimit from 'express-rate-limit';
 import router from './routes/appRoutes.js';
 import colors from 'colors';
 import morgan from 'morgan';
+import { setupBullBoard } from './queues/bullBoard.js';
+import { createReminderWorker } from './workers/reminderWorker.js';
+import { createDcrReportWorker } from './workers/dcrReportWorker.js';
+import { closeQueues } from './queues/queueConfig.js';
+import { setupCronJobs } from './cron/reconciliationCron.js';
+import { dcrDailyReportQueue } from './queues/queueConfig.js';
 
 dotenv.config();
 const app = express();
@@ -59,6 +65,54 @@ app.use(cors({
 // app.use(limiter);
 app.use("/api", router);
 
+// Setup Bull Board for queue monitoring
+setupBullBoard(app);
+
+// Start BullMQ workers
+let reminderWorker = null;
+let dcrReportWorker = null;
+try {
+    reminderWorker = createReminderWorker();
+    console.log('Reminder worker started successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to start reminder worker:'.bgRed.white, error);
+}
+
+try {
+    dcrReportWorker = createDcrReportWorker();
+    console.log('DCR report worker started successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to start DCR report worker:'.bgRed.white, error);
+}
+
+// Setup recurring DCR daily report job (6 PM IST = 12:00 UTC)
+(async () => {
+    try {
+        await dcrDailyReportQueue.add(
+            'sendDailyDCRReport',
+            { date: null }, // Will use current date when processed
+            {
+                repeat: {
+                    pattern: '0 12 * * *', // 12:00 UTC = 6 PM IST
+                    tz: 'UTC'
+                },
+                jobId: 'dcr-daily-report-recurring'
+            }
+        );
+        console.log('DCR daily report recurring job scheduled for 12:00 UTC (6 PM IST)'.bgGreen.white);
+    } catch (error) {
+        console.error('Failed to schedule DCR daily report job:'.bgRed.white, error);
+    }
+})();
+
+// Setup cron jobs
+try {
+    setupCronJobs();
+    console.log('Cron jobs scheduled successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to setup cron jobs:'.bgRed.white, error);
+}
+
 // 404 handler for unknown routes
 app.use((req, res, next) => {
     return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Route not found' } });
@@ -73,6 +127,38 @@ app.use((err, req, res, next) => {
     return res.status(status).json({ success: false, error: { code, message } });
 });
 
-app.listen(process.env.NODE_PORT || 3000, () => {
+const server = app.listen(process.env.NODE_PORT || 3000, () => {
   console.log(`Server is running at http://localhost:${process.env.NODE_PORT || 3000}`.bgGreen.white);
+  console.log(`Bull Board available at http://localhost:${process.env.NODE_PORT || 3000}/admin/queues`.bgCyan.white);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    if (reminderWorker) {
+        await reminderWorker.close();
+    }
+    if (dcrReportWorker) {
+        await dcrReportWorker.close();
+    }
+    await closeQueues();
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', async () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    if (reminderWorker) {
+        await reminderWorker.close();
+    }
+    if (dcrReportWorker) {
+        await dcrReportWorker.close();
+    }
+    await closeQueues();
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
