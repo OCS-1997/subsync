@@ -3,6 +3,7 @@ import { subscriptionRemindersQueue } from '../queues/queueConfig.js';
 import { sendReminderEmail } from '../services/emailService.js';
 import { upsertNotificationLog, logFailedJob } from '../models/notificationLogModel.js';
 import { isNotificationSent } from '../models/notificationLogModel.js';
+import {redisConnection} from '../queues/queueConfig.js';
 
 const WORKER_CONCURRENCY = parseInt(process.env.WORKER_CONCURRENCY || '10', 10);
 
@@ -141,7 +142,7 @@ export function createReminderWorker() {
             return await processReminderJob(job);
         },
         {
-            connection: subscriptionRemindersQueue.connection,
+            connection: redisConnection,
             concurrency: WORKER_CONCURRENCY,
             removeOnComplete: {
                 age: 7 * 24 * 3600, // 7 days

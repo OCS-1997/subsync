@@ -2,6 +2,7 @@ import { Worker } from 'bullmq';
 import { dcrDailyReportQueue } from '../queues/queueConfig.js';
 import { generateAndSendDailyReport } from '../services/dcrService.js';
 import { upsertNotificationLog } from '../models/notificationLogModel.js';
+import {redisConnection} from '../queues/queueConfig.js';
 
 const WORKER_CONCURRENCY = 1; // Process one report at a time
 
@@ -62,7 +63,7 @@ export function createDcrReportWorker() {
             return await processDcrReportJob(job);
         },
         {
-            connection: dcrDailyReportQueue.connection,
+            connection: redisConnection,
             concurrency: WORKER_CONCURRENCY,
             removeOnComplete: {
                 age: 7 * 24 * 3600, // 7 days

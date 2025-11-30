@@ -5,16 +5,43 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Redis connection configuration
-const redisConnection = {
+export const redisConnection = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    password: process.env.REDIS_PASSWORD || undefined,
+    // Only include password if it's set and not empty
+    ...(process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.trim() !== ''
+        ? { password: process.env.REDIS_PASSWORD.trim() }
+        : {}),
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
 };
 
 // Create Redis client for direct operations if needed
 export const redisClient = new Redis(redisConnection);
+
+// Add connection event handlers for debugging
+redisClient.on('connect', () => {
+    console.log('✅ Redis Client Connected');
+});
+
+redisClient.on('ready', () => {
+    console.log('✅ Redis Client Ready');
+});
+
+redisClient.on('error', (err) => {
+    console.error('❌ Redis Client Error:', err.message);
+    if (err.message.includes('NOAUTH')) {
+        console.error('💡 Redis authentication error. Check REDIS_PASSWORD in .env file matches Redis requirepass setting.');
+    }
+});
+
+redisClient.on('close', () => {
+    console.log('⚠️ Redis Client Connection Closed');
+});
+
+redisClient.on('reconnecting', () => {
+    console.log('🔄 Redis Client Reconnecting...');
+});
 
 // Queue names
 export const QUEUE_NAMES = {
