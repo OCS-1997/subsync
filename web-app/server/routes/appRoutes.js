@@ -35,6 +35,15 @@ import {
     getExpiredServicesController,
     getBirthdaysController
 } from '../controllers/dashboardController.js';
+import {
+    listToolsController,
+    listAllToolsController,
+    getToolController,
+    createToolController,
+    updateToolController,
+    deleteToolController,
+    previewUrlController
+} from '../controllers/quickToolsController.js';
 import { PERMISSIONS } from '../constants/permissions.js';
 
 const router = express.Router();
@@ -186,5 +195,14 @@ router.get('/dashboard', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW),
 router.get('/dashboard/renewals', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getRenewalsController);
 router.get('/dashboard/expired-services', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getExpiredServicesController);
 router.get('/dashboard/birthdays', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getBirthdaysController);
+
+// Quick Tools
+router.get('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_VIEW), listToolsController);
+router.get('/quick-tools/all', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), listAllToolsController);
+router.get('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), getToolController);
+router.post('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), createToolController);
+router.put('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), updateToolController);
+router.delete('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), deleteToolController);
+router.post('/quick-tools/preview', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), previewUrlController);
 
 export default router;

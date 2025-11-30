@@ -1,14 +1,15 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
 
 import { logoutUser } from "@/features/Auth/authSlice";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
+import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.jsx";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -32,6 +33,30 @@ function NavBar({ toggleSidebar }) {
   const loginIp = user?.ip;
   const loginTime = user?.loginTime;
   const { hasPermission } = usePermissions();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Shift+S - Toggle Sidebar
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+      // Ctrl+Shift+P - Toggle Settings Panel
+      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+        e.preventDefault();
+        setSettingsOpen((prev) => !prev);
+      }
+      // Ctrl+Shift+H - Go to Home/Dashboard
+      if (e.ctrlKey && e.shiftKey && e.key === 'H') {
+        e.preventDefault();
+        navigate(`/${user?.username}/dashboard`);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleSidebar, navigate, user?.username]);
 
   const handleLogout = async () => {
     try {
@@ -67,6 +92,10 @@ function NavBar({ toggleSidebar }) {
             </div>
           )}
 
+          {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (
+            <QuickToolsWidget />
+          )}
+
           <Button
             variant="ghost"
             size="icon"
@@ -82,7 +111,7 @@ function NavBar({ toggleSidebar }) {
             size="icon"
             className="h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
             onClick={() => setSettingsOpen(true)}
-            title="Settings"
+            title="Settings (Ctrl+Shift+P)"
           >
             <Settings className="h-5 w-5" />
           </Button>
@@ -249,6 +278,17 @@ function NavBar({ toggleSidebar }) {
                   >
                     <FileText className="h-5 w-5" />
                     Notification Logs
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.QUICK_TOOLS_MANAGE) && (
+                  <Link
+                    to="settings/quick-tools"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Link2 className="h-5 w-5" />
+                    Quick Tools
                   </Link>
                 )}
               </ul>

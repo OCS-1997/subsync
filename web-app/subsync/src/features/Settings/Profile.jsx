@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar } from "lucide-react";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
+import { Switch } from "@/components/ui/switch.jsx";
 
 export default function Profile() {
   const currentUser = useSelector((state) => state.auth.user);
@@ -22,6 +23,13 @@ export default function Profile() {
     confirmPassword: "",
   });
   const [userData, setUserData] = useState(null);
+
+  // User Preferences State
+  const [preferences, setPreferences] = useState({
+    theme: "light",
+    showQuickTools: true,
+    showCalculator: true,
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,12 +55,53 @@ export default function Profile() {
     fetchProfile();
   }, [currentUser?.username]);
 
+  // Load preferences from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    const savedShowQuickTools = localStorage.getItem("showQuickTools") !== "false";
+    const savedShowCalculator = localStorage.getItem("showCalculator") !== "false";
+
+    setPreferences({
+      theme: savedTheme,
+      showQuickTools: savedShowQuickTools,
+      showCalculator: savedShowCalculator,
+    });
+
+    // Apply theme on mount
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleThemeToggle = () => {
+    const newTheme = preferences.theme === "light" ? "dark" : "light";
+    setPreferences((prev) => ({ ...prev, theme: newTheme }));
+    localStorage.setItem("theme", newTheme);
+
+    // Apply theme immediately
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    toast.success(`Theme changed to ${newTheme} mode`);
+  };
+
+  const handlePreferenceChange = (key, value) => {
+    setPreferences((prev) => ({ ...prev, [key]: value }));
+    localStorage.setItem(key, value.toString());
+    toast.success("Preference updated successfully");
   };
 
   const validateForm = () => {
@@ -119,202 +168,349 @@ export default function Profile() {
 
   if (fetching) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
-        <p className="text-gray-600">Manage your account information and preferences</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Overview Card */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-24 h-24 rounded-full bg-blue-500 flex items-center justify-center mb-4">
-                <User className="w-12 h-12 text-white" />
-              </div>
-              <CardTitle className="text-xl">{userData?.name || "User"}</CardTitle>
-              <CardDescription className="mt-2">
-                <Badge variant="secondary" className="text-sm">
-                  {userData?.role || "No Role"}
-                </Badge>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-500">Username</div>
-                <div className="text-base font-semibold text-gray-900">
-                  {userData?.username || "-"}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-500">Email</div>
-                <div className="text-base text-gray-900">{userData?.email || "-"}</div>
-              </div>
-              {userData?.created_at && (
-                <div className="space-y-2 pt-4 border-t">
-                  <div className="text-sm font-medium text-gray-500">Member Since</div>
-                  <div className="text-sm text-gray-600">
-                    {new Date(userData.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Profile Settings</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account and preferences</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-sm capitalize">
+              <Shield className="w-3 h-3 mr-1" />
+              {userData?.role || "User"}
+            </Badge>
+          </div>
         </div>
 
-        {/* Edit Profile Form */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" />
-                Edit Profile
-              </CardTitle>
-              <CardDescription>
-                Update your personal information and change your password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your full name"
-                    className="w-full"
-                  />
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Profile Card */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Profile Overview */}
+            <Card className="border-blue-200 dark:border-blue-800">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  {/* Avatar */}
+                  <div className="relative inline-block">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <User className="w-12 h-12 text-white" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full"></div>
+                  </div>
 
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your email address"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Password Section */}
-                <div className="pt-4 border-t space-y-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <KeyRound className="w-4 h-4" />
-                      New Password
-                    </Label>
-                    <p className="text-sm text-gray-500 mb-2">
-                      Leave blank if you don't want to change your password
+                  {/* Name & Username */}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                      {userData?.name || "User"}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      @{userData?.username || "-"}
                     </p>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        placeholder="Enter new password"
-                        className="w-full pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
+                  </div>
+
+                  {/* Info Grid */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate ml-2">
+                        {userData?.email || "-"}
+                      </span>
+                    </div>
+                    {userData?.created_at && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          Joined
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {new Date(userData.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preferences Card */}
+            <Card className="border-blue-200 dark:border-blue-800">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Palette className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  Preferences
+                </CardTitle>
+                <CardDescription>Customize your experience</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Theme Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {preferences.theme === "dark" ? (
+                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                        <Moon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    ) : (
+                      <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                        <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {preferences.theme === "dark" ? "Dark Mode" : "Light Mode"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Theme preference
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.theme === "dark"}
+                    onCheckedChange={handleThemeToggle}
+                  />
+                </div>
+
+                {/* Quick Tools */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Quick Tools
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Show in header
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.showQuickTools}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange("showQuickTools", checked)
+                    }
+                  />
+                </div>
+
+                {/* Calculator */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                      <Calculator className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        Calculator
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Floating widget
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={preferences.showCalculator}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange("showCalculator", checked)
+                    }
+                  />
+                </div>
+
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                    💡 Changes are saved automatically
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Edit Form */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  Account Information
+                </CardTitle>
+                <CardDescription>
+                  Update your personal details and security settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Personal Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                      Personal Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Name */}
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="text-sm font-medium">
+                          Full Name *
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value={form.name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter your full name"
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Email */}
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-medium">
+                          Email Address *
+                        </Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter your email"
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Confirm Password */}
-                  {form.password && (
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          name="confirmPassword"
-                          value={form.confirmPassword}
-                          onChange={handleChange}
-                          placeholder="Confirm new password"
-                          className="w-full pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
+                  {/* Security Section */}
+                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                        Security Settings
+                      </h3>
+                      <Badge variant="outline" className="text-xs">
+                        <KeyRound className="w-3 h-3 mr-1" />
+                        Optional
+                      </Badge>
                     </div>
-                  )}
-                </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="min-w-[120px]"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Leave password fields blank if you don't want to change your password
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* New Password */}
+                      <div className="space-y-2">
+                        <Label htmlFor="password" className="text-sm font-medium">
+                          New Password
+                        </Label>
+                        <div className="relative">
+                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            placeholder="Enter new password"
+                            className="pl-10 pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Confirm Password */}
+                      {form.password && (
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                            Confirm Password
+                          </Label>
+                          <div className="relative">
+                            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                              id="confirmPassword"
+                              type={showConfirmPassword ? "text" : "password"}
+                              name="confirmPassword"
+                              value={form.confirmPassword}
+                              onChange={handleChange}
+                              placeholder="Confirm new password"
+                              className="pl-10 pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

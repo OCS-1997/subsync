@@ -53,6 +53,8 @@ export const PERMISSIONS = Object.freeze({
   DCR_UPDATE: 'dcr.update',
   DCR_DELETE: 'dcr.delete',
   DCR_SEND_REPORT: 'dcr.send_report',
+  QUICK_TOOLS_VIEW: 'quick_tools.view',
+  QUICK_TOOLS_MANAGE: 'quick_tools.manage',
 });
 
 export const PAGE_PERMISSIONS = {

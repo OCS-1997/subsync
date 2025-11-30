@@ -35,11 +35,13 @@ import RoleManagement from '@/features/Settings/RoleManagement.jsx';
 import ReminderPolicies from '@/features/Settings/ReminderPolicies.jsx';
 import EmailTemplates from '@/features/Settings/EmailTemplates.jsx';
 import NotificationLogs from '@/features/Settings/NotificationLogs.jsx';
+import QuickToolsAdmin from '@/features/QuickTools/pages/QuickToolsAdmin.jsx';
 import DCRList from '@/features/DCR/pages/DCRList.jsx';
 import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
 import DCRStats from '@/features/DCR/pages/DCRStats.jsx';
 import AdminDCRActions from '@/features/DCR/pages/AdminDCRActions.jsx';
 import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermissions.jsx';
+import HelpPage from '@/features/Help/HelpPage.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -127,9 +129,12 @@ const router = createBrowserRouter([
           { path: "reminder-policies", element: <PermissionGate required={PERMISSIONS.REMINDER_POLICIES_VIEW}><ReminderPolicies /></PermissionGate> },
           { path: "email-templates", element: <PermissionGate required={PERMISSIONS.EMAIL_TEMPLATES_VIEW}><EmailTemplates /></PermissionGate> },
           { path: "notification-logs", element: <PermissionGate required={PERMISSIONS.NOTIFICATION_LOGS_VIEW}><NotificationLogs /></PermissionGate> },
+          { path: "quick-tools", element: <PermissionGate required={PERMISSIONS.QUICK_TOOLS_MANAGE}><QuickToolsAdmin /></PermissionGate> },
           { path: "widget-permissions", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><AdminWidgetPermissions /></PermissionGate> },
         ]
-      }
+      },
+
+      { path: "help", element: <HelpPage /> },
     ]
   }
 ]);

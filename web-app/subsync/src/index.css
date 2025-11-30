@@ -8,9 +8,9 @@
 @tailwind utilities;
 
 body {
-  font-family:'Manrope',  sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-weight: 500;
-} 
+}
 
 @layer base {
   :root {
@@ -38,8 +38,7 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -47,7 +46,9 @@ body {
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%
+  }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -72,8 +73,7 @@ body {
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
-  ;
+    --chart-5: 340 75% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -81,7 +81,8 @@ body {
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%
+  }
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -98,6 +99,7 @@ input[type="number"] {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -107,6 +109,7 @@ input[type="number"] {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -114,9 +117,9 @@ input[type="number"] {
 
 /* Full border for the phone input */
 .phone-input-custom-style {
-  border: 1px solid #e2e8f0;      
-  border-radius: 0.5rem;       
-  padding: 0.25rem 0.75rem;        
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
   display: flex;
   align-items: center;
   background: white;
@@ -124,7 +127,8 @@ input[type="number"] {
 }
 
 .phone-input-custom-style:focus-within {
-  border-color: #6366f1;             /* Tailwind's ring color (indigo-500) */
+  border-color: #6366f1;
+  /* Tailwind's ring color (indigo-500) */
   box-shadow: 0 0 0 2px #6366f1;
 }
 
@@ -149,6 +153,7 @@ input[type="number"] {
     opacity: 0;
     transform: translateY(12px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -160,6 +165,7 @@ input[type="number"] {
     opacity: 0;
     transform: translateY(16px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -172,4 +178,28 @@ input[type="number"] {
 
 .item-row-slide-in {
   animation: itemRowSlideIn 0.35s ease-out;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb transparent;
 }

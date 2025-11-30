@@ -53,6 +53,8 @@ export const PERMISSIONS = Object.freeze({
     DCR_UPDATE: 'dcr.update',
     DCR_DELETE: 'dcr.delete',
     DCR_SEND_REPORT: 'dcr.send_report',
+    QUICK_TOOLS_VIEW: 'quick_tools.view',
+    QUICK_TOOLS_MANAGE: 'quick_tools.manage',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -110,6 +112,8 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.DCR_UPDATE, resource: 'dcr', action: 'update', description: 'Update DCR entries' },
     { key: PERMISSIONS.DCR_DELETE, resource: 'dcr', action: 'delete', description: 'Delete DCR entries' },
     { key: PERMISSIONS.DCR_SEND_REPORT, resource: 'dcr', action: 'send_report', description: 'Send DCR daily reports' },
+    { key: PERMISSIONS.QUICK_TOOLS_VIEW, resource: 'quick_tools', action: 'view', description: 'View and use quick tools widget' },
+    { key: PERMISSIONS.QUICK_TOOLS_MANAGE, resource: 'quick_tools', action: 'manage', description: 'Manage quick tools (admin only)' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -141,6 +145,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.DCR_UPDATE,
         PERMISSIONS.DCR_SEND_REPORT,
+        PERMISSIONS.QUICK_TOOLS_VIEW,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -155,6 +160,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.DCR_UPDATE,
+        PERMISSIONS.QUICK_TOOLS_VIEW,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -166,6 +172,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.DCR_UPDATE,
+        PERMISSIONS.QUICK_TOOLS_VIEW,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -176,6 +183,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.SUBSCRIPTIONS_VIEW,
         PERMISSIONS.TAXES_VIEW,
         PERMISSIONS.REPORTS_VIEW,
+        PERMISSIONS.QUICK_TOOLS_VIEW,
     ],
 };
 
