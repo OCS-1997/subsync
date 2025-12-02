@@ -307,7 +307,7 @@ export async function generateAndSendDailyReport(date) {
         const emailHtml = await formatDcrEmailHtml(reportData, stats, charts);
 
         // Send email
-        const adminEmail = process.env.DAILY_REPORT_ADMIN_EMAIL || 'hari@ocsindia.net';
+        const adminEmail = process.ADMIN_EMAILS || 'hari@ocsindia.net';
         const result = await sendEmail({
             to: adminEmail,
             subject: `Daily Call Register Report - ${date}`,
@@ -355,16 +355,17 @@ async function formatDcrEmailHtml(reportData, stats, charts) {
     <head>
         <meta charset="UTF-8">
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #1f2933; background-color: #f5f7fa; }
+            .header { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
-            .summary-box { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50; }
+            .summary-box { background-color: #eef2ff; padding: 15px; margin: 20px 0; border-left: 4px solid #2563eb; border-radius: 4px; }
             .chart-container { text-align: center; margin: 30px 0; }
             .chart-container img { max-width: 100%; height: auto; }
-            table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            th { background-color: #4CAF50; color: white; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: #ffffff; }
+            th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; font-size: 13px; }
+            th { background-color: #1d4ed8; color: white; }
             tr:nth-child(even) { background-color: #f2f2f2; }
+            h1, h2, h3 { color: #1f2937; }
         </style>
     </head>
     <body>

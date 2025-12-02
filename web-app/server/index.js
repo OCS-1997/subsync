@@ -85,7 +85,7 @@ try {
     console.error('Failed to start DCR report worker:'.bgRed.white, error);
 }
 
-// Setup recurring DCR daily report job (6 PM IST = 12:00 UTC)
+// Setup recurring DCR daily report job (6:30 PM IST = 12:30 UTC)
 (async () => {
     try {
         await dcrDailyReportQueue.add(
@@ -93,13 +93,13 @@ try {
             { date: null }, // Will use current date when processed
             {
                 repeat: {
-                    pattern: '0 12 * * *', // 12:00 UTC = 6 PM IST
+                    pattern: '30 12 * * *', // 12:30 UTC = 6:30 PM IST
                     tz: 'UTC'
                 },
                 jobId: 'dcr-daily-report-recurring'
             }
         );
-        console.log('DCR daily report recurring job scheduled for 12:00 UTC (6 PM IST)'.bgGreen.white);
+        console.log('DCR daily report recurring job scheduled for 12:30 UTC (6:30 PM IST)'.bgGreen.white);
     } catch (error) {
         console.error('Failed to schedule DCR daily report job:'.bgRed.white, error);
     }

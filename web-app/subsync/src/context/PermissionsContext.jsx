@@ -8,7 +8,31 @@ const PermissionsContext = createContext({
 });
 
 export const PermissionsProvider = ({ children }) => {
-  const permissions = useSelector((state) => state.auth.permissions || []);
+  const statePermissions = useSelector((state) => state.auth.permissions);
+
+  const permissions = useMemo(() => {
+    if (Array.isArray(statePermissions) && statePermissions.length > 0) {
+      return statePermissions;
+    }
+    // Fallback to sessionStorage so permissions survive reloads even if Redux is empty
+    try {
+      const raw = sessionStorage.getItem("subsync_user");
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && Array.isArray(parsed.permissions)) {
+        return parsed.permissions;
+      }
+    } catch {
+      // ignore JSON/Storage errors and fall through to empty list
+    }
+    return [];
+  }, [statePermissions]);
+
+  if (import.meta.env.DEV) {
+    console.log("[PermissionsContext] effective permissions", {
+      statePermissions,
+      permissions,
+    });
+  }
 
   const value = useMemo(() => {
     const normalized = new Set(permissions);
@@ -35,4 +59,3 @@ export const PermissionsProvider = ({ children }) => {
 };
 
 export const usePermissions = () => useContext(PermissionsContext);
-
