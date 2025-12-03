@@ -101,10 +101,11 @@ export async function generateBarChart(data, title = '') {
  * @returns {Promise<Object>} Object with base64 chart images
  */
 export async function generateDcrCharts(stats) {
-    const colors = [
-        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
-        '#36A2EB', '#FFCE56', '#4BC0C0'
+    // Blue color palette for application branding
+    const blueColors = [
+        '#1e3a8a', '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6',
+        '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe', '#eff6ff',
+        '#1e40af', '#2563eb', '#3b82f6'
     ];
 
     // Pie chart: Time spent per category
@@ -112,7 +113,7 @@ export async function generateDcrCharts(stats) {
         labels: stats.callsPerCategory.map(c => c.category),
         datasets: [{
             data: stats.callsPerCategory.map(c => c.total_minutes),
-            backgroundColor: colors.slice(0, stats.callsPerCategory.length)
+            backgroundColor: blueColors.slice(0, stats.callsPerCategory.length)
         }]
     };
     const pieChartBase64 = await generatePieChart(categoryTimeData, 'Time Spent per Category (Minutes)');
@@ -123,7 +124,7 @@ export async function generateDcrCharts(stats) {
         datasets: [{
             label: 'Number of Calls',
             data: stats.callsPerCategory.map(c => c.call_count),
-            backgroundColor: '#36A2EB'
+            backgroundColor: '#2563eb'
         }]
     };
     const barChartCallsBase64 = await generateBarChart(categoryCallsData, 'Number of Calls per Category');
@@ -134,7 +135,7 @@ export async function generateDcrCharts(stats) {
         datasets: [{
             label: 'Time Spent (Minutes)',
             data: stats.callsPerUser.map(u => u.total_minutes),
-            backgroundColor: '#4BC0C0'
+            backgroundColor: '#1d4ed8'
         }]
     };
     const barChartUserBase64 = await generateBarChart(userTimeData, 'Time Spent per User (Minutes)');

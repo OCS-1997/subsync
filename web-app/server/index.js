@@ -23,10 +23,10 @@ app.set('trust proxy', true);
 
 // Global process-level error handlers (prevent crashes)
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Promise Rejection:', reason);
+    console.error('Unhandled Promise Rejection:', reason);
 });
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
+    console.error('Uncaught Exception:', err);
 });
 
 // To get the real client IP in your routes/middleware:
@@ -40,16 +40,16 @@ process.on('uncaughtException', (err) => {
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    `http://localhost:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
-    `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
-    `http://localhost`, // allows requests from your Nginx frontend (port 80)
-    `http://127.0.0.1`,
-    `http://ocs365.in`
-  ],
-  methods: ['GET', 'POST','PUT','DELETE'],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+    origin: [
+        `http://localhost:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
+        `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
+        `http://localhost`, // allows requests from your Nginx frontend (port 80)
+        `http://127.0.0.1`,
+        `http://ocs365.in`
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
 }));
 
 // /**
@@ -85,7 +85,7 @@ try {
     console.error('Failed to start DCR report worker:'.bgRed.white, error);
 }
 
-// Setup recurring DCR daily report job (6:30 PM IST = 12:30 UTC)
+// Setup recurring DCR daily report job (6:30 PM IST = 13:00 UTC)
 (async () => {
     try {
         await dcrDailyReportQueue.add(
@@ -93,13 +93,13 @@ try {
             { date: null }, // Will use current date when processed
             {
                 repeat: {
-                    pattern: '30 12 * * *', // 12:30 UTC = 6:30 PM IST
+                    pattern: '0 13 * * *', // 13:00 UTC = 6:30 PM IST
                     tz: 'UTC'
                 },
                 jobId: 'dcr-daily-report-recurring'
             }
         );
-        console.log('DCR daily report recurring job scheduled for 12:30 UTC (6:30 PM IST)'.bgGreen.white);
+        console.log('DCR daily report recurring job scheduled for 13:00 UTC (6:30 PM IST)'.bgGreen.white);
     } catch (error) {
         console.error('Failed to schedule DCR daily report job:'.bgRed.white, error);
     }
@@ -128,8 +128,8 @@ app.use((err, req, res, next) => {
 });
 
 const server = app.listen(process.env.NODE_PORT || 3000, () => {
-  console.log(`Server is running at http://localhost:${process.env.NODE_PORT || 3000}`.bgGreen.white);
-  console.log(`Bull Board available at http://localhost:${process.env.NODE_PORT || 3000}/admin/queues`.bgCyan.white);
+    console.log(`Server is running at http://localhost:${process.env.NODE_PORT || 3000}`.bgGreen.white);
+    console.log(`Bull Board available at http://localhost:${process.env.NODE_PORT || 3000}/admin/queues`.bgCyan.white);
 });
 
 // Graceful shutdown

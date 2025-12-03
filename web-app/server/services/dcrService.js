@@ -239,8 +239,8 @@ export function formatDcrTableHtml(reportData) {
     const { entriesByUser, stats } = reportData;
 
     let html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
-    html += '<thead><tr style="background-color: #f0f0f0;">';
-    html += '<th>User</th><th>Time</th><th>Company</th><th>Domain</th><th>Contact</th><th>Type</th><th>Category</th><th>Description</th>';
+    html += '<thead><tr style="background-color: #1e3a8a; color: white;">';
+    html += '<th>User</th><th>Time</th><th>Company</th><th>Domain</th><th>Contact Person</th><th>Contact Number</th><th>Type</th><th>Category</th><th>Description</th>';
     html += '</tr></thead><tbody>';
 
     Object.values(entriesByUser).forEach(userGroup => {
@@ -251,9 +251,10 @@ export function formatDcrTableHtml(reportData) {
             html += `<td>${entry.company || '-'}</td>`;
             html += `<td>${entry.domain || '-'}</td>`;
             html += `<td>${entry.contact_person || '-'}</td>`;
+            html += `<td>${entry.contact_number || '-'}</td>`;
             html += `<td>${entry.call_type}</td>`;
             html += `<td>${entry.category}</td>`;
-            html += `<td>${(entry.description || '').substring(0, 100)}${entry.description && entry.description.length > 100 ? '...' : ''}</td>`;
+            html += `<td>${entry.description || '-'}</td>`;
             html += '</tr>';
         });
     });
@@ -261,9 +262,9 @@ export function formatDcrTableHtml(reportData) {
     html += '</tbody></table>';
 
     // Summary tables
-    html += '<h3>Summary by User</h3>';
+    html += '<h3 style="color: #1e3a8a;">Summary by User</h3>';
     html += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
-    html += '<thead><tr style="background-color: #f0f0f0;"><th>User</th><th>Calls</th><th>Total Time (Minutes)</th><th>Total Time (Hours)</th></tr></thead><tbody>';
+    html += '<thead><tr style="background-color: #1e3a8a; color: white;"><th>User</th><th>Calls</th><th>Total Time (Minutes)</th><th>Total Time (Hours)</th></tr></thead><tbody>';
     stats.callsPerUser.forEach(user => {
         html += '<tr>';
         html += `<td>${user.user_name}</td>`;
@@ -274,9 +275,9 @@ export function formatDcrTableHtml(reportData) {
     });
     html += '</tbody></table>';
 
-    html += '<h3>Summary by Category</h3>';
+    html += '<h3 style="color: #1e3a8a;">Summary by Category</h3>';
     html += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
-    html += '<thead><tr style="background-color: #f0f0f0;"><th>Category</th><th>Calls</th><th>Total Time (Minutes)</th><th>Total Time (Hours)</th></tr></thead><tbody>';
+    html += '<thead><tr style="background-color: #1e3a8a; color: white;"><th>Category</th><th>Calls</th><th>Total Time (Minutes)</th><th>Total Time (Hours)</th></tr></thead><tbody>';
     stats.callsPerCategory.forEach(cat => {
         html += '<tr>';
         html += `<td>${cat.category}</td>`;
@@ -356,16 +357,19 @@ async function formatDcrEmailHtml(reportData, stats, charts) {
         <meta charset="UTF-8">
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #1f2933; background-color: #f5f7fa; }
-            .header { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; padding: 20px; text-align: center; }
+            .header { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 20px; text-align: center; }
             .content { padding: 20px; }
-            .summary-box { background-color: #eef2ff; padding: 15px; margin: 20px 0; border-left: 4px solid #2563eb; border-radius: 4px; }
+            .summary-box { background-color: #dbeafe; padding: 15px; margin: 20px 0; border-left: 4px solid #2563eb; border-radius: 4px; }
             .chart-container { text-align: center; margin: 30px 0; }
             .chart-container img { max-width: 100%; height: auto; }
             table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: #ffffff; }
             th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; font-size: 13px; }
-            th { background-color: #1d4ed8; color: white; }
-            tr:nth-child(even) { background-color: #f2f2f2; }
-            h1, h2, h3 { color: #1f2937; }
+            th { background-color: #1e3a8a; color: white; }
+            tr:nth-child(even) { background-color: #eff6ff; }
+            tr:hover { background-color: #dbeafe; }
+            h1, h2, h3 { color: #1e3a8a; }
+            .summary-stat { display: inline-block; margin: 10px 20px 10px 0; }
+            .summary-stat strong { color: #1e3a8a; }
         </style>
     </head>
     <body>
@@ -376,9 +380,9 @@ async function formatDcrEmailHtml(reportData, stats, charts) {
         <div class="content">
             <div class="summary-box">
                 <h2>Summary</h2>
-                <p><strong>Total Calls:</strong> ${stats.totalCalls}</p>
-                <p><strong>Total Time Spent:</strong> ${stats.totalTimeHours} hours (${stats.totalTimeMinutes} minutes)</p>
-                <p><strong>Total Users:</strong> ${stats.callsPerUser.length}</p>
+                <div class="summary-stat"><strong>Total Calls:</strong> ${stats.totalCalls}</div>
+                <div class="summary-stat"><strong>Total Time Spent:</strong> ${stats.totalTimeHours} hours (${stats.totalTimeMinutes} minutes)</div>
+                <div class="summary-stat"><strong>Total Users:</strong> ${stats.callsPerUser.length}</div>
             </div>
     `;
 
