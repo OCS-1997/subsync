@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import { dcrDailyReportQueue } from '../queues/queueConfig.js';
 import { generateAndSendDailyReport } from '../services/dcrService.js';
 import { upsertNotificationLog } from '../models/notificationLogModel.js';
-import {redisConnection} from '../queues/queueConfig.js';
+import { redisConnection } from '../queues/queueConfig.js';
 
 const WORKER_CONCURRENCY = 1; // Process one report at a time
 
@@ -40,7 +40,7 @@ async function processDcrReportJob(job) {
 
         // Log to notification_logs
         await upsertNotificationLog({
-            subscription_id: 'DCR_DAILY_REPORT',
+            subscription_id: null, // DCR reports are not associated with a specific subscription
             template_key: 'dcr_daily_report',
             sent_at: new Date(),
             status: 'failed',
@@ -96,7 +96,7 @@ export function createDcrReportWorker() {
         // Log to notification_logs
         if (job) {
             await upsertNotificationLog({
-                subscription_id: 'DCR_DAILY_REPORT',
+                subscription_id: null, // DCR reports are not associated with a specific subscription
                 template_key: 'dcr_daily_report',
                 sent_at: new Date(),
                 status: 'failed',

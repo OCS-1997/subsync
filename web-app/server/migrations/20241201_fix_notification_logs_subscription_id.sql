@@ -21,3 +21,4 @@ ALTER TABLE notification_logs
         ON UPDATE CASCADE;
 
 COMMIT;
+    

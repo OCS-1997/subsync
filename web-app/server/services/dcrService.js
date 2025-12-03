@@ -318,7 +318,7 @@ export async function generateAndSendDailyReport(date) {
         // Log to notification_logs
         const { upsertNotificationLog } = await import('../models/notificationLogModel.js');
         await upsertNotificationLog({
-            subscription_id: 'DCR_DAILY_REPORT',
+            subscription_id: null, // DCR reports are not associated with a specific subscription
             user_id: null,
             template_key: 'dcr_daily_report',
             sent_at: new Date(),
