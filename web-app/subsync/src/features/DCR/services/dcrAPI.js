@@ -46,8 +46,9 @@ export const fetchAllDomains = async () => {
 };
 
 export const fetchAllUsers = async () => {
-  const response = await api.get("/users");
+  const response = await api.get("/dcr/users");
   return response.data;
 };
+
 
 

@@ -54,6 +54,10 @@ export const PERMISSIONS = Object.freeze({
     DCR_CREATE: 'dcr.create',
     DCR_UPDATE: 'dcr.update',
     DCR_DELETE: 'dcr.delete',
+    CONTACTS_VIEW: 'contacts.view',
+    CONTACTS_CREATE: 'contacts.create',
+    CONTACTS_UPDATE: 'contacts.update',
+    CONTACTS_DELETE: 'contacts.delete',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -112,6 +116,10 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.DCR_CREATE, resource: 'dcr', action: 'create', description: 'Create DCR entries' },
     { key: PERMISSIONS.DCR_UPDATE, resource: 'dcr', action: 'update', description: 'Update DCR entries' },
     { key: PERMISSIONS.DCR_DELETE, resource: 'dcr', action: 'delete', description: 'Delete DCR entries' },
+    { key: PERMISSIONS.CONTACTS_VIEW, resource: 'contacts', action: 'view', description: 'View contacts' },
+    { key: PERMISSIONS.CONTACTS_CREATE, resource: 'contacts', action: 'create', description: 'Create contacts' },
+    { key: PERMISSIONS.CONTACTS_UPDATE, resource: 'contacts', action: 'update', description: 'Update contacts' },
+    { key: PERMISSIONS.CONTACTS_DELETE, resource: 'contacts', action: 'delete', description: 'Delete contacts' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -143,6 +151,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.DCR_UPDATE,
+        PERMISSIONS.CONTACTS_VIEW,
+        PERMISSIONS.CONTACTS_CREATE,
+        PERMISSIONS.CONTACTS_UPDATE,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -158,6 +169,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.DCR_UPDATE,
+        PERMISSIONS.CONTACTS_VIEW,
+        PERMISSIONS.CONTACTS_CREATE,
+        PERMISSIONS.CONTACTS_UPDATE,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,

@@ -10,20 +10,20 @@ import { generateID } from "../middlewares/generateID.js";
 export function getWeekSegment(date = new Date()) {
     const d = new Date(date);
     const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    
+
     // Calculate days to subtract to get to Monday
     // If Sunday (0), go back 6 days to previous Monday
     // Otherwise, go back (day - 1) days
     const daysToMonday = day === 0 ? 6 : day - 1;
-    
+
     const monday = new Date(d);
     monday.setDate(d.getDate() - daysToMonday);
     monday.setHours(0, 0, 0, 0);
-    
+
     const saturday = new Date(monday);
     saturday.setDate(monday.getDate() + 5);
     saturday.setHours(23, 59, 59, 999);
-    
+
     return { start: monday, end: saturday };
 }
 
@@ -125,6 +125,10 @@ async function createDcrEntry(dcrData) {
  * @param {string} options.filterUserId - Optional user filter (admin only)
  * @param {Date} options.startDate - Optional start date
  * @param {Date} options.endDate - Optional end date
+ * @param {string} options.search - Optional search term
+ * @param {string} options.callType - Optional call type filter
+ * @param {string} options.sort - Optional sort field
+ * @param {string} options.order - Optional sort order (asc/desc)
  * @param {number} options.page - Page number
  * @param {number} options.limit - Items per page
  * @returns {Promise<{entries: Array, totalPages: number, totalRecords: number}>}
@@ -135,6 +139,10 @@ async function getDcrEntries({
     filterUserId = null,
     startDate = null,
     endDate = null,
+    search = null,
+    callType = null,
+    sort = null,
+    order = null,
     page = 1,
     limit = 10
 }) {
@@ -163,15 +171,52 @@ async function getDcrEntries({
             params.push(formatDateTime(endDate));
         }
 
+        // Call type filtering
+        if (callType) {
+            whereClauses.push('de.call_type = ?');
+            params.push(callType);
+        }
+
+        // Search filtering
+        if (search) {
+            whereClauses.push(`(
+                d.domain_name LIKE ? OR 
+                de.domain_free_text LIKE ? OR 
+                de.company_name LIKE ? OR 
+                de.contact_name LIKE ? OR 
+                de.notes LIKE ?
+            )`);
+            const searchPattern = `%${search}%`;
+            params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+        }
+
         const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
         // Count query
         const [[{ total }]] = await appDB.query(
             `SELECT COUNT(*) as total
              FROM dcr_entries de
+             LEFT JOIN domains d ON de.domain_id = d.domain_id
              ${whereClause}`,
             params
         );
+
+        // Determine sort order
+        let orderByClause = 'ORDER BY de.timestamp DESC';
+        if (sort && order) {
+            const validSortFields = {
+                'timestamp': 'de.timestamp',
+                'user_name': 'u.name',
+                'domain_display': 'COALESCE(d.domain_name, de.domain_free_text, de.company_name)',
+                'contact_display': 'de.contact_name',
+                'call_type': 'de.call_type',
+                'time_spent': 'de.time_spent_minutes'
+            };
+            if (validSortFields[sort]) {
+                const sortDirection = order.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+                orderByClause = `ORDER BY ${validSortFields[sort]} ${sortDirection}`;
+            }
+        }
 
         // Data query with user name join
         const [entries] = await appDB.query(
@@ -198,7 +243,7 @@ async function getDcrEntries({
              LEFT JOIN users u ON de.user_id = u.username
              LEFT JOIN domains d ON de.domain_id = d.domain_id
              ${whereClause}
-             ORDER BY de.timestamp DESC
+             ${orderByClause}
              LIMIT ? OFFSET ?`,
             [...params, parseInt(limit), parseInt(offset)]
         );
@@ -398,7 +443,7 @@ async function getDcrEntriesForDate(date) {
     try {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
-        
+
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
@@ -442,5 +487,6 @@ export {
     deleteDcrEntry,
     getDcrEntriesForDate,
 };
+
 
 

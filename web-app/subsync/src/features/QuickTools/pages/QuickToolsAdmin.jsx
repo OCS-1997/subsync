@@ -46,6 +46,8 @@ function QuickToolsAdmin() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [testDomain, setTestDomain] = useState('example.com');
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [toolToDelete, setToolToDelete] = useState(null);
 
   const { hasPermission } = usePermissions();
   const canManage = hasPermission(PERMISSIONS.QUICK_TOOLS_MANAGE);
@@ -122,13 +124,19 @@ function QuickToolsAdmin() {
     setShowDialog(true);
   };
 
-  const handleDelete = async (tool) => {
-    if (!window.confirm(`Are you sure you want to delete "${tool.name}"?`)) {
-      return;
-    }
+  const handleDelete = (tool) => {
+    setToolToDelete(tool);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!toolToDelete) return;
+
     try {
-      await api.delete(`/quick-tools/${tool.tool_id}`);
+      await api.delete(`/quick-tools/${toolToDelete.tool_id}`);
       toast.success('Tool deleted successfully');
+      setDeleteDialogOpen(false);
+      setToolToDelete(null);
       fetchTools();
     } catch (error) {
       console.error('Error deleting tool:', error);
@@ -378,7 +386,7 @@ function QuickToolsAdmin() {
 
                 <div className="space-y-2">
                   <Label htmlFor="icon">Icon <span className="text-red-500">*</span></Label>
-                  <div className="flex gap-2">    
+                  <div className="flex gap-2">
                     <Input
                       id="icon"
                       value={formData.icon}
@@ -538,6 +546,26 @@ function QuickToolsAdmin() {
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingTool ? 'Update Tool' : 'Create Tool'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Quick Tool</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{toolToDelete?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

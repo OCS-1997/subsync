@@ -54,6 +54,10 @@ export const PERMISSIONS = Object.freeze({
   DCR_CREATE: 'dcr.create',
   DCR_UPDATE: 'dcr.update',
   DCR_DELETE: 'dcr.delete',
+  CONTACTS_VIEW: 'contacts.view',
+  CONTACTS_CREATE: 'contacts.create',
+  CONTACTS_UPDATE: 'contacts.update',
+  CONTACTS_DELETE: 'contacts.delete',
 });
 
 export const PAGE_PERMISSIONS = {

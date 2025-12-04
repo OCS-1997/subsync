@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import RenewalsSection from '../components/RenewalsSection.jsx';
 import ExpiredServicesSection from '../components/ExpiredServicesSection.jsx';
 import BirthdayAlertsWidget from '../components/BirthdayAlertsWidget.jsx';
+import DCRWidget from '../components/DCRWidget.jsx';
 
 function DashboardHome() {
     const { user } = useSelector((state) => state.auth);
@@ -109,9 +110,10 @@ function DashboardHome() {
                     <ExpiredServicesSection />
                 </div>
 
-                {/* Right Column - Alerts */}
+                {/* Right Column - Alerts & DCR */}
                 <div className="space-y-6">
                     <BirthdayAlertsWidget data={dashboardData?.birthdays} />
+                    <DCRWidget />
                 </div>
             </div>
         </div>

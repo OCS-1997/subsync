@@ -89,6 +89,10 @@ const getDcrList = async (req, res) => {
             startDate,
             endDate,
             userId, // Admin filter
+            search,
+            callType,
+            sort,
+            order,
             page = 1,
             limit = 10
         } = req.query;
@@ -96,18 +100,9 @@ const getDcrList = async (req, res) => {
         const isAdmin = req.user.roleKey === 'admin';
         const currentUserId = req.user.username;
 
-        // If no dates provided, use current week segment (Mon-Sat)
-        let start = null;
-        let end = null;
-
-        if (startDate && endDate) {
-            start = new Date(startDate);
-            end = new Date(endDate);
-        } else {
-            const segment = getWeekSegment(new Date());
-            start = segment.start;
-            end = segment.end;
-        }
+        // If no dates provided, don't default to week - show all
+        let start = startDate ? new Date(startDate) : null;
+        let end = endDate ? new Date(endDate) : null;
 
         // Admin can filter by user, non-admin filter is ignored
         const filterUserId = isAdmin && userId ? userId : null;
@@ -118,6 +113,10 @@ const getDcrList = async (req, res) => {
             filterUserId,
             startDate: start,
             endDate: end,
+            search: search || null,
+            callType: callType || null,
+            sort: sort || null,
+            order: order || null,
             page: parseInt(page),
             limit: parseInt(limit)
         });
@@ -132,8 +131,9 @@ const getDcrList = async (req, res) => {
             entries: formattedEntries,
             totalPages,
             totalRecords,
-            startDate: start.toISOString(),
-            endDate: end.toISOString()
+            currentPage: parseInt(page),
+            startDate: start ? start.toISOString() : null,
+            endDate: end ? end.toISOString() : null
         });
     } catch (error) {
         console.error("Error fetching DCR entries:", error);
@@ -286,13 +286,126 @@ const deleteDcr = async (req, res) => {
     }
 };
 
+/**
+ * Get DCR statistics for dashboard widget
+ */
+const getDcrStats = async (req, res) => {
+    try {
+        const isAdmin = req.user.roleKey === 'admin';
+        const currentUserId = req.user.username;
+
+        // Get date range (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+
+        const { entries } = await getDcrEntries({
+            user_id: currentUserId,
+            isAdmin,
+            filterUserId: isAdmin ? null : currentUserId, // Admin sees all, others see only theirs
+            startDate,
+            endDate,
+            page: 1,
+            limit: 1000 // Get all entries for stats
+        });
+
+        // Calculate summary stats
+        const totalCalls = entries.length;
+        const totalMinutes = entries.reduce((sum, entry) => sum + entry.time_spent_minutes, 0);
+        const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
+        const uniqueContacts = new Set(entries.filter(e => e.contact_name).map(e => e.contact_name)).size;
+        const avgPerDay = Math.round(totalCalls / 30 * 10) / 10;
+
+        // Call type distribution
+        const callTypes = entries.reduce((acc, entry) => {
+            acc[entry.call_type] = (acc[entry.call_type] || 0) + 1;
+            return acc;
+        }, {});
+
+        const callTypeDistribution = Object.entries(callTypes).map(([name, value]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            value
+        }));
+
+        // Daily activity (last 7 days)
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            const count = entries.filter(e => e.timestamp.toISOString().split('T')[0] === dateStr).length;
+            last7Days.push({
+                date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                calls: count
+            });
+        }
+
+        // Top domains
+        const domainCounts = entries.reduce((acc, entry) => {
+            const domain = entry.domain_name || entry.domain_free_text || 'Unknown';
+            acc[domain] = (acc[domain] || 0) + 1;
+            return acc;
+        }, {});
+
+        const topDomains = Object.entries(domainCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([domain, count]) => ({
+                domain: domain.length > 20 ? domain.substring(0, 20) + '...' : domain,
+                count
+            }));
+
+        res.status(200).json({
+            summary: {
+                totalCalls,
+                totalHours,
+                avgPerDay,
+                uniqueContacts
+            },
+            callTypeDistribution,
+            dailyActivity: last7Days,
+            topDomains
+        });
+    } catch (error) {
+        console.error("Error fetching DCR stats:", error);
+        res.status(500).json({ error: "Failed to fetch DCR statistics." });
+    }
+};
+
+/**
+ * Get users for DCR filtering (admin only, lightweight)
+ */
+const getDcrUsers = async (req, res) => {
+    try {
+        const isAdmin = req.user.roleKey === 'admin';
+
+        if (!isAdmin) {
+            return res.status(403).json({ error: "Only admins can view all users" });
+        }
+
+        // Import appDB here to avoid circular dependency
+        const appDB = (await import("../db/subsyncDB.js")).default;
+
+        const [users] = await appDB.query(
+            `SELECT username, name FROM users WHERE is_active = 1 ORDER BY name ASC`
+        );
+
+        res.status(200).json({ users });
+    } catch (error) {
+        console.error("Error fetching DCR users:", error);
+        res.status(500).json({ error: "Failed to fetch users." });
+    }
+};
+
 export {
     createDcr,
     getDcrList,
     getDcrById,
     updateDcr,
     deleteDcr,
-    getWeekMeta
+    getWeekMeta,
+    getDcrStats,
+    getDcrUsers
 };
 
 

@@ -6,6 +6,7 @@ import QueueHealthWidget from './QueueHealthWidget.jsx';
 import ActivityLogWidget from './ActivityLogWidget.jsx';
 import BirthdayWidget from './BirthdayWidget.jsx';
 import QuickActionsWidget from './QuickActionsWidget.jsx';
+import DCRWidget from './DCRWidget.jsx';
 
 const WIDGET_COMPONENTS = {
     subscription_status: SubscriptionStatusWidget,
@@ -16,6 +17,7 @@ const WIDGET_COMPONENTS = {
     activity_log: ActivityLogWidget,
     birthdays: BirthdayWidget,
     quick_actions: QuickActionsWidget,
+    dcr: DCRWidget,
 };
 
 function DashboardWidgetRenderer({ widgetKey, data }) {
