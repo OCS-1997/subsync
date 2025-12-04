@@ -1,5 +1,7 @@
 import { addDomain, updateDomain, getAllDomains, getDomainById, importDomainData } from "../models/domainModel.js";
+import { getCustomerById } from "../models/customerModel.js";
 import { logActivity } from "../models/activityLogModel.js";
+import appDB from "../db/subsyncDB.js";
 
 /**
  * Controller function for addDomain() to be executed at /create-domain
@@ -101,4 +103,59 @@ const importDomains = async (req, res) => {
 
 // No changes needed for ENUM, as backend just forwards values.
 
-export { createDomain, updateDomainDetails, fetchAllDomains, fetchAllDomainDetails, domainDetailsByID, importDomains };
+/**
+ * Get domain details with customer and contacts for DCR form
+ */
+const getDomainDetailsForDcr = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const domain = await getDomainById(id);
+        
+        if (!domain) {
+            return res.status(404).json({ error: "Domain not found." });
+        }
+
+        // Get customer details
+        let customer = null;
+        let contacts = [];
+
+        if (domain.customer_id) {
+            customer = await getCustomerById(domain.customer_id);
+            
+            // Extract contacts from customer's other_contacts JSON field
+            if (customer && customer.other_contacts) {
+                try {
+                    const parsedContacts = typeof customer.other_contacts === 'string' 
+                        ? JSON.parse(customer.other_contacts) 
+                        : customer.other_contacts;
+                    
+                    if (Array.isArray(parsedContacts)) {
+                        contacts = parsedContacts.map(contact => ({
+                            email: contact.email || '',
+                            last_name: contact.last_name || contact.lastName || '',
+                            first_name: contact.first_name || contact.firstName || '',
+                            salutation: contact.salutation || 'Mr.',
+                            designation: contact.designation || '',
+                            country_code: contact.country_code || '+91',
+                            phone_number: contact.phone_number || contact.phoneNumber || contact.mobile || contact.phone || ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Error parsing customer contacts:", e);
+                }
+            }
+        }
+
+        res.status(200).json({
+            domain_name: domain.domain_name,
+            customer_name: domain.customer_name || customer?.display_name || customer?.company_name || '',
+            company_name: customer?.company_name || domain.customer_name || '',
+            contacts
+        });
+    } catch (error) {
+        console.error("Error fetching domain details for DCR:", error);
+        res.status(500).json({ error: "Failed to fetch domain details." });
+    }
+};
+
+export { createDomain, updateDomainDetails, fetchAllDomains, fetchAllDomainDetails, domainDetailsByID, importDomains, getDomainDetailsForDcr };

@@ -50,6 +50,10 @@ export const PERMISSIONS = Object.freeze({
     NOTIFICATION_LOGS_VIEW: 'notification_logs.view',
     QUICK_TOOLS_VIEW: 'quick_tools.view',
     QUICK_TOOLS_MANAGE: 'quick_tools.manage',
+    DCR_VIEW: 'dcr.view',
+    DCR_CREATE: 'dcr.create',
+    DCR_UPDATE: 'dcr.update',
+    DCR_DELETE: 'dcr.delete',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -104,6 +108,10 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.NOTIFICATION_LOGS_VIEW, resource: 'notification_logs', action: 'view', description: 'View notification logs' },
     { key: PERMISSIONS.QUICK_TOOLS_VIEW, resource: 'quick_tools', action: 'view', description: 'View and use quick tools widget' },
     { key: PERMISSIONS.QUICK_TOOLS_MANAGE, resource: 'quick_tools', action: 'manage', description: 'Manage quick tools (admin only)' },
+    { key: PERMISSIONS.DCR_VIEW, resource: 'dcr', action: 'view', description: 'View DCR entries' },
+    { key: PERMISSIONS.DCR_CREATE, resource: 'dcr', action: 'create', description: 'Create DCR entries' },
+    { key: PERMISSIONS.DCR_UPDATE, resource: 'dcr', action: 'update', description: 'Update DCR entries' },
+    { key: PERMISSIONS.DCR_DELETE, resource: 'dcr', action: 'delete', description: 'Delete DCR entries' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -132,6 +140,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.REPORTS_VIEW,
         PERMISSIONS.SETTINGS_MANAGE,
         PERMISSIONS.QUICK_TOOLS_VIEW,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.DCR_UPDATE,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -144,6 +155,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER,
         PERMISSIONS.REPORTS_VIEW,
         PERMISSIONS.QUICK_TOOLS_VIEW,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.DCR_UPDATE,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -153,6 +167,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.SUBSCRIPTIONS_VIEW,
         PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER,
         PERMISSIONS.QUICK_TOOLS_VIEW,
+        PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.DCR_CREATE,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -164,6 +180,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TAXES_VIEW,
         PERMISSIONS.REPORTS_VIEW,
         PERMISSIONS.QUICK_TOOLS_VIEW,
+        PERMISSIONS.DCR_VIEW,
     ],
 };
 

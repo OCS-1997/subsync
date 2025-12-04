@@ -38,6 +38,8 @@ import NotificationLogs from '@/features/Settings/NotificationLogs.jsx';
 import QuickToolsAdmin from '@/features/QuickTools/pages/QuickToolsAdmin.jsx';
 import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermissions.jsx';
 import HelpPage from '@/features/Help/HelpPage.jsx';
+import DCRList from '@/features/DCR/pages/DCRList.jsx';
+import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -74,6 +76,10 @@ const router = createBrowserRouter([
       { path: "subscriptions/*", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
       { path: "subscriptions/add", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_CREATE}><AddSubscription /></PermissionGate> },
       { path: "subscriptions/:id/edit", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_UPDATE}><EditSubscription /></PermissionGate> },
+
+      { path: "dcr", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DCRList /></PermissionGate> },
+      { path: "dcr/new", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/:id/edit", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
 
       {
         path: "settings",

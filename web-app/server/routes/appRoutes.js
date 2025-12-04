@@ -4,7 +4,9 @@ import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
-import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains } from '../controllers/domainController.js';
+import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
+import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta } from '../controllers/dcrController.js';
+import { createContactFromDcrController, getContactByIdController } from '../controllers/contactController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
@@ -69,6 +71,7 @@ router.put('/update-domain/:did', isAuthenticated, authorize(PERMISSIONS.DOMAINS
 router.get('/all-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), fetchAllDomains);
 router.get('/all-domain-details', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), domainDetailsByID);
 router.post('/import-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_CREATE), importDomains);
+router.get('/domains/:id/details', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), getDomainDetailsForDcr);
 
 // Services
 router.get('/all-services', isAuthenticated, authorize(PERMISSIONS.SERVICES_VIEW), getAllServicesController);
@@ -181,5 +184,17 @@ router.post('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_M
 router.put('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), updateToolController);
 router.delete('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), deleteToolController);
 router.post('/quick-tools/preview', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), previewUrlController);
+
+// DCR (Daily Call Report)
+router.post('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createDcr);
+router.get('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrList);
+router.get('/dcr/week-meta', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getWeekMeta);
+router.get('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrById);
+router.put('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_UPDATE), updateDcr);
+router.delete('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_DELETE), deleteDcr);
+
+// Contacts (minimal for DCR integration)
+router.post('/contacts/from-dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createContactFromDcrController);
+router.get('/contacts/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getContactByIdController);
 
 export default router;

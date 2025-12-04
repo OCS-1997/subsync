@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { reconciliationCron } from '../services/reminderService.js';
 import { archiveOldSubscriptions } from '../services/reminderService.js';
 import { sendTodayBirthdayEmails } from '../services/birthdayService.js';
+import { sendDailyDcrReportEmail } from '../services/dcrService.js';
 
 const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
 
@@ -86,11 +87,41 @@ export function setupBirthdayCron() {
 }
 
 /**
+ * Setup DCR daily email report cron job
+ * Runs daily at 13:00 UTC (18:30 IST)
+ */
+export function setupDcrReportCron() {
+    // Run at 13:00 UTC daily (18:30 IST)
+    cron.schedule('0 13 * * *', async () => {
+        console.log('Running DCR daily report cron job...');
+        try {
+            const result = await sendDailyDcrReportEmail();
+            console.log(JSON.stringify({
+                event: 'dcr_daily_report_sent',
+                success: result.success,
+                error: result.error,
+                timestamp: new Date().toISOString(),
+            }));
+            if (!result.success) {
+                console.error('DCR report error:', result.error);
+            }
+        } catch (error) {
+            console.error('Error in DCR report cron:', error);
+        }
+    }, {
+        timezone: 'UTC',
+    });
+
+    console.log('DCR daily report cron scheduled for 13:00 UTC daily (18:30 IST)');
+}
+
+/**
  * Setup all cron jobs
  */
 export function setupCronJobs() {
     setupReconciliationCron();
     setupArchivalCron();
     setupBirthdayCron();
+    setupDcrReportCron();
 }
 

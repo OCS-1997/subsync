@@ -6,6 +6,7 @@ import itemGroupReducer from '@/features/Services/itemGroupSlice';
 import serviceReducer from '@/features/Services/serviceSlice';
 import vendorReducer from '@/features/Services/vendorSlice';
 import domainReducer from '@/features/Domains/domainSlice';
+import dcrReducer from '@/features/DCR/dcrSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,5 +16,6 @@ export const store = configureStore({
     domains: domainReducer,
     vendors: vendorReducer,
     itemGroups: itemGroupReducer,
+    dcr: dcrReducer,
   },
 });

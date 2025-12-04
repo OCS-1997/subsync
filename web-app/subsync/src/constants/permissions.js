@@ -50,6 +50,10 @@ export const PERMISSIONS = Object.freeze({
   NOTIFICATION_LOGS_VIEW: 'notification_logs.view',
   QUICK_TOOLS_VIEW: 'quick_tools.view',
   QUICK_TOOLS_MANAGE: 'quick_tools.manage',
+  DCR_VIEW: 'dcr.view',
+  DCR_CREATE: 'dcr.create',
+  DCR_UPDATE: 'dcr.update',
+  DCR_DELETE: 'dcr.delete',
 });
 
 export const PAGE_PERMISSIONS = {
