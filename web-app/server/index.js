@@ -8,10 +8,8 @@ import colors from 'colors';
 import morgan from 'morgan';
 import { setupBullBoard } from './queues/bullBoard.js';
 import { createReminderWorker } from './workers/reminderWorker.js';
-import { createDcrReportWorker } from './workers/dcrReportWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
-import { dcrDailyReportQueue } from './queues/queueConfig.js';
 
 dotenv.config();
 const app = express();
@@ -70,40 +68,12 @@ setupBullBoard(app);
 
 // Start BullMQ workers
 let reminderWorker = null;
-let dcrReportWorker = null;
 try {
     reminderWorker = createReminderWorker();
     console.log('Reminder worker started successfully'.bgGreen.white);
 } catch (error) {
     console.error('Failed to start reminder worker:'.bgRed.white, error);
 }
-
-try {
-    dcrReportWorker = createDcrReportWorker();
-    console.log('DCR report worker started successfully'.bgGreen.white);
-} catch (error) {
-    console.error('Failed to start DCR report worker:'.bgRed.white, error);
-}
-
-// Setup recurring DCR daily report job (6:30 PM IST = 13:00 UTC)
-(async () => {
-    try {
-        await dcrDailyReportQueue.add(
-            'sendDailyDCRReport',
-            { date: null }, // Will use current date when processed
-            {
-                repeat: {
-                    pattern: '0 13 * * *', // 13:00 UTC = 6:30 PM IST
-                    tz: 'UTC'
-                },
-                jobId: 'dcr-daily-report-recurring'
-            }
-        );
-        console.log('DCR daily report recurring job scheduled for 13:00 UTC (6:30 PM IST)'.bgGreen.white);
-    } catch (error) {
-        console.error('Failed to schedule DCR daily report job:'.bgRed.white, error);
-    }
-})();
 
 // Setup cron jobs
 try {
@@ -138,9 +108,6 @@ process.on('SIGTERM', async () => {
     if (reminderWorker) {
         await reminderWorker.close();
     }
-    if (dcrReportWorker) {
-        await dcrReportWorker.close();
-    }
     await closeQueues();
     server.close(() => {
         console.log('Server closed');
@@ -152,9 +119,6 @@ process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully...');
     if (reminderWorker) {
         await reminderWorker.close();
-    }
-    if (dcrReportWorker) {
-        await dcrReportWorker.close();
     }
     await closeQueues();
     server.close(() => {

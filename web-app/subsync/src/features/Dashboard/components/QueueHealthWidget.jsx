@@ -23,7 +23,6 @@ function QueueHealthWidget({ data }) {
 
     const queues = [
         { name: 'Subscription Reminders', data: data.subscription_reminders },
-        { name: 'DCR Daily Report', data: data.dcr_daily_report },
         { name: 'PDF Generation', data: data.pdf_generation }
     ];
 

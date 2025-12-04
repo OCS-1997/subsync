@@ -27,12 +27,12 @@ export const PermissionsProvider = ({ children }) => {
     return [];
   }, [statePermissions]);
 
-  if (import.meta.env.DEV) {
-    console.log("[PermissionsContext] effective permissions", {
-      statePermissions,
-      permissions,
-    });
-  }
+  // if (import.meta.env.DEV) {
+  //   console.log("[PermissionsContext] effective permissions", {
+  //     statePermissions,
+  //     permissions,
+  //   });
+  // }
 
   const value = useMemo(() => {
     const normalized = new Set(permissions);

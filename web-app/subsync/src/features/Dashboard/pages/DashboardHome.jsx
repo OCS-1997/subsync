@@ -10,7 +10,6 @@ import { toast } from 'react-toastify';
 
 import RenewalsSection from '../components/RenewalsSection.jsx';
 import ExpiredServicesSection from '../components/ExpiredServicesSection.jsx';
-import DCRKPIsWidget from '../components/DCRKPIsWidget.jsx';
 import BirthdayAlertsWidget from '../components/BirthdayAlertsWidget.jsx';
 
 function DashboardHome() {
@@ -110,10 +109,9 @@ function DashboardHome() {
                     <ExpiredServicesSection />
                 </div>
 
-                {/* Right Column - Alerts & DCR */}
+                {/* Right Column - Alerts */}
                 <div className="space-y-6">
                     <BirthdayAlertsWidget data={dashboardData?.birthdays} />
-                    <DCRKPIsWidget data={dashboardData?.dcr} />
                 </div>
             </div>
         </div>

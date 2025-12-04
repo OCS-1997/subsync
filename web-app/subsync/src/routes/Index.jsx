@@ -36,10 +36,6 @@ import ReminderPolicies from '@/features/Settings/ReminderPolicies.jsx';
 import EmailTemplates from '@/features/Settings/EmailTemplates.jsx';
 import NotificationLogs from '@/features/Settings/NotificationLogs.jsx';
 import QuickToolsAdmin from '@/features/QuickTools/pages/QuickToolsAdmin.jsx';
-import DCRList from '@/features/DCR/pages/DCRList.jsx';
-import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
-import DCRStats from '@/features/DCR/pages/DCRStats.jsx';
-import AdminDCRActions from '@/features/DCR/pages/AdminDCRActions.jsx';
 import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermissions.jsx';
 import HelpPage from '@/features/Help/HelpPage.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
@@ -78,12 +74,6 @@ const router = createBrowserRouter([
       { path: "subscriptions/*", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
       { path: "subscriptions/add", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_CREATE}><AddSubscription /></PermissionGate> },
       { path: "subscriptions/:id/edit", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_UPDATE}><EditSubscription /></PermissionGate> },
-
-      { path: "dcr", element: <PermissionGate any={[PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE]}><DCRList /></PermissionGate> },
-      { path: "dcr/add", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
-      { path: "dcr/edit/:id", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
-      { path: "dcr/stats", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DCRStats /></PermissionGate> },
-      { path: "dcr/admin", element: <PermissionGate required={PERMISSIONS.DCR_SEND_REPORT}><AdminDCRActions /></PermissionGate> },
 
       {
         path: "settings",

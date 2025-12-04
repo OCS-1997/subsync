@@ -17,14 +17,6 @@ function QuickActionsWidget({ data }) {
     const handleAction = async (action) => {
         if (action.path) {
             navigate(action.path);
-        } else if (action.action === 'sendDcrReport') {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                await api.post('/dcr/send-daily-report', { date: today });
-                toast.success('DCR report sent successfully');
-            } catch (error) {
-                toast.error(error.normalizedMessage || 'Failed to send DCR report');
-            }
         }
     };
 

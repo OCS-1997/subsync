@@ -19,17 +19,6 @@ import { getallUsers, getUser, createUserController, updateUserController, delet
 import { getLogs } from '../controllers/activityLogController.js';
 import { listRolesController, createRoleController, updateRoleController, deleteRoleController, assignPermissionsController, listPermissionsController } from '../controllers/rbacController.js';
 import {
-    createDcrEntryController,
-    listDcrEntriesController,
-    getDcrEntryController,
-    updateDcrEntryController,
-    deleteDcrEntryController,
-    getDcrStatsController,
-    exportDcrEntriesController,
-    sendDailyReportController,
-    getDcrCategoriesController
-} from '../controllers/dcrController.js';
-import {
     getDashboardController,
     getRenewalsController,
     getExpiredServicesController,
@@ -177,18 +166,6 @@ router.put('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_U
 router.delete('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_DELETE), deleteRoleController);
 router.put('/rbac/roles/:roleId/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), assignPermissionsController);
 router.get('/rbac/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), listPermissionsController);
-
-// DCR (Daily Call Register)
-router.post('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createDcrEntryController);
-// Allow users with either DCR_VIEW or DCR_CREATE to list entries (users who can create should see their entries)
-router.get('/dcr', isAuthenticated, authorize([PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE], { match: 'any' }), listDcrEntriesController);
-router.get('/dcr/categories', isAuthenticated, authorize([PERMISSIONS.DCR_VIEW, PERMISSIONS.DCR_CREATE], { match: 'any' }), getDcrCategoriesController);
-router.get('/dcr/stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrStatsController);
-router.get('/dcr/export', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), exportDcrEntriesController);
-router.get('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrEntryController);
-router.put('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_UPDATE), updateDcrEntryController);
-router.delete('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_DELETE), deleteDcrEntryController);
-router.post('/dcr/send-daily-report', isAuthenticated, authorize(PERMISSIONS.DCR_SEND_REPORT), sendDailyReportController);
 
 // Dashboard
 router.get('/dashboard', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getDashboardController);

@@ -85,12 +85,6 @@ export default function HelpPage() {
             color: "indigo"
         },
         {
-            title: "DCR (Daily Call Reports)",
-            icon: <Calendar className="w-6 h-6" />,
-            description: "Log daily activities, calls, and customer interactions",
-            color: "teal"
-        },
-        {
             title: "Quick Tools",
             icon: <Link2 className="w-6 h-6" />,
             description: "Access diagnostic tools for domain analysis (DNS, SSL, WHOIS, etc.)",

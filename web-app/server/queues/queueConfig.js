@@ -46,7 +46,6 @@ redisClient.on('reconnecting', () => {
 // Queue names
 export const QUEUE_NAMES = {
     SUBSCRIPTION_REMINDERS: 'subscriptionReminders',
-    DCR_DAILY_REPORT: 'dcrDailyReport',
     PDF_GENERATION: 'pdfGeneration',
 };
 
@@ -82,40 +81,17 @@ export const pdfGenerationQueue = new Queue(QUEUE_NAMES.PDF_GENERATION, {
     },
 });
 
-export const dcrDailyReportQueue = new Queue(QUEUE_NAMES.DCR_DAILY_REPORT, {
-    connection: redisConnection,
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 60000, // Start with 1 minute
-        },
-        removeOnComplete: {
-            age: 7 * 24 * 3600, // Keep completed jobs for 7 days
-            count: 100,
-        },
-        removeOnFail: {
-            age: 30 * 24 * 3600, // Keep failed jobs for 30 days
-        },
-    },
-});
-
 // Queue events for monitoring
 export const subscriptionRemindersQueueEvents = new QueueEvents(QUEUE_NAMES.SUBSCRIPTION_REMINDERS, {
     connection: redisConnection,
 });
 
-export const dcrDailyReportQueueEvents = new QueueEvents(QUEUE_NAMES.DCR_DAILY_REPORT, {
-    connection: redisConnection,
-});
 
 // Helper function to get queue by name
 export function getQueueByName(queueName) {
     switch (queueName) {
         case QUEUE_NAMES.SUBSCRIPTION_REMINDERS:
             return subscriptionRemindersQueue;
-        case QUEUE_NAMES.DCR_DAILY_REPORT:
-            return dcrDailyReportQueue;
         case QUEUE_NAMES.PDF_GENERATION:
             return pdfGenerationQueue;
         default:
@@ -127,10 +103,8 @@ export function getQueueByName(queueName) {
 export async function closeQueues() {
     await Promise.all([
         subscriptionRemindersQueue.close(),
-        dcrDailyReportQueue.close(),
         pdfGenerationQueue.close(),
         subscriptionRemindersQueueEvents.close(),
-        dcrDailyReportQueueEvents.close(),
         redisClient.quit(),
     ]);
 }

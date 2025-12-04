@@ -48,11 +48,6 @@ export const PERMISSIONS = Object.freeze({
   EMAIL_TEMPLATES_UPDATE: 'email_templates.update',
   EMAIL_TEMPLATES_DELETE: 'email_templates.delete',
   NOTIFICATION_LOGS_VIEW: 'notification_logs.view',
-  DCR_VIEW: 'dcr.view',
-  DCR_CREATE: 'dcr.create',
-  DCR_UPDATE: 'dcr.update',
-  DCR_DELETE: 'dcr.delete',
-  DCR_SEND_REPORT: 'dcr.send_report',
   QUICK_TOOLS_VIEW: 'quick_tools.view',
   QUICK_TOOLS_MANAGE: 'quick_tools.manage',
 });

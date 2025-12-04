@@ -3,7 +3,6 @@ import {
     getExpiredServices,
     getExpiringTodayCount
 } from '../models/dashboardModel.js';
-import { getDcrStats } from '../models/dcrModel.js';
 import { getUpcomingBirthdays } from '../models/birthdayModel.js';
 
 /**
@@ -31,15 +30,7 @@ export const getDashboardController = async (req, res) => {
         // Get expiring today count
         const expiringTodayCount = await getExpiringTodayCount();
 
-        // Get DCR stats (today)
-        const today = new Date().toISOString().split('T')[0];
-        const dcrStats = await getDcrStats({
-            start_date: today,
-            end_date: today,
-            user_id: user.roleKey === 'admin' ? null : user.username
-        });
-
-        // Get birthdays (don't check dashboardController for this per user request)
+        // Get birthdays
         const birthdays = await getUpcomingBirthdays();
 
         res.json({
@@ -51,14 +42,6 @@ export const getDashboardController = async (req, res) => {
             expiredServices: {
                 data: expiredServices,
                 count: expiredServices.length
-            },
-            dcr: {
-                total_calls: dcrStats.totalCalls || 0,
-                total_time_minutes: dcrStats.totalTimeMinutes || 0,
-                total_time_hours: parseFloat(dcrStats.totalTimeHours || 0),
-                calls_per_user: dcrStats.callsPerUser || [],
-                calls_per_category: dcrStats.callsPerCategory || [],
-                time_per_company: dcrStats.timePerCompany || []
             },
             birthdays: birthdays
         });
