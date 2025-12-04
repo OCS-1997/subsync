@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
@@ -16,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu.jsx";
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
+import ViewSubscription from "./ViewSubscription.jsx";
 import { Input } from "@/components/ui/input.jsx";
 
 const sortMap = {
@@ -43,6 +45,8 @@ const StatusPill = ({ status }) => {
 
 export default function ListSubscriptions({ onAddNew, onEdit }) {
   const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -57,7 +61,12 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   const [selectedSubId, setSelectedSubId] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, subId: null, domain: "" });
   const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsSubscription, setDetailsSubscription] = useState(null);
   const debounceTimeout = useRef();
+
+  const username = location.pathname.split('/')[1] || '';
 
   const openDeleteDialog = (subId, domainName) => {
     setDeleteDialog({ open: true, subId, domain: domainName || "" });
@@ -67,6 +76,21 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   const closeDeleteDialog = () => {
     setDeleteDialog({ open: false, subId: null, domain: "" });
     setDeleteConfirmValue("");
+  };
+
+  const openDetailsDialog = async (subId) => {
+    try {
+      setDetailsLoading(true);
+      setDetailsDialogOpen(true);
+      setDetailsSubscription(null);
+      const res = await api.get(`/subscriptions/${subId}`);
+      setDetailsSubscription(res.data.subscription || null);
+    } catch (e) {
+      toast.error(e.normalizedMessage || 'Failed to load subscription details');
+      setDetailsDialogOpen(false);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -139,6 +163,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   }, [page, statusFilter, sortBy, sortOrder, debouncedSearch]);
 
   const headers = useMemo(() => ([
+    { key: 'sub_id', label: 'Subscription ID' },
     { key: 'domain_name', label: 'Domain' },
     { key: 'service_summary', label: 'Services' },
     { key: 'customer_name', label: 'Contact' },
@@ -187,6 +212,15 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
 
   const rows = (data || []).map(row => ({
     ...row,
+    sub_id: (
+      <button
+        type="button"
+        className="text-blue-600 hover:underline font-mono text-sm"
+        onClick={() => navigate(`/${username}/dashboard/subscriptions/${row.sub_id}`)}
+      >
+        {row.sub_id}
+      </button>
+    ),
     domain_name: row.domain_name || '-',
     service_summary: (
       <ServiceTooltip items={row.items || []}>
@@ -228,6 +262,10 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
           }}>
             <History className="mr-2 h-4 w-4" />
             View History
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openDetailsDialog(row.sub_id)}>
+            <Edit className="mr-2 h-4 w-4" />
+            View Details
           </DropdownMenuItem>
           <DropdownMenuItem onClick={async () => {
             try {
@@ -322,6 +360,38 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
               subId={selectedSubId}
               onClose={() => setHistoryDialogOpen(false)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          {detailsLoading ? (
+            <div className="flex flex-col justify-center items-center my-8">
+              <Hamster />
+            </div>
+          ) : detailsSubscription ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Subscription Details</DialogTitle>
+                <DialogDescription>
+                  Quick view of subscription{" "}
+                  <span className="font-mono font-medium">
+                    {detailsSubscription.sub_id}
+                  </span>
+                  .
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                <ViewSubscription
+                  subscription={detailsSubscription}
+                  showActions={false}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-600">Unable to load subscription details.</p>
           )}
         </DialogContent>
       </Dialog>
