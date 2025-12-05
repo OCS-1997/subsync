@@ -10,6 +10,7 @@ import { logoutUser } from "@/features/Auth/authSlice";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.jsx";
+import BirthdayNavWidget from "@/features/Dashboard/components/BirthdayNavWidget.jsx";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -94,6 +95,10 @@ function NavBar({ toggleSidebar }) {
 
           {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (
             <QuickToolsWidget />
+          )}
+
+          {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && (
+            <BirthdayNavWidget />
           )}
 
           <Button
