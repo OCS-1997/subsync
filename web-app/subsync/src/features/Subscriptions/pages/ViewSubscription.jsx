@@ -19,8 +19,8 @@ function StatusPill({ status }) {
     status === "Active"
       ? "secondary"
       : status === "Expired"
-      ? "destructive"
-      : "default";
+        ? "destructive"
+        : "default";
   return <Badge variant={variant}>{status || "Unknown"}</Badge>;
 }
 
@@ -207,8 +207,8 @@ export default function ViewSubscription({
                     {discount_type === "percent"
                       ? `${Number(discount_value || 0).toFixed(2)}%`
                       : `${currencyLabel} ${Number(
-                          discount_value || 0
-                        ).toFixed(2)}`}
+                        discount_value || 0
+                      ).toFixed(2)}`}
                   </p>
                 </div>
                 <div>

@@ -77,7 +77,7 @@ function BirthdayNavWidget() {
               <div>
                 <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">Birthday Alerts</h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {totalCount > 0 
+                  {totalCount > 0
                     ? `${totalCount} ${totalCount === 1 ? 'birthday' : 'birthdays'} in the next 7 days`
                     : 'No upcoming birthdays'}
                 </p>
@@ -113,11 +113,10 @@ function BirthdayNavWidget() {
               {allBirthdays.map((person, idx) => (
                 <div
                   key={idx}
-                  className={`p-3 rounded-lg border ${
-                    person.isToday
+                  className={`p-3 rounded-lg border ${person.isToday
                       ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-800'
                       : 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -125,7 +124,11 @@ function BirthdayNavWidget() {
                         {person.name}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {person.type === 'user' ? 'Team Member' : 'Customer'}
+                        {person.type === 'user'
+                          ? 'Team Member'
+                          : person.type === 'contact_person'
+                            ? `Contact - ${person.company_name || 'Customer'}`
+                            : 'Customer'}
                       </div>
                     </div>
                     <div className="ml-3 flex-shrink-0">

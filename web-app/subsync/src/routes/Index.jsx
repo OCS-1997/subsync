@@ -43,6 +43,7 @@ import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
 import ContactsList from '@/features/Contacts/pages/ContactsList.jsx';
 import ContactForm from '@/features/Contacts/pages/ContactForm.jsx';
 import ContactDetails from '@/features/Contacts/pages/ContactDetails.jsx';
+import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -89,6 +90,8 @@ const router = createBrowserRouter([
       { path: "contacts/new", element: <PermissionGate required={PERMISSIONS.CONTACTS_CREATE}><ContactForm /></PermissionGate> },
       { path: "contacts/:id", element: <PermissionGate required={PERMISSIONS.CONTACTS_VIEW}><ContactDetails /></PermissionGate> },
       { path: "contacts/:id/edit", element: <PermissionGate required={PERMISSIONS.CONTACTS_UPDATE}><ContactForm /></PermissionGate> },
+
+      { path: "birthdays", element: <PermissionGate required={PERMISSIONS.BIRTHDAYS_VIEW}><BirthdaysPage /></PermissionGate> },
 
       {
         path: "settings",

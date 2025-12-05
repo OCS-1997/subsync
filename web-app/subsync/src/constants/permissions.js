@@ -58,6 +58,9 @@ export const PERMISSIONS = Object.freeze({
   CONTACTS_CREATE: 'contacts.create',
   CONTACTS_UPDATE: 'contacts.update',
   CONTACTS_DELETE: 'contacts.delete',
+  BIRTHDAYS_VIEW: 'birthdays.view',
+  BIRTHDAYS_MANAGE: 'birthdays.manage',
+  BIRTHDAYS_SYNC: 'birthdays.sync',
 });
 
 export const PAGE_PERMISSIONS = {

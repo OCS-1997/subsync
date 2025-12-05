@@ -58,6 +58,9 @@ export const PERMISSIONS = Object.freeze({
     CONTACTS_CREATE: 'contacts.create',
     CONTACTS_UPDATE: 'contacts.update',
     CONTACTS_DELETE: 'contacts.delete',
+    BIRTHDAYS_VIEW: 'birthdays.view',
+    BIRTHDAYS_MANAGE: 'birthdays.manage',
+    BIRTHDAYS_SYNC: 'birthdays.sync',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -120,6 +123,9 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.CONTACTS_CREATE, resource: 'contacts', action: 'create', description: 'Create contacts' },
     { key: PERMISSIONS.CONTACTS_UPDATE, resource: 'contacts', action: 'update', description: 'Update contacts' },
     { key: PERMISSIONS.CONTACTS_DELETE, resource: 'contacts', action: 'delete', description: 'Delete contacts' },
+    { key: PERMISSIONS.BIRTHDAYS_VIEW, resource: 'birthdays', action: 'view', description: 'View birthdays' },
+    { key: PERMISSIONS.BIRTHDAYS_MANAGE, resource: 'birthdays', action: 'manage', description: 'Manage birthdays' },
+    { key: PERMISSIONS.BIRTHDAYS_SYNC, resource: 'birthdays', action: 'sync', description: 'Sync birthdays from source tables' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {

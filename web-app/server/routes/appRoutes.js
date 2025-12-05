@@ -27,6 +27,14 @@ import {
     getBirthdaysController
 } from '../controllers/dashboardController.js';
 import {
+    getAllBirthdaysController,
+    getUpcomingBirthdaysController,
+    getBirthdayByIdController,
+    saveBirthdayController,
+    deleteBirthdayController,
+    syncBirthdaysController
+} from '../controllers/birthdayController.js';
+import {
     listToolsController,
     listAllToolsController,
     getToolController,
@@ -184,6 +192,15 @@ router.post('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_M
 router.put('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), updateToolController);
 router.delete('/quick-tools/:id', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), deleteToolController);
 router.post('/quick-tools/preview', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), previewUrlController);
+
+// Birthdays Module
+router.get('/birthdays', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_VIEW), getAllBirthdaysController);
+router.get('/birthdays/upcoming', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_VIEW), getUpcomingBirthdaysController);
+router.get('/birthdays/:id', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_VIEW), getBirthdayByIdController);
+router.post('/birthdays', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_MANAGE), saveBirthdayController);
+router.delete('/birthdays/:id', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_MANAGE), deleteBirthdayController);
+router.post('/birthdays/sync', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_SYNC), syncBirthdaysController);
+
 
 // DCR (Daily Call Report)
 router.post('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createDcr);

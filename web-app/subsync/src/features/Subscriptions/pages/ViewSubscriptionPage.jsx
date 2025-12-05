@@ -180,7 +180,7 @@ export default function ViewSubscriptionPage() {
               disabled={
                 !domainName ||
                 deleteConfirmValue.trim().toLowerCase() !==
-                  domainName.trim().toLowerCase()
+                domainName.trim().toLowerCase()
               }
             >
               Delete
