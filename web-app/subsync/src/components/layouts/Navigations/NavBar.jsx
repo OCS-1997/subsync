@@ -75,21 +75,21 @@ function NavBar({ toggleSidebar }) {
   };
 
   return (
-    <nav className="bg-white shadow-md rounded-b-l border-b-2  border-gray-200">
+    <nav className="bg-background dark:bg-background shadow-md rounded-b-l border-b-2 border-border">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex  justify-between items-center h-16">
         <div className="flex w-full items-start p-2 m-1">
           <Button variant="ghost" size="icon" className="mr-2 lg:hidden" onClick={toggleSidebar}>
             <span className="material-symbols-outlined">menu</span>
           </Button>
           <div className="flex-shrink-0 flex justify-end p-1 rounded">
-            <img src="/logo.png" alt="" className="h-12  p-1 invert brightness-50" />
+            <img src="/logo.png" alt="" className="h-12  p-1 dark:invert dark:brightness-0 dark:contrast-200" />
           </div>
         </div>
         <div className="flex items-center gap-3">
           {loginIp && loginTime && (
-            <div className="px-4 py-2 text-xs text-gray-600 border-r border-gray-200">
+            <div className="px-4 py-2 text-xs text-foreground dark:text-foreground border-r border-border">
               <div className="font-medium">IP: {formatIp(loginIp)}</div>
-              <div className="text-gray-500">Logged in: {new Date(loginTime).toLocaleString()}</div>
+              <div className="text-muted-foreground">Logged in: {new Date(loginTime).toLocaleString()}</div>
             </div>
           )}
 
@@ -104,7 +104,7 @@ function NavBar({ toggleSidebar }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full hover:bg-blue-100 hover:text-blue-600 transition-colors"
+            className="h-10 w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={handleCalculatorToggle}
             title="Calculator (Ctrl+Shift+C)"
           >
@@ -114,7 +114,7 @@ function NavBar({ toggleSidebar }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
+            className="h-10 w-10 rounded-full hover:bg-accent transition-colors"
             onClick={() => setSettingsOpen(true)}
             title="Settings (Ctrl+Shift+P)"
           >
@@ -126,7 +126,7 @@ function NavBar({ toggleSidebar }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors"
+                className="h-10 w-10 rounded-full border border-border hover:bg-accent transition-colors"
                 title="User Menu"
               >
                 <User className="h-5 w-5" />
@@ -138,7 +138,7 @@ function NavBar({ toggleSidebar }) {
                 item.key === "logout" ? (
                   <button
                     key={item.key}
-                    className="flex items-center w-full px-2 py-2 text-sm text-red-500 hover:bg-red-100 hover:border hover:translate-x-2 transition-all duration-200 ease-in-out hover:border-red-500 rounded-md"
+                    className="flex items-center w-full px-2 py-2 text-sm text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 hover:border hover:translate-x-2 transition-all duration-200 ease-in-out hover:border-destructive rounded-md"
                     onClick={() => {
                       setOpen(false);
                       handleLogout();
@@ -151,7 +151,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     key={item.key}
                     to={item.path}
-                    className="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
                     onClick={() => setOpen(false)}
                   >
                     <item.icon className="mr-2 h-4 w-4" />
@@ -174,7 +174,7 @@ function NavBar({ toggleSidebar }) {
             onClick={() => setSettingsOpen(false)}
           >
             <motion.div
-              className="w-80 h-full bg-white shadow-xl z-50 p-6 flex flex-col"
+              className="w-80 h-full bg-background dark:bg-background shadow-xl z-50 p-6 flex flex-col"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -182,17 +182,17 @@ function NavBar({ toggleSidebar }) {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex justify-between  items-center mb-6 border-b pb-3">
+              <div className="flex justify-between  items-center mb-6 border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <Settings className="h-6 w-6" />
-                  <h2 className="text-xl font-bold text-gray-800"> Settings</h2>
+                  <h2 className="text-xl font-bold text-foreground"> Settings</h2>
                 </div>
 
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setSettingsOpen(false)}
-                  className="hover:bg-gray-100"
+                  className="hover:bg-accent"
                 >
                   <X className="h-6 w-6" />
                 </Button>
@@ -203,7 +203,7 @@ function NavBar({ toggleSidebar }) {
                 <Link
                   to="settings/profile"
                   onClick={() => setSettingsOpen(false)}
-                  className="text-gray-700 hover:text-blue-600  hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                 >
                   <UserRound className="h-5 w-5" />
                   Profile
@@ -213,7 +213,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/taxes/tax-rates"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <ReceiptIndianRupeeIcon className="h-5 w-5" />
                     Taxes
@@ -224,7 +224,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/user-management"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <UserCog className="h-5 w-5" />
                     Users Management
@@ -235,7 +235,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/activity-logs"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <FileText className="h-5 w-5" />
                     Activity Logs
@@ -246,7 +246,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/roles"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <Shield className="h-5 w-5" />
                     Roles & Permissions
@@ -257,7 +257,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/reminder-policies"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <Bell className="h-5 w-5" />
                     Reminder Policies
@@ -268,7 +268,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/email-templates"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <Mail className="h-5 w-5" />
                     Email Templates
@@ -279,7 +279,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/notification-logs"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <FileText className="h-5 w-5" />
                     Notification Logs
@@ -290,7 +290,7 @@ function NavBar({ toggleSidebar }) {
                   <Link
                     to="settings/quick-tools"
                     onClick={() => setSettingsOpen(false)}
-                    className="text-gray-700 hover:text-blue-600 hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
                     <Link2 className="h-5 w-5" />
                     Quick Tools

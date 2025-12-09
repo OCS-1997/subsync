@@ -7,6 +7,7 @@ import router from '@/routes/Index'
 import ErrorBoundary from './ErrorBoundary.jsx'
 
 import { PermissionsProvider } from '@/context/PermissionsContext.jsx'
+import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
 
 function App() {
@@ -43,9 +44,11 @@ function App() {
   return (
     <>
       <ErrorBoundary>
-        <PermissionsProvider>
-          <RouterProvider router={router} />
-        </PermissionsProvider>
+        <ThemeProvider>
+          <PermissionsProvider>
+            <RouterProvider router={router} />
+          </PermissionsProvider>
+        </ThemeProvider>
       </ErrorBoundary>
       <ToastContainer position="top-right" theme="colored" transition={Bounce} autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <FloatingCalculator />

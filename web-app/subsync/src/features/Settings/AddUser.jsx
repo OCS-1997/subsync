@@ -21,6 +21,7 @@ const AddUser = () => {
     name: "",
     email: "",
     password: "",
+    date_of_birth: "",
     roleKey: "",
     is_active: true,
   });
@@ -33,6 +34,7 @@ const AddUser = () => {
         name: "",
         email: "",
         password: "",
+        date_of_birth: "",
         roleKey: "",
         is_active: true,
       });
@@ -64,6 +66,7 @@ const AddUser = () => {
         name: user.name,
         email: user.email,
         password: "",
+        date_of_birth: user.date_of_birth || "",
         roleKey: user.roleKey || "",
         is_active: !!user.is_active,
       });
@@ -76,6 +79,7 @@ const AddUser = () => {
             name: res.data.name,
             email: res.data.email,
             password: "",
+            date_of_birth: res.data.date_of_birth || "",
             roleKey: res.data.roleKey || "",
             is_active: !!res.data.is_active,
           });
@@ -118,24 +122,24 @@ const AddUser = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 bg-background dark:bg-background min-h-screen">
       <div className="max-w-2xl mx-auto">
         {/* Header with Breadcrumb */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={handleBack}
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Go back"
               disabled={loading}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 Settings {`>`} User Management {`>`} {editing ? 'Edit' : 'New'}
               </div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold text-foreground">
                 {editing ? 'Edit User' : 'New User'}
               </h1>
             </div>
@@ -163,7 +167,7 @@ const AddUser = () => {
                     onChange={handleChange}
                     required
                     disabled={editing}
-                    className={editing ? "bg-gray-50" : ""}
+                    className={editing ? "bg-muted dark:bg-muted" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,8 +193,18 @@ const AddUser = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">
-                    Password {editing && <span className="text-xs text-gray-500 font-normal">(leave blank to keep unchanged)</span>}
+                  <Label htmlFor="date_of_birth">Date of Birth</Label>
+                  <Input
+                    id="date_of_birth"
+                    type="date"
+                    name="date_of_birth"
+                    value={form.date_of_birth}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">
+                    Password {editing && <span className="text-xs text-muted-foreground font-normal">(leave blank to keep unchanged)</span>}
                   </Label>
                   <Input
                     id="password"
@@ -233,7 +247,7 @@ const AddUser = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"

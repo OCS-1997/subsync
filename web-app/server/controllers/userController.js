@@ -35,7 +35,7 @@ export const getUser = async (req, res) => {
 
 export const createUserController = async (req, res) => {
     try {
-        const { username, name, email, password, roleKey, roleId, is_active = true } = req.body;
+        const { username, name, email, password, roleKey, roleId, is_active = true, date_of_birth } = req.body;
         if (!username || !name || !email || !password) {
             return res.status(400).json({ message: "Missing required fields" });
         }
@@ -58,7 +58,8 @@ export const createUserController = async (req, res) => {
             password: hashedPassword,
             roleName: role.name,
             roleId: role.id,
-            is_active
+            is_active,
+            date_of_birth
         });
         if (req.user && req.user.username) {
             await logActivity({
@@ -107,9 +108,9 @@ export const updateUserController = async (req, res) => {
             }
         }
         
-        // For self-updates, only allow name, email, and password
+        // For self-updates, only allow name, email, password, and date_of_birth
         if (isSelfUpdate) {
-            const allowedFields = ['name', 'email', 'password'];
+            const allowedFields = ['name', 'email', 'password', 'date_of_birth'];
             Object.keys(updateData).forEach(key => {
                 if (!allowedFields.includes(key)) {
                     delete updateData[key];

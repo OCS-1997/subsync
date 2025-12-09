@@ -179,27 +179,25 @@
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .calculator-panel {
-    background: rgba(31, 41, 55, 0.95);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-  }
+.dark .calculator-panel {
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
 
-  .calculator-tabs {
-    background: #1f2937;
-  }
+.dark .calculator-tabs {
+  background: hsl(var(--muted));
+}
 
-  .calculator-tab {
-    color: #9ca3af;
-  }
+.dark .calculator-tab {
+  color: hsl(var(--muted-foreground));
+}
 
-  .calculator-tab:hover {
-    background: rgba(59, 130, 246, 0.2);
-    color: #60a5fa;
-  }
+.dark .calculator-tab:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
 
-  .calculator-tab.active {
-    background: #374151;
-    color: #60a5fa;
-  }
+.dark .calculator-tab.active {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
 }

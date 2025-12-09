@@ -126,10 +126,21 @@ input[type="number"] {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.dark .phone-input-custom-style {
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
 .phone-input-custom-style:focus-within {
   border-color: #6366f1;
   /* Tailwind's ring color (indigo-500) */
   box-shadow: 0 0 0 2px #6366f1;
+}
+
+.dark .phone-input-custom-style:focus-within {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring));
 }
 
 /* Vertical separator between country code and input */
@@ -137,6 +148,10 @@ input[type="number"] {
   border-right: 2px solid #e2e8f0;
   margin-right: 0.5rem;
   padding-right: 0.5rem;
+}
+
+.dark .phone-input-custom-style .PhoneInputCountry {
+  border-right-color: hsl(var(--border));
 }
 
 /* Remove default PhoneInput input border for seamless look */
@@ -198,8 +213,20 @@ input[type="number"] {
   background: #1d4ed8;
 }
 
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
 /* Firefox scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #2563eb transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
 }

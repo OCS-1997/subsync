@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar } from "lucide-react";
+import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake } from "lucide-react";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label.jsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Switch } from "@/components/ui/switch.jsx";
+import { useTheme } from "@/context/ThemeContext.jsx";
 
 export default function Profile() {
   const currentUser = useSelector((state) => state.auth.user);
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +21,7 @@ export default function Profile() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    date_of_birth: "",
     password: "",
     confirmPassword: "",
   });
@@ -26,7 +29,6 @@ export default function Profile() {
 
   // User Preferences State
   const [preferences, setPreferences] = useState({
-    theme: "light",
     showQuickTools: true,
     showCalculator: true,
   });
@@ -41,6 +43,7 @@ export default function Profile() {
         setForm({
           name: response.data.name || "",
           email: response.data.email || "",
+          date_of_birth: response.data.date_of_birth || "",
           password: "",
           confirmPassword: "",
         });
@@ -57,22 +60,13 @@ export default function Profile() {
 
   // Load preferences from localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
     const savedShowQuickTools = localStorage.getItem("showQuickTools") !== "false";
     const savedShowCalculator = localStorage.getItem("showCalculator") !== "false";
 
     setPreferences({
-      theme: savedTheme,
       showQuickTools: savedShowQuickTools,
       showCalculator: savedShowCalculator,
     });
-
-    // Apply theme on mount
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
   }, []);
 
   const handleChange = (e) => {
@@ -84,18 +78,8 @@ export default function Profile() {
   };
 
   const handleThemeToggle = () => {
-    const newTheme = preferences.theme === "light" ? "dark" : "light";
-    setPreferences((prev) => ({ ...prev, theme: newTheme }));
-    localStorage.setItem("theme", newTheme);
-
-    // Apply theme immediately
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-
-    toast.success(`Theme changed to ${newTheme} mode`);
+    toggleTheme();
+    toast.success(`Theme changed to ${theme === "light" ? "dark" : "light"} mode`);
   };
 
   const handlePreferenceChange = (key, value) => {
@@ -138,6 +122,11 @@ export default function Profile() {
         name: form.name.trim(),
         email: form.email.trim(),
       };
+
+      // Include date_of_birth if provided
+      if (form.date_of_birth) {
+        payload.date_of_birth = form.date_of_birth;
+      }
 
       // Only include password if it's been entered
       if (form.password) {
@@ -230,6 +219,21 @@ export default function Profile() {
                         {userData?.email || "-"}
                       </span>
                     </div>
+                    {userData?.date_of_birth && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                          <Cake className="w-4 h-4" />
+                          Birthday
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {new Date(userData.date_of_birth).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
                     {userData?.created_at && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -262,7 +266,7 @@ export default function Profile() {
                 {/* Theme Toggle */}
                 <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                   <div className="flex items-center gap-3">
-                    {preferences.theme === "dark" ? (
+                    {theme === "dark" ? (
                       <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
                         <Moon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
@@ -273,7 +277,7 @@ export default function Profile() {
                     )}
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {preferences.theme === "dark" ? "Dark Mode" : "Light Mode"}
+                        {theme === "dark" ? "Dark Mode" : "Light Mode"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Theme preference
@@ -281,7 +285,7 @@ export default function Profile() {
                     </div>
                   </div>
                   <Switch
-                    checked={preferences.theme === "dark"}
+                    checked={theme === "dark"}
                     onCheckedChange={handleThemeToggle}
                   />
                 </div>
@@ -397,6 +401,25 @@ export default function Profile() {
                             onChange={handleChange}
                             required
                             placeholder="Enter your email"
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Date of Birth */}
+                      <div className="space-y-2">
+                        <Label htmlFor="date_of_birth" className="text-sm font-medium">
+                          Date of Birth
+                        </Label>
+                        <div className="relative">
+                          <Cake className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="date_of_birth"
+                            type="date"
+                            name="date_of_birth"
+                            value={form.date_of_birth}
+                            onChange={handleChange}
+                            placeholder="Select your birthday"
                             className="pl-10"
                           />
                         </div>

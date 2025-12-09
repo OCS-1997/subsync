@@ -4,6 +4,7 @@ const userProjection = `
     u.username,
     u.name,
     u.email,
+    u.date_of_birth AS dateOfBirth,
     u.role_id AS roleId,
     u.role,
     u.is_active AS isActive,
@@ -17,6 +18,7 @@ const mapUserRow = (row = {}) => ({
     username: row.username,
     name: row.name,
     email: row.email,
+    date_of_birth: row.dateOfBirth || null,
     roleId: row.roleId,
     role: row.roleName || row.role || null,
     roleKey: row.roleKey || null,
@@ -54,6 +56,7 @@ const getUserAuthProfile = async (username) => {
             u.username,
             u.name,
             u.email,
+            u.date_of_birth AS dateOfBirth,
             u.role_id AS roleId,
             u.role,
             u.is_active AS isActive,
@@ -68,11 +71,11 @@ const getUserAuthProfile = async (username) => {
     return rows.length ? mapUserRow(rows[0]) : null;
 };
 
-const createUser = async ({ username, name, email, password, roleName, roleId, is_active }) => {
+const createUser = async ({ username, name, email, password, roleName, roleId, is_active, date_of_birth }) => {
     const [result] = await appDB.query(
-        `INSERT INTO users (username, name, email, password, role, role_id, is_active, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [username, name, email, password, roleName, roleId || null, is_active]
+        `INSERT INTO users (username, name, email, password, role, role_id, is_active, date_of_birth, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [username, name, email, password, roleName, roleId || null, is_active, date_of_birth || null]
     );
     return result.insertId;
 };
@@ -83,6 +86,7 @@ const updateUser = async (username, user) => {
     if (user.name !== undefined) { fields.push('name = ?'); values.push(user.name); }
     if (user.email !== undefined) { fields.push('email = ?'); values.push(user.email); }
     if (user.password !== undefined) { fields.push('password = ?'); values.push(user.password); }
+    if (user.date_of_birth !== undefined) { fields.push('date_of_birth = ?'); values.push(user.date_of_birth || null); }
     if (user.roleName !== undefined) { fields.push('role = ?'); values.push(user.roleName); }
     if (user.roleId !== undefined) { fields.push('role_id = ?'); values.push(user.roleId); }
     if (user.is_active !== undefined) { fields.push('is_active = ?'); values.push(user.is_active); }

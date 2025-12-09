@@ -35,19 +35,19 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   return (
     <aside
-      className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-blue-500 text-primary-foreground 
+      className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-blue-500 dark:bg-sidebar text-white dark:text-sidebar-foreground 
         transition-all duration-300 ease-in-out
         ${isOpen ? 'w-64' : 'w-16'}
         lg:relative lg:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         overflow-y-auto`}
     >
-      <div className="flex items-center justify-between p-4 border-b border-primary-foreground/10">
+      <div className="flex items-center justify-between p-4 border-b border-white/10 dark:border-sidebar-border">
         {isOpen && <span className="text-xl font-bold">SRMS</span>}
         <Button
-          variant="primary"
+          variant="ghost"
           size="icon"
-          className="text-primary-foreground hover:bg-primary-foreground/10 z-50"
+          className="text-white dark:text-sidebar-foreground hover:bg-white/10 dark:hover:bg-sidebar-accent z-50"
           onClick={toggleSidebar}
         >
           <span className="material-symbols-outlined">{isOpen ? 'close' : 'menu'}</span>
@@ -65,7 +65,7 @@ function SideBar({ isOpen, toggleSidebar }) {
                     <TooltipTrigger asChild>
                       <Link
                         to={`/${username}/${item.path}`}
-                        className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-primary-foreground/10 hover:translate-x-3   duration-300 ease-in-out transition-all"
+                        className="flex items-center space-x-2 py-3 px-4 w-full hover:bg-white/10 dark:hover:bg-sidebar-accent hover:translate-x-3 duration-300 ease-in-out transition-all"
                       >
                         <span className="material-symbols-outlined">{item.icon}</span>
                         {isOpen && <span>{item.title}</span>}
