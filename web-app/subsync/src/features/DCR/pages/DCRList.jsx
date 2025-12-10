@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import {
   Dialog,
   DialogContent,
@@ -161,6 +162,7 @@ export default function DCRList() {
 
   return (
     <div className="p-4">
+      <Breadcrumb items={[{ label: "Daily Call Reports" }]} />
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Daily Call Reports (DCR)</h1>

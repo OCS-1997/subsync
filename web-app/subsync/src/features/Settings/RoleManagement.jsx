@@ -4,6 +4,7 @@ import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import {
@@ -284,13 +285,14 @@ const RoleManagement = () => {
       {/* Header with Breadcrumb */}
       <div className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
         <div className="px-6 py-4">
+          <Breadcrumb
+            items={[
+              { label: "Settings", href: "./" },
+              { label: "Roles & Permissions" }
+            ]}
+          />
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <span>Settings</span>
-                <ChevronRight className="w-3 h-3" />
-                <span className="text-foreground font-medium">Roles & Permissions</span>
-              </div>
               <h1 className="text-2xl font-bold tracking-tight">Access Control</h1>
             </div>
             {canCreate && (

@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import Hamster from "@/components/animations/Hamster.jsx";
 import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
@@ -71,48 +72,48 @@ function Customers() {
     if (e.key === "Enter") setCurrentPage(1);
   };
 
- const fetchCustomersAndExport = async () => {
-  try {
-    const response = await api.get(`/all-customer-details`);
-    const data = response.data;
+  const fetchCustomersAndExport = async () => {
+    try {
+      const response = await api.get(`/all-customer-details`);
+      const data = response.data;
 
-    if (!data.customers || !Array.isArray(data.customers)) throw new Error("Invalid customer data received!");
-    if (data.customers.length === 0) throw new Error("No customer data available to export!");
+      if (!data.customers || !Array.isArray(data.customers)) throw new Error("Invalid customer data received!");
+      if (data.customers.length === 0) throw new Error("No customer data available to export!");
 
-    const formattedData = data.customers.map((c) => ({
-      "Customer ID": c.customer_id || "",
-      "Salutation": c.salutation || "",
-      "First Name": c.first_name || "",
-      "Last Name": c.last_name || "",
-      "Display Name": c.display_name || "",
-      "Company Name": c.company_name || "",
-      "Phone Number": `${c.country_code || ""}${c.primary_phone_number || ""}`,
-      "Secondary Phone Number": c.secondary_phone_number || "",
-      "Email": c.primary_email || "",
-      "Secondary Email": c.secondary_email || "",
-      "GSTIN": c.gst_in || "",
-      "GST Treatment": c.gst_treatment || "",
-      "Tax Preference": c.tax_preference || "",
-      "Payment Terms": c.payment_terms?.term_name || "",
-      "Exemption Reason": c.exemption_reason || "",
-      "Currency Code": c.currency_code || "",
-      "Address Line": c.customer_address?.addressLine || "",
-      "City": c.customer_address?.city || "",
-      "State": c.customer_address?.state || "",
-      "Country": c.customer_address?.country || "",
-      "Zip Code": c.customer_address?.zipCode || "",
-      "Notes": c.notes || "",
-      "Customer Status": c.customer_status || "Active",
-    }));
+      const formattedData = data.customers.map((c) => ({
+        "Customer ID": c.customer_id || "",
+        "Salutation": c.salutation || "",
+        "First Name": c.first_name || "",
+        "Last Name": c.last_name || "",
+        "Display Name": c.display_name || "",
+        "Company Name": c.company_name || "",
+        "Phone Number": `${c.country_code || ""}${c.primary_phone_number || ""}`,
+        "Secondary Phone Number": c.secondary_phone_number || "",
+        "Email": c.primary_email || "",
+        "Secondary Email": c.secondary_email || "",
+        "GSTIN": c.gst_in || "",
+        "GST Treatment": c.gst_treatment || "",
+        "Tax Preference": c.tax_preference || "",
+        "Payment Terms": c.payment_terms?.term_name || "",
+        "Exemption Reason": c.exemption_reason || "",
+        "Currency Code": c.currency_code || "",
+        "Address Line": c.customer_address?.addressLine || "",
+        "City": c.customer_address?.city || "",
+        "State": c.customer_address?.state || "",
+        "Country": c.customer_address?.country || "",
+        "Zip Code": c.customer_address?.zipCode || "",
+        "Notes": c.notes || "",
+        "Customer Status": c.customer_status || "Active",
+      }));
 
-    const csv = Papa.unparse(formattedData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, `customers_export_${new Date().toISOString()}.csv`);
-    toast.success("CSV file downloaded successfully!");
-  } catch (err) {
-    toast.error(err.message || "Failed to generate CSV file.");
-  }
-};
+      const csv = Papa.unparse(formattedData);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      saveAs(blob, `customers_export_${new Date().toISOString()}.csv`);
+      toast.success("CSV file downloaded successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to generate CSV file.");
+    }
+  };
 
   const fileInputRef = useRef(null);
 
@@ -180,7 +181,7 @@ function Customers() {
     }
   };
 
- const handleSort = (key) => {
+  const handleSort = (key) => {
     if (sortBy === key && sortOrder === "asc") {
       setSortOrder("desc");
     } else if (sortBy === key && sortOrder === "desc") {
@@ -190,7 +191,7 @@ function Customers() {
       setSortBy(key);
       setSortOrder("asc");
     }
- 
+
   };
 
   const renderActions = (id) => (
@@ -210,7 +211,7 @@ function Customers() {
     const countryCode = typeof c.country_code === 'string' ? c.country_code : (c.country_code ? String(c.country_code) : '');
     const phoneNumber = typeof c.primary_phone_number === 'string' ? c.primary_phone_number : (c.primary_phone_number ? String(c.primary_phone_number) : '');
     const phoneDisplay = countryCode && phoneNumber ? `${countryCode} ${phoneNumber}` : (phoneNumber || countryCode || 'N/A');
-    
+
     return {
       ...c,
       first_name: (c.salutation ? c.salutation + " " : "") + (c.first_name || "") + " " + (c.last_name || ""),
@@ -223,11 +224,12 @@ function Customers() {
 
   return (
     <div className="p-4">
+      <Breadcrumb items={[{ label: "Customers" }]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Customers</h1>
         <PermissionCheck required={PERMISSIONS.CUSTOMERS_CREATE}>
           <Link to={`add`}>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40"> 
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
               <UserPlus /> Add
             </Button>
           </Link>
@@ -314,4 +316,3 @@ function Customers() {
 }
 
 export default Customers;
-           

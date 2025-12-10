@@ -11,6 +11,7 @@ import api from "@/lib/axiosInstance.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Textarea } from "@/components/ui/textarea";
 
 function AddDomain() {
@@ -232,21 +233,13 @@ function AddDomain() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-            disabled={loading}
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <span>Domains</span>
-          <span>{`>`}</span>
-          <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
-        </div>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Domains", href: `/${location.pathname.split('/')[1]}/dashboard/domains` },
+          { label: isEditing ? 'Edit Domain' : 'New Domain' }
+        ]}
+        className="mb-4"
+      />
       <div className="flex items-center gap-2 mb-2">
         <h1 className="text-3xl font-bold">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
         <button

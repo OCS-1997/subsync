@@ -2,10 +2,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { toast} from "react-toastify";
+import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 
 import BasicDetailsSection from "../components/BasicDetailsSection";
 import PurchaseInfoSection from "../components/PurchaseInfoSection";
@@ -173,15 +174,15 @@ const AddService = () => {
       return;
     }
     // Validate structured tax preferences - both kind and id should be consistent
-   // console.log("Default Tax Rates Debug:", { defaultTaxRates });
-    
+    // console.log("Default Tax Rates Debug:", { defaultTaxRates });
+
     // For new structured format, validate that selections are made (allow null for "No Tax")
     const isIntraValid = defaultTaxRates.intra.rate !== undefined && defaultTaxRates.intra.rate !== '';
     const isInterValid = defaultTaxRates.inter.rate !== undefined && defaultTaxRates.inter.rate !== '';
-    
+
     if (!isIntraValid || !isInterValid) {
       toast.error("Please configure tax rates for both Intra-state and Inter-state (you can select 'No Tax' if applicable).");
-    // console.log("Validation Failed: Tax Rates not configured", { defaultTaxRates, isIntraValid, isInterValid });
+      // console.log("Validation Failed: Tax Rates not configured", { defaultTaxRates, isIntraValid, isInterValid });
       return;
     }
     // console.log("Client-side validation passed.");
@@ -252,55 +253,47 @@ const AddService = () => {
 
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="mb-4 mt-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-            disabled={loading}
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <span>Services</span>
-          <span>{`>`}</span>
-          <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
+      <Breadcrumb
+        items={[
+          { label: "Services", href: `/${location.pathname.split('/')[1]}/dashboard/services` },
+          { label: isEditing ? 'Edit Service' : 'New Service' }
+        ]}
+        className="mt-3 mb-4"
+      />
+      <form className="space-y-6 p-6" onSubmit={handleSubmit}>
+        <h1 className="text-3xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
+        <hr className="mb-2 border-blue-500 border-1 size-auto" />
+        <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />
+
+        <hr className="mb-4 border-gray-500 border-1 size-auto" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <SalesInfoSection data={salesInfo} setData={setSalesInfo} />
+          </div>
+          <div>
+            <PurchaseInfoSection
+              data={purchaseInfo}
+              setData={setPurchaseInfo}
+              vendors={vendors}
+              isLoadingVendors={isLoadingVendors}
+              vendorsError={vendorsError}
+              fetchVendors={() => dispatch(fetchVendors())}
+            />
+          </div>
         </div>
-      </div>
-    <form className="space-y-6 p-6" onSubmit={handleSubmit}>
-      <h1 className="text-3xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
-      <hr className="mb-2 border-blue-500 border-1 size-auto" />
-      <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />
 
-      <hr className="mb-4 border-gray-500 border-1 size-auto" />
+        <hr className="mb-4 border-gray-500 border-1 size-auto" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <SalesInfoSection data={salesInfo} setData={setSalesInfo} />
+        <DefaultTaxRatesSection defaultTaxRates={defaultTaxRates} setDefaultTaxRates={setDefaultTaxRates} />
+
+        <div className="flex justify-end gap-4 pt-4">
+          <Button type="submit" className="bg-blue-500" disabled={isSubmittingService}>
+            {isSubmittingService ? (isEditing ? "Updating..." : "Saving...") : (isEditing ? "Update Service" : "Save Service")}
+          </Button>
+          <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
         </div>
-        <div>
-          <PurchaseInfoSection
-            data={purchaseInfo}
-            setData={setPurchaseInfo}
-            vendors={vendors}
-            isLoadingVendors={isLoadingVendors}
-            vendorsError={vendorsError}
-            fetchVendors={() => dispatch(fetchVendors())}
-          />
-        </div>
-      </div>
-
-      <hr className="mb-4 border-gray-500 border-1 size-auto" />
-
-      <DefaultTaxRatesSection defaultTaxRates={defaultTaxRates} setDefaultTaxRates={setDefaultTaxRates} />
-
-      <div className="flex justify-end gap-4 pt-4">
-        <Button type="submit" className="bg-blue-500"  disabled={isSubmittingService}>
-          {isSubmittingService ? (isEditing ? "Updating..." : "Saving...") : (isEditing ? "Update Service" : "Save Service")}
-        </Button>
-        <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
-      </div>
-    </form>
+      </form>
     </>
   );
 };

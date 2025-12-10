@@ -8,6 +8,7 @@ import Hamster from "@/components/animations/Hamster.jsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
@@ -28,7 +29,7 @@ function Vendors() {
   const location = useLocation();
   const dispatch = useDispatch();
 
- const { list: vendors, loading, error, totalRecords, totalPages } = useSelector((state) => state.vendors);
+  const { list: vendors, loading, error, totalRecords, totalPages } = useSelector((state) => state.vendors);
 
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
@@ -57,13 +58,13 @@ function Vendors() {
       page: currentPage,
       limit: 10
     };
-    
+
     // Only add sort parameters if they are not null
     if (sortBy && sortOrder) {
       params.sortBy = sortBy;
       params.order = sortOrder;
     }
-    
+
     dispatch(fetchVendors(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
@@ -122,9 +123,9 @@ function Vendors() {
 
   const renderActions = (vendor) => (
     <div className="flex items-center gap-2">
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => {
           const currentPath = location.pathname;
           const userSegment = currentPath.split("/")[1];
@@ -150,10 +151,11 @@ function Vendors() {
 
   return (
     <div className="p-4">
+      <Breadcrumb items={[{ label: "Vendors" }]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Vendors</h1>
-        <Button 
-          className="bg-blue-500 hover:bg-blue-600 text-white w-40" 
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white w-40"
           onClick={handleAddVendor}
         >
           <UserPlus /> Add
@@ -179,75 +181,74 @@ function Vendors() {
         </DropdownMenu>
       </div>
 
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {loading ? (
-          <div className="p-6 flex flex-col justify-center items-center">
-            <Hamster />
-          </div>
-        ) : vendors.length > 0 ? (
-          <>
-            <GenericTable
-              headers={headers}
-              data={vendors.map((v) => {
-                const isInactive = (v.vendor_status || '').toLowerCase() === 'inactive';
-                // Ensure phone number is always a string and includes country code
-                const countryCode = typeof v.country_code === 'string' ? v.country_code : (v.country_code ? String(v.country_code) : '');
-                const phoneNumber = typeof v.primary_phone_number === 'string' ? v.primary_phone_number : (v.primary_phone_number ? String(v.primary_phone_number) : '');
-                // Format: country code + phone number, or just phone number, or "Not provided"
-                let phoneDisplay = "Not provided";
-                if (countryCode && phoneNumber) {
-                  phoneDisplay = `${countryCode} ${phoneNumber}`;
-                } else if (phoneNumber) {
-                  phoneDisplay = phoneNumber;
-                } else if (countryCode) {
-                  phoneDisplay = countryCode;
-                }
-                return {
-                  ...v,
-                  display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
-                  primary_phone_number: phoneDisplay,
-                  gst_treatment: v.gst_treatment || "Not specified",
-                  actions: renderActions(v),
-                  _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : '',
-                };
-              })}
-              primaryKey="vendor_id"
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-            />
-            <Pagination
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalPages={backendTotalPages}
-              totalRecords={totalRecords}
-            />
-          </>
-        ) : (
-          <div className="p-10 border rounded-md bg-white text-center">
-            {debouncedSearch ? (
-              <>
-                <div className="text-lg font-semibold mb-2">No results found</div>
-                <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
-              </>
-            ) : (
-              <>
-                <div className="text-lg font-semibold mb-2">No vendors yet</div>
-                <div className="text-sm text-gray-600 mb-4">Create your first vendor to get started.</div>
-                <Button onClick={handleAddVendor}><UserPlus className="w-4 h-4" /> Add Vendor</Button>
-              </>
-            )}
-          </div>
-        )}
+      {loading ? (
+        <div className="p-6 flex flex-col justify-center items-center">
+          <Hamster />
+        </div>
+      ) : vendors.length > 0 ? (
+        <>
+          <GenericTable
+            headers={headers}
+            data={vendors.map((v) => {
+              const isInactive = (v.vendor_status || '').toLowerCase() === 'inactive';
+              // Ensure phone number is always a string and includes country code
+              const countryCode = typeof v.country_code === 'string' ? v.country_code : (v.country_code ? String(v.country_code) : '');
+              const phoneNumber = typeof v.primary_phone_number === 'string' ? v.primary_phone_number : (v.primary_phone_number ? String(v.primary_phone_number) : '');
+              // Format: country code + phone number, or just phone number, or "Not provided"
+              let phoneDisplay = "Not provided";
+              if (countryCode && phoneNumber) {
+                phoneDisplay = `${countryCode} ${phoneNumber}`;
+              } else if (phoneNumber) {
+                phoneDisplay = phoneNumber;
+              } else if (countryCode) {
+                phoneDisplay = countryCode;
+              }
+              return {
+                ...v,
+                display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
+                primary_phone_number: phoneDisplay,
+                gst_treatment: v.gst_treatment || "Not specified",
+                actions: renderActions(v),
+                _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : '',
+              };
+            })}
+            primaryKey="vendor_id"
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+          />
+          <Pagination
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPages={backendTotalPages}
+            totalRecords={totalRecords}
+          />
+        </>
+      ) : (
+        <div className="p-10 border rounded-md bg-white text-center">
+          {debouncedSearch ? (
+            <>
+              <div className="text-lg font-semibold mb-2">No results found</div>
+              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+            </>
+          ) : (
+            <>
+              <div className="text-lg font-semibold mb-2">No vendors yet</div>
+              <div className="text-sm text-gray-600 mb-4">Create your first vendor to get started.</div>
+              <Button onClick={handleAddVendor}><UserPlus className="w-4 h-4" /> Add Vendor</Button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default Vendors;
-       

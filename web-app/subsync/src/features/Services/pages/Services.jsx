@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import {
   Dialog,
   DialogContent,
@@ -334,36 +335,37 @@ function Services() {
   return (
     <>
       <div className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">Services</h1>
-        <Link to={`add`}>
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
-            <Plus /> Add
-          </Button> 
-        </Link>
-      </div>
-      <hr className="mb-6 border-blue-500 border-1" />
-      <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm
-          search={search}
-          setSearch={setSearch}
-          handleSearch={(e) => setSearch(e.target.value)}
-        />
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
-          <FileDown /> Import
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-              <FileUp /> Export
+        <Breadcrumb items={[{ label: "Services" }]} />
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-bold">Services</h1>
+          <Link to={`add`}>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
+              <Plus /> Add
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={fetchServicesAndExport}>Export as CSV</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
-      </div>
+          </Link>
+        </div>
+        <hr className="mb-6 border-blue-500 border-1" />
+        <div className="flex items-center gap-3 mb-3">
+          <SearchFilterForm
+            search={search}
+            setSearch={setSearch}
+            handleSearch={(e) => setSearch(e.target.value)}
+          />
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleImportButtonClick}>
+            <FileDown /> Import
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                <FileUp /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={fetchServicesAndExport}>Export as CSV</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
+        </div>
 
         {error && (
           <Alert variant="destructive" className="mb-6">

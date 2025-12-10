@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 
 import VendorAddressSection from "@/features/Vendors/components/VendorAddressSection.jsx";
 import VendorCompanyDetails from "@/features/Vendors/components/VendorCompanyDetails.jsx";
@@ -124,7 +125,7 @@ const AddVendor = () => {
       dispatch(fetchVendorById(editableVendorId));
     }
     return () => {
-      dispatch(clearVendorState()); 
+      dispatch(clearVendorState());
     };
   }, [editableVendorId, dispatch]);
 
@@ -147,7 +148,7 @@ const AddVendor = () => {
       const matchedTerm = paymentTermsList.find(
         t => t.term_id === currentVendor.payment_terms?.term_id
       );
-      
+
       if (matchedTerm) {
         setVendorData(prev => ({
           ...prev,
@@ -353,7 +354,7 @@ const AddVendor = () => {
 
   // Determine if country is India for state dropdown logic
   const countryVal =
-    vendorData.address?.country?.value || 
+    vendorData.address?.country?.value ||
     vendorData.address?.country ||
     vendorData.country ||
     "";
@@ -361,21 +362,12 @@ const AddVendor = () => {
 
   return (
     <div className="container mt-4 ml-4">
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-            disabled={loading}
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <span>Vendors</span>
-          <span>{`>`}</span>
-          <span className="font-medium text-gray-900 dark:text-white">{isEditing ? 'Edit' : 'New'}</span>
-        </div>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Vendors", href: `/${location.pathname.split('/')[1]}/dashboard/vendors` },
+          { label: isEditing ? 'Edit Vendor' : 'New Vendor' }
+        ]}
+      />
       <h1 className="mb-4 text-3xl font-bold">{isEditing ? "Edit Vendor" : "Add Vendor"}</h1>
       <hr className="mb-4 border-blue-500 border-3 size-auto" />
 

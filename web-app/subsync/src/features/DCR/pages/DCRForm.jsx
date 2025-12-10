@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountrySelect } from "@/components/ui/country-select";
@@ -254,19 +255,13 @@ export default function DCRForm() {
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(`/${username}/dashboard/dcr`)}
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          Dashboard / DCR / {isEditing ? "Edit Entry" : "New Entry"}
-        </span>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Daily Call Reports", href: `/${username}/dashboard/dcr` },
+          { label: isEditing ? 'Edit Entry' : 'New Entry' }
+        ]}
+        className="mb-4"
+      />
 
       {/* Header */}
       <h1 className="text-2xl font-bold mb-6 dark:text-white">

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
 import {
     Dialog,
     DialogContent,
@@ -73,6 +74,7 @@ export default function ContactsList() {
 
     return (
         <div className="p-6">
+            <Breadcrumb items={[{ label: "Contacts" }]} />
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold dark:text-white">Contacts</h1>

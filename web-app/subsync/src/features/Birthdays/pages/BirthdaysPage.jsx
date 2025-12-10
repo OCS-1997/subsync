@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
+import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
 import { Gift, Search, RefreshCw, Calendar, User, Building2, Users, Loader2, Cake } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
@@ -145,6 +146,7 @@ function BirthdaysPage() {
 
     return (
         <div className="container mx-auto p-6 space-y-6">
+            <Breadcrumb items={[{ label: "Birthdays" }]} />
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

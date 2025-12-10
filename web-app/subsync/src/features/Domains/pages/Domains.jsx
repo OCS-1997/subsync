@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import Hamster from "@/components/animations/Hamster.jsx";
 import GenericTable from "@/components/layouts/GenericTable";
 import Pagination from "@/components/layouts/Pagination";
@@ -53,21 +54,21 @@ function Domains() {
     if (!dateString) return "";
     // If it's already in yyyy-MM-dd format, return as is
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
-    
+
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return "";
-    
+
     // Get the date in local timezone
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
-    
+
     return `${day}-${month}-${year}`;
   };
 
   const formatNameServers = (nameServers) => {
     if (!nameServers || nameServers.length === 0) return "-";
-    return nameServers.map((ns, i) => <div key={i}>{ns}<br/></div>);
+    return nameServers.map((ns, i) => <div key={i}>{ns}<br /></div>);
   };
 
   const formatMailServices = (provider, details) => {
@@ -116,7 +117,7 @@ function Domains() {
       setSortBy(key);
       setSortOrder("asc");
     }
-    
+
   };
 
   const fetchDomainsAndExport = async () => {
@@ -151,6 +152,7 @@ function Domains() {
 
   return (
     <div className="p-4">
+      <Breadcrumb items={[{ label: "Domains" }]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Domains</h1>
         <Link to="add">
@@ -278,4 +280,3 @@ function Domains() {
 }
 
 export default Domains;
-                       

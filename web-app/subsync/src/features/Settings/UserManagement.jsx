@@ -8,6 +8,7 @@ import { PERMISSIONS } from "@/constants/permissions.js";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import Hamster from "@/components/animations/Hamster.jsx";
@@ -79,11 +80,12 @@ const UserManagement = () => {
     <div className="p-6 max-w-[1600px] mx-auto space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>Settings</span>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-foreground font-medium">User Management</span>
-          </div>
+          <Breadcrumb
+            items={[
+              { label: "Settings", href: "./" },
+              { label: "User Management" }
+            ]}
+          />
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             User Management
           </h1>

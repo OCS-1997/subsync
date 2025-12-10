@@ -5,6 +5,7 @@ import { ArrowLeft, Edit, ChevronDown, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 
 import { fetchCustomerById, clearCustomerState } from "@/features/Customers/customerSlice.js";
 
@@ -50,14 +51,12 @@ function CustomerDetails() {
 
   return (
     <div className="container mx-auto py-4 px-2 sm:px-2 lg:px-6">
-      <button
-        onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
-        disabled={loading}
-      >
-        <ArrowLeft size={20} className="animate-bounce-x" />
-        <span className="font-medium">Back</span>
-      </button>
+      <Breadcrumb
+        items={[
+          { label: "Customers", href: `/${location.pathname.split('/')[1]}/dashboard/customers` },
+          { label: currentCustomer?.display_name || 'Customer Details' }
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Customer Details</h1>
@@ -88,9 +87,8 @@ function CustomerDetails() {
           )}
         </button>
         <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-          }`}
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="px-4 pb-4 pt-1">
             {/* Personal Information */}
@@ -128,11 +126,10 @@ function CustomerDetails() {
                   )}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Status</label>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                      currentCustomer.customer_status === "Active" 
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${currentCustomer.customer_status === "Active"
                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                         : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                    }`}>
+                      }`}>
                       {currentCustomer.customer_status}
                     </span>
                   </div>

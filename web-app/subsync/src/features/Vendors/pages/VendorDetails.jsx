@@ -5,6 +5,7 @@ import { ArrowLeft, Edit } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 
 import { fetchVendorById, clearVendorState } from "@/features/Services/vendorSlice.js";
 
@@ -40,19 +41,16 @@ function VendorDetails() {
 
   return (
     <div className="container mx-auto py-4 px-2 sm:px-2 lg:px-6">
-      {/* Header with back button and edit button */}
-       <button
-          onClick={handleBack}
-          className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
-          disabled={loading}
-        >
-          <ArrowLeft size={20} className="animate-bounce-x" />
-          <span className="font-medium">Back</span>
-        </button>
+      <Breadcrumb
+        items={[
+          { label: "Vendors", href: `/${location.pathname.split('/')[1]}/dashboard/vendors` },
+          { label: currentVendor?.display_name || 'Vendor Details' }
+        ]}
+      />
       <div className="flex items-center justify-between mb-6">
-        
+
         <div className="flex items-center gap-4">
-          
+
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Vendor Details</h1>
         </div>
         <Button
@@ -71,7 +69,7 @@ function VendorDetails() {
         {/* Personal Information */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Personal Information</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Name</label>
@@ -115,11 +113,10 @@ function VendorDetails() {
 
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Status</label>
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                currentVendor.vendor_status === "Active" 
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${currentVendor.vendor_status === "Active"
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                   : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-              }`}>
+                }`}>
                 {currentVendor.vendor_status}
               </span>
             </div>
@@ -129,7 +126,7 @@ function VendorDetails() {
         {/* Company Information */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Company Information</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Company Name</label>
@@ -157,7 +154,7 @@ function VendorDetails() {
       {/* Address Information */}
       <div className="mt-8 space-y-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Address Information</h2>
-        
+
         {currentVendor.vendor_address && (
           <div className="grid md:grid-cols-2 gap-8">
             <div>
@@ -201,7 +198,7 @@ function VendorDetails() {
       {/* Tax Information */}
       <div className="mt-8 space-y-6">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Tax Information</h2>
-        
+
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">GST Treatment</label>
@@ -226,12 +223,12 @@ function VendorDetails() {
       {currentVendor.payment_terms && (
         <div className="mt-8 space-y-6">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Payment Terms</h2>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Payment Term</label>
             <p className="text-lg text-gray-900 dark:text-white">
               {currentVendor.payment_terms.term_name} ({currentVendor.payment_terms.days || 0} days)
-              
+
             </p>
           </div>
         </div>
@@ -241,7 +238,7 @@ function VendorDetails() {
       {currentVendor.notes && (
         <div className="mt-8 space-y-6">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Notes</h2>
-          
+
           <div>
             <p className="text-lg text-gray-900 dark:text-white whitespace-pre-wrap">{currentVendor.notes}</p>
           </div>
@@ -252,7 +249,7 @@ function VendorDetails() {
       {currentVendor.other_contacts && currentVendor.other_contacts.length > 0 && (
         <div className="mt-8 space-y-6">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Contact Persons</h2>
-          
+
           <div className="grid gap-4">
             {currentVendor.other_contacts.map((contact, index) => (
               <div key={index} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">

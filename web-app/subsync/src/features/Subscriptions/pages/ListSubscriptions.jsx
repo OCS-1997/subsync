@@ -13,6 +13,7 @@ import Pagination from "@/components/layouts/Pagination.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu.jsx";
@@ -298,6 +299,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
 
   return (
     <div className="p-4">
+      <Breadcrumb items={[{ label: "Subscriptions" }]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">All Subscriptions</h1>
 
