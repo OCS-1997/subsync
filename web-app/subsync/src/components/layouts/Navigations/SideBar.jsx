@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { Command } from 'lucide-react';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -33,6 +34,11 @@ function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
   const { hasAnyPermission } = usePermissions();
 
+  const handleOpenCommandPalette = () => {
+    // Trigger custom event to open command palette in NavBar
+    window.dispatchEvent(new CustomEvent('openCommandPalette'));
+  };
+
   return (
     <aside
       className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-blue-500 dark:bg-sidebar text-white dark:text-sidebar-foreground 
@@ -40,7 +46,7 @@ function SideBar({ isOpen, toggleSidebar }) {
         ${isOpen ? 'w-64' : 'w-16'}
         lg:relative lg:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        overflow-y-auto`}
+        overflow-y-auto flex flex-col`}
     >
       <div className="flex items-center justify-between p-4 border-b border-white/10 dark:border-sidebar-border">
         {isOpen && <span className="text-xl font-bold">SRMS</span>}
@@ -54,7 +60,7 @@ function SideBar({ isOpen, toggleSidebar }) {
         </Button>
       </div>
 
-      <nav className="h-[calc(100%-4rem)] overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto">
         <ul className="py-2">
           <TooltipProvider>
             {sidebarItems
@@ -82,8 +88,32 @@ function SideBar({ isOpen, toggleSidebar }) {
           </TooltipProvider>
         </ul>
       </nav>
+
+      {/* Bottom section with Command Palette */}
+      <div className="border-t border-white/10 dark:border-sidebar-border p-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`w-full flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 py-3 px-4 text-white dark:text-sidebar-foreground hover:bg-white/10 dark:hover:bg-sidebar-accent transition-all duration-200`}
+                onClick={handleOpenCommandPalette}
+              >
+                <Command className="h-5 w-5" />
+                {isOpen && <span>Command Palette</span>}
+              </Button>
+            </TooltipTrigger>
+            {!isOpen && (
+              <TooltipContent side="right">
+                Command Palette (Ctrl+Shift+P)
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </aside>
   );
 }
 
 export default SideBar;
+

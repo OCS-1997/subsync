@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Phone, TrendingUp, Clock, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Phone, TrendingUp, Clock, Users, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/axiosInstance';
 import { toast } from 'react-toastify';
@@ -23,12 +25,17 @@ import {
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444'];
 
 function DCRWidget() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [dcrData, setDcrData] = useState(null);
 
     useEffect(() => {
         loadDCRData();
     }, []);
+
+    const handleViewAll = () => {
+        navigate('dcr/new');
+    };
 
     const loadDCRData = async () => {
         try {
@@ -69,10 +76,21 @@ function DCRWidget() {
     return (
         <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900">
             <CardHeader className="border-b bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                    <Phone className="w-6 h-6" />
-                    DCR Overview
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                        <Phone className="w-6 h-6" />
+                        DCR Overview
+                    </CardTitle>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleViewAll}
+                        className="bg-white text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+                    >
+                        New DCR
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
                 {/* Summary Stats */}

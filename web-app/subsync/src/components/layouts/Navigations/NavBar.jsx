@@ -11,6 +11,7 @@ import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.jsx";
 import BirthdayNavWidget from "@/features/Dashboard/components/BirthdayNavWidget.jsx";
+import CommandPalette from "@/components/CommandPalette/CommandPalette.jsx";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -28,6 +29,7 @@ function formatIp(ip) {
 function NavBar({ toggleSidebar }) {
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(state => state.auth.user);
@@ -43,11 +45,7 @@ function NavBar({ toggleSidebar }) {
         e.preventDefault();
         toggleSidebar();
       }
-      // Ctrl+Shift+P - Toggle Settings Panel
-      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
-        e.preventDefault();
-        setSettingsOpen((prev) => !prev);
-      }
+      // Note: Ctrl+Shift+P is now handled by CommandPalette component
       // Ctrl+Shift+H - Go to Home/Dashboard
       if (e.ctrlKey && e.shiftKey && e.key === 'H') {
         e.preventDefault();
@@ -55,8 +53,17 @@ function NavBar({ toggleSidebar }) {
       }
     };
 
+    // Listen for openCommandPalette event from sidebar
+    const handleOpenCommandPalette = () => {
+      setCommandPaletteOpen(true);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('openCommandPalette', handleOpenCommandPalette);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('openCommandPalette', handleOpenCommandPalette);
+    };
   }, [toggleSidebar, navigate, user?.username]);
 
   const handleLogout = async () => {
@@ -82,7 +89,7 @@ function NavBar({ toggleSidebar }) {
             <span className="material-symbols-outlined">menu</span>
           </Button>
           <div className="flex-shrink-0 flex justify-end p-1 rounded">
-            <img src="/logo.png" alt="" className="h-12  p-1 dark:invert dark:brightness-0 dark:contrast-200" />
+            <img src="/logo.png" alt="Logo" className="h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -301,6 +308,12 @@ function NavBar({ toggleSidebar }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+      />
     </nav>
   );
 }
