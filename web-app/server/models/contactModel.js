@@ -25,6 +25,9 @@ const createContact = async (contactData) => {
             country_code,
             phone_number,
             designation,
+            date_of_birth,
+            is_private,
+            created_by,
             notes
         } = contactData;
 
@@ -32,8 +35,9 @@ const createContact = async (contactData) => {
             INSERT INTO contacts (
                 contact_id, domain_id, domain_free_text, company_name,
                 salutation, first_name, last_name, email,
-                country_code, phone_number, designation, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                country_code, phone_number, designation, date_of_birth,
+                is_private, created_by, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         await appDB.query(query, [
@@ -48,6 +52,9 @@ const createContact = async (contactData) => {
             country_code,
             phone_number,
             designation,
+            date_of_birth,
+            is_private,
+            created_by,
             notes
         ]);
 
@@ -60,8 +67,9 @@ const createContact = async (contactData) => {
 
 /**
  * Get all contacts with pagination and search
+ * Filters private contacts based on user permissions
  */
-const getAllContacts = async ({ page = 1, limit = 20, search = '' }) => {
+const getAllContacts = async ({ page = 1, limit = 20, search = '', username = null, sort = null, order = 'asc' }) => {
     try {
         const offset = (page - 1) * limit;
 
@@ -74,40 +82,80 @@ const getAllContacts = async ({ page = 1, limit = 20, search = '' }) => {
         `;
 
         const params = [];
+        const conditions = [];
 
+        // Privacy filter: show public contacts OR private contacts created by the user
+        if (username) {
+            conditions.push('(c.is_private = 0 OR c.created_by = ?)');
+            params.push(username);
+        } else {
+            conditions.push('c.is_private = 0');
+        }
+
+        // Search filter
         if (search) {
-            query += ` WHERE 
+            conditions.push(`(
                 c.first_name LIKE ? OR 
                 c.last_name LIKE ? OR 
                 c.email LIKE ? OR 
                 c.company_name LIKE ? OR
                 c.phone_number LIKE ? OR
                 c.domain_free_text LIKE ?
-            `;
+            )`);
             const searchPattern = `%${search}%`;
             params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
         }
 
-        query += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
+        if (conditions.length > 0) {
+            query += ` WHERE ${conditions.join(' AND ')}`;
+        }
+
+        // Sorting - map frontend keys to database columns
+        const sortMap = {
+            'full_name': 'c.first_name',
+            'company_name': 'c.company_name',
+            'email': 'c.email',
+            'phone': 'c.phone_number',
+            'domain': 'd.domain_name'
+        };
+
+        const sortColumn = sort && sortMap[sort] ? sortMap[sort] : 'c.created_at';
+        const sortDirection = order && (order.toLowerCase() === 'desc' || order.toLowerCase() === 'asc')
+            ? order.toUpperCase()
+            : 'DESC';
+
+        query += ` ORDER BY ${sortColumn} ${sortDirection} LIMIT ? OFFSET ?`;
         params.push(limit, offset);
 
         const [contacts] = await appDB.query(query, params);
 
-        // Get total count
+        // Get total count with same filters
         let countQuery = `SELECT COUNT(*) as total FROM contacts c`;
         const countParams = [];
+        const countConditions = [];
+
+        if (username) {
+            countConditions.push('(c.is_private = 0 OR c.created_by = ?)');
+            countParams.push(username);
+        } else {
+            countConditions.push('c.is_private = 0');
+        }
 
         if (search) {
-            countQuery += ` WHERE 
+            countConditions.push(`(
                 c.first_name LIKE ? OR 
                 c.last_name LIKE ? OR 
                 c.email LIKE ? OR 
                 c.company_name LIKE ? OR
                 c.phone_number LIKE ? OR
                 c.domain_free_text LIKE ?
-            `;
+            )`);
             const searchPattern = `%${search}%`;
             countParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+        }
+
+        if (countConditions.length > 0) {
+            countQuery += ` WHERE ${countConditions.join(' AND ')}`;
         }
 
         const [countResult] = await appDB.query(countQuery, countParams);

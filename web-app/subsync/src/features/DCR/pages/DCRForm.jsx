@@ -36,7 +36,7 @@ export default function DCRForm() {
   const [formData, setFormData] = useState({
     timestamp: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm
     call_type: "inbound",
-    time_spent: "00:30",
+    time_spent: "00:05",
     domain_id: null,
     domain_free_text: "",
     company_name: "",
@@ -371,8 +371,8 @@ export default function DCRForm() {
               )}
 
               {domainDetails && (
-                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                  <p className="font-semibold">{domainDetails.company_name || domainDetails.customer_name}</p>
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+                  <p className="font-semibold dark:text-white">{domainDetails.company_name || domainDetails.customer_name}</p>
                   {domainDetails.contacts && domainDetails.contacts.length > 0 && (
                     <div className="mt-3">
                       <Label className="text-sm">Contact Person</Label>
@@ -381,7 +381,7 @@ export default function DCRForm() {
                           value: contact,
                           label: `${contact.salutation || 'Mr.'} ${contact.first_name} ${contact.last_name || ''} ${contact.designation ? `(${contact.designation})` : ''} – ${contact.country_code || '+91'} ${contact.phone_number || ''}`.trim()
                         }))}
-                        onChange={(option) => {
+                        onChange={(option) => { 
                           if (option) {
                             const contact = option.value;
                             setFormData(prev => ({
@@ -396,6 +396,35 @@ export default function DCRForm() {
                         placeholder="Select contact person"
                         className="mt-2 react-select-container"
                         classNamePrefix="react-select"
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            backgroundColor: 'transparent',
+                            borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
+                            '&:hover': { borderColor: '#9ca3af' }
+                          }),
+                          menu: (base) => ({
+                            ...base,
+                            backgroundColor: 'var(--select-menu-bg, white)',
+                            color: 'var(--select-menu-text, black)'
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused
+                              ? 'var(--select-option-hover, #e5e7eb)'
+                              : 'transparent',
+                            color: 'var(--select-option-text, black)',
+                            '&:hover': { backgroundColor: 'var(--select-option-hover, #e5e7eb)' }
+                          }),
+                          singleValue: (base) => ({
+                            ...base,
+                            color: 'var(--select-value-text, black)'
+                          }),
+                          input: (base) => ({
+                            ...base,
+                            color: 'var(--select-input-text, black)'
+                          })
+                        }}
                       />
                     </div>
                   )}

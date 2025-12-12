@@ -24,6 +24,8 @@ const createContact = async (req, res) => {
             country_code,
             phone_number,
             designation,
+            date_of_birth,
+            is_private,
             notes
         } = req.body;
 
@@ -32,6 +34,7 @@ const createContact = async (req, res) => {
         }
 
         const contact_id = generateContactId();
+        const created_by = req.user?.username || null;
 
         const contactData = {
             contact_id,
@@ -45,6 +48,9 @@ const createContact = async (req, res) => {
             country_code: country_code || '+91',
             phone_number: phone_number || null,
             designation: designation || null,
+            date_of_birth: date_of_birth || null,
+            is_private: is_private !== undefined ? is_private : 0,  // Default to public (0)
+            created_by,
             notes: notes || null
         };
 
@@ -74,19 +80,27 @@ const createContact = async (req, res) => {
 
 /**
  * Get all contacts with pagination and search
+ * Filters based on privacy settings and current user
  */
 const getContacts = async (req, res) => {
     try {
         const {
             page = 1,
             limit = 20,
-            search = ''
+            search = '',
+            sort = null,
+            order = 'asc'
         } = req.query;
+
+        const username = req.user?.username || null;
 
         const result = await getAllContacts({
             page: parseInt(page),
             limit: parseInt(limit),
-            search
+            search,
+            username,
+            sort,
+            order
         });
 
         res.status(200).json(result);
@@ -133,6 +147,8 @@ const updateContact = async (req, res) => {
             country_code,
             phone_number,
             designation,
+            date_of_birth,
+            is_private,
             notes
         } = req.body;
 
@@ -148,6 +164,8 @@ const updateContact = async (req, res) => {
         if (country_code !== undefined) updateData.country_code = country_code;
         if (phone_number !== undefined) updateData.phone_number = phone_number;
         if (designation !== undefined) updateData.designation = designation;
+        if (date_of_birth !== undefined) updateData.date_of_birth = date_of_birth;
+        if (is_private !== undefined) updateData.is_private = is_private;
         if (notes !== undefined) updateData.notes = notes;
 
         const success = await updateContactModel(id, updateData);

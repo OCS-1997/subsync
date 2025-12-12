@@ -312,7 +312,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
         <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} />
         <div className="flex items-center gap-2">
           <Label>Status</Label>
-          <select className="border rounded-md h-9 px-2" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
+          <select className="border rounded-md h-9 px-2 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
             <option value="">All</option>
             <option value="active">Active</option>
             <option value="soon">Soon Expiring</option>
@@ -329,19 +329,19 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
           <Hamster />
         </div>
       ) : rows.length === 0 ? (
-        <div className="p-10 border rounded-md bg-white text-center">
+        <div className="p-10 border rounded-md bg-white dark:bg-gray-800 dark:border-gray-700 text-center">
           {debouncedSearch || statusFilter ? (
             <>
-              <div className="text-lg font-semibold mb-2">No results found</div>
-              <div className="text-sm text-gray-600 mb-4">Try adjusting your search or filter criteria.</div>
+              <div className="text-lg font-semibold mb-2 dark:text-white">No results found</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">Try adjusting your search or filter criteria.</div>
               <Button variant="outline" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }}>
                 <RotateCcw className="w-4 h-4 mr-2" /> Clear Filters
               </Button>
             </>
           ) : (
             <>
-              <div className="text-lg font-semibold mb-2">No subscriptions yet</div>
-              <div className="text-sm text-gray-600 mb-4">Add a subscription to see it listed here.</div>
+              <div className="text-lg font-semibold mb-2 dark:text-white">No subscriptions yet</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">Add a subscription to see it listed here.</div>
               {onAddNew && (
                 <Button onClick={onAddNew}><Plus className="w-4 h-4" /> Add Subscription</Button>
               )}

@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Lock, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { CountrySelect } from '@/components/ui/country-select';
 import Hamster from '@/components/animations/Hamster.jsx';
 import { createContact, updateContact, fetchContactById, clearCurrentContact, clearError } from '../contactsSlice';
@@ -33,6 +34,8 @@ export default function ContactForm() {
         designation: '',
         domain_id: '',
         domain_free_text: '',
+        date_of_birth: '',
+        is_private: false,
         notes: ''
     });
 
@@ -58,6 +61,8 @@ export default function ContactForm() {
                 designation: currentContact.designation || '',
                 domain_id: currentContact.domain_id || '',
                 domain_free_text: currentContact.domain_free_text || '',
+                date_of_birth: currentContact.date_of_birth ? currentContact.date_of_birth.split('T')[0] : '',
+                is_private: currentContact.is_private === 1 || currentContact.is_private === true,
                 notes: currentContact.notes || ''
             });
         }
@@ -261,10 +266,59 @@ export default function ContactForm() {
                     </CardContent>
                 </Card>
 
+                {/* Personal Information */}
+                <Card>
+                    <CardHeader className="border-b">
+                        <CardTitle>Personal Information</CardTitle>
+                        <CardDescription>Date of birth and privacy settings</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-4">
+                        {/* Date of Birth */}
+                        <div>
+                            <Label htmlFor="date_of_birth">Date of Birth</Label>
+                            <Input
+                                id="date_of_birth"
+                                type="date"
+                                value={formData.date_of_birth}
+                                onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                                className="mt-2"
+                                max={new Date().toISOString().split('T')[0]}
+                            />
+                            <p className="text-sm text-gray-500 mt-1">Used for birthday reminders</p>
+                        </div>
+
+                        {/* Privacy Setting */}
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    {formData.is_private ? (
+                                        <Lock className="w-5 h-5 text-orange-500" />
+                                    ) : (
+                                        <Unlock className="w-5 h-5 text-green-500" />
+                                    )}
+                                    <Label htmlFor="is_private" className="cursor-pointer">
+                                        {formData.is_private ? 'Private Contact' : 'Public Contact'}
+                                    </Label>
+                                </div>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {formData.is_private
+                                        ? 'Only you can see this contact'
+                                        : 'All users can see this contact'}
+                                </p>
+                            </div>
+                            <Switch
+                                id="is_private"
+                                checked={formData.is_private}
+                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_private: checked }))}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Notes */}
                 <Card>
                     <CardHeader className="border-b">
-                        <CardTitle>Notes</CardTitle>
+                        <CardTitle>Additional Notes</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
                         <Textarea
