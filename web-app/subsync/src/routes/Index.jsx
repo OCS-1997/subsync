@@ -40,6 +40,7 @@ import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermis
 import HelpPage from '@/features/Help/HelpPage.jsx';
 import DCRList from '@/features/DCR/pages/DCRList.jsx';
 import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
+import ViewDCR from '@/features/DCR/pages/ViewDCR.jsx';
 import ContactsList from '@/features/Contacts/pages/ContactsList.jsx';
 import ContactForm from '@/features/Contacts/pages/ContactForm.jsx';
 import ContactDetails from '@/features/Contacts/pages/ContactDetails.jsx';
@@ -84,6 +85,7 @@ const router = createBrowserRouter([
 
       { path: "dcr", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DCRList /></PermissionGate> },
       { path: "dcr/new", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/:id", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><ViewDCR /></PermissionGate> },
       { path: "dcr/:id/edit", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
 
       { path: "contacts", element: <PermissionGate required={PERMISSIONS.CONTACTS_VIEW}><ContactsList /></PermissionGate> },

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Filter, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, X, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,7 +154,8 @@ export default function DCRList() {
     { key: "domain_display", label: "Domain / Company" },
     { key: "contact_display", label: "Contact" },
     { key: "call_type", label: "Call Type" },
-    { key: "time_spent", label: "Time Spent" },
+    { key: "time_spent", label: "Duration" },
+    { key: "notes_preview", label: "Short Description" },
     { key: "actions", label: "Actions" }
   ];
 
@@ -244,8 +245,9 @@ export default function DCRList() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="inbound">Inbound</SelectItem>
-                    <SelectItem value="outbound">Outbound</SelectItem>
+                    <SelectItem value="incoming">Incoming</SelectItem>
+                    <SelectItem value="outgoing">Outgoing</SelectItem>
+                    <SelectItem value="follow-up">Follow-up</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -294,37 +296,60 @@ export default function DCRList() {
         <>
           <GenericTable
             headers={headers}
-            data={entries.map((entry) => ({
-              ...entry,
-              timestamp: formatDateTime(entry.timestamp),
-              domain_display: entry.domain_name || entry.domain_free_text || entry.company_name || "-",
-              contact_display: entry.contact_name || "-",
-              call_type: entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1),
-              actions: (
-                <div className="flex gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => navigate(`/${username}/dashboard/dcr/${entry.id}/edit`)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  {hasPermission(PERMISSIONS.DCR_DELETE) && (
+            data={entries.map((entry) => {
+              const notesPreview = entry.notes ? (entry.notes.length > 50 ? entry.notes.substring(0, 50) + '...' : entry.notes) : "-";
+              const currentUser = username; // Assuming username is the current logged in user
+              const canEdit = isAdmin || entry.user_id === currentUser;
+
+              return {
+                ...entry,
+                timestamp: formatDateTime(entry.timestamp),
+                domain_display: entry.domain_name || entry.domain_free_text || entry.company_name || "-",
+                contact_display: entry.contact_name || "-",
+                call_type: entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1).replace('-', '-'),
+                notes_preview: (
+                  <span title={entry.notes || "-"} className="cursor-help">
+                    {notesPreview}
+                  </span>
+                ),
+                actions: (
+                  <div className="flex gap-2">
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => {
-                        setEntryToDelete(entry);
-                        setDeleteDialogOpen(true);
-                      }}
-                      className="text-red-600 hover:text-red-700"
+                      onClick={() => navigate(`/${username}/dashboard/dcr/${entry.id}`)}
+                      title="View"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </Button>
-                  )}
-                </div>
-              )
-            }))}
+                    {canEdit && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => navigate(`/${username}/dashboard/dcr/${entry.id}/edit`)}
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    )}
+                    {hasPermission(PERMISSIONS.DCR_DELETE) && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEntryToDelete(entry);
+                          setDeleteDialogOpen(true);
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                )
+              };
+            })}
             primaryKey="id"
             sortBy={sortBy}
             sortOrder={sortOrder}

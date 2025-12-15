@@ -93,9 +93,8 @@ function NavBar({ toggleSidebar }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {loginIp && loginTime && (
+          {loginTime && (
             <div className="px-4 py-2 text-xs text-foreground dark:text-foreground border-r border-border">
-              <div className="font-medium">IP: {formatIp(loginIp)}</div>
               <div className="text-muted-foreground">Logged in: {new Date(loginTime).toLocaleString()}</div>
             </div>
           )}
@@ -139,8 +138,25 @@ function NavBar({ toggleSidebar }) {
                 <User className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-48" align="end">
+            <PopoverContent className="w-64" align="end">
+              {/* IP Address */}
+              {loginIp && (
+                <div className="px-2 py-2 mb-2 border-b border-border">
+                  <div className="text-xs font-medium text-foreground">IP: {formatIp(loginIp)}</div>
+                </div>
+              )}
 
+              {/* Profile Link */}
+              <Link
+                to="settings/profile"
+                className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
+                onClick={() => setOpen(false)}
+              >
+                <UserRound className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+
+              {/* Navigation Items */}
               {navItems.map((item) => (
                 item.key === "logout" ? (
                   <button
@@ -207,15 +223,6 @@ function NavBar({ toggleSidebar }) {
 
               {/* Links */}
               <ul className="flex flex-col space-y-4 text-sm font-medium">
-                <Link
-                  to="settings/profile"
-                  onClick={() => setSettingsOpen(false)}
-                  className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-                >
-                  <UserRound className="h-5 w-5" />
-                  Profile
-                </Link>
-
                 {hasPermission(PERMISSIONS.TAXES_VIEW) && (
                   <Link
                     to="settings/taxes/tax-rates"

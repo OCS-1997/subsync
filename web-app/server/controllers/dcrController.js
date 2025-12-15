@@ -46,7 +46,7 @@ const createDcr = async (req, res) => {
         const dcrData = {
             user_id: req.user.username,
             timestamp: normalizedTimestamp,
-            call_type: call_type || 'inbound',
+            call_type: call_type || 'incoming',
             time_spent_minutes,
             domain_id: domain_id || null,
             domain_free_text: domain_free_text || null,

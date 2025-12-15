@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS dcr_entries (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(32) NOT NULL,
     timestamp DATETIME NOT NULL,
-    call_type ENUM('inbound', 'outbound') NOT NULL DEFAULT 'inbound',
+    call_type ENUM('incoming', 'outgoing', 'follow-up') NOT NULL DEFAULT 'incoming',
     time_spent_minutes INT NOT NULL,
     domain_id VARCHAR(15) NULL,
     domain_free_text VARCHAR(255) NULL,
