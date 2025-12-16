@@ -6,7 +6,10 @@ ALTER TABLE birthdays
     MODIFY COLUMN user_id VARCHAR(50) NULL,
     ADD COLUMN contact_person_index INT NULL COMMENT 'Index in other_contacts array for contact persons' AFTER customer_id,
     MODIFY COLUMN type ENUM('user', 'customer', 'contact_person') NOT NULL,
-    ADD INDEX idx_birthdays_contact_person (customer_id, contact_person_index);
+    ADD INDEX idx_birthdays_contact_person (customer_id, contact_person_index)
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_0900_ai_ci
+    NOT NULL;
 
 -- Add birthday-related permissions
 INSERT INTO permissions (permission_key, resource, action, description)
