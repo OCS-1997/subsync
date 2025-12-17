@@ -39,6 +39,7 @@ import {
     Receipt,
     UserCog,
     ClipboardList,
+    Database,
 } from "lucide-react";
 
 // Command palette items configuration
@@ -137,7 +138,17 @@ const createCommandItems = (username, hasPermission) => {
             keywords: ["celebrations", "dates", "anniversary"],
             permission: PERMISSIONS.BIRTHDAYS_VIEW,
         },
-        
+        {
+            id: "backups",
+            category: "Navigation",
+            icon: Database,
+            title: "Backups",
+            subtitle: "Manage database backups",
+            path: `${baseUrl}/backups`,
+            keywords: ["database", "restore", "recovery", "export"],
+            permission: PERMISSIONS.BACKUPS_VIEW,
+        },
+
 
         // Quick Actions - Add New
         {
@@ -372,12 +383,12 @@ export default function CommandPalette({ open, onOpenChange }) {
     // Keyboard shortcut listener
     useEffect(() => {
         const down = (e) => {
-            // Ctrl+Shift+P
+            // Ctrl+Shift+P - Open Settings Menu
             if (e.key === "P" && e.ctrlKey && e.shiftKey) {
                 e.preventDefault();
-                onOpenChange(!open);
+                window.dispatchEvent(new CustomEvent('openSettingsMenu'));
             }
-            // Also support Ctrl+K for quick search
+            // Ctrl+K - Open Command Palette
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 onOpenChange(!open);
@@ -393,12 +404,12 @@ export default function CommandPalette({ open, onOpenChange }) {
             <DialogContent className="overflow-hidden p-0 max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/50 shadow-2xl">
                 <Command className="bg-transparent">
                     <div className="flex items-center border-b border-gray-200 dark:border-gray-700/50 px-4 py-3">
-                        
+
                         <CommandInput
                             placeholder="Type a command or search..."
                             className="flex h-10 w-full text-lg bg-transparent text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none text-base border-0"
                             autoFocus
-                        />  
+                        />
                         <kbd className="ml-2 hidden sm:inline-flex h-6 select-none items-center gap-1 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-2 font-mono text-[11px] font-medium text-gray-500 dark:text-gray-400">
                             ESC
                         </kbd>
@@ -473,7 +484,7 @@ export default function CommandPalette({ open, onOpenChange }) {
                             </span>
                         </div>
                         <span className="text-gray-400 dark:text-gray-600">
-                            Ctrl+Shift+P or Ctrl+K
+                            Ctrl+K
                         </span>
                     </div>
                 </Command>

@@ -21,7 +21,8 @@ import {
     Moon,
     Sun,
     Search,
-    ChevronRight
+    ChevronRight,
+    Database
 } from "lucide-react";
 
 export default function HelpPage() {
@@ -31,7 +32,8 @@ export default function HelpPage() {
             icon: <Menu className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
             items: [
                 { keys: ["Ctrl", "Shift", "S"], description: "Toggle Sidebar", icon: <Menu className="w-4 h-4" /> },
-                { keys: ["Ctrl", "Shift", "P"], description: "Open Command Palette", icon: <Settings className="w-4 h-4" /> },
+                { keys: ["Ctrl", "K"], description: "Open Command Palette", icon: <Search className="w-4 h-4" /> },
+                { keys: ["Ctrl", "Shift", "P"], description: "Open Settings Menu", icon: <Settings className="w-4 h-4" /> },
                 { keys: ["Ctrl", "Shift", "Q"], description: "Open Quick Tools", icon: <Link2 className="w-4 h-4" /> },
                 { keys: ["Ctrl", "Shift", "H"], description: "Go to Home/Dashboard", icon: <Home className="w-4 h-4" /> },
             ]
@@ -40,7 +42,6 @@ export default function HelpPage() {
             category: "Quick Actions",
             icon: <Zap className="w-5 h-5 text-purple-600 dark:text-purple-400" />,
             items: [
-                { keys: ["Ctrl", "K"], description: "Quick Search", icon: <Search className="w-4 h-4" /> },
                 { keys: ["Esc"], description: "Close Dialogs/Modals", icon: <ChevronRight className="w-4 h-4" /> },
                 { keys: ["Enter"], description: "Submit Forms", icon: <ChevronRight className="w-4 h-4" /> },
             ]
@@ -83,6 +84,12 @@ export default function HelpPage() {
             icon: <FileText className="w-6 h-6" />,
             description: "Track recurring subscriptions and billing cycles",
             color: "indigo"
+        },
+        {
+            title: "Backups",
+            icon: <Database className="w-6 h-6" />,
+            description: "Manage database backups, restoration, and recovery",
+            color: "cyan"
         },
         {
             title: "Quick Tools",
@@ -348,7 +355,13 @@ export default function HelpPage() {
                             <li className="flex items-start gap-2">
                                 <ChevronRight className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    <strong>Command Palette:</strong> Quick access with Ctrl+Shift+P to search and navigate anywhere instantly
+                                    <strong>Command Palette:</strong> Quick access with Ctrl+K to search and navigate anywhere instantly
+                                </span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <ChevronRight className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    <strong>Settings Menu:</strong> Open the settings menu instantly with Ctrl+Shift+P
                                 </span>
                             </li>
                             <li className="flex items-start gap-2">

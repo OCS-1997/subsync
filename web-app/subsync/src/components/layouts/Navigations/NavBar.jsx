@@ -58,11 +58,18 @@ function NavBar({ toggleSidebar }) {
       setCommandPaletteOpen(true);
     };
 
+    // Listen for openSettingsMenu event from CommandPalette
+    const handleOpenSettingsMenu = () => {
+      setSettingsOpen(true);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('openCommandPalette', handleOpenCommandPalette);
+    window.addEventListener('openSettingsMenu', handleOpenSettingsMenu);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('openCommandPalette', handleOpenCommandPalette);
+      window.removeEventListener('openSettingsMenu', handleOpenSettingsMenu);
     };
   }, [toggleSidebar, navigate, user?.username]);
 
