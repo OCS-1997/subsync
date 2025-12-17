@@ -61,6 +61,13 @@ export const PERMISSIONS = Object.freeze({
     BIRTHDAYS_VIEW: 'birthdays.view',
     BIRTHDAYS_MANAGE: 'birthdays.manage',
     BIRTHDAYS_SYNC: 'birthdays.sync',
+    BACKUPS_VIEW: 'backups.view',
+    BACKUPS_CREATE: 'backups.create',
+    BACKUPS_UPDATE: 'backups.update',
+    BACKUPS_DELETE: 'backups.delete',
+    BACKUPS_TRIGGER: 'backups.trigger',
+    BACKUPS_RESTORE: 'backups.restore',
+    BACKUPS_DOWNLOAD: 'backups.download',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -126,6 +133,13 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.BIRTHDAYS_VIEW, resource: 'birthdays', action: 'view', description: 'View birthdays' },
     { key: PERMISSIONS.BIRTHDAYS_MANAGE, resource: 'birthdays', action: 'manage', description: 'Manage birthdays' },
     { key: PERMISSIONS.BIRTHDAYS_SYNC, resource: 'birthdays', action: 'sync', description: 'Sync birthdays from source tables' },
+    { key: PERMISSIONS.BACKUPS_VIEW, resource: 'backups', action: 'view', description: 'View backup configurations and history' },
+    { key: PERMISSIONS.BACKUPS_CREATE, resource: 'backups', action: 'create', description: 'Create backup configurations' },
+    { key: PERMISSIONS.BACKUPS_UPDATE, resource: 'backups', action: 'update', description: 'Update backup configurations' },
+    { key: PERMISSIONS.BACKUPS_DELETE, resource: 'backups', action: 'delete', description: 'Delete backup configurations' },
+    { key: PERMISSIONS.BACKUPS_TRIGGER, resource: 'backups', action: 'trigger', description: 'Manually trigger backups' },
+    { key: PERMISSIONS.BACKUPS_RESTORE, resource: 'backups', action: 'restore', description: 'Restore from backups (CRITICAL - Admin only)' },
+    { key: PERMISSIONS.BACKUPS_DOWNLOAD, resource: 'backups', action: 'download', description: 'Download backup files' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {

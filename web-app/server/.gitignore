@@ -13,3 +13,7 @@ uploads/*
 # Ignore
 *.csv
 *.venv
+
+
+backups
+backups/*

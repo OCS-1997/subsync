@@ -61,6 +61,13 @@ export const PERMISSIONS = Object.freeze({
   BIRTHDAYS_VIEW: 'birthdays.view',
   BIRTHDAYS_MANAGE: 'birthdays.manage',
   BIRTHDAYS_SYNC: 'birthdays.sync',
+  BACKUPS_VIEW: 'backups.view',
+  BACKUPS_CREATE: 'backups.create',
+  BACKUPS_UPDATE: 'backups.update',
+  BACKUPS_DELETE: 'backups.delete',
+  BACKUPS_TRIGGER: 'backups.trigger',
+  BACKUPS_RESTORE: 'backups.restore',
+  BACKUPS_DOWNLOAD: 'backups.download',
 });
 
 export const PAGE_PERMISSIONS = {

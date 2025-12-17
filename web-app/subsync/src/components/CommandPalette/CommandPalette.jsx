@@ -137,6 +137,7 @@ const createCommandItems = (username, hasPermission) => {
             keywords: ["celebrations", "dates", "anniversary"],
             permission: PERMISSIONS.BIRTHDAYS_VIEW,
         },
+        
 
         // Quick Actions - Add New
         {

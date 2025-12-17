@@ -45,6 +45,9 @@ import ContactsList from '@/features/Contacts/pages/ContactsList.jsx';
 import ContactForm from '@/features/Contacts/pages/ContactForm.jsx';
 import ContactDetails from '@/features/Contacts/pages/ContactDetails.jsx';
 import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
+import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.jsx';
+import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
+import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -94,6 +97,12 @@ const router = createBrowserRouter([
       { path: "contacts/:id/edit", element: <PermissionGate required={PERMISSIONS.CONTACTS_UPDATE}><ContactForm /></PermissionGate> },
 
       { path: "birthdays", element: <PermissionGate required={PERMISSIONS.BIRTHDAYS_VIEW}><BirthdaysPage /></PermissionGate> },
+
+      { path: "backups", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupConfigurations /></PermissionGate> },
+      { path: "backups/new", element: <PermissionGate required={PERMISSIONS.BACKUPS_CREATE}><BackupForm /></PermissionGate> },
+      { path: "backups/:id/edit", element: <PermissionGate required={PERMISSIONS.BACKUPS_UPDATE}><BackupForm /></PermissionGate> },
+      { path: "backups/:configId/history", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupHistory /></PermissionGate> },
+      { path: "backups/history", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupHistory /></PermissionGate> },
 
       {
         path: "settings",

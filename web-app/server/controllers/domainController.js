@@ -32,7 +32,7 @@ const updateDomainDetails = async (req, res) => {
         const updatedDomain = await getDomainById(did); // after update
         // Log activity
         if (req.user && req.user.username) {
-            await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did,ipAddress: req.ip, details: req.body });
+            await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did, ipAddress: req.ip, details: req.body });
         }
         res.json(updatedDomain);
     } catch (error) {
@@ -110,7 +110,7 @@ const getDomainDetailsForDcr = async (req, res) => {
     try {
         const { id } = req.params;
         const domain = await getDomainById(id);
-        
+
         if (!domain) {
             return res.status(404).json({ error: "Domain not found." });
         }
@@ -121,14 +121,14 @@ const getDomainDetailsForDcr = async (req, res) => {
 
         if (domain.customer_id) {
             customer = await getCustomerById(domain.customer_id);
-            
+
             // Extract contacts from customer's other_contacts JSON field
             if (customer && customer.other_contacts) {
                 try {
-                    const parsedContacts = typeof customer.other_contacts === 'string' 
-                        ? JSON.parse(customer.other_contacts) 
+                    const parsedContacts = typeof customer.other_contacts === 'string'
+                        ? JSON.parse(customer.other_contacts)
                         : customer.other_contacts;
-                    
+
                     if (Array.isArray(parsedContacts)) {
                         contacts = parsedContacts.map(contact => ({
                             email: contact.email || '',

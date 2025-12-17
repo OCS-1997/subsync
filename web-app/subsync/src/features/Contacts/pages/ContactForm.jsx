@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Lock, Unlock } from 'lucide-react';
+import { Save, Lock, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { CountrySelect } from '@/components/ui/country-select';
+import { PageHeader } from '@/components/ui/breadcrumb';
 import Hamster from '@/components/animations/Hamster.jsx';
 import { createContact, updateContact, fetchContactById, clearCurrentContact, clearError } from '../contactsSlice';
 
@@ -105,23 +106,16 @@ export default function ContactForm() {
 
     return (
         <div className="p-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(`/${username}/dashboard/contacts`)}
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Dashboard / Contacts / {isEditing ? 'Edit Contact' : 'New Contact'}
-                </span>
-            </div>
+            <PageHeader
+                description={isEditing ? 'Update contact information' : 'Add a new contact to your address book'}
+                breadcrumbItems={[
+                    { label: 'Contacts', href: `/${username}/dashboard/contacts` },
+                    { label: isEditing ? 'Edit Contact' : 'New Contact' }
+                ]}
+            />
 
-            {/* Header */}
             <h1 className="text-2xl font-bold mb-6 dark:text-white">
-                {isEditing ? 'Edit Contact' : 'New Contact'}
+                {isEditing ? "Edit Contact" : "New Contact"}
             </h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">

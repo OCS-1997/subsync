@@ -44,6 +44,18 @@ import {
     previewUrlController
 } from '../controllers/quickToolsController.js';
 import { PERMISSIONS } from '../constants/permissions.js';
+import {
+    getBackupConfigurations,
+    getBackupConfiguration,
+    createBackupConfig,
+    updateBackupConfig,
+    deleteBackupConfig,
+    triggerBackupManual,
+    getBackupHistory,
+    getBackupHistoryEntry,
+    downloadBackup,
+    restoreFromBackup
+} from '../controllers/backupController.js';
 
 const router = express.Router();
 
@@ -224,5 +236,17 @@ router.delete('/contacts/:id', isAuthenticated, authorize(PERMISSIONS.CONTACTS_D
 // Contacts (DCR integration - keeping for compatibility)
 router.post('/contacts/from-dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createContactFromDcrController);
 
+// Backup System
+router.get('/backups', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupConfigurations);
+router.get('/backups/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupConfiguration);
+router.post('/backups', isAuthenticated, authorize(PERMISSIONS.BACKUPS_CREATE), createBackupConfig);
+router.put('/backups/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS_UPDATE), updateBackupConfig);
+router.delete('/backups/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS_DELETE), deleteBackupConfig);
+router.post('/backups/:id/trigger', isAuthenticated, authorize(PERMISSIONS.BACKUPS_TRIGGER), triggerBackupManual);
+router.get('/backups/:id/history', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupHistory);
+router.get('/backup-history', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupHistory);
+router.get('/backup-history/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupHistoryEntry);
+router.get('/backup-history/:id/download', isAuthenticated, authorize(PERMISSIONS.BACKUPS_DOWNLOAD), downloadBackup);
+router.post('/backup-history/:id/restore', isAuthenticated, authorize(PERMISSIONS.BACKUPS_RESTORE), restoreFromBackup);
 
 export default router;

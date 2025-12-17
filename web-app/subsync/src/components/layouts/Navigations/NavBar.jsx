@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -308,6 +308,17 @@ function NavBar({ toggleSidebar }) {
                   >
                     <Link2 className="h-5 w-5" />
                     Quick Tools
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.BACKUPS_VIEW) && (
+                  <Link
+                    to={`/${user?.username}/dashboard/backups`}
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Database className="h-5 w-5" />
+                    Backups
                   </Link>
                 )}
               </ul>

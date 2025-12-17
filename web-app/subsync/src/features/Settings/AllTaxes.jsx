@@ -10,13 +10,14 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import api from "@/lib/axiosInstance.js";
 
 function AllTaxes() {
@@ -41,14 +42,14 @@ function AllTaxes() {
         try {
             setLoading(true);
             setError(null);
-            
+
             const includeQuery = filter === 'Inactive' ? '?include=inactive' : (filter === 'All' ? '?include=all' : '');
             const [taxesRes, defaultTaxRes, groupsRes] = await Promise.all([
                 api.get(`/all-taxes${includeQuery}`),
                 api.get("/default-tax-preference"),
                 api.get("/tax-groups?include=members")
             ]);
-            
+
             setData(taxesRes.data.taxes || []);
             setDefaultTax(defaultTaxRes.data.defaultTaxPreference || null);
             setGroups(groupsRes.data.groups || []);
@@ -75,10 +76,10 @@ function AllTaxes() {
 
         try {
             await api.delete(`/delete-tax/${taxToDelete.tax_id}`);
-            
+
             // Update local state
             setData((prev) => prev.filter((item) => item.tax_id !== taxToDelete.tax_id));
-            
+
             // If deleted tax was default, clear default
             if (defaultTax && defaultTax.tax_id === taxToDelete.tax_id) {
                 setDefaultTax(null);
@@ -116,7 +117,7 @@ function AllTaxes() {
         try {
             const response = await api.post("/set-default-tax-preference", { taxId: tax.tax_id });
             setDefaultTax(response.data.defaultTaxPreference);
-            
+
             toast.success(`"${tax.tax_name}" set as default tax!`, {
                 position: "top-right",
                 autoClose: 2000,
@@ -150,7 +151,7 @@ function AllTaxes() {
             'SEZ': 'bg-yellow-100 text-yellow-800',
             'NO_TAX': 'bg-gray-100 text-gray-800'
         };
-        
+
         return (
             <Badge className={colors[taxType] || 'bg-gray-100 text-gray-800'}>
                 {taxType}
@@ -187,46 +188,54 @@ function AllTaxes() {
 
     return (
         <>
-            <div className="w-full flex flex-row justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Tax Rates</h1>
-                <div className="flex items-center gap-2">
-                <Popover open={filterOpen} onOpenChange={setFilterOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-2">
-                            <ArrowDownWideNarrow size={16} /> {filter}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-44 p-1">
-                        <div className="flex flex-col">
-                            {['All', 'Active', 'Inactive', 'Tax', 'Tax Group'].map(f => (
-                                <button key={f} className={`text-left px-3 py-2 hover:bg-gray-100 rounded-md ${filter === f ? 'bg-gray-100' : ''}`} onClick={() => { setFilter(f); setFilterOpen(false); }}>
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
-                    </PopoverContent>
-                </Popover>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button className="bg-blue-500 hover:bg-blue-600 rounded-lg px-4 py-2 text-white flex items-center gap-2">
-                            <Plus size={16} />
-                            Add
-                            <ChevronDown size={16} />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-48 p-1">
-                        <div className="flex flex-col">
-                            <Link to="add" className="px-3 py-2 hover:bg-gray-100 rounded-md flex items-center gap-2">
-                                <Plus size={14} /> Add Tax
-                            </Link>
-                            <Link to="../tax-groups/add" className="px-3 py-2 hover:bg-gray-100 rounded-md flex items-center gap-2">
-                                <Layers size={14} /> Add Tax Group
-                            </Link>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-                </div>
-            </div>
+            <PageHeader
+                title="Tax Rates"
+                description="Manage your tax rates and tax groups"
+                breadcrumbItems={[
+                    { label: "Settings", href: "settings" },
+                    { label: "Taxes", href: "settings/taxes" },
+                    { label: "Tax Rates" }
+                ]}
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="flex items-center gap-2">
+                                    <ArrowDownWideNarrow size={16} /> {filter}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-44 p-1">
+                                <div className="flex flex-col">
+                                    {['All', 'Active', 'Inactive', 'Tax', 'Tax Group'].map(f => (
+                                        <button key={f} className={`text-left px-3 py-2 hover:bg-gray-100 rounded-md ${filter === f ? 'bg-gray-100' : ''}`} onClick={() => { setFilter(f); setFilterOpen(false); }}>
+                                            {f}
+                                        </button>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button className="bg-blue-500 hover:bg-blue-600 rounded-lg px-4 py-2 text-white flex items-center gap-2">
+                                    <Plus size={16} />
+                                    Add
+                                    <ChevronDown size={16} />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-48 p-1">
+                                <div className="flex flex-col">
+                                    <Link to="add" className="px-3 py-2 hover:bg-gray-100 rounded-md flex items-center gap-2">
+                                        <Plus size={14} /> Add Tax
+                                    </Link>
+                                    <Link to="../tax-groups/add" className="px-3 py-2 hover:bg-gray-100 rounded-md flex items-center gap-2">
+                                        <Layers size={14} /> Add Tax Group
+                                    </Link>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                }
+            />
 
             {error && (
                 <Alert variant="destructive" className="mb-4">
@@ -289,10 +298,10 @@ function AllTaxes() {
                                                 <span className="text-sm text-gray-600">Default</span>
                                             </div>
                                         ) : (
-                                            <Button 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                onClick={() => setAsDefault(item)} 
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setAsDefault(item)}
                                                 title="Set as default"
                                                 className="text-gray-400 hover:text-yellow-500"
                                             >
@@ -379,19 +388,19 @@ function AllTaxes() {
                     <DialogHeader>
                         <DialogTitle>Delete Tax</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete the tax "{taxToDelete?.tax_name}"? 
+                            Are you sure you want to delete the tax "{taxToDelete?.tax_name}"?
                             This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setDeleteDialogOpen(false)}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            variant="destructive" 
+                        <Button
+                            variant="destructive"
                             onClick={handleDeleteConfirm}
                         >
                             Delete
@@ -411,14 +420,14 @@ function AllTaxes() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setGroupDeleteDialogOpen(false)}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            variant="destructive" 
+                        <Button
+                            variant="destructive"
                             onClick={async () => {
                                 if (!groupToDelete) return;
                                 try {

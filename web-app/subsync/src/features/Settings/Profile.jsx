@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label.jsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Switch } from "@/components/ui/switch.jsx";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { useTheme } from "@/context/ThemeContext.jsx";
 
 export default function Profile() {
@@ -170,18 +171,20 @@ export default function Profile() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Profile Settings</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account and preferences</p>
-          </div>
-          <div className="flex items-center gap-2">
+        <PageHeader
+          title="Profile Settings"
+          description="Manage your account and preferences"
+          breadcrumbItems={[
+            { label: "Settings", href: "settings" },
+            { label: "Profile" }
+          ]}
+          actions={
             <Badge variant="outline" className="text-sm capitalize">
               <Shield className="w-3 h-3 mr-1" />
               {userData?.role || "User"}
             </Badge>
-          </div>
-        </div>
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
