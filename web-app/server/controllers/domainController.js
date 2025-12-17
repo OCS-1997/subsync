@@ -122,32 +122,53 @@ const getDomainDetailsForDcr = async (req, res) => {
         if (domain.customer_id) {
             customer = await getCustomerById(domain.customer_id);
 
-            // Extract contacts from customer's other_contacts JSON field
-            if (customer && customer.other_contacts) {
-                try {
-                    const parsedContacts = typeof customer.other_contacts === 'string'
-                        ? JSON.parse(customer.other_contacts)
-                        : customer.other_contacts;
+            if (customer) {
+                // Add primary contact from customer table first
+                const primaryContact = {
+                    contact_id: null, // Primary contact doesn't have a contact_id
+                    salutation: customer.salutation || 'Mr.',
+                    first_name: customer.first_name || '',
+                    last_name: customer.last_name || '',
+                    email: customer.primary_email || '',
+                    country_code: customer.country_code || '+91',
+                    phone_number: customer.primary_phone_number || '',
+                    designation: 'Primary Contact',
+                    is_primary: true
+                };
+                contacts.push(primaryContact);
 
-                    if (Array.isArray(parsedContacts)) {
-                        contacts = parsedContacts.map(contact => ({
-                            email: contact.email || '',
-                            last_name: contact.last_name || contact.lastName || '',
-                            first_name: contact.first_name || contact.firstName || '',
-                            salutation: contact.salutation || 'Mr.',
-                            designation: contact.designation || '',
-                            country_code: contact.country_code || '+91',
-                            phone_number: contact.phone_number || contact.phoneNumber || contact.mobile || contact.phone || ''
-                        }));
+                // Extract contacts from customer's other_contacts JSON field
+                if (customer.other_contacts) {
+                    try {
+                        const parsedContacts = typeof customer.other_contacts === 'string'
+                            ? JSON.parse(customer.other_contacts)
+                            : customer.other_contacts;
+
+                        if (Array.isArray(parsedContacts)) {
+                            const otherContacts = parsedContacts.map((contact, index) => ({
+                                contact_id: null, // other_contacts don't have IDs
+                                contact_index: index, // Track index for updates
+                                email: contact.email || '',
+                                last_name: contact.last_name || contact.lastName || '',
+                                first_name: contact.first_name || contact.firstName || '',
+                                salutation: contact.salutation || 'Mr.',
+                                designation: contact.designation || '',
+                                country_code: contact.country_code || '+91',
+                                phone_number: contact.phone_number || contact.phoneNumber || contact.mobile || contact.phone || '',
+                                is_primary: false
+                            }));
+                            contacts = contacts.concat(otherContacts);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing customer contacts:", e);
                     }
-                } catch (e) {
-                    console.error("Error parsing customer contacts:", e);
                 }
             }
         }
 
         res.status(200).json({
             domain_name: domain.domain_name,
+            customer_id: domain.customer_id,
             customer_name: domain.customer_name || customer?.display_name || customer?.company_name || '',
             company_name: customer?.company_name || domain.customer_name || '',
             contacts

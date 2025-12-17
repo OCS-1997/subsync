@@ -244,6 +244,54 @@ const createContactFromDcrController = async (req, res) => {
             return res.status(400).json({ error: "Domain and first name are required" });
         }
 
+        // Import appDB for validation queries
+        const appDB = (await import("../db/subsyncDB.js")).default;
+
+        // Check if domain already exists in domains table
+        const [existingDomains] = await appDB.query(
+            'SELECT domain_id, domain_name, customer_name FROM domains WHERE domain_name = ?',
+            [domain_free_text]
+        );
+
+        if (existingDomains.length > 0) {
+            return res.status(409).json({
+                error: "Domain already exists in system",
+                message: `The domain "${domain_free_text}" is already registered as a customer domain. Please select it from the Existing Customer dropdown instead.`,
+                domain: existingDomains[0]
+            });
+        }
+
+        // Check if company name already exists in customers table (if provided)
+        if (company_name && company_name.trim()) {
+            const [existingCustomers] = await appDB.query(
+                'SELECT customer_id, company_name, display_name FROM customers WHERE company_name LIKE ? OR display_name LIKE ?',
+                [`%${company_name}%`, `%${company_name}%`]
+            );
+
+            if (existingCustomers.length > 0) {
+                return res.status(409).json({
+                    error: "Company already exists in system",
+                    message: `A customer with similar company name "${existingCustomers[0].company_name}" already exists. Please verify if this is a duplicate.`,
+                    customer: existingCustomers[0]
+                });
+            }
+        }
+
+        // Check if domain_free_text already exists in contacts table
+        const [existingContacts] = await appDB.query(
+            'SELECT contact_id, domain_free_text, company_name, first_name, last_name FROM contacts WHERE domain_free_text = ?',
+            [domain_free_text]
+        );
+
+        if (existingContacts.length > 0) {
+            return res.status(409).json({
+                error: "Domain already exists in contacts",
+                message: `The domain "${domain_free_text}" already exists in contacts. This contact will be available for selection in future DCR entries.`,
+                contact: existingContacts[0]
+            });
+        }
+
+        // All validations passed, create the contact
         const contact_id = generateContactId();
 
         const contactData = {
@@ -258,14 +306,29 @@ const createContactFromDcrController = async (req, res) => {
             country_code: country_code || '+91',
             phone_number: phone_number || null,
             designation: null,
-            notes: notes || null
+            notes: notes || null,
+            is_private: 0, // Public by default for DCR contacts
+            created_by: req.user?.username || null
         };
 
         await createContactModel(contactData);
 
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({
+                username: req.user.username,
+                action: 'CREATE_CONTACT',
+                resourceType: 'Contact',
+                resourceId: contact_id,
+                ipAddress: req.ip,
+                details: { source: 'DCR', domain_free_text, company_name }
+            });
+        }
+
         res.status(201).json({
             message: 'Contact created successfully!',
-            contact_id
+            contact_id,
+            contact: contactData
         });
     } catch (error) {
         console.error("Error creating contact from DCR:", error);

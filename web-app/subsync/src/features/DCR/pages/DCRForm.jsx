@@ -214,7 +214,23 @@ export default function DCRForm() {
       toast.success("Contact added successfully!");
       setShowAddToContacts(false);
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to add contact");
+      // Handle specific validation errors
+      if (err.response?.status === 409) {
+        const errorData = err.response.data;
+
+        if (errorData.message) {
+          toast.error(errorData.message, { autoClose: 5000 });
+        } else {
+          toast.error(errorData.error || "Failed to add contact");
+        }
+
+        // If domain exists in system, suggest using existing customer
+        if (errorData.domain) {
+          toast.info(`Tip: Switch to "Existing Customer" and search for "${errorData.domain.domain_name}"`, { autoClose: 7000 });
+        }
+      } else {
+        toast.error(err.response?.data?.error || err.message || "Failed to add contact");
+      }
     }
   };
 
@@ -249,6 +265,14 @@ export default function DCRForm() {
       const [year, month, day] = formData.date.split('-');
       const timestamp = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
 
+      // Determine if we should add this contact to customer's other_contacts
+      // This happens when: existing customer (domain_id) + new contact info (!contact_id) + contact provided
+      const shouldAddToCustomer = isExistingCustomer &&
+        formData.domain_id &&
+        !formData.contact_id &&
+        formData.contact_name &&
+        !isExistingContact;
+
       const submitData = {
         timestamp: timestamp.toISOString(),
         call_type: formData.call_type,
@@ -261,7 +285,8 @@ export default function DCRForm() {
         contact_phone_number: formData.contact_phone_number || null,
         contact_email: formData.contact_email || null,
         contact_id: formData.contact_id || null,
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        add_to_customer_contacts: shouldAddToCustomer // Add contact to customer's other_contacts
       };
 
       if (isEditing) {
@@ -269,7 +294,11 @@ export default function DCRForm() {
         toast.success("DCR entry updated successfully!");
       } else {
         await dispatch(addDcrEntry(submitData)).unwrap();
-        toast.success("DCR entry created successfully!");
+        if (shouldAddToCustomer) {
+          toast.success("DCR entry created and contact added to customer!");
+        } else {
+          toast.success("DCR entry created successfully!");
+        }
       }
 
       navigate(`/${username}/dashboard/dcr`);
@@ -622,7 +651,7 @@ export default function DCRForm() {
                 <ReactSelect
                   options={domainDetails.contacts.map(contact => ({
                     value: contact,
-                    label: `${contact.salutation || 'Mr.'} ${contact.first_name} ${contact.last_name || ''} ${contact.designation ? `(${contact.designation})` : ''} – ${contact.country_code || '+91'} ${contact.phone_number || ''}`.trim()
+                    label: `${contact.is_primary ? '⭐ ' : ''}${contact.salutation || 'Mr.'} ${contact.first_name} ${contact.last_name || ''} ${contact.designation ? `(${contact.designation})` : ''} – ${contact.country_code || '+91'} ${contact.phone_number || ''}${contact.email ? ` • ${contact.email}` : ''}`.trim()
                   }))}
                   onChange={(option) => {
                     if (option) {

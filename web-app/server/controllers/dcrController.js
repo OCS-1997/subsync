@@ -35,7 +35,8 @@ const createDcr = async (req, res) => {
             contact_phone_number,
             contact_email,
             contact_id,
-            notes
+            notes,
+            add_to_customer_contacts // Flag to indicate if contact should be added to customer
         } = req.body;
 
         // Convert HH:MM to minutes
@@ -60,6 +61,70 @@ const createDcr = async (req, res) => {
         };
 
         const id = await createDcrEntry(dcrData);
+
+        // If this is an existing customer (has domain_id) with new contact info, add it to customer's other_contacts
+        if (domain_id && contact_name && add_to_customer_contacts) {
+            try {
+                const appDB = (await import("../db/subsyncDB.js")).default;
+                const { getDomainById } = await import("../models/domainModel.js");
+                const { getCustomerById } = await import("../models/customerModel.js");
+
+                // Get domain to find customer_id
+                const domain = await getDomainById(domain_id);
+                if (domain && domain.customer_id) {
+                    // Get customer
+                    const customer = await getCustomerById(domain.customer_id);
+                    if (customer) {
+                        // Parse existing other_contacts
+                        let otherContacts = [];
+                        if (customer.other_contacts) {
+                            try {
+                                otherContacts = typeof customer.other_contacts === 'string'
+                                    ? JSON.parse(customer.other_contacts)
+                                    : customer.other_contacts;
+                            } catch (e) {
+                                console.error("Error parsing other_contacts:", e);
+                            }
+                        }
+
+                        // Split contact_name into first and last name
+                        const nameParts = contact_name.trim().split(/\s+/);
+                        const newContact = {
+                            first_name: nameParts[0] || '',
+                            last_name: nameParts.slice(1).join(' ') || '',
+                            email: contact_email || '',
+                            country_code: contact_phone_country_code || '+91',
+                            phone_number: contact_phone_number || '',
+                            salutation: 'Mr.',
+                            designation: '',
+                            email_send: true,
+                            include_in_communication: true
+                        };
+
+                        // Check if contact already exists (by email or phone)
+                        const contactExists = otherContacts.some(c =>
+                            (c.email && c.email === contact_email) ||
+                            (c.phone_number && c.phone_number === contact_phone_number)
+                        );
+
+                        if (!contactExists) {
+                            otherContacts.push(newContact);
+
+                            // Update customer's other_contacts
+                            await appDB.query(
+                                'UPDATE customers SET other_contacts = ?, updated_at = NOW() WHERE customer_id = ?',
+                                [JSON.stringify(otherContacts), domain.customer_id]
+                            );
+
+                            // console.log(`Added new contact to customer ${domain.customer_id}'s other_contacts`);
+                        }
+                    }
+                }
+            } catch (contactError) {
+                // Log error but don't fail the DCR creation
+                console.error("Error adding contact to customer:", contactError);
+            }
+        }
 
         // Log activity
         if (req.user && req.user.username) {

@@ -259,22 +259,25 @@ CREATE TABLE role_permissions (
 );
 
 CREATE TABLE users (
-    username VARCHAR(32) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    password TEXT NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'Viewer',
-    role_id INT,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    date_of_birth DATE NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    username VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    name VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    password TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    role VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Viewer',
+    role_id INT DEFAULT NULL,
+    email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    date_of_birth DATE DEFAULT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (username),
+    UNIQUE KEY email (email),
+    KEY fk_users_role (role_id),
     INDEX idx_users_date_of_birth (date_of_birth),
     CONSTRAINT fk_users_role FOREIGN KEY (role_id)
         REFERENCES roles(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed roles
 INSERT INTO roles (role_key, name, description, is_system) VALUES
