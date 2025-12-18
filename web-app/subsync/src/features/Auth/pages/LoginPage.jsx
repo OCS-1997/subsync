@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Snowflake, Sparkles, PartyPopper, Gift, TreePine, CandyCane } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer, Bounce } from 'react-toastify';
@@ -16,7 +16,7 @@ function LoginPage() {
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
   const [partyMode, setPartyMode] = useState(false);
-  const fullText = 'Welcome to RMS';
+  const fullText = "Season's Greetings!";
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ function LoginPage() {
 
     if (logoClicks + 1 === 5) {
       setPartyMode(true);
-      toast.success("🎉 Party Mode Activated! 🎊", {
+      toast.success("🎄 Happy Holidays! 🎅", {
         position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -102,91 +102,129 @@ function LoginPage() {
   return (
     <>
       <ToastContainer />
-      <div className="min-h-screen flex bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900 transition-colors duration-300">
+      <div className="min-h-screen flex bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-slate-950 dark:via-red-950/20 dark:to-slate-950 transition-colors duration-300 relative overflow-hidden">
+        {/* Snowfall Effect */}
+        <div className="snowflakes" aria-hidden="true">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="snowflake">
+              <Snowflake size={Math.random() * 20 + 10} className="text-blue-200/40 dark:text-blue-100/20" />
+            </div>
+          ))}
+        </div>
+
         {/* Left Panel - Branding */}
         <div className={`hidden lg:flex lg:w-1/2 p-12 flex-col justify-center items-center relative overflow-hidden transition-all duration-500 ${partyMode
-          ? 'bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 animate-rainbow'
-          : 'bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 dark:from-blue-800 dark:via-blue-900 dark:to-slate-900'
+          ? 'bg-gradient-to-br from-red-600 via-green-600 to-yellow-500 animate-rainbow'
+          : 'bg-gradient-to-br from-red-700 via-red-800 to-green-900 dark:from-red-900 dark:via-red-950 dark:to-green-950'
           }`}>
-          {/* Animated Background Elements */}
+
+          {/* Animated Festive Elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-            <div className={`absolute top-20 -left-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${partyMode ? 'bg-yellow-400/30' : 'bg-blue-400/20'
+            <div className={`absolute top-20 -left-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${partyMode ? 'bg-yellow-400/30' : 'bg-green-400/20'
               }`}></div>
-            <div className={`absolute bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${partyMode ? 'bg-pink-400/30' : 'bg-cyan-400/20'
+            <div className={`absolute bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${partyMode ? 'bg-red-400/30' : 'bg-yellow-400/10'
               }`}></div>
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse delay-500 ${partyMode ? 'bg-green-400/20' : 'bg-white/5'
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse delay-500 ${partyMode ? 'bg-white/20' : 'bg-red-400/10'
               }`}></div>
           </div>
 
-          {/* Floating particles / Confetti */}
-          <div className="absolute inset-0">
-            {[...Array(partyMode ? 50 : 20)].map((_, i) => (
-              <div
-                key={i}
-                className={`absolute rounded-full animate-float ${partyMode
-                  ? 'w-2 h-2'
-                  : 'w-1 h-1 bg-white/30'
-                  }`}
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 5}s`,
-                  animationDuration: `${5 + Math.random() * 10}s`,
-                  backgroundColor: partyMode
-                    ? ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd79a8'][Math.floor(Math.random() * 6)]
-                    : undefined
-                }}
-              ></div>
-            ))}
+          {/* Floating Festive Icons */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(15)].map((_, i) => {
+              const Icons = [Snowflake, TreePine, Gift, Sparkles, PartyPopper, CandyCane];
+              const Icon = Icons[i % Icons.length];
+              return (
+                <div
+                  key={i}
+                  className="absolute animate-float opacity-20"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 5}s`,
+                    animationDuration: `${10 + Math.random() * 15}s`,
+                    color: i % 2 === 0 ? '#ffffff' : '#ffd700'
+                  }}
+                >
+                  <Icon size={Math.random() * 30 + 20} />
+                </div>
+              );
+            })}
           </div>
+
+          {/* New Year Fireworks (for Party Mode) */}
+          {partyMode && (
+            <div className="absolute inset-0 z-0">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className={`firework-${i} absolute text-yellow-400 animate-ping`} style={{
+                  left: `${Math.random() * 80 + 10}%`,
+                  top: `${Math.random() * 80 + 10}%`,
+                  animationDelay: `${i * 0.5}s`
+                }}>
+                  <Sparkles size={40} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Content */}
           <div className="relative z-10 text-center space-y-8 animate-fade-in">
             {/* Logo */}
             <div className="flex justify-center mb-8">
-              <img
-                src="/logo.png"
-                alt="RMS Logo"
-                onClick={handleLogoClick}
-                className={`h-15 w-auto filter brightness-0 invert cursor-pointer transition-all duration-300 hover:scale-110 ${partyMode ? 'animate-spin-slow drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]' : 'animate-slide-down'
-                  }`}
-              />
+              <div className="relative group">
+                <img
+                  src="/logo.png"
+                  alt="RMS Logo"
+                  onClick={handleLogoClick}
+                  className={`h-10 w-auto filter brightness-0 invert cursor-pointer transition-all duration-300 hover:scale-110 ${partyMode ? 'animate-bounce drop-shadow-[0_0_15px_rgba(255,255,0,0.8)]' : 'animate-slide-down'
+                    }`}
+                />
+                <div className="absolute -top-4 -right-4 animate-bounce">
+                  <div className="bg-red-600 text-[10px] text-white px-2 py-0.5 rounded-full border border-yellow-400 font-bold">2025</div>
+                </div>
+              </div>
             </div>
 
             {/* Typewriter Text */}
             <div className="space-y-4">
-              <h1 className={`text-5xl font-bold min-h-[60px] flex items-center justify-center transition-all duration-300 ${partyMode ? 'text-yellow-300 animate-pulse' : 'text-white'
+              <h1 className={`text-5xl font-bold min-h-[60px] flex flex-col items-center justify-center transition-all duration-300 ${partyMode ? 'text-yellow-300 animate-pulse' : 'text-white'
                 }`}>
-                {partyMode ? '🎉 PARTY MODE! 🎊' : displayText}
+                <span className="text-3xl font-light opacity-90 mb-2">
+                  {partyMode ? '🎆 NEW YEAR' : 'Merry Christmas'}
+                </span>
+                <span>
+                  {partyMode ? 'CELEBRATION! 🎉' : displayText}
+                </span>
                 {!isTypingComplete && !partyMode && <span className="animate-blink ml-1">|</span>}
               </h1>
-              <p className={`text-xl leading-relaxed max-w-md mx-auto animate-fade-in-delay ${partyMode ? 'text-pink-200' : 'text-blue-100'
+              <p className={`text-xl leading-relaxed max-w-md mx-auto animate-fade-in-delay ${partyMode ? 'text-yellow-100' : 'text-red-100'
                 }`}>
                 {partyMode
-                  ? 'You found the secret! Enjoy the party! 🎈'
-                  : 'Your comprehensive subscription and customer relationship management platform'
+                  ? 'Wishing you a prosperous and joyful New Year ahead! 🎇'
+                  : 'May your holiday season be filled with joy, peace, and prosperity.'
                 }
               </p>
             </div>
 
             {/* Decorative Line */}
             <div className="flex items-center justify-center gap-4 animate-fade-in-delay-2">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-300"></div>
-              <div className="w-2 h-2 bg-blue-300 rounded-full animate-pulse"></div>
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-300"></div>
+              <div className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-400"></div>
+              <TreePine className="text-yellow-400 animate-pulse" size={24} />
+              <div className="h-px w-16 bg-gradient-to-l from-transparent to-yellow-400"></div>
             </div>
           </div>
 
           {/* Footer */}
           <div className="absolute bottom-8 left-0 right-0 text-center">
-            <p className="text-blue-200 text-sm animate-fade-in-delay-3">
-              © 2025 RMS. All rights reserved.
+            <p className="text-white/60 text-sm animate-fade-in-delay-3 flex items-center justify-center gap-2">
+              <Gift size={14} className="text-yellow-400" />
+              © 2025 OCS Holiday Edition
+              <Snowflake size={14} className="text-blue-200" />
             </p>
           </div>
         </div>
 
         {/* Right Panel - Login Form */}
-        <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex-1 flex items-center justify-center p-8 z-10">
           <div className="w-full max-w-md animate-slide-up">
             {/* Mobile Logo */}
             <div className="lg:hidden mb-8 text-center animate-fade-in">
@@ -195,18 +233,21 @@ function LoginPage() {
                 alt="RMS Logo"
                 className="h-12 w-auto mx-auto mb-4 dark:filter dark:brightness-0 dark:invert"
               />
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">RMS</h2>
+              <h2 className="text-2xl font-bold text-red-700 dark:text-red-400">RMS Holiday Edition</h2>
             </div>
 
             {/* Login Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-blue-500/10 hover:shadow-3xl">
+            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-red-100 dark:border-red-900/30 transition-all duration-300 hover:shadow-red-500/20 hover:border-red-200 dark:hover:border-red-800">
               {/* Header */}
-              <div className="mb-8 animate-fade-in">
+              <div className="mb-8 animate-fade-in text-center">
+                <div className="inline-block p-3 rounded-full bg-red-50 dark:bg-red-900/30 mb-4">
+                  <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  Sign In
+                  Welcome Back
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Enter your credentials to access your account
+                  Please sign in to your dashboard
                 </p>
               </div>
 
@@ -239,7 +280,7 @@ function LoginPage() {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors duration-200" />
+                      <User className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-red-500 transition-colors duration-200" />
                     </div>
                     <input
                       id="username"
@@ -248,8 +289,8 @@ function LoginPage() {
                       className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                placeholder-gray-400 dark:placeholder-gray-500
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                               transition-all duration-200 hover:border-blue-400 dark:hover:border-blue-500"
+                               focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
+                               transition-all duration-200 hover:border-red-400 dark:hover:border-red-500"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
@@ -268,7 +309,7 @@ function LoginPage() {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-500 transition-colors duration-200" />
+                      <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-red-500 transition-colors duration-200" />
                     </div>
                     <input
                       id="password"
@@ -277,8 +318,8 @@ function LoginPage() {
                       className="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                placeholder-gray-400 dark:placeholder-gray-500
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                               transition-all duration-200 hover:border-blue-400 dark:hover:border-blue-500"
+                               focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
+                               transition-all duration-200 hover:border-red-400 dark:hover:border-red-500"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -289,8 +330,8 @@ function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center
-                               text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400
-                               focus:outline-none transition-colors duration-200"
+                                text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400
+                                focus:outline-none transition-colors duration-200"
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -305,15 +346,15 @@ function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 
-                           hover:from-blue-700 hover:to-blue-800
-                           dark:from-blue-500 dark:to-blue-600
-                           dark:hover:from-blue-600 dark:hover:to-blue-700
+                  className="w-full py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 
+                           hover:from-red-700 hover:to-red-800
+                           dark:from-red-700 dark:to-red-800
+                           dark:hover:from-red-800 dark:hover:to-red-900
                            text-white font-semibold rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
+                           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
                            transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
                            disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                           shadow-lg hover:shadow-xl hover:shadow-blue-500/50
+                           shadow-lg hover:shadow-xl hover:shadow-red-500/50
                            animate-fade-in-delay-3"
                 >
                   {isLoading ? (
@@ -322,10 +363,13 @@ function LoginPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Signing in...
+                      Checking list...
                     </span>
                   ) : (
-                    'Sign In'
+                    <span className="flex items-center justify-center gap-2">
+                      <Gift size={20} />
+                      Step Inside
+                    </span>
                   )}
                 </button>
               </form>
@@ -333,14 +377,17 @@ function LoginPage() {
               {/* Footer */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fade-in-delay-3">
                 <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                  Secure login powered by RMS
+                  Secure holiday access by RMS
                 </p>
               </div>
             </div>
 
             {/* Additional Info */}
             <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400 animate-fade-in-delay-3">
-              <p>Need help? Contact your system administrator</p>
+              <p className="flex items-center justify-center gap-2">
+                <CandyCane size={14} className="text-red-400" />
+                Need a Christmas miracle? Contact Support
+              </p>
             </div>
           </div>
         </div>
@@ -349,12 +396,12 @@ function LoginPage() {
       <style>{`
         @keyframes float {
           0%, 100% {
-            transform: translateY(0px);
-            opacity: 0.2;
+            transform: translateY(0px) rotate(0deg);
+            opacity: 0.1;
           }
           50% {
-            transform: translateY(-20px);
-            opacity: 0.4;
+            transform: translateY(-40px) rotate(20deg);
+            opacity: 0.3;
           }
         }
 
@@ -424,14 +471,55 @@ function LoginPage() {
           }
         }
 
-        @keyframes spinSlow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+        /* Snowfall Styles */
+        .snowflake {
+          color: #fff;
+          font-size: 1.2em;
+          font-family: Arial;
+          text-shadow: 0 0 1px #000;
+          position: fixed;
+          top: -10%;
+          z-index: 9999;
+          user-select: none;
+          cursor: default;
+          animation-name: snowflakes-fall, snowflakes-shake;
+          animation-duration: 10s, 3s;
+          animation-timing-function: linear, ease-in-out;
+          animation-iteration-count: infinite, infinite;
+          animation-play-state: running, running;
         }
+
+        @keyframes snowflakes-fall {
+          0% { top: -10%; }
+          100% { top: 100%; }
+        }
+
+        @keyframes snowflakes-shake {
+          0% { transform: translateX(0px); }
+          50% { transform: translateX(80px); }
+          100% { transform: translateX(0px); }
+        }
+
+        .snowflake:nth-of-type(0) { left: 1%; animation-delay: 0s, 0s; }
+        .snowflake:nth-of-type(1) { left: 10%; animation-delay: 1s, 1s; }
+        .snowflake:nth-of-type(2) { left: 20%; animation-delay: 6s, 0.5s; }
+        .snowflake:nth-of-type(3) { left: 30%; animation-delay: 4s, 2s; }
+        .snowflake:nth-of-type(4) { left: 40%; animation-delay: 2s, 2s; }
+        .snowflake:nth-of-type(5) { left: 50%; animation-delay: 8s, 3s; }
+        .snowflake:nth-of-type(6) { left: 60%; animation-delay: 6s, 2s; }
+        .snowflake:nth-of-type(7) { left: 70%; animation-delay: 2.5s, 1s; }
+        .snowflake:nth-of-type(8) { left: 80%; animation-delay: 1s, 0s; }
+        .snowflake:nth-of-type(9) { left: 90%; animation-delay: 3s, 1.5s; }
+        .snowflake:nth-of-type(10) { left: 25%; animation-delay: 2s, 0s; }
+        .snowflake:nth-of-type(11) { left: 65%; animation-delay: 4s, 2.5s; }
+        .snowflake:nth-of-type(12) { left: 35%; animation-delay: 3s, 0s; }
+        .snowflake:nth-of-type(13) { left: 75%; animation-delay: 5s, 1s; }
+        .snowflake:nth-of-type(14) { left: 45%; animation-delay: 8s, 0.5s; }
+        .snowflake:nth-of-type(15) { left: 85%; animation-delay: 2s, 1.5s; }
+        .snowflake:nth-of-type(16) { left: 15%; animation-delay: 5s, 0s; }
+        .snowflake:nth-of-type(17) { left: 55%; animation-delay: 7s, 2.5s; }
+        .snowflake:nth-of-type(18) { left: 95%; animation-delay: 1s, 0s; }
+        .snowflake:nth-of-type(19) { left: 5%; animation-delay: 6s, 1.5s; }
 
         .animate-float {
           animation: float linear infinite;
@@ -475,10 +563,6 @@ function LoginPage() {
         .animate-rainbow {
           background-size: 200% 200%;
           animation: rainbow 3s ease infinite;
-        }
-
-        .animate-spin-slow {
-          animation: spinSlow 2s linear infinite;
         }
         
         .delay-500 {
