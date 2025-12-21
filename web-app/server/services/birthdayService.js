@@ -2,6 +2,7 @@ import { renderEmailTemplate, sendEmail } from './emailService.js';
 import { getUpcomingBirthdays } from '../models/birthdayModel.js';
 import { getCustomerById } from '../models/customerModel.js';
 import appDB from '../db/subsyncDB.js';
+import { formatMySQLDate } from '../utils/dateFormatter.js';
 
 /**
  * Send birthday email to a person
@@ -110,7 +111,7 @@ export async function syncBirthdays() {
                     email = VALUES(email),
                     name = VALUES(name),
                     updated_at = CURRENT_TIMESTAMP`,
-                [user.username, user.date_of_birth, user.email, user.name]
+                [user.username, formatMySQLDate(user.date_of_birth), user.email, user.name]
             );
         }
 
@@ -130,7 +131,7 @@ export async function syncBirthdays() {
                     email = VALUES(email),
                     name = VALUES(name),
                     updated_at = CURRENT_TIMESTAMP`,
-                [customer.customer_id, customer.date_of_birth, customer.primary_email, customer.name]
+                [customer.customer_id, formatMySQLDate(customer.date_of_birth), customer.primary_email, customer.name]
             );
         }
 

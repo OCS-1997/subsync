@@ -7,7 +7,14 @@ import {
     getBackupHistory as getBackupHistoryModel,
     getBackupHistoryById
 } from '../models/backupModel.js';
-import { triggerBackup, restoreBackup } from '../services/backupService.js';
+
+import {
+    triggerBackup,
+    restoreBackup,
+    updateScheduledBackupJob,
+    deleteScheduledBackupJob
+} from '../services/backupService.js';
+import { backupTasksQueue } from '../queues/queueConfig.js';
 import { logActivity } from '../models/activityLogModel.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -79,6 +86,9 @@ export const createBackupConfig = async (req, res) => {
 
         const id = await createBackupConfiguration(configData);
 
+        // Sync with BullMQ scheduler
+        await updateScheduledBackupJob(id);
+
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({
@@ -112,6 +122,9 @@ export const updateBackupConfig = async (req, res) => {
             return res.status(404).json({ error: 'Backup configuration not found' });
         }
 
+        // Sync with BullMQ scheduler
+        await updateScheduledBackupJob(parseInt(id));
+
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({
@@ -144,6 +157,9 @@ export const deleteBackupConfig = async (req, res) => {
             return res.status(404).json({ error: 'Backup configuration not found' });
         }
 
+        // Remove from BullMQ scheduler
+        await deleteScheduledBackupJob(parseInt(id));
+
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({
@@ -169,26 +185,30 @@ export const triggerBackupManual = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const result = await triggerBackup(parseInt(id));
-
-        if (!result.success) {
-            return res.status(500).json({ error: result.error || 'Failed to trigger backup' });
-        }
+        // Result is now just queueing status
+        const job = await backupTasksQueue.add(
+            `manual-backup-${id}-${Date.now()}`,
+            {
+                configId: parseInt(id),
+                triggeredBy: req.user?.username || 'Unknown'
+            }
+        );
 
         // Log activity
         if (req.user && req.user.username) {
             await logActivity({
                 username: req.user.username,
-                action: 'TRIGGER_BACKUP',
+                action: 'TRIGGER_BACKUP_QUEUED',
                 resourceType: 'BackupConfiguration',
                 resourceId: id,
-                ipAddress: req.ip
+                ipAddress: req.ip,
+                details: { jobId: job.id }
             });
         }
 
         res.status(200).json({
-            message: 'Backup triggered successfully',
-            historyId: result.historyId
+            message: 'Backup has been queued for execution',
+            jobId: job.id
         });
     } catch (error) {
         console.error('Error triggering backup:', error);

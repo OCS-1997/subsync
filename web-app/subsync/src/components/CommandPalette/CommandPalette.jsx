@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { logoutUser } from "@/features/Auth/authSlice.js";
+import { toast } from "react-toastify";
 import {
     Command,
     CommandDialog,
@@ -43,7 +45,7 @@ import {
 } from "lucide-react";
 
 // Command palette items configuration
-const createCommandItems = (username, hasPermission) => {
+const createCommandItems = (username, hasPermission, dispatch, navigate) => {
     const baseUrl = `/${username}/dashboard`;
 
     return [
@@ -325,6 +327,24 @@ const createCommandItems = (username, hasPermission) => {
             keywords: ["documentation", "guide", "shortcuts"],
             permission: null,
         },
+        {
+            id: "logout",
+            category: "Other",
+            icon: LogOut,
+            title: "Logout",
+            subtitle: "Sign out of your account",
+            action: async () => {
+                try {
+                    await dispatch(logoutUser()).unwrap();
+                    toast.success("Logged out successfully");
+                    navigate("/");
+                } catch (error) {
+                    console.error("Logout failed:", error);
+                }
+            },
+            keywords: ["signout", "exit", "leave"],
+            permission: null,
+        },
     ];
 };
 
@@ -341,6 +361,7 @@ const groupByCategory = (items) => {
 
 export default function CommandPalette({ open, onOpenChange }) {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
     const { hasPermission } = usePermissions();
 
@@ -348,14 +369,14 @@ export default function CommandPalette({ open, onOpenChange }) {
     const commandItems = useMemo(() => {
         if (!user?.username) return [];
 
-        const items = createCommandItems(user.username, hasPermission);
+        const items = createCommandItems(user.username, hasPermission, dispatch, navigate);
 
         // Filter items based on permissions
         return items.filter((item) => {
             if (item.permission === null) return true;
             return hasPermission(item.permission);
         });
-    }, [user?.username, hasPermission]);
+    }, [user?.username, hasPermission, dispatch, navigate]);
 
     // Group items by category
     const groupedItems = useMemo(() => {
@@ -386,6 +407,7 @@ export default function CommandPalette({ open, onOpenChange }) {
             // Ctrl+Shift+P - Open Settings Menu
             if (e.key === "P" && e.ctrlKey && e.shiftKey) {
                 e.preventDefault();
+                if (open) onOpenChange(false);
                 window.dispatchEvent(new CustomEvent('openSettingsMenu'));
             }
             // Ctrl+K - Open Command Palette

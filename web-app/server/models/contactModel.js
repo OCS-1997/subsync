@@ -1,5 +1,6 @@
 import appDB from "../db/subsyncDB.js";
 import { generateID } from "../middlewares/generateID.js";
+import { formatMySQLDate } from "../utils/dateFormatter.js";
 
 /**
  * Generate a unique contact ID
@@ -52,7 +53,7 @@ const createContact = async (contactData) => {
             country_code,
             phone_number,
             designation,
-            date_of_birth,
+            formatMySQLDate(date_of_birth),
             is_private,
             created_by,
             notes
@@ -163,7 +164,10 @@ const getAllContacts = async ({ page = 1, limit = 20, search = '', username = nu
         const totalPages = Math.ceil(totalRecords / limit);
 
         return {
-            contacts,
+            contacts: contacts.map(c => ({
+                ...c,
+                date_of_birth: formatMySQLDate(c.date_of_birth)
+            })),
             totalPages,
             totalRecords,
             currentPage: page
@@ -190,7 +194,10 @@ const getContactById = async (contact_id) => {
 
         const [contacts] = await appDB.query(query, [contact_id]);
 
-        return contacts.length > 0 ? contacts[0] : null;
+        return contacts.length > 0 ? {
+            ...contacts[0],
+            date_of_birth: formatMySQLDate(contacts[0].date_of_birth)
+        } : null;
     } catch (error) {
         console.error("Error fetching contact by ID:", error);
         throw error;
@@ -207,7 +214,11 @@ const updateContact = async (contact_id, updateData) => {
 
         Object.keys(updateData).forEach(key => {
             fields.push(`${key} = ?`);
-            values.push(updateData[key]);
+            if (key === 'date_of_birth') {
+                values.push(formatMySQLDate(updateData[key]));
+            } else {
+                values.push(updateData[key]);
+            }
         });
 
         if (fields.length === 0) {

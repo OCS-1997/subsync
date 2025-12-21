@@ -1,8 +1,7 @@
-import { AlertCircle } from "lucide-react"; 
+import { AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast, ToastContainer, Bounce } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast, Bounce } from "react-toastify";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import api from "@/lib/axiosInstance.js"; 
+import api from "@/lib/axiosInstance.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 
@@ -46,7 +45,7 @@ function AddTax() {
             setLoading(true);
             const response = await api.get(`/tax/${id}`);
             const tax = response.data.tax;
-            
+
             setTaxName(tax.tax_name || "");
             setTaxType(tax.tax_type || "CGST");
             setTaxRate(tax.tax_rate?.toString() || "");
@@ -142,8 +141,8 @@ function AddTax() {
                 {/* Breadcrumb */}
                 <div className="mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Button 
-                            variant="ghost" 
+                        <Button
+                            variant="ghost"
                             onClick={goBack}
                             className="inline-flex items-center gap-2 p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                         >

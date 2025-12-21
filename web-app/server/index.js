@@ -8,7 +8,9 @@ import colors from 'colors';
 import morgan from 'morgan';
 import { setupBullBoard } from './queues/bullBoard.js';
 import { createReminderWorker } from './workers/reminderWorker.js';
+import { createBackupWorker } from './workers/backupWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
+import { syncAllBackupSchedules } from './services/backupService.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
 
 dotenv.config();
@@ -68,11 +70,22 @@ setupBullBoard(app);
 
 // Start BullMQ workers
 let reminderWorker = null;
+let backupWorker = null;
 try {
     reminderWorker = createReminderWorker();
     console.log('Reminder worker started successfully'.bgGreen.white);
 } catch (error) {
     console.error('Failed to start reminder worker:'.bgRed.white, error);
+}
+
+try {
+    backupWorker = createBackupWorker();
+    console.log('Backup worker started successfully'.bgGreen.white);
+
+    // Sync backup schedules to BullMQ
+    syncAllBackupSchedules();
+} catch (error) {
+    console.error('Failed to start backup worker:'.bgRed.white, error);
 }
 
 // Setup cron jobs
@@ -107,6 +120,9 @@ process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully...');
     if (reminderWorker) {
         await reminderWorker.close();
+    }
+    if (backupWorker) {
+        await backupWorker.close();
     }
     await closeQueues();
     server.close(() => {

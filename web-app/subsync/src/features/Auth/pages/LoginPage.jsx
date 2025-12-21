@@ -1,12 +1,9 @@
-import { Eye, EyeOff, Lock, User, Snowflake, Sparkles, PartyPopper, Gift, TreePine, CandyCane } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Snowflake, Sparkles, PartyPopper, Gift, TreePine, CandyCane, Star, Clock, Trophy, Music } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toast, ToastContainer, Bounce } from 'react-toastify';
-import { useState, useEffect } from 'react';
-
-import { loginUser } from '../authSlice';
-
-import 'react-toastify/dist/ReactToastify.css';
+import { toast, Bounce } from "react-toastify";
+import { useState, useEffect } from "react";
+import { loginUser } from "../authSlice";
 
 function LoginPage() {
   const [username, setUsername] = useState('');
@@ -16,7 +13,7 @@ function LoginPage() {
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
   const [partyMode, setPartyMode] = useState(false);
-  const fullText = "Season's Greetings!";
+  const fullText = "Happy New Year 2026!";
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -28,7 +25,7 @@ function LoginPage() {
 
     if (logoClicks + 1 === 5) {
       setPartyMode(true);
-      toast.success("🎄 Happy Holidays! 🎅", {
+      toast.success("🎆 Welcome to 2026! 🥂", {
         position: "top-center",
         autoClose: 3000,
         hideProgressBar: false,
@@ -101,70 +98,69 @@ function LoginPage() {
 
   return (
     <>
-      <ToastContainer />
-      <div className="min-h-screen flex bg-gradient-to-br from-red-50 via-white to-green-50 dark:from-slate-950 dark:via-red-950/20 dark:to-slate-950 transition-colors duration-300 relative overflow-hidden">
-        {/* Snowfall Effect */}
-        <div className="snowflakes" aria-hidden="true">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className="snowflake">
-              <Snowflake size={Math.random() * 20 + 10} className="text-blue-200/40 dark:text-blue-100/20" />
+
+      <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-purple-950/20 dark:to-slate-950 transition-colors duration-300 relative overflow-hidden">
+        {/* New Year Stars/Confetti Effect */}
+        <div className="stars-container" aria-hidden="true">
+          {[...Array(30)].map((_, i) => (
+            <div key={i} className="star-particle">
+              <Star size={Math.random() * 15 + 5} className="text-yellow-400/30 dark:text-yellow-200/20" fill="currentColor" />
             </div>
           ))}
         </div>
 
         {/* Left Panel - Branding */}
         <div className={`hidden lg:flex lg:w-1/2 p-12 flex-col justify-center items-center relative overflow-hidden transition-all duration-500 ${partyMode
-          ? 'bg-gradient-to-br from-red-600 via-green-600 to-yellow-500 animate-rainbow'
-          : 'bg-gradient-to-br from-red-700 via-red-800 to-green-900 dark:from-red-900 dark:via-red-950 dark:to-green-950'
+          ? 'bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 animate-rainbow'
+          : 'bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950'
           }`}>
 
           {/* Animated Festive Elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
-            <div className={`absolute top-20 -left-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${partyMode ? 'bg-yellow-400/30' : 'bg-green-400/20'
+            <div className={`absolute top-20 -left-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${partyMode ? 'bg-pink-400/30' : 'bg-blue-400/20'
               }`}></div>
-            <div className={`absolute bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${partyMode ? 'bg-red-400/30' : 'bg-yellow-400/10'
+            <div className={`absolute bottom-20 -right-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${partyMode ? 'bg-yellow-400/30' : 'bg-purple-400/10'
               }`}></div>
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse delay-500 ${partyMode ? 'bg-white/20' : 'bg-red-400/10'
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse delay-500 ${partyMode ? 'bg-white/20' : 'bg-indigo-400/10'
               }`}></div>
           </div>
 
           {/* Floating Festive Icons */}
           <div className="absolute inset-0 pointer-events-none">
-            {[...Array(15)].map((_, i) => {
-              const Icons = [Snowflake, TreePine, Gift, Sparkles, PartyPopper, CandyCane];
+            {[...Array(20)].map((_, i) => {
+              const Icons = [Sparkles, PartyPopper, Star, Clock, Trophy, Music];
               const Icon = Icons[i % Icons.length];
               return (
                 <div
                   key={i}
-                  className="absolute animate-float opacity-20"
+                  className="absolute animate-float opacity-30"
                   style={{
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
                     animationDelay: `${Math.random() * 5}s`,
-                    animationDuration: `${10 + Math.random() * 15}s`,
-                    color: i % 2 === 0 ? '#ffffff' : '#ffd700'
+                    animationDuration: `${8 + Math.random() * 12}s`,
+                    color: i % 3 === 0 ? '#ffd700' : (i % 3 === 1 ? '#c0c0c0' : '#ffffff')
                   }}
                 >
-                  <Icon size={Math.random() * 30 + 20} />
+                  <Icon size={Math.random() * 25 + 15} />
                 </div>
               );
             })}
           </div>
 
-          {/* New Year Fireworks (for Party Mode) */}
-          {partyMode && (
-            <div className="absolute inset-0 z-0">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className={`firework-${i} absolute text-yellow-400 animate-ping`} style={{
-                  left: `${Math.random() * 80 + 10}%`,
-                  top: `${Math.random() * 80 + 10}%`,
-                  animationDelay: `${i * 0.5}s`
-                }}>
-                  <Sparkles size={40} />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* New Year Fireworks */}
+          <div className="absolute inset-0 z-0">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className={`firework-${i} absolute text-yellow-400/40 animate-pulse`} style={{
+                left: `${Math.random() * 80 + 10}%`,
+                top: `${Math.random() * 80 + 10}%`,
+                animationDelay: `${i * 0.8}s`,
+                transform: `scale(${partyMode ? 1.5 : 1})`
+              }}>
+                <Sparkles size={partyMode ? 60 : 30} />
+              </div>
+            ))}
+          </div>
 
           {/* Content */}
           <div className="relative z-10 text-center space-y-8 animate-fade-in">
@@ -179,7 +175,7 @@ function LoginPage() {
                     }`}
                 />
                 <div className="absolute -top-4 -right-4 animate-bounce">
-                  <div className="bg-red-600 text-[10px] text-white px-2 py-0.5 rounded-full border border-yellow-400 font-bold">2025</div>
+                  <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-[10px] text-slate-900 px-2 py-0.5 rounded-full border border-yellow-200 font-bold shadow-[0_0_10px_rgba(250,204,21,0.5)]">2026</div>
                 </div>
               </div>
             </div>
@@ -189,36 +185,41 @@ function LoginPage() {
               <h1 className={`text-5xl font-bold min-h-[60px] flex flex-col items-center justify-center transition-all duration-300 ${partyMode ? 'text-yellow-300 animate-pulse' : 'text-white'
                 }`}>
                 <span className="text-3xl font-light opacity-90 mb-2">
-                  {partyMode ? '🎆 NEW YEAR' : 'Merry Christmas'}
+                  {partyMode ? '🎉 THE GRAND' : 'Happy New Year'}
                 </span>
                 <span>
-                  {partyMode ? 'CELEBRATION! 🎉' : displayText}
+                  {partyMode ? '2026 KICKOFF! 🎆' : displayText}
                 </span>
                 {!isTypingComplete && !partyMode && <span className="animate-blink ml-1">|</span>}
               </h1>
-              <p className={`text-xl leading-relaxed max-w-md mx-auto animate-fade-in-delay ${partyMode ? 'text-yellow-100' : 'text-red-100'
+              <p className={`text-xl leading-relaxed max-w-md mx-auto animate-fade-in-delay ${partyMode ? 'text-yellow-100' : 'text-blue-100'
                 }`}>
                 {partyMode
-                  ? 'Wishing you a prosperous and joyful New Year ahead! 🎇'
-                  : 'May your holiday season be filled with joy, peace, and prosperity.'
+                  ? 'Ready to make this year extraordinary? Let\'s build the future together! 🚀'
+                  : 'Welcome to a brand new chapter of excellence and innovation.'
                 }
               </p>
             </div>
 
             {/* Decorative Line */}
-            <div className="flex items-center justify-center gap-4 animate-fade-in-delay-2">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-400"></div>
-              <TreePine className="text-yellow-400 animate-pulse" size={24} />
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-yellow-400"></div>
+            <div className="flex flex-col items-center gap-4 animate-fade-in-delay-2">
+              <div className="flex items-center justify-center gap-4">
+                <div className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-400"></div>
+                <Star className="text-yellow-400 animate-spin-slow" size={24} fill="currentColor" />
+                <div className="h-px w-16 bg-gradient-to-l from-transparent to-yellow-400"></div>
+              </div>
+              <span className="text-xs text-white/40 italic flex items-center gap-1">
+                <Snowflake size={10} /> Merry Christmas to those still celebrating <Snowflake size={10} />
+              </span>
             </div>
           </div>
 
           {/* Footer */}
           <div className="absolute bottom-8 left-0 right-0 text-center">
             <p className="text-white/60 text-sm animate-fade-in-delay-3 flex items-center justify-center gap-2">
-              <Gift size={14} className="text-yellow-400" />
-              © 2025 OCS Holiday Edition
-              <Snowflake size={14} className="text-blue-200" />
+              <PartyPopper size={14} className="text-yellow-400" />
+              © 2026 OCS New Year Edition
+              <Sparkles size={14} className="text-blue-300" />
             </p>
           </div>
         </div>
@@ -233,15 +234,15 @@ function LoginPage() {
                 alt="RMS Logo"
                 className="h-12 w-auto mx-auto mb-4 dark:filter dark:brightness-0 dark:invert"
               />
-              <h2 className="text-2xl font-bold text-red-700 dark:text-red-400">RMS Holiday Edition</h2>
+              <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400">RMS New Year 2026</h2>
             </div>
 
             {/* Login Card */}
-            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-red-100 dark:border-red-900/30 transition-all duration-300 hover:shadow-red-500/20 hover:border-red-200 dark:hover:border-red-800">
+            <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border-2 border-indigo-100 dark:border-indigo-900/30 transition-all duration-300 hover:shadow-indigo-500/20 hover:border-indigo-200 dark:hover:border-indigo-800">
               {/* Header */}
               <div className="mb-8 animate-fade-in text-center">
-                <div className="inline-block p-3 rounded-full bg-red-50 dark:bg-red-900/30 mb-4">
-                  <Lock className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="inline-block p-3 rounded-full bg-indigo-50 dark:bg-indigo-900/30 mb-4">
+                  <Lock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   Welcome Back
@@ -280,7 +281,7 @@ function LoginPage() {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-red-500 transition-colors duration-200" />
+                      <User className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-indigo-500 transition-colors duration-200" />
                     </div>
                     <input
                       id="username"
@@ -289,8 +290,8 @@ function LoginPage() {
                       className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                placeholder-gray-400 dark:placeholder-gray-500
-                               focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
-                               transition-all duration-200 hover:border-red-400 dark:hover:border-red-500"
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                               transition-all duration-200 hover:border-indigo-400 dark:hover:border-indigo-500"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
@@ -309,7 +310,7 @@ function LoginPage() {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-red-500 transition-colors duration-200" />
+                      <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-indigo-500 transition-colors duration-200" />
                     </div>
                     <input
                       id="password"
@@ -318,8 +319,8 @@ function LoginPage() {
                       className="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                                placeholder-gray-400 dark:placeholder-gray-500
-                               focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
-                               transition-all duration-200 hover:border-red-400 dark:hover:border-red-500"
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                               transition-all duration-200 hover:border-indigo-400 dark:hover:border-indigo-500"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -330,7 +331,7 @@ function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center
-                                text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400
+                                text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400
                                 focus:outline-none transition-colors duration-200"
                     >
                       {showPassword ? (
@@ -346,15 +347,15 @@ function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 
-                           hover:from-red-700 hover:to-red-800
-                           dark:from-red-700 dark:to-red-800
-                           dark:hover:from-red-800 dark:hover:to-red-900
+                  className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-700 
+                           hover:from-indigo-700 hover:to-purple-800
+                           dark:from-indigo-700 dark:to-purple-800
+                           dark:hover:from-indigo-800 dark:hover:to-purple-900
                            text-white font-semibold rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
                            transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
                            disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                           shadow-lg hover:shadow-xl hover:shadow-red-500/50
+                           shadow-lg hover:shadow-xl hover:shadow-indigo-500/50
                            animate-fade-in-delay-3"
                 >
                   {isLoading ? (
@@ -367,8 +368,8 @@ function LoginPage() {
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      <Gift size={20} />
-                      Step Inside
+                      <PartyPopper size={20} />
+                      Launch 2026
                     </span>
                   )}
                 </button>
@@ -377,16 +378,16 @@ function LoginPage() {
               {/* Footer */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 animate-fade-in-delay-3">
                 <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                  Secure holiday access by RMS
+                  Secure system access by RMS
                 </p>
               </div>
             </div>
 
             {/* Additional Info */}
             <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400 animate-fade-in-delay-3">
-              <p className="flex items-center justify-center gap-2">
-                <CandyCane size={14} className="text-red-400" />
-                Need a Christmas miracle? Contact Support
+              <p className="flex items-center justify-center gap-2 text-indigo-400 group cursor-help">
+                <Sparkles size={14} className="group-hover:animate-spin" />
+                New year, new goals? Contact Support
               </p>
             </div>
           </div>
@@ -471,55 +472,48 @@ function LoginPage() {
           }
         }
 
-        /* Snowfall Styles */
-        .snowflake {
-          color: #fff;
-          font-size: 1.2em;
-          font-family: Arial;
-          text-shadow: 0 0 1px #000;
+        /* Stars/Particles Styles */
+        .star-particle {
           position: fixed;
           top: -10%;
-          z-index: 9999;
+          z-index: 0;
           user-select: none;
-          cursor: default;
-          animation-name: snowflakes-fall, snowflakes-shake;
-          animation-duration: 10s, 3s;
+          pointer-events: none;
+          animation-name: stars-fall, stars-shake;
+          animation-duration: 8s, 4s;
           animation-timing-function: linear, ease-in-out;
           animation-iteration-count: infinite, infinite;
-          animation-play-state: running, running;
         }
 
-        @keyframes snowflakes-fall {
-          0% { top: -10%; }
-          100% { top: 100%; }
+        @keyframes stars-fall {
+          0% { top: -5%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 105%; opacity: 0; }
         }
 
-        @keyframes snowflakes-shake {
-          0% { transform: translateX(0px); }
-          50% { transform: translateX(80px); }
-          100% { transform: translateX(0px); }
+        @keyframes stars-shake {
+          0% { transform: translateX(0px) rotate(0deg); }
+          50% { transform: translateX(50px) rotate(180deg); }
+          100% { transform: translateX(0px) rotate(360deg); }
         }
 
-        .snowflake:nth-of-type(0) { left: 1%; animation-delay: 0s, 0s; }
-        .snowflake:nth-of-type(1) { left: 10%; animation-delay: 1s, 1s; }
-        .snowflake:nth-of-type(2) { left: 20%; animation-delay: 6s, 0.5s; }
-        .snowflake:nth-of-type(3) { left: 30%; animation-delay: 4s, 2s; }
-        .snowflake:nth-of-type(4) { left: 40%; animation-delay: 2s, 2s; }
-        .snowflake:nth-of-type(5) { left: 50%; animation-delay: 8s, 3s; }
-        .snowflake:nth-of-type(6) { left: 60%; animation-delay: 6s, 2s; }
-        .snowflake:nth-of-type(7) { left: 70%; animation-delay: 2.5s, 1s; }
-        .snowflake:nth-of-type(8) { left: 80%; animation-delay: 1s, 0s; }
-        .snowflake:nth-of-type(9) { left: 90%; animation-delay: 3s, 1.5s; }
-        .snowflake:nth-of-type(10) { left: 25%; animation-delay: 2s, 0s; }
-        .snowflake:nth-of-type(11) { left: 65%; animation-delay: 4s, 2.5s; }
-        .snowflake:nth-of-type(12) { left: 35%; animation-delay: 3s, 0s; }
-        .snowflake:nth-of-type(13) { left: 75%; animation-delay: 5s, 1s; }
-        .snowflake:nth-of-type(14) { left: 45%; animation-delay: 8s, 0.5s; }
-        .snowflake:nth-of-type(15) { left: 85%; animation-delay: 2s, 1.5s; }
-        .snowflake:nth-of-type(16) { left: 15%; animation-delay: 5s, 0s; }
-        .snowflake:nth-of-type(17) { left: 55%; animation-delay: 7s, 2.5s; }
-        .snowflake:nth-of-type(18) { left: 95%; animation-delay: 1s, 0s; }
-        .snowflake:nth-of-type(19) { left: 5%; animation-delay: 6s, 1.5s; }
+        .star-particle:nth-of-type(3n) { color: #fbbf24; }
+        .star-particle:nth-of-type(3n+1) { color: #818cf8; }
+        .star-particle:nth-of-type(3n+2) { color: #f472b6; }
+
+        .star-particle:nth-of-type(1) { left: 5%; animation-delay: 0s, 0s; }
+        .star-particle:nth-of-type(2) { left: 15%; animation-delay: 2s, 1s; }
+        .star-particle:nth-of-type(3) { left: 25%; animation-delay: 4s, 0.5s; }
+        .star-particle:nth-of-type(4) { left: 35%; animation-delay: 1s, 2s; }
+        .star-particle:nth-of-type(5) { left: 45%; animation-delay: 6s, 3s; }
+        .star-particle:nth-of-type(6) { left: 55%; animation-delay: 3s, 1s; }
+        .star-particle:nth-of-type(7) { left: 65%; animation-delay: 5s, 2.5s; }
+        .star-particle:nth-of-type(8) { left: 75%; animation-delay: 2s, 0.5s; }
+        .star-particle:nth-of-type(9) { left: 85%; animation-delay: 7s, 1.5s; }
+        .star-particle:nth-of-type(10) { left: 95%; animation-delay: 4s, 3s; }
+        /* ... more variations ... */
+        .star-particle:nth-of-type(n+11) { left: calc(5% + (n * 7%)); animation-delay: calc(n * 0.5s); }
 
         .animate-float {
           animation: float linear infinite;
@@ -563,6 +557,15 @@ function LoginPage() {
         .animate-rainbow {
           background-size: 200% 200%;
           animation: rainbow 3s ease infinite;
+        }
+
+        .animate-spin-slow {
+          animation: spin 5s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         
         .delay-500 {

@@ -80,6 +80,11 @@ function SideBar({ isOpen, toggleSidebar }) {
                     {!isOpen && (
                       <TooltipContent side="right">
                         {item.title}
+                        {item.path === 'dashboard/settings' && (
+                          <span className="ml-2 text-gray-400 dark:text-gray-600">
+                            Ctrl+Shift+P
+                          </span>
+                        )}
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -105,7 +110,7 @@ function SideBar({ isOpen, toggleSidebar }) {
             </TooltipTrigger>
             {!isOpen && (
               <TooltipContent side="right">
-                Command Palette (Ctrl+Shift+P)
+                Command Palette (Ctrl+K)
               </TooltipContent>
             )}
           </Tooltip>

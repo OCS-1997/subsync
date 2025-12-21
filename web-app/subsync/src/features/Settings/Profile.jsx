@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake } from "lucide-react";
+import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake, AtSign } from "lucide-react";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -20,6 +20,7 @@ export default function Profile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
+    username: "",
     name: "",
     email: "",
     date_of_birth: "",
@@ -42,6 +43,7 @@ export default function Profile() {
         const response = await api.get(`/users/${currentUser.username}`);
         setUserData(response.data);
         setForm({
+          username: response.data.username || "",
           name: response.data.name || "",
           email: response.data.email || "",
           date_of_birth: response.data.date_of_birth || "",
@@ -80,7 +82,7 @@ export default function Profile() {
 
   const handleThemeToggle = () => {
     toggleTheme();
-    toast.success(`Theme changed to ${theme === "light" ? "dark" : "light"} mode`);
+    // toast.success(`Theme changed to ${theme === "light" ? "dark" : "light"} mode`);
   };
 
   const handlePreferenceChange = (key, value) => {
@@ -369,10 +371,28 @@ export default function Profile() {
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Username */}
+                      <div className="space-y-2">
+                        <Label htmlFor="username" className="text-sm font-medium">
+                          Username
+                        </Label>
+                        <div className="relative">
+                          <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="username"
+                            type="text"
+                            name="username"
+                            value={form.username}
+                            readOnly
+                            disabled
+                            className="pl-10 bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-70"
+                          />
+                        </div>
+                      </div>
                       {/* Name */}
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-sm font-medium">
-                          Full Name *
+                          Full Name <span className="text-red-500">*</span>
                         </Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -392,7 +412,7 @@ export default function Profile() {
                       {/* Email */}
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-sm font-medium">
-                          Email Address *
+                          Email Address <span className="text-red-500">*</span>
                         </Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

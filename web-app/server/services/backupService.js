@@ -14,8 +14,10 @@ import {
     updateBackupConfigLastRun,
     getBackupConfigurationById,
     getBackupHistoryById,
-    getBackupHistory
+    getBackupHistory,
+    getEnabledBackupConfigurations
 } from '../models/backupModel.js';
+import { backupTasksQueue } from '../queues/queueConfig.js';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -368,3 +370,99 @@ export async function restoreBackup(filePath, restoredBy) {
         };
     }
 }
+
+/**
+ * Convert configuration schedule to cron expression
+ * @param {Object} config 
+ * @returns {string|null}
+ */
+function getCronExpression(config) {
+    if (config.schedule_type === 'manual') return null;
+
+    const [hour, minute] = config.schedule_time.split(':').map(Number);
+
+    switch (config.schedule_type) {
+        case 'daily':
+            return `${minute} ${hour} * * *`;
+        case 'weekly':
+            return `${minute} ${hour} * * ${config.schedule_day_of_week}`;
+        case 'monthly':
+            return `${minute} ${hour} ${config.schedule_day_of_month} * *`;
+        default:
+            return null;
+    }
+}
+
+/**
+ * Update or create a scheduled backup job in BullMQ
+ * @param {number} configId 
+ */
+export async function updateScheduledBackupJob(configId) {
+    try {
+        const config = await getBackupConfigurationById(configId);
+
+        // Remove existing repeatable job for this config
+        const repeatableJobs = await backupTasksQueue.getRepeatableJobs();
+        const existingJob = repeatableJobs.find(job => job.key.includes(`backup-config-${configId}`));
+
+        if (existingJob) {
+            await backupTasksQueue.removeRepeatableByKey(existingJob.key);
+        }
+
+        if (!config || !config.enabled || config.schedule_type === 'manual') {
+            return;
+        }
+
+        const cron = getCronExpression(config);
+        if (cron) {
+            await backupTasksQueue.add(
+                `backup-config-${configId}`,
+                { configId, triggeredBy: 'Scheduler' },
+                {
+                    repeat: {
+                        pattern: cron,
+                        tz: config.timezone || 'Asia/Kolkata'
+                    },
+                    jobId: `backup-config-${configId}`
+                }
+            );
+            console.log(`Scheduled backup for config ${configId} with cron: ${cron}`);
+        }
+    } catch (error) {
+        console.error(`Error updating scheduled backup for config ${configId}:`, error);
+    }
+}
+
+/**
+ * Delete a scheduled backup job
+ * @param {number} configId 
+ */
+export async function deleteScheduledBackupJob(configId) {
+    try {
+        const repeatableJobs = await backupTasksQueue.getRepeatableJobs();
+        const existingJob = repeatableJobs.find(job => job.key.includes(`backup-config-${configId}`));
+
+        if (existingJob) {
+            await backupTasksQueue.removeRepeatableByKey(existingJob.key);
+            console.log(`Removed scheduled backup for config ${configId}`);
+        }
+    } catch (error) {
+        console.error(`Error deleting scheduled backup for config ${configId}:`, error);
+    }
+}
+
+/**
+ * Sync all enabled configurations to BullMQ (call at startup)
+ */
+export async function syncAllBackupSchedules() {
+    try {
+        const configs = await getEnabledBackupConfigurations();
+        for (const config of configs) {
+            await updateScheduledBackupJob(config.id);
+        }
+        console.log('All backup schedules synced to BullMQ');
+    } catch (error) {
+        console.error('Error syncing backup schedules:', error);
+    }
+}
+

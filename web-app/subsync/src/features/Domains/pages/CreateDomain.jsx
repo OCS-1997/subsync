@@ -1,7 +1,7 @@
 import { Plus, Trash2, ArrowLeft, Settings } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Select from "react-select";
-import { toast, ToastContainer, Bounce } from "react-toastify";
+import { toast, Bounce } from "react-toastify";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDomainById, createDomain, updateDomain } from "../domainSlice";

@@ -32,7 +32,8 @@ import {
     getBirthdayByIdController,
     saveBirthdayController,
     deleteBirthdayController,
-    syncBirthdaysController
+    syncBirthdaysController,
+    sendManualBirthdayWishController
 } from '../controllers/birthdayController.js';
 import {
     listToolsController,
@@ -212,6 +213,7 @@ router.get('/birthdays/:id', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_VI
 router.post('/birthdays', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_MANAGE), saveBirthdayController);
 router.delete('/birthdays/:id', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_MANAGE), deleteBirthdayController);
 router.post('/birthdays/sync', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_SYNC), syncBirthdaysController);
+router.post('/birthdays/:id/wish', isAuthenticated, authorize(PERMISSIONS.BIRTHDAYS_MANAGE), sendManualBirthdayWishController);
 
 
 // DCR (Daily Call Report)

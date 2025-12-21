@@ -43,6 +43,19 @@ function App() {
 
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
       <ErrorBoundary>
         <ThemeProvider>
           <PermissionsProvider>
@@ -50,10 +63,10 @@ function App() {
           </PermissionsProvider>
         </ThemeProvider>
       </ErrorBoundary>
-      <ToastContainer position="top-right" theme="colored" transition={Bounce} autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
       <FloatingCalculator />
     </>
   );
 }
+
 
 export default App;

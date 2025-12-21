@@ -6,6 +6,33 @@ import {
     deleteBirthday,
     syncBirthdays
 } from '../models/birthdayModel.js';
+import { sendBirthdayEmail } from '../services/birthdayService.js';
+
+/**
+ * POST /api/birthdays/:id/wish
+ * Send a manual birthday wish email
+ */
+export const sendManualBirthdayWishController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const birthday = await getBirthdayById(id);
+
+        if (!birthday) {
+            return res.status(404).json({ error: 'Birthday record not found' });
+        }
+
+        const result = await sendBirthdayEmail(birthday);
+
+        if (result.success) {
+            res.json({ success: true, message: 'Birthday wish sent successfully' });
+        } else {
+            res.status(500).json({ error: result.error || 'Failed to send birthday wish' });
+        }
+    } catch (error) {
+        console.error('Error sending manual birthday wish:', error);
+        res.status(500).json({ error: error.message || 'Failed to send birthday wish' });
+    }
+};
 
 /**
  * GET /api/birthdays

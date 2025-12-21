@@ -60,7 +60,7 @@ function NavBar({ toggleSidebar }) {
 
     // Listen for openSettingsMenu event from CommandPalette
     const handleOpenSettingsMenu = () => {
-      setSettingsOpen(true);
+      setSettingsOpen(prev => !prev);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -128,7 +128,7 @@ function NavBar({ toggleSidebar }) {
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full hover:bg-accent transition-colors"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setSettingsOpen(prev => !prev)}
             title="Settings (Ctrl+Shift+P)"
           >
             <Settings className="h-5 w-5" />

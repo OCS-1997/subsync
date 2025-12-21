@@ -1,4 +1,5 @@
 import appDB from "../db/subsyncDB.js";
+import { formatMySQLDate } from "../utils/dateFormatter.js";
 
 /**
  * Get birthdays for today and upcoming (next 7 days)
@@ -12,20 +13,23 @@ export async function getUpcomingBirthdays() {
 
     // Get user birthdays
     const [allUsers] = await appDB.query(
-        `SELECT username, name, email, date_of_birth
-         FROM users
-         WHERE date_of_birth IS NOT NULL`
+        `SELECT u.username, u.name, u.email, u.date_of_birth, b.id
+         FROM users u
+         LEFT JOIN birthdays b ON b.user_id = u.username
+         WHERE u.date_of_birth IS NOT NULL`
     );
 
     // Get customer birthdays
     const [allCustomers] = await appDB.query(
-        `SELECT customer_id, 
-                CONCAT(first_name, ' ', last_name) AS name,
-                primary_email AS email,
-                date_of_birth,
-                company_name
-         FROM customers
-         WHERE date_of_birth IS NOT NULL`
+        `SELECT c.customer_id, 
+                CONCAT(c.first_name, ' ', c.last_name) AS name,
+                c.primary_email AS email,
+                c.date_of_birth,
+                c.company_name,
+                b.id
+         FROM customers c
+         LEFT JOIN birthdays b ON b.customer_id = c.customer_id AND b.type = 'customer'
+         WHERE c.date_of_birth IS NOT NULL`
     );
 
     // Get customers with contact persons who have birthdays
@@ -102,7 +106,14 @@ export async function getUpcomingBirthdays() {
     const customerBirthdays = processBirthdays(allCustomers, 'customer');
     const contactBirthdays = processBirthdays(contactPersonBirthdays, 'contact_person');
 
-    const allBirthdays = [...userBirthdays, ...customerBirthdays, ...contactBirthdays];
+    const allBirthdays = [...userBirthdays, ...customerBirthdays, ...contactBirthdays].map(b => ({
+        ...b,
+        date_of_birth: formatMySQLDate(b.date_of_birth)
+    }));
+
+    // If ID is still missing for some (e.g. contact persons), try to find it in the birthdays table
+    // (Contact persons join is harder in SQL because of JSON, so we do it here or just wait for next sync)
+    // Actually, let's just use the emails as a secondary lookup if id is missing in the controller.
 
     return {
         today: allBirthdays.filter(b => b.birthday_status === 'today'),
@@ -126,7 +137,7 @@ export async function saveBirthday(birthdayData) {
             email_send = VALUES(email_send),
             include_in_communication = VALUES(include_in_communication),
             updated_at = CURRENT_TIMESTAMP`,
-        [user_id || null, customer_id || null, contact_person_index || null, date_of_birth, email, name, type, email_send ? 1 : 0, include_in_communication ? 1 : 0]
+        [user_id || null, customer_id || null, contact_person_index || null, formatMySQLDate(date_of_birth), email, name, type, email_send ? 1 : 0, include_in_communication ? 1 : 0]
     );
 
     return result.insertId || result.affectedRows;
@@ -177,7 +188,14 @@ export async function getAllBirthdays({ search = '', type = '', page = 1, limit 
     );
 
     const totalPages = Math.ceil(total / limit);
-    return { birthdays, totalPages, totalRecords: total };
+    return {
+        birthdays: birthdays.map(b => ({
+            ...b,
+            date_of_birth: formatMySQLDate(b.date_of_birth)
+        })),
+        totalPages,
+        totalRecords: total
+    };
 }
 
 /**
@@ -303,6 +321,9 @@ export async function getBirthdayById(birthdayId) {
          WHERE b.id = ?`,
         [birthdayId]
     );
-    return result[0];
+    return result[0] ? {
+        ...result[0],
+        date_of_birth: formatMySQLDate(result[0].date_of_birth)
+    } : null;
 }
 

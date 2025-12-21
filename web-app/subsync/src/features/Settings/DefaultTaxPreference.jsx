@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast, ToastContainer, Bounce } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast, Bounce } from "react-toastify";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ function DefaultTaxPreference() {
         try {
             setLoading(true);
             setError(null);
-            
+
             const [taxesRes, groupsRes, prefsRes] = await Promise.all([
                 api.get("/all-taxes"),
                 api.get("/tax-groups"),
@@ -58,7 +57,7 @@ function DefaultTaxPreference() {
         try {
             setSaving(true);
             setError(null);
-            
+
             const response = await api.post("/default-tax-preferences", { intra: selected.intra, inter: selected.inter });
             setPreferences(response.data.preferences);
 
@@ -97,7 +96,7 @@ function DefaultTaxPreference() {
             'SEZ': 'bg-yellow-100 text-yellow-800',
             'NO_TAX': 'bg-gray-100 text-gray-800'
         };
-        
+
         return (
             <Badge className={colors[taxType] || 'bg-gray-100 text-gray-800'}>
                 {taxType}
@@ -142,7 +141,7 @@ function DefaultTaxPreference() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Intra-state */}
                                 <div className="space-y-3 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><Percent size={16}/> Intra State Tax Rate</h3>
+                                    <h3 className="font-semibold flex items-center gap-2"><Percent size={16} /> Intra State Tax Rate</h3>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Select kind</label>
                                         <Select value={selected.intra?.kind || ""} onValueChange={(v) => setSelected(s => ({ ...s, intra: { kind: v, id: "" } }))}>
@@ -187,7 +186,7 @@ function DefaultTaxPreference() {
                                                     {groups.map((g) => (
                                                         <SelectItem key={g.group_id} value={g.group_id}>
                                                             <div className="flex items-center gap-2">
-                                                                <Layers size={14}/>
+                                                                <Layers size={14} />
                                                                 <span>{g.group_name}</span>
                                                             </div>
                                                         </SelectItem>
@@ -200,7 +199,7 @@ function DefaultTaxPreference() {
 
                                 {/* Inter-state */}
                                 <div className="space-y-3 p-4 border rounded-lg">
-                                    <h3 className="font-semibold flex items-center gap-2"><Percent size={16}/> Inter State Tax Rate</h3>
+                                    <h3 className="font-semibold flex items-center gap-2"><Percent size={16} /> Inter State Tax Rate</h3>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Select kind</label>
                                         <Select value={selected.inter?.kind || ""} onValueChange={(v) => setSelected(s => ({ ...s, inter: { kind: v, id: "" } }))}>
@@ -245,7 +244,7 @@ function DefaultTaxPreference() {
                                                     {groups.map((g) => (
                                                         <SelectItem key={g.group_id} value={g.group_id}>
                                                             <div className="flex items-center gap-2">
-                                                                <Layers size={14}/>
+                                                                <Layers size={14} />
                                                                 <span>{g.group_name}</span>
                                                             </div>
                                                         </SelectItem>
@@ -257,9 +256,9 @@ function DefaultTaxPreference() {
                                 </div>
                             </div>
 
-                            <Button 
-                                type="submit" 
-                                className="w-full" 
+                            <Button
+                                type="submit"
+                                className="w-full"
                                 disabled={saving || !selected.intra?.kind || !selected.inter?.kind || !selected.intra?.id || !selected.inter?.id}
                             >
                                 {saving ? "Saving..." : "Save Default Preferences"}

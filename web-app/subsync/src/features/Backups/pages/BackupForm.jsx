@@ -118,7 +118,11 @@ export default function BackupForm() {
     };
 
     if (loading) {
-        return <Hamster />;
+        return (
+            <div className="flex flex-col justify-center items-center h-screen">
+                <Hamster />
+            </div>
+        );
     }
 
     return (
