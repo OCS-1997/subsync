@@ -49,6 +49,26 @@ const createCommandItems = (username, hasPermission, dispatch, navigate) => {
     const baseUrl = `/${username}/dashboard`;
 
     return [
+        // Account & Session
+        {
+            id: "logout",
+            category: "Account",
+            icon: LogOut,
+            title: "Logout",
+            subtitle: "Sign out of your account",
+            action: async () => {
+                try {
+                    await dispatch(logoutUser()).unwrap();
+                    toast.success("Logged out successfully");
+                    navigate("/");
+                } catch (error) {
+                    console.error("Logout failed:", error);
+                }
+            },
+            keywords: ["signout", "exit", "leave", "logout"],
+            permission: null,
+        },
+
         // Navigation - Main Modules
         {
             id: "dashboard",
@@ -150,7 +170,6 @@ const createCommandItems = (username, hasPermission, dispatch, navigate) => {
             keywords: ["database", "restore", "recovery", "export"],
             permission: PERMISSIONS.BACKUPS_VIEW,
         },
-
 
         // Quick Actions - Add New
         {
@@ -315,8 +334,6 @@ const createCommandItems = (username, hasPermission, dispatch, navigate) => {
             keywords: ["dns", "ssl", "whois"],
             permission: PERMISSIONS.QUICK_TOOLS_MANAGE,
         },
-
-        // Other
         {
             id: "help",
             category: "Other",
@@ -325,24 +342,6 @@ const createCommandItems = (username, hasPermission, dispatch, navigate) => {
             subtitle: "View help and shortcuts",
             path: `${baseUrl}/help`,
             keywords: ["documentation", "guide", "shortcuts"],
-            permission: null,
-        },
-        {
-            id: "logout",
-            category: "Other",
-            icon: LogOut,
-            title: "Logout",
-            subtitle: "Sign out of your account",
-            action: async () => {
-                try {
-                    await dispatch(logoutUser()).unwrap();
-                    toast.success("Logged out successfully");
-                    navigate("/");
-                } catch (error) {
-                    console.error("Logout failed:", error);
-                }
-            },
-            keywords: ["signout", "exit", "leave"],
             permission: null,
         },
     ];
@@ -454,16 +453,24 @@ export default function CommandPalette({ open, onOpenChange }) {
                                         key={item.id}
                                         value={`${item.title} ${item.subtitle} ${item.keywords?.join(" ")}`}
                                         onSelect={() => handleSelect(item)}
-                                        className="flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer transition-all duration-150 data-[selected=true]:bg-blue-100 dark:data-[selected=true]:bg-blue-600/20 data-[selected=true]:text-blue-700 dark:data-[selected=true]:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800/60 group"
+                                        className={`flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer transition-all duration-150 group
+                                            ${item.id === 'logout'
+                                                ? "data-[selected=true]:bg-red-500 data-[selected=true]:text-white hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-500"
+                                                : "data-[selected=true]:bg-blue-100 dark:data-[selected=true]:bg-blue-600/20 data-[selected=true]:text-blue-700 dark:data-[selected=true]:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                                            }`}
                                     >
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/50 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:border-blue-300 dark:group-hover:border-blue-600/40 group-data-[selected=true]:bg-blue-100 dark:group-data-[selected=true]:bg-blue-600/20 group-data-[selected=true]:border-blue-300 dark:group-data-[selected=true]:border-blue-500/50 group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 transition-all duration-150">
+                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-150
+                                            ${item.id === 'logout'
+                                                ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 group-data-[selected=true]:bg-white group-data-[selected=true]:text-red-600 group-data-[selected=true]:border-transparent"
+                                                : "bg-gray-100 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/50 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:border-blue-300 dark:group-hover:border-blue-600/40 group-data-[selected=true]:bg-blue-100 dark:group-data-[selected=true]:bg-blue-600/20 group-data-[selected=true]:border-blue-300 dark:group-data-[selected=true]:border-blue-500/50 group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400"
+                                            }`}>
                                             <item.icon className="h-4 w-4" />
                                         </div>
                                         <div className="flex flex-col flex-1 min-w-0">
-                                            <span className="text-sm font-medium text-gray-800 dark:text-gray-100 group-data-[selected=true]:text-gray-900 dark:group-data-[selected=true]:text-white truncate">
+                                            <span className={`text-sm font-medium truncate ${item.id === 'logout' ? "group-data-[selected=true]:text-white" : "text-gray-800 dark:text-gray-100 group-data-[selected=true]:text-gray-900 dark:group-data-[selected=true]:text-white"}`}>
                                                 {item.title}
                                             </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-500 group-data-[selected=true]:text-gray-600 dark:group-data-[selected=true]:text-gray-400 truncate">
+                                            <span className={`text-xs truncate ${item.id === 'logout' ? "text-red-400 dark:text-red-500 group-data-[selected=true]:text-red-100" : "text-gray-500 dark:text-gray-500 group-data-[selected=true]:text-gray-600 dark:group-data-[selected=true]:text-gray-400"}`}>
                                                 {item.subtitle}
                                             </span>
                                         </div>
