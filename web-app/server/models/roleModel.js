@@ -106,3 +106,19 @@ export const replaceRolePermissions = async (roleId, permissionIds = []) => {
     }
 };
 
+export const getUsersByRole = async (roleId) => {
+    const [rows] = await appDB.query(
+        `SELECT 
+            u.username,
+            u.name,
+            u.email,
+            u.is_active,
+            u.created_at AS createdAt
+        FROM users u
+        WHERE u.role_id = ?
+        ORDER BY u.name, u.username`,
+        [roleId]
+    );
+    return rows;
+};
+

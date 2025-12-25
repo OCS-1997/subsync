@@ -76,6 +76,24 @@ export const assignPermissionsController = async (req, res) => {
     }
 };
 
+export const getUsersByRoleController = async (req, res) => {
+    try {
+        const { roleId } = req.params;
+        const role = await getRoleById(roleId);
+        if (!role) {
+            return res.status(404).json({ error: "Role not found" });
+        }
+
+        // Import getUsersByRole from roleModel
+        const { getUsersByRole } = await import("../models/roleModel.js");
+        const users = await getUsersByRole(roleId);
+        res.json(users);
+    } catch (error) {
+        console.error("Error fetching users for role:", error);
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+};
+
 export const listPermissionsController = async (_req, res) => {
     try {
         const permissions = await getAllPermissions();

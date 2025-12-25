@@ -40,12 +40,17 @@ export const PermissionGate = ({ children, required, any, redirectTo = "/" }) =>
     return <Navigate to={redirectTo} replace />;
   }
 
+  // Get the forbidden path based on current location
+  const forbiddenPath = location.pathname.includes('/dashboard')
+    ? `/${user?.username}/dashboard/forbidden`
+    : '/forbidden';
+
   if (required && !hasPermission(required)) {
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to={forbiddenPath} replace />;
   }
 
   if (any && !hasAnyPermission(any)) {
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to={forbiddenPath} replace />;
   }
 
   return children;

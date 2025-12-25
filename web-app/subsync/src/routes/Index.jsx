@@ -51,6 +51,7 @@ import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
+import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -156,10 +157,15 @@ const router = createBrowserRouter([
 
       { path: "help", element: <HelpPage /> },
 
+      // 403 Forbidden
+      { path: "forbidden", element: <ForbiddenPage /> },
+
       // Catch-all for 404 within dashboard
       { path: "*", element: <NotFoundPage /> },
     ]
   },
+  // 403 Forbidden (outside dashboard)
+  { path: "/forbidden", element: <ForbiddenPage /> },
   // Catch-all for 404 outside dashboard
   { path: "*", element: <NotFoundPage /> }
 ]);

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import {
@@ -30,6 +31,18 @@ const RoleManagement = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [roleUsers, setRoleUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // User Permission Overrides State
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userOverridesDialogOpen, setUserOverridesDialogOpen] = useState(false);
+  const [userOverrides, setUserOverrides] = useState([]);
+  const [loadingOverrides, setLoadingOverrides] = useState(false);
+  const [savingOverrides, setSavingOverrides] = useState(false);
+  const [overrideSearchTerm, setOverrideSearchTerm] = useState("");
+  const [showClearOverridesConfirm, setShowClearOverridesConfirm] = useState(false);
+
   const pendingActionRef = useRef(null);
 
   const { hasPermission } = usePermissions();
@@ -98,6 +111,23 @@ const RoleManagement = () => {
     );
   }, [roles, searchTerm]);
 
+  const fetchRoleUsers = async (roleId) => {
+    if (!roleId) {
+      setRoleUsers([]);
+      return;
+    }
+    try {
+      setLoadingUsers(true);
+      const response = await api.get(`/rbac/roles/${roleId}/users`);
+      setRoleUsers(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch role users:', error);
+      setRoleUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   const applyRoleSelection = (role) => {
     if (!role) return;
     setSelectedRoleId(role.id);
@@ -111,6 +141,9 @@ const RoleManagement = () => {
     setSelectedPermissions(rolePerms);
     setOriginalPermissions(rolePerms);
     setHasUnsavedChanges(false);
+
+    // Fetch users for this role
+    fetchRoleUsers(role.id);
   };
 
   const requestUnsavedConfirmation = (action) => {
@@ -266,6 +299,123 @@ const RoleManagement = () => {
 
   const resetForm = () => {
     requestUnsavedConfirmation(() => performReset());
+  };
+
+  // User Permission Override Functions
+  const handleUserClick = async (user) => {
+    if (!canAssignPerms) {
+      toast.info("You don't have permission to manage user overrides");
+      return;
+    }
+
+    setSelectedUser(user);
+    setUserOverridesDialogOpen(true);
+    await fetchUserPermissionOverrides(user.username);
+  };
+
+  const fetchUserPermissionOverrides = async (username) => {
+    try {
+      setLoadingOverrides(true);
+      const response = await api.get(`/users/${username}/permission-overrides`);
+      setUserOverrides(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch user overrides:', error);
+      setUserOverrides([]);
+      toast.error('Failed to load user permission overrides');
+    } finally {
+      setLoadingOverrides(false);
+    }
+  };
+
+  const handleSaveUserOverrides = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setSavingOverrides(true);
+
+      const overridesToSave = userOverrides
+        .filter(override => override.override !== 'inherit')
+        .map(override => ({
+          permissionKey: override.permissionKey,
+          isGranted: override.override === 'grant',
+          reason: override.reason || null
+        }));
+
+      await api.post(`/users/${selectedUser.username}/permission-overrides`, {
+        overrides: overridesToSave
+      });
+
+      toast.success('User permission overrides saved successfully');
+      setUserOverridesDialogOpen(false);
+      await fetchRoleUsers(selectedRoleId); // Refresh users list
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to save permission overrides');
+    } finally {
+      setSavingOverrides(false);
+    }
+  };
+
+  const handleOverrideChange = (permissionKey, value) => {
+    setUserOverrides(prev => {
+      const existing = prev.find(o => o.permissionKey === permissionKey);
+      if (existing) {
+        return prev.map(o =>
+          o.permissionKey === permissionKey
+            ? { ...o, override: value }
+            : o
+        );
+      } else {
+        // Find permission details
+        const permission = permissions.find(p => p.permissionKey === permissionKey);
+        return [...prev, {
+          permissionKey,
+          resource: permission?.resource,
+          action: permission?.action,
+          override: value,
+          reason: null
+        }];
+      }
+    });
+  };
+
+  const getPermissionOverrideState = (permissionKey) => {
+    const override = userOverrides.find(o => o.permissionKey === permissionKey);
+    if (override) {
+      // If override has explicit 'override' field, use it
+      if (override.override) {
+        return override.override;
+      }
+      // Otherwise map isGranted (from database)
+      if (override.isGranted !== undefined) {
+        return override.isGranted ? 'grant' : 'deny';
+      }
+    }
+    // No override: return inherit
+    return 'inherit';
+  };
+
+  const handleClearAllOverrides = async () => {
+    if (!selectedUser) return;
+    setShowClearOverridesConfirm(true);
+  };
+
+  const confirmClearOverrides = async () => {
+    try {
+      setSavingOverrides(true);
+      await api.delete(`/users/${selectedUser.username}/permission-overrides`);
+
+      // Reset UI state to empty overrides
+      setUserOverrides([]);
+
+      toast.success('All overrides removed successfully');
+      setShowClearOverridesConfirm(false);
+      setUserOverridesDialogOpen(false);
+      await fetchRoleUsers(selectedRoleId);
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to remove overrides');
+    } finally {
+      setSavingOverrides(false);
+    }
   };
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);
@@ -480,6 +630,89 @@ const RoleManagement = () => {
                 </div>
               </div>
 
+              {/* Users Section */}
+              {selectedRoleId && (
+                <div className="border-b border-border bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm px-6 py-5">
+                  <div className="max-w-6xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 shadow-md">
+                          <Users className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-semibold">Users in this Role</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {loadingUsers ? "Loading..." : `${roleUsers.length} user${roleUsers.length !== 1 ? 's' : ''} assigned`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 text-xs font-semibold">
+                        <Info className="w-3 h-3" />
+                        <span>View Only</span>
+                      </div>
+                    </div>
+
+                    {loadingUsers ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    ) : roleUsers.length === 0 ? (
+                      <div className="text-center py-8 px-4 border border-dashed border-border rounded-lg bg-background/50">
+                        <Users className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm text-muted-foreground font-medium">No users assigned to this role</p>
+                        <p className="text-xs text-muted-foreground mt-1">Users can be assigned roles from the User Management page</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <AnimatePresence>
+                          {roleUsers.map((user, idx) => (
+                            <motion.div
+                              key={user.username || idx}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              transition={{ delay: idx * 0.05 }}
+                              whileHover={{ scale: 1.02, y: -2 }}
+                              onClick={() => handleUserClick(user)}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-gradient-to-br from-background to-card/30 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                            >
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                                {user.name?.charAt(0).toUpperCase() || user.username?.charAt(0).toUpperCase() || 'U'}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                                  {user.name || user.username}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                              </div>
+                              {user.is_active ? (
+                                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Active" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0" title="Inactive" />
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {/* Info note about per-user permissions */}
+                    <div className="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-200/20 dark:border-blue-800/20">
+                      <div className="flex gap-2">
+                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-xs text-blue-700 dark:text-blue-300">
+                          <strong className="font-semibold block mb-1">About Per-User Permissions:</strong>
+                          <p className="text-blue-600/90 dark:text-blue-400/90">
+                            This system uses <strong>Role-Based Access Control (RBAC)</strong>. Permissions are assigned to roles, not individual users.
+                            To customize a user's permissions, either: (1) Create a new role with the desired permissions, or (2) Implement user-specific permission overrides in your backend.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Permissions Section */}
               {selectedRoleId && (
                 <div className="flex-1 flex flex-col overflow-hidden">
@@ -689,6 +922,185 @@ const RoleManagement = () => {
         )}
       </AnimatePresence>
 
+      {/* User Permission Overrides Dialog */}
+      <Dialog open={userOverridesDialogOpen} onOpenChange={setUserOverridesDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-blue-950/30">
+          <DialogHeader className="pb-4 border-b border-blue-200 dark:border-blue-900">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                  Permission Overrides
+                </DialogTitle>
+                <DialogDescription className="text-blue-600/80 dark:text-blue-400/80 mt-1">
+                  {selectedUser?.name || selectedUser?.username} ({selectedRole?.name})
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto py-4">
+            {/* Info Banner */}
+            <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800">
+              <div className="flex gap-3">
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="font-semibold mb-1">How Permission Overrides Work:</p>
+                  <ul className="list-disc list-inside space-y-1 text-blue-600 dark:text-blue-400">
+                    <li><strong>Inherit</strong>: Use permission from role (default)</li>
+                    <li><strong>Grant</strong>: Give permission even if role doesn't have it</li>
+                    <li><strong>Deny</strong>: Remove permission even if role has it</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                <Input
+                  placeholder="Search permissions..."
+                  value={overrideSearchTerm}
+                  onChange={(e) => setOverrideSearchTerm(e.target.value)}
+                  className="pl-10 border-blue-200 dark:border-blue-800 focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-900"
+                />
+              </div>
+            </div>
+
+            {/* Permissions Grid */}
+            {loadingOverrides ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(groupedPermissions)
+                  .filter(([resource]) =>
+                    !overrideSearchTerm ||
+                    resource.toLowerCase().includes(overrideSearchTerm.toLowerCase())
+                  )
+                  .map(([resource, perms]) => (
+                    <div key={resource} className="border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900/50">
+                      <div className="px-4 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 border-b border-blue-200 dark:border-blue-800">
+                        <h4 className="font-semibold text-sm uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                          {resource}
+                        </h4>
+                      </div>
+                      <div className="p-4 space-y-2">
+                        {perms
+                          .filter(perm =>
+                            !overrideSearchTerm ||
+                            perm.action.toLowerCase().includes(overrideSearchTerm.toLowerCase()) ||
+                            perm.description?.toLowerCase().includes(overrideSearchTerm.toLowerCase())
+                          )
+                          .map((perm) => {
+                            const hasFromRole = selectedPermissions.includes(perm.permissionKey);
+                            const currentState = getPermissionOverrideState(perm.permissionKey);
+
+                            return (
+                              <div
+                                key={perm.permissionKey}
+                                className="flex items-center gap-3 p-3 rounded-md border border-blue-100 dark:border-blue-900/50 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-gradient-to-r from-white to-blue-50/30 dark:from-gray-900 dark:to-blue-950/20"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                      {perm.action}
+                                    </p>
+                                    {hasFromRole && currentState === 'inherit' && (
+                                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                        From Role
+                                      </span>
+                                    )}
+                                  </div>
+                                  {perm.description && (
+                                    <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-0.5">
+                                      {perm.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <Select
+                                  value={currentState}
+                                  onValueChange={(value) => handleOverrideChange(perm.permissionKey, value)}
+                                >
+                                  <SelectTrigger className="w-32 border-blue-200 dark:border-blue-800 focus:ring-blue-500">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="inherit">
+                                      <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                                        Inherit
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="grant">
+                                      <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                        Grant
+                                      </span>
+                                    </SelectItem>
+                                    <SelectItem value="deny">
+                                      <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                        Deny
+                                      </span>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-blue-200 dark:border-blue-900 flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              onClick={handleClearAllOverrides}
+              disabled={savingOverrides || userOverrides.length === 0}
+              className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear All Overrides
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setUserOverridesDialogOpen(false)}
+                disabled={savingOverrides}
+                className="border-blue-200 dark:border-blue-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveUserOverrides}
+                disabled={savingOverrides}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30"
+              >
+                {savingOverrides ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Overrides
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={unsavedDialogOpen} onOpenChange={(open) => {
         if (!open) {
           pendingActionRef.current = null;
@@ -720,6 +1132,53 @@ const RoleManagement = () => {
               }}
             >
               Discard Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear All Overrides Confirmation Dialog */}
+      <Dialog open={showClearOverridesConfirm} onOpenChange={setShowClearOverridesConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+              <AlertTriangle className="w-5 h-5" />
+              Clear All Overrides?
+            </DialogTitle>
+            <DialogDescription>
+              Remove all permission overrides for <strong>{selectedUser?.name || selectedUser?.username}</strong>?
+              <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+                <p className="text-sm text-red-800 dark:text-red-300">
+                  This will reset all permissions to inherit from their role. This action cannot be undone.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowClearOverridesConfirm(false)}
+              disabled={savingOverrides}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmClearOverrides}
+              disabled={savingOverrides}
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              {savingOverrides ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All Overrides
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

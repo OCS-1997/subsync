@@ -1,13 +1,41 @@
 import { getPermissionIdsByKeys, getPermissionsByRoleId, getAllPermissions } from "../models/permissionModel.js";
 import { createRole, deleteRole, getRoleById, getRoleByKey, getRoles, getRolePermissionsMap, replaceRolePermissions, updateRole } from "../models/roleModel.js";
 import { getUserAuthProfile } from "../models/userModel.js";
+import { getUserPermissionOverrides } from "../models/userPermissionOverrideModel.js";
 
 export const buildUserContext = async (username) => {
     const user = await getUserAuthProfile(username);
     if (!user || user.is_active === false || user.isActive === false) {
         return null;
     }
-    const permissions = await getPermissionsByRoleId(user.roleId);
+
+    // Get base permissions from role
+    const rolePermissions = await getPermissionsByRoleId(user.roleId);
+    const rolePermissionKeys = rolePermissions.map((perm) => perm.permissionKey);
+
+    // Get user-specific permission overrides
+    const userOverrides = await getUserPermissionOverrides(username);
+
+    // Apply overrides
+    let finalPermissions = [...rolePermissionKeys];
+
+    if (userOverrides && userOverrides.length > 0) {
+        userOverrides.forEach(override => {
+            const permKey = override.permissionKey;
+            const hasFromRole = rolePermissionKeys.includes(permKey);
+
+            if (override.isGranted) {
+                // Grant: Add permission if not already present
+                if (!finalPermissions.includes(permKey)) {
+                    finalPermissions.push(permKey);
+                }
+            } else {
+                // Deny: Remove permission if present
+                finalPermissions = finalPermissions.filter(p => p !== permKey);
+            }
+        });
+    }
+
     return {
         username: user.username,
         name: user.name,
@@ -16,7 +44,7 @@ export const buildUserContext = async (username) => {
         role: user.role,
         roleKey: user.roleKey,
         isActive: user.isActive,
-        permissions: permissions.map((perm) => perm.permissionKey),
+        permissions: finalPermissions,
     };
 };
 

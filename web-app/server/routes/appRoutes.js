@@ -19,7 +19,8 @@ import { getAllTaxes, getTaxByIdController, createTax, editTax, deleteTax, getDe
 import { getGSTSettingsController, updateGSTSettingsController } from '../controllers/gstSettingsController.js';
 import { getallUsers, getUser, createUserController, updateUserController, deleteUserController } from '../controllers/userController.js';
 import { getLogs } from '../controllers/activityLogController.js';
-import { listRolesController, createRoleController, updateRoleController, deleteRoleController, assignPermissionsController, listPermissionsController } from '../controllers/rbacController.js';
+import { listRolesController, createRoleController, updateRoleController, deleteRoleController, assignPermissionsController, listPermissionsController, getUsersByRoleController } from '../controllers/rbacController.js';
+import { getUserOverridesController, setUserOverrideController, removeUserOverrideController, removeAllUserOverridesController, batchSetUserOverridesController, getUsersWithOverridesController } from '../controllers/userPermissionOverrideController.js';
 import {
     getDashboardController,
     getRenewalsController,
@@ -186,10 +187,19 @@ router.get('/activity-logs', isAuthenticated, authorize(PERMISSIONS.ACTIVITY_LOG
 // RBAC Management
 router.get('/rbac/roles', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), listRolesController);
 router.post('/rbac/roles', isAuthenticated, authorize(PERMISSIONS.ROLES_CREATE), createRoleController);
+router.get('/rbac/roles/:roleId/users', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), getUsersByRoleController);
 router.put('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_UPDATE), updateRoleController);
 router.delete('/rbac/roles/:roleId', isAuthenticated, authorize(PERMISSIONS.ROLES_DELETE), deleteRoleController);
 router.put('/rbac/roles/:roleId/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), assignPermissionsController);
 router.get('/rbac/permissions', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), listPermissionsController);
+
+// User Permission Overrides
+router.get('/users/:username/permission-overrides', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), getUserOverridesController);
+router.post('/users/:username/permission-overrides', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), batchSetUserOverridesController);
+router.put('/users/:username/permission-overrides/:permissionId', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), setUserOverrideController);
+router.delete('/users/:username/permission-overrides/:permissionId', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), removeUserOverrideController);
+router.delete('/users/:username/permission-overrides', isAuthenticated, authorize(PERMISSIONS.ROLES_ASSIGN_PERMISSIONS), removeAllUserOverridesController);
+router.get('/users-with-overrides', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), getUsersWithOverridesController);
 
 // Dashboard
 router.get('/dashboard', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getDashboardController);
