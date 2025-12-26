@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2, Lock, MoreVertical } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Lock, MoreVertical, FileDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
@@ -14,6 +14,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu.jsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx';
+import { Checkbox } from '@/components/ui/checkbox.jsx';
 import Hamster from '@/components/animations/Hamster.jsx';
 import GenericTable from '@/components/layouts/GenericTable.jsx';
 import Pagination from '@/components/layouts/Pagination.jsx';
@@ -45,6 +47,18 @@ export default function ContactsList() {
     const [sortOrder, setSortOrder] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [contactToDelete, setContactToDelete] = useState(null);
+
+    // Export state
+    const [exportDialogOpen, setExportDialogOpen] = useState(false);
+    const [exportFormat, setExportFormat] = useState('csv');
+    const [exportFields, setExportFields] = useState({
+        name: true,
+        company: true,
+        email: true,
+        phone: true,
+        domain: true,
+        designation: true
+    });
 
     const debounceTimeout = useRef();
 
@@ -126,6 +140,96 @@ export default function ContactsList() {
         setContactToDelete(null);
     };
 
+    const handleExport = () => {
+        const dataToExport = contacts.map(contact => {
+            const exportRow = {};
+            if (exportFields.name) {
+                exportRow['Name'] = `${contact.salutation || ''} ${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+            }
+            if (exportFields.designation) {
+                exportRow['Designation'] = contact.designation || '-';
+            }
+            if (exportFields.company) {
+                exportRow['Company'] = contact.company_name || '-';
+            }
+            if (exportFields.email) {
+                exportRow['Email'] = contact.email || '-';
+            }
+            if (exportFields.phone) {
+                exportRow['Phone'] = contact.country_code && contact.phone_number
+                    ? `${contact.country_code} ${contact.phone_number}`
+                    : '-';
+            }
+            if (exportFields.domain) {
+                exportRow['Domain'] = contact.domain_name || contact.domain_free_text || '-';
+            }
+            return exportRow;
+        });
+
+        if (dataToExport.length === 0) {
+            toast.warning('No data available to export');
+            return;
+        }
+
+        if (exportFormat === 'csv') {
+            exportToCSV(dataToExport);
+        } else {
+            exportToText(dataToExport);
+        }
+
+        setExportDialogOpen(false);
+        toast.success(`Contacts exported successfully as ${exportFormat.toUpperCase()}`);
+    };
+
+    const exportToCSV = (data) => {
+        const headers = Object.keys(data[0] || {});
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row =>
+                headers.map(header => `"${(row[header] || '').toString().replace(/"/g, '""')}"`).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Contacts_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    };
+
+    const exportToText = (data) => {
+        let content = 'CONTACTS - EXPORT REPORT\n';
+        content += '='.repeat(80) + '\n\n';
+        content += `Generated on: ${new Date().toLocaleString('en-IN')}\n`;
+        content += `Total Records: ${data.length}\n\n`;
+        content += '='.repeat(80) + '\n\n';
+
+        data.forEach((contact, index) => {
+            content += `CONTACT #${index + 1}\n`;
+            content += '-'.repeat(80) + '\n';
+            Object.entries(contact).forEach(([key, value]) => {
+                content += `${key.padEnd(20)}: ${value}\n`;
+            });
+            content += '\n';
+        });
+
+        content += '='.repeat(80) + '\n';
+        content += 'END OF REPORT\n';
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Contacts_Export_${new Date().toISOString().split('T')[0]}.txt`;
+        link.click();
+    };
+
+    const toggleExportField = (field) => {
+        setExportFields(prev => ({
+            ...prev,
+            [field]: !prev[field]
+        }));
+    };
+
     // Format contacts data for table
     const tableData = contacts.map((contact) => ({
         ...contact,
@@ -192,13 +296,22 @@ export default function ContactsList() {
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
                 <h1 className="text-2xl font-bold">Contacts</h1>
-                {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
-                    <Link to={`/${username}/dashboard/contacts/new`}>
-                        <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
-                            <Plus className="w-4 h-4" /> Add
-                        </Button>
-                    </Link>
-                )}
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        className="border-green-500 text-green-600 hover:bg-green-50"
+                        onClick={() => setExportDialogOpen(true)}
+                    >
+                        <FileDown className="w-4 h-4 mr-2" /> Export
+                    </Button>
+                    {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
+                        <Link to={`/${username}/dashboard/contacts/new`}>
+                            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
+                                <Plus className="w-4 h-4" /> Add
+                            </Button>
+                        </Link>
+                    )}
+                </div>
             </div>
 
             <hr className="mb-6 border-blue-500 border-1" />
@@ -271,6 +384,124 @@ export default function ContactsList() {
                         </Button>
                         <Button variant="destructive" onClick={handleDelete}>
                             Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Export Dialog */}
+            <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Export Contacts</DialogTitle>
+                        <DialogDescription>
+                            Select the export format and fields to include in the export.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-4">
+                        {/* Export Format */}
+                        <div>
+                            <label className="text-sm font-medium mb-2 block">Export Format</label>
+                            <Select value={exportFormat} onValueChange={setExportFormat}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="csv">CSV (Comma-Separated Values)</SelectItem>
+                                    <SelectItem value="text">Text Report (Formatted)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {exportFormat === 'csv'
+                                    ? 'Download data as a CSV file for use in Excel or other spreadsheet applications.'
+                                    : 'Download a formatted text report with detailed information.'}
+                            </p>
+                        </div>
+
+                        {/* Fields Selection */}
+                        <div>
+                            <label className="text-sm font-medium mb-3 block">Fields to Include</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-name"
+                                        checked={exportFields.name}
+                                        onCheckedChange={() => toggleExportField('name')}
+                                    />
+                                    <label htmlFor="export-name" className="text-sm cursor-pointer">
+                                        Name
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-designation"
+                                        checked={exportFields.designation}
+                                        onCheckedChange={() => toggleExportField('designation')}
+                                    />
+                                    <label htmlFor="export-designation" className="text-sm cursor-pointer">
+                                        Designation
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-company"
+                                        checked={exportFields.company}
+                                        onCheckedChange={() => toggleExportField('company')}
+                                    />
+                                    <label htmlFor="export-company" className="text-sm cursor-pointer">
+                                        Company
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-email"
+                                        checked={exportFields.email}
+                                        onCheckedChange={() => toggleExportField('email')}
+                                    />
+                                    <label htmlFor="export-email" className="text-sm cursor-pointer">
+                                        Email
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-phone"
+                                        checked={exportFields.phone}
+                                        onCheckedChange={() => toggleExportField('phone')}
+                                    />
+                                    <label htmlFor="export-phone" className="text-sm cursor-pointer">
+                                        Phone
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="export-domain"
+                                        checked={exportFields.domain}
+                                        onCheckedChange={() => toggleExportField('domain')}
+                                    />
+                                    <label htmlFor="export-domain" className="text-sm cursor-pointer">
+                                        Domain
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                            onClick={handleExport}
+                            disabled={Object.values(exportFields).every(v => !v)}
+                        >
+                            <FileDown className="w-4 h-4 mr-2" /> Export Data
                         </Button>
                     </DialogFooter>
                 </DialogContent>

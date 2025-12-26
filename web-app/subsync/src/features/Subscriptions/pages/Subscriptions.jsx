@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import { ArrowLeft, Mail, Plus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Mail, Plus, RotateCcw, FileDown } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 
 import api from "@/lib/axiosInstance.js";
@@ -12,6 +12,16 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
+import { Checkbox } from "@/components/ui/checkbox.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog.jsx";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -42,6 +52,20 @@ const ListView = ({ onAddNew }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Export dialog state
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState("csv");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [exportFields, setExportFields] = useState({
+    domain: true,
+    service: true,
+    contact: true,
+    startDate: true,
+    endDate: true,
+    status: true
+  });
   const debounceTimeout = useRef();
 
   // Debounce search
@@ -156,7 +180,7 @@ const ListView = ({ onAddNew }) => {
       </div>
 
       <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => {}} />
+        <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} />
         <div className="flex items-center gap-2">
           <Label>Status</Label>
           <select className="border rounded-md h-9 px-2" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
@@ -299,7 +323,7 @@ const AddForm = ({ onBack }) => {
       </button>
 
       <h2 className="text-2xl font-bold">Add Subscription</h2>
-      
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-3">

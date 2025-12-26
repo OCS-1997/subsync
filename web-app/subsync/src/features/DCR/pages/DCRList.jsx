@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Filter, X, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import {
@@ -49,6 +50,21 @@ export default function DCRList() {
   // Delete dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState(null);
+
+  // Export dialog
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState("csv");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [exportFields, setExportFields] = useState({
+    timestamp: true,
+    user: isAdmin,
+    domain: true,
+    contact: true,
+    callType: true,
+    duration: true,
+    notes: true
+  });
 
   // Debounce search
   const debounceTimeout = useRef();
@@ -136,6 +152,148 @@ export default function DCRList() {
     setSearch("");
   };
 
+  const handleExport = async () => {
+    try {
+      // Build query params for export
+      const params = {
+        search: debouncedSearch,
+      };
+
+      if (exportStartDate) params.startDate = new Date(exportStartDate).toISOString();
+      if (exportEndDate) {
+        const endDate = new Date(exportEndDate);
+        endDate.setHours(23, 59, 59, 999);
+        params.endDate = endDate.toISOString();
+      }
+      if (isAdmin && filterUserId) params.userId = filterUserId;
+      if (filterCallType) params.callType = filterCallType;
+
+      // Fetch all entries for export (without pagination)
+      const response = await dispatch(getDcrEntries({ ...params, limit: 10000 })).unwrap();
+      const dataToExport = response.entries || entries;
+
+      if (dataToExport.length === 0) {
+        toast.warning("No data available to export");
+        return;
+      }
+
+      if (exportFormat === "csv") {
+        exportToCSV(dataToExport);
+      } else if (exportFormat === "pdf") {
+        exportToPDF(dataToExport);
+      }
+
+      setExportDialogOpen(false);
+      toast.success(`Data exported successfully as ${exportFormat.toUpperCase()}`);
+    } catch (err) {
+      toast.error("Failed to export data");
+      console.error("Export error:", err);
+    }
+  };
+
+  const exportToCSV = (data) => {
+    // Build CSV headers
+    const headers = [];
+    if (exportFields.timestamp) headers.push("Date & Time");
+    if (exportFields.user && isAdmin) headers.push("User");
+    if (exportFields.domain) headers.push("Domain / Company");
+    if (exportFields.contact) headers.push("Contact Person");
+    if (exportFields.callType) headers.push("Call Type");
+    if (exportFields.duration) headers.push("Duration");
+    if (exportFields.notes) headers.push("Description");
+
+    // Build CSV rows
+    const rows = data.map(entry => {
+      const row = [];
+      if (exportFields.timestamp) row.push(`"${formatDateTime(entry.timestamp)}"`);
+      if (exportFields.user && isAdmin) row.push(`"${entry.user_name || '-'}"`);
+      if (exportFields.domain) row.push(`"${entry.domain_name || entry.domain_free_text || entry.company_name || '-'}"`);
+      if (exportFields.contact) row.push(`"${entry.contact_name || '-'}"`);
+      if (exportFields.callType) row.push(`"${entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1)}"`);
+      if (exportFields.duration) row.push(`"${entry.time_spent || '-'}"`);
+      if (exportFields.notes) row.push(`"${(entry.notes || '-').replace(/"/g, '""')}"`);
+      return row.join(",");
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `DCR_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = (data) => {
+    // Create a formatted text content for PDF
+    let content = "DAILY CALL REPORTS (DCR) - EXPORT REPORT\n";
+    content += "=".repeat(80) + "\n\n";
+    content += `Generated on: ${new Date().toLocaleString('en-IN')}\n`;
+    content += `Total Records: ${data.length}\n`;
+
+    if (exportStartDate || exportEndDate) {
+      content += `Date Range: ${exportStartDate || 'Start'} to ${exportEndDate || 'End'}\n`;
+    }
+    content += "\n" + "=".repeat(80) + "\n\n";
+
+    // Add each entry
+    data.forEach((entry, index) => {
+      content += `ENTRY #${index + 1}\n`;
+      content += "-".repeat(80) + "\n";
+
+      if (exportFields.timestamp) {
+        content += `Date & Time:       ${formatDateTime(entry.timestamp)}\n`;
+      }
+      if (exportFields.user && isAdmin) {
+        content += `User:              ${entry.user_name || '-'}\n`;
+      }
+      if (exportFields.domain) {
+        content += `Domain/Company:    ${entry.domain_name || entry.domain_free_text || entry.company_name || '-'}\n`;
+      }
+      if (exportFields.contact) {
+        content += `Contact Person:    ${entry.contact_name || '-'}\n`;
+      }
+      if (exportFields.callType) {
+        content += `Call Type:         ${entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1)}\n`;
+      }
+      if (exportFields.duration) {
+        content += `Duration:          ${entry.time_spent || '-'}\n`;
+      }
+      if (exportFields.notes) {
+        content += `Description:\n${entry.notes || '-'}\n`;
+      }
+
+      content += "\n";
+    });
+
+    content += "=".repeat(80) + "\n";
+    content += "END OF REPORT\n";
+
+    // Download as text file (formatted as PDF-like report)
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `DCR_Export_${new Date().toISOString().split('T')[0]}.txt`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const toggleExportField = (field) => {
+    setExportFields(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -167,12 +325,21 @@ export default function DCRList() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold">Daily Call Reports (DCR)</h1>
-        <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white"
-          onClick={() => navigate(`/${username}/dashboard/dcr/new`)}
-        >
-          <Plus className="w-4 h-4 mr-2" /> New Entry
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="border-green-500 text-green-600 hover:bg-green-50"
+            onClick={() => setExportDialogOpen(true)}
+          >
+            <FileDown className="w-4 h-4 mr-2" /> Export
+          </Button>
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+            onClick={() => navigate(`/${username}/dashboard/dcr/new`)}
+          >
+            <Plus className="w-4 h-4 mr-2" /> New Entry
+          </Button>
+        </div>
       </div>
       <hr className="mb-6 border-blue-500 border-1" />
 
@@ -393,6 +560,184 @@ export default function DCRList() {
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Export DCR Data</DialogTitle>
+            <DialogDescription>
+              Configure your export options and select the fields to include in the export.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Export Format */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Export Format</label>
+              <Select value={exportFormat} onValueChange={setExportFormat}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="csv">CSV (Comma-Separated Values)</SelectItem>
+                  <SelectItem value="pdf">Text Report (Formatted)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {exportFormat === "csv"
+                  ? "Download data as a CSV file for use in Excel or other spreadsheet applications."
+                  : "Download a formatted text report with detailed information for each entry."}
+              </p>
+            </div>
+
+            {/* Date Range */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Date Range (Optional)</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Start Date</label>
+                  <Input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(e) => setExportStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">End Date</label>
+                  <Input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(e) => setExportEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Leave blank to export all data based on current filters.
+              </p>
+            </div>
+
+            {/* Fields Selection */}
+            <div>
+              <label className="text-sm font-medium mb-3 block">Fields to Include</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-timestamp"
+                    checked={exportFields.timestamp}
+                    onCheckedChange={() => toggleExportField('timestamp')}
+                  />
+                  <label
+                    htmlFor="export-timestamp"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Date & Time
+                  </label>
+                </div>
+
+                {isAdmin && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="export-user"
+                      checked={exportFields.user}
+                      onCheckedChange={() => toggleExportField('user')}
+                    />
+                    <label
+                      htmlFor="export-user"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      User
+                    </label>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-domain"
+                    checked={exportFields.domain}
+                    onCheckedChange={() => toggleExportField('domain')}
+                  />
+                  <label
+                    htmlFor="export-domain"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Domain / Company
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-contact"
+                    checked={exportFields.contact}
+                    onCheckedChange={() => toggleExportField('contact')}
+                  />
+                  <label
+                    htmlFor="export-contact"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Contact Person
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-callType"
+                    checked={exportFields.callType}
+                    onCheckedChange={() => toggleExportField('callType')}
+                  />
+                  <label
+                    htmlFor="export-callType"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Call Type
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-duration"
+                    checked={exportFields.duration}
+                    onCheckedChange={() => toggleExportField('duration')}
+                  />
+                  <label
+                    htmlFor="export-duration"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Duration
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="export-notes"
+                    checked={exportFields.notes}
+                    onCheckedChange={() => toggleExportField('notes')}
+                  />
+                  <label
+                    htmlFor="export-notes"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Description / Notes
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-green-500 hover:bg-green-600 text-white"
+              onClick={handleExport}
+              disabled={!Object.values(exportFields).some(v => v)}
+            >
+              <FileDown className="w-4 h-4 mr-2" /> Export Data
             </Button>
           </DialogFooter>
         </DialogContent>
