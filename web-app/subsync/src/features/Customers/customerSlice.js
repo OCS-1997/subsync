@@ -9,7 +9,7 @@ export const fetchCustomerById = createAsyncThunk(
       const res = await api.get(`/customer/${id}`);
       return res.data.customer;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to fetch customer';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to fetch customer';
       return rejectWithValue(errorMessage);
     }
   }
@@ -22,7 +22,7 @@ export const createCustomer = createAsyncThunk(
       const res = await api.post(`/create-customer`, payload);
       return res.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to create customer';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to create customer';
       return rejectWithValue(errorMessage);
     }
   }
@@ -36,7 +36,7 @@ export const updateCustomer = createAsyncThunk(
       const res = await api.put(`/update-customer/${id}`, payload);
       return res.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to update customer';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to update customer';
       return rejectWithValue(errorMessage);
     }
   }
@@ -53,7 +53,7 @@ export const fetchCustomers = createAsyncThunk(
         totalRecords: res.data.totalRecords,
       };
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to fetch customers';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to fetch customers';
       return rejectWithValue(errorMessage);
     }
   }

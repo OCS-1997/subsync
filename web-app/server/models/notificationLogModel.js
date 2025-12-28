@@ -27,7 +27,7 @@ export async function upsertNotificationLog({
 }) {
     try {
         const sentAtDate = sent_at instanceof Date ? sent_at : new Date(sent_at);
-        
+
         const [result] = await appDB.query(`
             INSERT INTO notification_logs (
                 subscription_id, template_key, sent_at, status, user_id,
@@ -111,6 +111,7 @@ export async function isNotificationSent(subscriptionId, templateKey, sentAt) {
  * @param {Object} filters
  * @param {string} filters.subscription_id
  * @param {string} filters.template_key
+ * @param {string} filters.domain_name
  * @param {Date|string} filters.start_date
  * @param {Date|string} filters.end_date
  * @param {string} filters.status
@@ -121,6 +122,7 @@ export async function isNotificationSent(subscriptionId, templateKey, sentAt) {
 export async function getNotificationLogs({
     subscription_id = null,
     template_key = null,
+    domain_name = null,
     start_date = null,
     end_date = null,
     status = null,
@@ -138,6 +140,10 @@ export async function getNotificationLogs({
         if (template_key) {
             whereClauses.push(`nl.template_key = ?`);
             params.push(template_key);
+        }
+        if (domain_name) {
+            whereClauses.push(`s.domain_name LIKE ?`);
+            params.push(`%${domain_name}%`);
         }
         if (start_date) {
             whereClauses.push(`DATE(nl.sent_at) >= DATE(?)`);
@@ -158,6 +164,7 @@ export async function getNotificationLogs({
         const [countResult] = await appDB.query(`
             SELECT COUNT(*) as total
             FROM notification_logs nl
+            LEFT JOIN subscriptions s ON nl.subscription_id = s.sub_id
             ${whereStr}
         `, params);
 

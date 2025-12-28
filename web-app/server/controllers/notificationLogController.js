@@ -9,6 +9,7 @@ export const listNotificationLogsController = async (req, res) => {
         const {
             subscription_id,
             template_key,
+            domain_name,
             start_date,
             end_date,
             status,
@@ -19,6 +20,7 @@ export const listNotificationLogsController = async (req, res) => {
         const result = await getNotificationLogs({
             subscription_id,
             template_key,
+            domain_name,
             start_date,
             end_date,
             status,

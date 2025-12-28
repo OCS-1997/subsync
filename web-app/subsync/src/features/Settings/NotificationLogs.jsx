@@ -8,11 +8,16 @@ import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import {
   Loader2, FileText, Search, Calendar, Filter, X,
-  CheckCircle, XCircle, Clock, AlertCircle
+  CheckCircle, XCircle, Clock, AlertCircle, Info
 } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card.jsx";
 
 const NotificationLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -20,6 +25,7 @@ const NotificationLogs = () => {
   const [filters, setFilters] = useState({
     subscription_id: "",
     template_key: "",
+    domain_name: "",
     start_date: "",
     end_date: "",
     status: "",
@@ -31,6 +37,8 @@ const NotificationLogs = () => {
     total: 0,
     totalPages: 1,
   });
+  const [subscriptionDetails, setSubscriptionDetails] = useState({});
+  const [loadingSubId, setLoadingSubId] = useState(null);
 
   const { hasPermission } = usePermissions();
   const canView = hasPermission(PERMISSIONS.NOTIFICATION_LOGS_VIEW);
@@ -87,11 +95,124 @@ const NotificationLogs = () => {
     setFilters({
       subscription_id: "",
       template_key: "",
+      domain_name: "",
       start_date: "",
       end_date: "",
       status: "",
     });
     setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const fetchSubscriptionDetails = async (subId) => {
+    if (subscriptionDetails[subId]) return subscriptionDetails[subId];
+
+    setLoadingSubId(subId);
+    try {
+      const response = await api.get(`/subscriptions/${subId}`);
+      const details = response.data.subscription;
+      setSubscriptionDetails(prev => ({ ...prev, [subId]: details }));
+      return details;
+    } catch (error) {
+      console.error("Failed to load subscription details:", error);
+      return null;
+    } finally {
+      setLoadingSubId(null);
+    }
+  };
+
+  const SubscriptionCell = ({ subId }) => {
+    const [details, setDetails] = useState(subscriptionDetails[subId] || null);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleOpenChange = async (open) => {
+      setIsOpen(open);
+      if (open && !details) {
+        const fetchedDetails = await fetchSubscriptionDetails(subId);
+        setDetails(fetchedDetails);
+      }
+    };
+
+    return (
+      <HoverCard openDelay={200} closeDelay={100} open={isOpen} onOpenChange={handleOpenChange}>
+        <HoverCardTrigger asChild>
+          <button className="font-mono text-sm text-primary hover:underline cursor-pointer flex items-center gap-1">
+            {subId}
+            <Info className="w-3 h-3 opacity-50" />
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-96" side="right" align="start">
+          {loadingSubId === subId ? (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <span className="ml-2 text-sm">Loading...</span>
+            </div>
+          ) : details ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h4 className="font-semibold text-sm">Subscription Details</h4>
+                <Badge variant={details.status === 'active' ? 'default' : 'secondary'}>
+                  {details.status}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Domain</p>
+                  <p className="font-medium">{details.domain_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Currency</p>
+                  <p className="font-medium">{details.currency || 'INR'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Start Date</p>
+                  <p className="font-medium">
+                    {details.start_date ? new Date(details.start_date).toLocaleDateString('en-IN') : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">End Date</p>
+                  <p className="font-medium">
+                    {details.end_date ? new Date(details.end_date).toLocaleDateString('en-IN') : 'Never'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t pt-2">
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <p className="text-muted-foreground">Subtotal</p>
+                    <p className="font-medium">{details.currency} {parseFloat(details.subtotal || 0).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Tax</p>
+                    <p className="font-medium">{details.currency} {parseFloat(details.tax_total || 0).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total</p>
+                    <p className="font-semibold text-primary">{details.currency} {parseFloat(details.total || 0).toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {details.notes && (
+                <div className="border-t pt-2">
+                  <p className="text-muted-foreground text-xs">Notes</p>
+                  <p className="text-xs mt-1 line-clamp-2">{details.notes}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground p-4 text-center">
+              Failed to load subscription details
+            </div>
+          )}
+        </HoverCardContent>
+      </HoverCard>
+    );
   };
 
   const getStatusBadge = (status) => {
@@ -150,7 +271,7 @@ const NotificationLogs = () => {
       {/* Filters */}
       <div className="border-b border-border bg-card/20 p-4">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[180px]">
             <Label className="text-xs mb-2">Subscription ID</Label>
             <Input
               placeholder="SUB001"
@@ -160,7 +281,17 @@ const NotificationLogs = () => {
             />
           </div>
 
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[180px]">
+            <Label className="text-xs mb-2">Domain Name</Label>
+            <Input
+              placeholder="example.com"
+              value={filters.domain_name}
+              onChange={(e) => handleFilterChange("domain_name", e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+          <div className="flex-1 min-w-[180px]">
             <Label className="text-xs mb-2">Template</Label>
             <Select
               value={filters.template_key}
@@ -250,6 +381,7 @@ const NotificationLogs = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Subscription ID</TableHead>
+                  <TableHead>Domain</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Template</TableHead>
                   <TableHead>Sent At</TableHead>
@@ -262,7 +394,10 @@ const NotificationLogs = () => {
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="font-mono text-sm">{log.subscription_id}</TableCell>
+                    <TableCell>
+                      <SubscriptionCell subId={log.subscription_id} />
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">{log.domain_name || "N/A"}</TableCell>
                     <TableCell>{log.customer_name || "N/A"}</TableCell>
                     <TableCell>
                       <span className="text-sm font-medium">

@@ -291,25 +291,70 @@ const AddCustomer = () => {
         actionResult = await dispatch(createCustomer(payload));
       }
 
+      // Debug: Log the action result
+      console.log("Action result:", actionResult);
+      console.log("Request status:", actionResult.meta.requestStatus);
+      console.log("Action payload:", actionResult.payload);
+
       if (actionResult.meta.requestStatus === "rejected") {
         // Check for duplicate name error
         const backendMsg = actionResult.payload || "Error saving customer details.";
-        if (backendMsg.includes("name already exists")) {
-          toast.error("A customer with this name already exists. Please use a different name.");
+        console.log("Backend error message:", backendMsg);
+
+        // Check for duplicate name (handle both exact message and contains)
+        if (backendMsg.toLowerCase().includes("already exists") ||
+          backendMsg.toLowerCase().includes("duplicate")) {
+          toast.error("A customer with this name already exists. Please use a different name.", {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+
+          // Focus on the displayName field (try multiple possible IDs)
+          setTimeout(() => {
+            const displayNameInput = document.getElementById("displayName") ||
+              document.querySelector('input[name="displayName"]');
+            if (displayNameInput) {
+              displayNameInput.focus();
+              displayNameInput.select(); // Select the text so user can easily change it
+              displayNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        } else if (backendMsg.toLowerCase().includes("invalid") ||
+          backendMsg.toLowerCase().includes("required")) {
+          // Handle other validation errors
+          toast.error(backendMsg, {
+            position: "top-center",
+            autoClose: 5000,
+          });
         } else {
-          throw new Error(backendMsg);
+          // Generic error message
+          toast.error(backendMsg || "Failed to save customer details.", {
+            position: "top-center",
+            autoClose: 5000,
+          });
         }
+        // IMPORTANT: Don't reset the form - keep all user data
         return;
       }
 
       toast.success(isEditing ? "Customer Updated Successfully." : "Customer Created Successfully.");
+
+      // Only reset form on SUCCESS
       if (!isEditing) resetCustomerData();
 
       const userSegment = location.pathname.split("/")[1];
       setTimeout(() => navigate(`/${userSegment}/dashboard/customers`), 2000);
     } catch (err) {
       const errorMessage = typeof err === 'string' ? err : err.message || 'An error occurred';
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 5000,
+      });
+      // IMPORTANT: Don't reset the form - keep all user data
     }
   };
 
