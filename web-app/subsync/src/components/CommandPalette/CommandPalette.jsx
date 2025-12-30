@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTheme } from "@/context/ThemeContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "@/features/Auth/authSlice.js";
@@ -42,10 +43,12 @@ import {
     UserCog,
     ClipboardList,
     Database,
+    Sun,
+    Moon,
 } from "lucide-react";
 
 // Command palette items configuration
-const createCommandItems = (username, hasPermission, dispatch, navigate) => {
+const createCommandItems = (username, hasPermission, dispatch, navigate, theme, toggleTheme) => {
     const baseUrl = `/${username}/dashboard`;
 
     return [
@@ -66,6 +69,20 @@ const createCommandItems = (username, hasPermission, dispatch, navigate) => {
                 }
             },
             keywords: ["signout", "exit", "leave", "logout"],
+            permission: null,
+        },
+
+        // Appearances
+        {
+            id: "theme-toggle",
+            category: "Appearance",
+            icon: theme === "dark" ? Sun : Moon,
+            title: theme === "dark" ? "Light Mode" : "Dark Mode",
+            subtitle: `Switch to ${theme === "dark" ? "light" : "dark"} theme`,
+            action: () => {
+                toggleTheme();
+            },
+            keywords: ["theme", "dark", "light", "mode", "color", "design"],
             permission: null,
         },
 
@@ -364,18 +381,20 @@ export default function CommandPalette({ open, onOpenChange }) {
     const user = useSelector((state) => state.auth.user);
     const { hasPermission } = usePermissions();
 
+    const { theme, toggleTheme } = useTheme();
+
     // Create command items with permission filtering
     const commandItems = useMemo(() => {
         if (!user?.username) return [];
 
-        const items = createCommandItems(user.username, hasPermission, dispatch, navigate);
+        const items = createCommandItems(user.username, hasPermission, dispatch, navigate, theme, toggleTheme);
 
         // Filter items based on permissions
         return items.filter((item) => {
             if (item.permission === null) return true;
             return hasPermission(item.permission);
         });
-    }, [user?.username, hasPermission, dispatch, navigate]);
+    }, [user?.username, hasPermission, dispatch, navigate, theme, toggleTheme]);
 
     // Group items by category
     const groupedItems = useMemo(() => {

@@ -65,7 +65,7 @@ function QuickToolsWidget() {
         return;
       }
       window.open(url, '_blank', 'noopener,noreferrer');
-      toast.success(`Opening ${tool.name}...`);
+      // toast.success(`Opening ${tool.name}...`);
     } catch (error) {
       toast.error('Invalid URL');
     }

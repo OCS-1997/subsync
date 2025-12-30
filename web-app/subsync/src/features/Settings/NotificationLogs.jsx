@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
@@ -41,6 +42,8 @@ const NotificationLogs = () => {
   const [loadingSubId, setLoadingSubId] = useState(null);
 
   const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
+  const { username } = useParams();
   const canView = hasPermission(PERMISSIONS.NOTIFICATION_LOGS_VIEW);
 
   useEffect(() => {
@@ -135,7 +138,14 @@ const NotificationLogs = () => {
     return (
       <HoverCard openDelay={200} closeDelay={100} open={isOpen} onOpenChange={handleOpenChange}>
         <HoverCardTrigger asChild>
-          <button className="font-mono text-sm text-primary hover:underline cursor-pointer flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/${username}/dashboard/subscriptions/${subId}`);
+            }}  
+            className="text-blue-600 hover:underline font-mono text-sm cursor-pointer flex items-center gap-1"
+          >
             {subId}
             <Info className="w-3 h-3 opacity-50" />
           </button>
