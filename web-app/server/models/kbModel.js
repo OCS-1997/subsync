@@ -89,7 +89,7 @@ async function updateArticleTags(articleId, tags = []) {
 /**
  * Create a new article
  */
-export async function createArticle({ title, content, category_id, author_id, is_published = false, tags = [], source = null }) {
+export async function createArticle({ title, content, category_id, author_id, visibility, is_published = false, tags = [], source = null }) {
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now();
 
     const connection = await appDB.getConnection();
