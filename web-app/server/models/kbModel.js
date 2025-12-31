@@ -4,11 +4,11 @@ import { getCurrentTime } from "../middlewares/time.js";
 
 // --- CATEGORIES ---
 
-export async function createCategory(name, description) {
+export async function createCategory(name, description, parent_id = null) {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const [result] = await appDB.query(
-        `INSERT INTO knowledge_categories (name, slug, description) VALUES (?, ?, ?)`,
-        [name, slug, description]
+        `INSERT INTO knowledge_categories (name, slug, description, parent_id) VALUES (?, ?, ?, ?)`,
+        [name, slug, description, parent_id]
     );
     return result.insertId;
 }
@@ -26,7 +26,7 @@ export async function getCategories() {
     return rows;
 }
 
-export async function updateCategory(id, { name, description }) {
+export async function updateCategory(id, { name, description, parent_id }) {
     const updates = [];
     const params = [];
     if (name) {
@@ -38,6 +38,10 @@ export async function updateCategory(id, { name, description }) {
     if (description !== undefined) {
         updates.push('description = ?');
         params.push(description);
+    }
+    if (parent_id !== undefined) {
+        updates.push('parent_id = ?');
+        params.push(parent_id);
     }
 
     if (updates.length === 0) return false;
@@ -93,9 +97,9 @@ export async function createArticle({ title, content, category_id, author_id, is
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO knowledge_articles (title, slug, content, category_id, author_id, is_published, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            [title, slug, content, category_id || null, author_id, is_published]
+            `INSERT INTO knowledge_articles (title, slug, content, category_id, author_id, visibility, is_published, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [title, slug, content, category_id || null, author_id, visibility || 'internal', is_published]
         );
         const articleId = result.insertId;
 
@@ -136,7 +140,7 @@ export async function createArticle({ title, content, category_id, author_id, is
     }
 }
 
-export async function getArticles({ search, categoryId, tag, isPublished, limit = 20, offset = 0, authorId }) {
+export async function getArticles({ search, categoryId, tag, isPublished, visibility, limit = 20, offset = 0, authorId }) {
     let query = `
         SELECT 
             ka.*, 
@@ -167,6 +171,16 @@ export async function getArticles({ search, categoryId, tag, isPublished, limit 
     if (authorId) {
         where.push(`ka.author_id = ?`);
         params.push(authorId);
+    }
+
+    if (visibility) {
+        if (Array.isArray(visibility)) {
+            where.push(`ka.visibility IN (?)`);
+            params.push(visibility);
+        } else {
+            where.push(`ka.visibility = ?`);
+            params.push(visibility);
+        }
     }
 
     if (search) {
@@ -230,7 +244,30 @@ export async function getArticleById(id) {
     return rows[0];
 }
 
-export async function updateArticle(id, { title, content, category_id, is_published, tags, changed_by }) {
+export async function getArticleBySlug(slug) {
+    const [rows] = await appDB.query(`
+        SELECT 
+            ka.*, 
+            kc.name as category_name,
+            u.name as author_name,
+            (SELECT JSON_ARRAYAGG(kt.name) 
+             FROM knowledge_article_tags kat 
+             JOIN knowledge_tags kt ON kat.tag_id = kt.id 
+             WHERE kat.article_id = ka.id) as tags,
+            ks.source_type,
+            ks.source_reference_id
+        FROM knowledge_articles ka
+        LEFT JOIN knowledge_categories kc ON ka.category_id = kc.id
+        LEFT JOIN users u ON ka.author_id = u.username
+        LEFT JOIN knowledge_sources ks ON ks.article_id = ka.id
+        WHERE ka.slug = ?
+    `, [slug]);
+
+    if (rows.length === 0) return null;
+    return rows[0];
+}
+
+export async function updateArticle(id, { title, content, category_id, visibility, is_published, tags, changed_by }) {
     const connection = await appDB.getConnection();
     try {
         await connection.beginTransaction();
@@ -249,6 +286,10 @@ export async function updateArticle(id, { title, content, category_id, is_publis
         if (category_id !== undefined) {
             updates.push('category_id = ?');
             params.push(category_id || null);
+        }
+        if (visibility !== undefined) {
+            updates.push('visibility = ?');
+            params.push(visibility);
         }
         if (is_published !== undefined) {
             updates.push('is_published = ?');

@@ -67,6 +67,7 @@ import {
     createArticleController,
     getArticlesController,
     getArticleByIdController,
+    getArticleBySlugController,
     updateArticleController,
     deleteArticleController,
     getArticleVersionsController
@@ -287,6 +288,7 @@ router.post('/dcr/:dcrId/promote-to-kb', isAuthenticated, authorize(PERMISSIONS.
 router.post('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_CREATE), createArticleController);
 router.get('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticlesController);
 router.get('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleByIdController);
+router.get('/kb/public/articles/:slug', getArticleBySlugController);
 router.put('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleController);
 router.delete('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_DELETE), deleteArticleController);
 router.get('/kb/articles/:id/versions', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleVersionsController);

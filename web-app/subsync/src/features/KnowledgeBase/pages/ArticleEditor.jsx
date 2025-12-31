@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowLeft, Save, Eye, Plus, FolderPlus } from "lucide-react";
+import { ArrowLeft, Save, Eye, Plus, FolderPlus, Check, ChevronsUpDown } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import api from "@/lib/axiosInstance.js";
 import { Button } from "@/components/ui/button.jsx";
@@ -13,6 +13,16 @@ import { Switch } from "@/components/ui/switch.jsx";
 import { RichTextEditor } from "@/components/ui/rich-text-editor.jsx";
 import { TagInput } from "@/components/ui/tag-input.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command.jsx";
+import { cn } from "@/lib/utils.js";
 
 export default function ArticleEditor() {
     const { id } = useParams();
@@ -25,6 +35,7 @@ export default function ArticleEditor() {
     const [saving, setSaving] = useState(false);
     const [categories, setCategories] = useState([]);
     const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+    const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
     const [newCategory, setNewCategory] = useState({ name: '', description: '' });
 
     const [formData, setFormData] = useState({
@@ -32,6 +43,7 @@ export default function ArticleEditor() {
         content: "",
         category_id: "",
         is_published: false,
+        visibility: "internal",
         tags: []
     });
 
@@ -71,6 +83,7 @@ export default function ArticleEditor() {
                 content: article.content || "",
                 category_id: article.category_id || "",
                 is_published: !!article.is_published,
+                visibility: article.visibility || "internal",
                 tags: tags || []
             });
         } catch (error) {
@@ -196,15 +209,39 @@ export default function ArticleEditor() {
 
                         {/* Sidebar */}
                         <div className="space-y-6">
+                            {/* Visibility Settings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Article Visibility</CardTitle>
+                                    <CardDescription>Determine who can access this article</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <select
+                                        className="w-full border rounded-md h-10 px-3 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                        value={formData.visibility}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
+                                    >
+                                        <option value="internal">Internal Only (Staff Only)</option>
+                                        <option value="customer">Customer Only (Public Link)</option>
+                                        <option value="both">Both (Staff & Public)</option>
+                                    </select>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                        {formData.visibility === 'internal'
+                                            ? '🔒 Only authenticated staff can view this document.'
+                                            : '🌐 Anyone with the link can view this document if published.'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+
                             {/* Publish Settings */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Publish Settings</CardTitle>
+                                    <CardTitle>Publishing</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <Label htmlFor="is_published" className="cursor-pointer">
-                                            Published
+                                            Live Status
                                         </Label>
                                         <Switch
                                             id="is_published"
@@ -214,8 +251,8 @@ export default function ArticleEditor() {
                                     </div>
                                     <p className="text-xs text-gray-500">
                                         {formData.is_published
-                                            ? '✅ This article will be visible to all users'
-                                            : '📝 This article is saved as a draft'}
+                                            ? '✅ This article is live and accessible.'
+                                            : '📝 This article is saved as a draft (Staff only).'}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -227,22 +264,72 @@ export default function ArticleEditor() {
                                     <CardDescription>Organize your articles</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    <select
-                                        className="w-full border rounded-md h-10 px-3 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                        value={formData.category_id}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
-                                    >
-                                        <option value="">No Category</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
+                                    <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={isCategoryPopoverOpen}
+                                                className="w-full justify-between font-normal h-10 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                            >
+                                                {formData.category_id
+                                                    ? categories.find((cat) => cat.id.toString() === formData.category_id.toString())?.name
+                                                    : "Select category..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search categories..." />
+                                                <CommandList>
+                                                    <CommandEmpty>No category found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        <CommandItem
+                                                            value="none"
+                                                            onSelect={() => {
+                                                                setFormData(prev => ({ ...prev, category_id: "" }));
+                                                                setIsCategoryPopoverOpen(false);
+                                                            }}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    formData.category_id === "" ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            No Category
+                                                        </CommandItem>
+                                                        {categories.map((cat) => (
+                                                            <CommandItem
+                                                                key={cat.id}
+                                                                value={cat.name}
+                                                                onSelect={() => {
+                                                                    setFormData(prev => ({ ...prev, category_id: cat.id.toString() }));
+                                                                    setIsCategoryPopoverOpen(false);
+                                                                }}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        formData.category_id.toString() === cat.id.toString() ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {cat.name}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
                                         onClick={() => setShowCategoryDialog(true)}
-                                        className="w-full"
+                                        className="w-full border-dashed border-2 hover:border-blue-500 hover:text-blue-500 transition-all"
                                     >
                                         <FolderPlus className="w-4 h-4 mr-2" />
                                         Create New Category

@@ -49,6 +49,7 @@ import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.
 import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
 import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
 import KnowledgeBaseRoutes from '@/features/KnowledgeBase/index.jsx';
+import ArticleView from '@/features/KnowledgeBase/pages/ArticleView.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -56,6 +57,7 @@ import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
+  { path: "/kb/p/:slug", element: <ArticleView publicView={true} /> },
   {
     path: "/:username/dashboard",
     element: (

@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import ArticleListRefactored from "./pages/ArticleListRefactored.jsx";
+import ArticleList from "./pages/ArticleList.jsx";
 import ArticleView from "./pages/ArticleView.jsx";
 import ArticleEditor from "./pages/ArticleEditor.jsx";
 import CategoryManagement from "./pages/CategoryManagement.jsx";
@@ -7,7 +7,7 @@ import CategoryManagement from "./pages/CategoryManagement.jsx";
 export default function KnowledgeBaseRoutes() {
     return (
         <Routes>
-            <Route path="/" element={<ArticleListRefactored />} />
+            <Route path="/" element={<ArticleList />} />
             <Route path="/categories" element={<CategoryManagement />} />
             <Route path="/new" element={<ArticleEditor />} />
             <Route path="/:id" element={<ArticleView />} />

@@ -12,9 +12,11 @@ const createTables = async () => {
                 name VARCHAR(100) NOT NULL,
                 slug VARCHAR(100) NOT NULL,
                 description VARCHAR(255) DEFAULT NULL,
+                parent_id INT DEFAULT NULL,
                 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
-                UNIQUE KEY slug_UNIQUE (slug)
+                UNIQUE KEY slug_UNIQUE (slug),
+                FOREIGN KEY (parent_id) REFERENCES knowledge_categories(id) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
         console.log("Created knowledge_categories table");
@@ -28,6 +30,7 @@ const createTables = async () => {
                 content LONGTEXT,
                 category_id INT DEFAULT NULL,
                 author_id VARCHAR(32) NOT NULL,
+                visibility ENUM('internal','customer','both') NOT NULL DEFAULT 'internal',
                 is_published TINYINT(1) DEFAULT '0',
                 views INT DEFAULT '0',
                 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

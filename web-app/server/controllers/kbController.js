@@ -7,6 +7,7 @@ import {
     createArticle,
     getArticles,
     getArticleById,
+    getArticleBySlug,
     updateArticle,
     deleteArticle,
     getArticleVersions
@@ -18,10 +19,10 @@ import { getDcrEntryById } from "../models/dcrModel.js";
 
 export const createCategoryController = async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, parent_id } = req.body;
         if (!name) return res.status(400).json({ error: "Category name is required" });
 
-        const id = await createCategory(name, description);
+        const id = await createCategory(name, description, parent_id);
 
         await logActivity({
             username: req.user.username,
@@ -51,9 +52,9 @@ export const getCategoriesController = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description } = req.body;
+        const { name, description, parent_id } = req.body;
 
-        const success = await updateCategory(id, { name, description });
+        const success = await updateCategory(id, { name, description, parent_id });
         if (!success) {
             return res.status(404).json({ error: "Category not found" });
         }
@@ -181,7 +182,7 @@ export const createArticleFromDCRController = async (req, res) => {
 
 export const createArticleController = async (req, res) => {
     try {
-        const { title, content, category_id, is_published, tags, source } = req.body;
+        const { title, content, category_id, visibility, is_published, tags, source } = req.body;
 
         if (!title) return res.status(400).json({ error: "Title is required" });
 
@@ -190,6 +191,7 @@ export const createArticleController = async (req, res) => {
             content,
             category_id,
             author_id: req.user.username,
+            visibility,
             is_published,
             tags,
             source
@@ -212,7 +214,7 @@ export const createArticleController = async (req, res) => {
 
 export const getArticlesController = async (req, res) => {
     try {
-        const { search, categoryId, tag, status, page = 1, limit = 20 } = req.query;
+        const { search, categoryId, tag, status, visibility, page = 1, limit = 20 } = req.query;
 
         const isPublished = status === 'published' ? true : (status === 'draft' ? false : undefined);
 
@@ -221,10 +223,9 @@ export const getArticlesController = async (req, res) => {
             categoryId,
             tag,
             isPublished,
+            visibility,
             limit: parseInt(limit),
             offset: (parseInt(page) - 1) * parseInt(limit),
-            // Optional: if not admin/editor, maybe force isPublished=true? 
-            // For now, let frontend handling or generic permission filter.
         });
 
         res.status(200).json({
@@ -255,15 +256,35 @@ export const getArticleByIdController = async (req, res) => {
     }
 };
 
+export const getArticleBySlugController = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const article = await getArticleBySlug(slug);
+
+        if (!article) return res.status(404).json({ error: "Article not found" });
+
+        // If user is not logged in, check if article is public
+        if (!req.user && article.visibility === 'internal') {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        res.status(200).json({ article });
+    } catch (error) {
+        console.error("Get article by slug error:", error);
+        res.status(500).json({ error: "Failed to fetch article" });
+    }
+};
+
 export const updateArticleController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, content, category_id, is_published, tags } = req.body;
+        const { title, content, category_id, visibility, is_published, tags } = req.body;
 
         const success = await updateArticle(id, {
             title,
             content,
             category_id,
+            visibility,
             is_published,
             tags,
             changed_by: req.user.username

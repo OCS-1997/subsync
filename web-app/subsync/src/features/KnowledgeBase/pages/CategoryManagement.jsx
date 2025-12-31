@@ -23,7 +23,7 @@ export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dialog, setDialog] = useState({ open: false, mode: 'create', category: null });
-    const [formData, setFormData] = useState({ name: '', description: '' });
+    const [formData, setFormData] = useState({ name: '', description: '', parent_id: '' });
     const [deleteDialog, setDeleteDialog] = useState({ open: false, categoryId: null, name: '' });
 
     useEffect(() => {
@@ -58,7 +58,7 @@ export default function CategoryManagement() {
                 toast.success('Category updated successfully');
             }
             setDialog({ open: false, mode: 'create', category: null });
-            setFormData({ name: '', description: '' });
+            setFormData({ name: '', description: '', parent_id: '' });
             fetchCategories();
         } catch (error) {
             toast.error(error.normalizedMessage || 'Failed to save category');
@@ -66,7 +66,11 @@ export default function CategoryManagement() {
     };
 
     const handleEdit = (category) => {
-        setFormData({ name: category.name, description: category.description || '' });
+        setFormData({
+            name: category.name,
+            description: category.description || '',
+            parent_id: category.parent_id || ''
+        });
         setDialog({ open: true, mode: 'edit', category });
     };
 
@@ -82,7 +86,7 @@ export default function CategoryManagement() {
     };
 
     const openCreateDialog = () => {
-        setFormData({ name: '', description: '' });
+        setFormData({ name: '', description: '', parent_id: '' });
         setDialog({ open: true, mode: 'create', category: null });
     };
 
@@ -230,6 +234,20 @@ export default function CategoryManagement() {
                                         onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                     />
                                 </div>
+                                <div>
+                                    <Label htmlFor="cat-parent">Parent Category</Label>
+                                    <select
+                                        id="cat-parent"
+                                        className="w-full border rounded-md h-10 px-3 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                        value={formData.parent_id}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, parent_id: e.target.value }))}
+                                    >
+                                        <option value="">None (Top Level)</option>
+                                        {categories.filter(c => c.id !== dialog.category?.id).map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                             <DialogFooter>
                                 <Button
@@ -237,7 +255,7 @@ export default function CategoryManagement() {
                                     variant="outline"
                                     onClick={() => {
                                         setDialog({ open: false, mode: 'create', category: null });
-                                        setFormData({ name: '', description: '' });
+                                        setFormData({ name: '', description: '', parent_id: '' });
                                     }}
                                 >
                                     Cancel
