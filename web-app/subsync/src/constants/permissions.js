@@ -68,6 +68,11 @@ export const PERMISSIONS = Object.freeze({
   BACKUPS_TRIGGER: 'backups.trigger',
   BACKUPS_RESTORE: 'backups.restore',
   BACKUPS_DOWNLOAD: 'backups.download',
+  KNOWLEDGE_BASE_VIEW: 'knowledge_base.view',
+  KNOWLEDGE_BASE_CREATE: 'knowledge_base.create',
+  KNOWLEDGE_BASE_UPDATE: 'knowledge_base.update',
+  KNOWLEDGE_BASE_DELETE: 'knowledge_base.delete',
+  KNOWLEDGE_BASE_MANAGE_CATEGORIES: 'knowledge_base.manage_categories',
 });
 
 export const PAGE_PERMISSIONS = {

@@ -59,7 +59,7 @@ export default function ArchivedSubscriptions({ onEdit }) {
   const [selectedSubId, setSelectedSubId] = useState(null);
   const [renewDialog, setRenewDialog] = useState({ open: false, subId: null, newEndDate: "" });
   const debounceTimeout = useRef();
-  
+
   const username = location.pathname.split('/')[1] || '';
 
   // Debounce search
@@ -77,14 +77,14 @@ export default function ArchivedSubscriptions({ onEdit }) {
       setLoading(true);
       const params = new URLSearchParams();
       params.set('page', (opts.page || page).toString());
-      params.set('archivedOnly', 'true');
+      // params.set('archivedOnly', 'true'); // Handled by endpoint
       if (debouncedSearch) params.set('search', debouncedSearch);
       const serverSort = sortMap[sortBy];
       if (serverSort && sortOrder) {
         params.set('sort', serverSort);
         params.set('order', sortOrder);
       }
-      const res = await api.get(`/subscriptions?${params.toString()}`);
+      const res = await api.get(`/subscriptions/archived?${params.toString()}`);
       let rows = res.data.dataArray || [];
       if (!serverSort && sortBy && sortOrder) {
         rows = [...rows].sort((a, b) => {

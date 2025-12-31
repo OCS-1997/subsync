@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Phone, Calendar, Clock, Building2, User, Mail } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, Calendar, Clock, Building2, User, Mail, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
@@ -9,6 +9,8 @@ import Hamster from "@/components/animations/Hamster.jsx";
 import { getDcrById, clearDcrState } from "../dcrSlice";
 import { usePermissions } from "@/context/PermissionsContext";
 import { PERMISSIONS } from "@/constants/permissions";
+import { toast } from "react-toastify";
+import api from "@/lib/axiosInstance.js";
 
 export default function ViewDCR() {
     const navigate = useNavigate();
@@ -17,6 +19,9 @@ export default function ViewDCR() {
     const { currentEntry, loading } = useSelector((state) => state.dcr);
     const { hasPermission } = usePermissions();
     const isAdmin = hasPermission(PERMISSIONS.DCR_DELETE);
+    const canPromoteToKB = hasPermission(PERMISSIONS.KNOWLEDGE_BASE_CREATE);
+
+    const [promoting, setPromoting] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -26,6 +31,19 @@ export default function ViewDCR() {
             dispatch(clearDcrState());
         };
     }, [id, dispatch]);
+
+    const promoteToKB = async () => {
+        try {
+            setPromoting(true);
+            const res = await api.post(`/dcr/${id}/promote-to-kb`);
+            toast.success('DCR promoted to Knowledge Base successfully!');
+            navigate(`/${username}/dashboard/kb/${res.data.id}/edit`);
+        } catch (error) {
+            toast.error(error.normalizedMessage || 'Failed to promote DCR to Knowledge Base');
+        } finally {
+            setPromoting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -103,6 +121,17 @@ export default function ViewDCR() {
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to List
                     </Button>
+                    {canPromoteToKB && (
+                        <Button
+                            variant="outline"
+                            onClick={promoteToKB}
+                            disabled={promoting}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900"
+                        >
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            {promoting ? 'Promoting...' : 'Promote to KB'}
+                        </Button>
+                    )}
                     {canEdit && (
                         <Button
                             onClick={() => navigate(`/${username}/dashboard/dcr/${entry.id}/edit`)}

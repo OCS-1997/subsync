@@ -164,7 +164,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   }, [page, statusFilter, sortBy, sortOrder, debouncedSearch]);
 
   const headers = useMemo(() => ([
-    { key: 'sub_id', label: 'Subscription ID' },
+    { key: 'sub_id_display', label: 'Subscription ID' },
     { key: 'domain_name', label: 'Domain' },
     { key: 'service_summary', label: 'Services' },
     { key: 'customer_name', label: 'Contact' },
@@ -213,7 +213,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
 
   const rows = (data || []).map(row => ({
     ...row,
-    sub_id: (
+    sub_id_display: (
       <button
         type="button"
         className="text-blue-600 hover:underline font-mono text-sm"

@@ -68,6 +68,11 @@ export const PERMISSIONS = Object.freeze({
     BACKUPS_TRIGGER: 'backups.trigger',
     BACKUPS_RESTORE: 'backups.restore',
     BACKUPS_DOWNLOAD: 'backups.download',
+    KNOWLEDGE_BASE_VIEW: 'knowledge_base.view',
+    KNOWLEDGE_BASE_CREATE: 'knowledge_base.create',
+    KNOWLEDGE_BASE_UPDATE: 'knowledge_base.update',
+    KNOWLEDGE_BASE_DELETE: 'knowledge_base.delete',
+    KNOWLEDGE_BASE_MANAGE_CATEGORIES: 'knowledge_base.manage_categories',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -140,6 +145,11 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.BACKUPS_TRIGGER, resource: 'backups', action: 'trigger', description: 'Manually trigger backups' },
     { key: PERMISSIONS.BACKUPS_RESTORE, resource: 'backups', action: 'restore', description: 'Restore from backups (CRITICAL - Admin only)' },
     { key: PERMISSIONS.BACKUPS_DOWNLOAD, resource: 'backups', action: 'download', description: 'Download backup files' },
+    { key: PERMISSIONS.KNOWLEDGE_BASE_VIEW, resource: 'knowledge_base', action: 'view', description: 'View knowledge base articles' },
+    { key: PERMISSIONS.KNOWLEDGE_BASE_CREATE, resource: 'knowledge_base', action: 'create', description: 'Create knowledge base articles' },
+    { key: PERMISSIONS.KNOWLEDGE_BASE_UPDATE, resource: 'knowledge_base', action: 'update', description: 'Update knowledge base articles' },
+    { key: PERMISSIONS.KNOWLEDGE_BASE_DELETE, resource: 'knowledge_base', action: 'delete', description: 'Delete knowledge base articles' },
+    { key: PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES, resource: 'knowledge_base', action: 'manage_categories', description: 'Manage knowledge base categories' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -203,6 +213,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.QUICK_TOOLS_VIEW,
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
+        PERMISSIONS.KNOWLEDGE_BASE_VIEW,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -214,7 +225,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TAXES_VIEW,
         PERMISSIONS.REPORTS_VIEW,
         PERMISSIONS.QUICK_TOOLS_VIEW,
+        PERMISSIONS.QUICK_TOOLS_VIEW,
         PERMISSIONS.DCR_VIEW,
+        PERMISSIONS.KNOWLEDGE_BASE_VIEW,
     ],
 };
 

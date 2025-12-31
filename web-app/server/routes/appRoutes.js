@@ -58,6 +58,19 @@ import {
     downloadBackup,
     restoreFromBackup
 } from '../controllers/backupController.js';
+import {
+    createCategoryController,
+    getCategoriesController,
+    updateCategoryController,
+    deleteCategoryController,
+    createArticleFromDCRController,
+    createArticleController,
+    getArticlesController,
+    getArticleByIdController,
+    updateArticleController,
+    deleteArticleController,
+    getArticleVersionsController
+} from '../controllers/kbController.js';
 
 const router = express.Router();
 
@@ -118,6 +131,10 @@ router.delete('/delete-item-group/:id', isAuthenticated, authorize(PERMISSIONS.S
 
 // Subscriptions
 router.post('/subscription/:id/reminder', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), sendReminderController);
+router.get('/subscriptions/archived', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), (req, res, next) => {
+    req.query.archivedOnly = 'true';
+    next();
+}, getSubscriptionsController);
 router.get('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionsController);
 router.post('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_CREATE), createSubscription);
 router.get('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionByIdController);
@@ -260,5 +277,18 @@ router.get('/backup-history', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIE
 router.get('/backup-history/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS_VIEW), getBackupHistoryEntry);
 router.get('/backup-history/:id/download', isAuthenticated, authorize(PERMISSIONS.BACKUPS_DOWNLOAD), downloadBackup);
 router.post('/backup-history/:id/restore', isAuthenticated, authorize(PERMISSIONS.BACKUPS_RESTORE), restoreFromBackup);
+
+// Knowledge Base
+router.post('/kb/categories', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), createCategoryController);
+router.get('/kb/categories', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getCategoriesController);
+router.put('/kb/categories/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), updateCategoryController);
+router.delete('/kb/categories/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), deleteCategoryController);
+router.post('/dcr/:dcrId/promote-to-kb', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_CREATE), createArticleFromDCRController);
+router.post('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_CREATE), createArticleController);
+router.get('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticlesController);
+router.get('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleByIdController);
+router.put('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleController);
+router.delete('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_DELETE), deleteArticleController);
+router.get('/kb/articles/:id/versions', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleVersionsController);
 
 export default router;

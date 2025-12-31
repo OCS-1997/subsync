@@ -48,6 +48,7 @@ import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
 import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.jsx';
 import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
 import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
+import KnowledgeBaseRoutes from '@/features/KnowledgeBase/index.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -105,6 +106,8 @@ const router = createBrowserRouter([
       { path: "backups/:id/edit", element: <PermissionGate required={PERMISSIONS.BACKUPS_UPDATE}><BackupForm /></PermissionGate> },
       { path: "backups/:configId/history", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupHistory /></PermissionGate> },
       { path: "backups/history", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupHistory /></PermissionGate> },
+
+      { path: "kb/*", element: <PermissionGate required={PERMISSIONS.KNOWLEDGE_BASE_VIEW}><KnowledgeBaseRoutes /></PermissionGate> },
 
       {
         path: "settings",

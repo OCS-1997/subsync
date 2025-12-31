@@ -16,6 +16,7 @@ const sidebarItems = [
   { path: 'dashboard/dcr', title: 'DCR', icon: 'call', permission: PERMISSIONS.DCR_VIEW },
   { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', permission: PERMISSIONS.CONTACTS_VIEW },
   { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', permission: PERMISSIONS.BIRTHDAYS_VIEW },
+  { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
   // { 
   //   path: 'dashboard/settings',
   //   title: 'Settings',
