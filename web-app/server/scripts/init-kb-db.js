@@ -17,7 +17,7 @@ const createTables = async () => {
                 PRIMARY KEY (id),
                 UNIQUE KEY slug_UNIQUE (slug),
                 FOREIGN KEY (parent_id) REFERENCES knowledge_categories(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_categories table");
 
@@ -41,7 +41,7 @@ const createTables = async () => {
                 KEY idx_category_id (category_id),
                 FULLTEXT KEY ft_search (title, content),
                 FOREIGN KEY (category_id) REFERENCES knowledge_categories(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_articles table");
 
@@ -52,7 +52,7 @@ const createTables = async () => {
                 name VARCHAR(50) NOT NULL,
                 PRIMARY KEY (id),
                 UNIQUE KEY name_UNIQUE (name)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_tags table");
 
@@ -64,7 +64,7 @@ const createTables = async () => {
                 PRIMARY KEY (article_id, tag_id),
                 FOREIGN KEY (article_id) REFERENCES knowledge_articles(id) ON DELETE CASCADE,
                 FOREIGN KEY (tag_id) REFERENCES knowledge_tags(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_article_tags table");
 
@@ -78,22 +78,22 @@ const createTables = async () => {
                 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 FOREIGN KEY (article_id) REFERENCES knowledge_articles(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_sources table");
 
         // 6. Versions
         await appDB.query(`
-            CREATE TABLE IF NOT EXISTS knowledge_versions (
-                id INT NOT NULL AUTO_INCREMENT,
-                article_id INT NOT NULL,
-                version_number INT NOT NULL,
-                content_snapshot MEDIUMTEXT NOT NULL,
-                changed_by VARCHAR(32) NOT NULL,
-                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (id),
-                FOREIGN KEY (article_id) REFERENCES knowledge_articles(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                CREATE TABLE IF NOT EXISTS knowledge_versions (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    article_id INT NOT NULL,
+                    version_number INT NOT NULL,
+                    content_snapshot MEDIUMTEXT NOT NULL,
+                    changed_by VARCHAR(32) NOT NULL,
+                    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    FOREIGN KEY (article_id) REFERENCES knowledge_articles(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         `);
         console.log("Created knowledge_versions table");
 
