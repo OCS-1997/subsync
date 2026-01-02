@@ -13,8 +13,8 @@ const sidebarItems = [
   { path: 'dashboard/services', title: 'Services', icon: 'shop', permission: PERMISSIONS.SERVICES_VIEW },
   { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', permission: PERMISSIONS.VENDORS_VIEW },
   { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW },
-  { path: 'dashboard/dcr', title: 'DCR', icon: 'call', permission: PERMISSIONS.DCR_VIEW },
   { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', permission: PERMISSIONS.CONTACTS_VIEW },
+  { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
   { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', permission: PERMISSIONS.BIRTHDAYS_VIEW },
   { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
   // { 

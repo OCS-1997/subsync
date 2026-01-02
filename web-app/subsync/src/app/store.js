@@ -8,6 +8,7 @@ import vendorReducer from '@/features/Services/vendorSlice';
 import domainReducer from '@/features/Domains/domainSlice';
 import dcrReducer from '@/features/DCR/dcrSlice';
 import contactsReducer from '@/features/Contacts/contactsSlice';
+import opportunityReducer from '@/features/Opportunities/opportunitySlice';
 
 export const store = configureStore({
   reducer: {
@@ -19,5 +20,6 @@ export const store = configureStore({
     itemGroups: itemGroupReducer,
     dcr: dcrReducer,
     contacts: contactsReducer,
+    opportunities: opportunityReducer,
   },
 });

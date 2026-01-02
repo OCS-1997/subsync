@@ -73,6 +73,11 @@ export const PERMISSIONS = Object.freeze({
     KNOWLEDGE_BASE_UPDATE: 'knowledge_base.update',
     KNOWLEDGE_BASE_DELETE: 'knowledge_base.delete',
     KNOWLEDGE_BASE_MANAGE_CATEGORIES: 'knowledge_base.manage_categories',
+    OPPORTUNITIES_VIEW: 'opportunities.view',
+    OPPORTUNITIES_CREATE: 'opportunities.create',
+    OPPORTUNITIES_UPDATE: 'opportunities.update',
+    OPPORTUNITIES_DELETE: 'opportunities.delete',
+    OPPORTUNITIES_MANAGE_STATUSES: 'opportunities.manage_statuses',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -150,6 +155,11 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.KNOWLEDGE_BASE_UPDATE, resource: 'knowledge_base', action: 'update', description: 'Update knowledge base articles' },
     { key: PERMISSIONS.KNOWLEDGE_BASE_DELETE, resource: 'knowledge_base', action: 'delete', description: 'Delete knowledge base articles' },
     { key: PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES, resource: 'knowledge_base', action: 'manage_categories', description: 'Manage knowledge base categories' },
+    { key: PERMISSIONS.OPPORTUNITIES_VIEW, resource: 'opportunities', action: 'view', description: 'View opportunities' },
+    { key: PERMISSIONS.OPPORTUNITIES_CREATE, resource: 'opportunities', action: 'create', description: 'Create opportunities' },
+    { key: PERMISSIONS.OPPORTUNITIES_UPDATE, resource: 'opportunities', action: 'update', description: 'Update opportunities' },
+    { key: PERMISSIONS.OPPORTUNITIES_DELETE, resource: 'opportunities', action: 'delete', description: 'Delete opportunities' },
+    { key: PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES, resource: 'opportunities', action: 'manage', description: 'Manage opportunity statuses' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -184,6 +194,10 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.CONTACTS_VIEW,
         PERMISSIONS.CONTACTS_CREATE,
         PERMISSIONS.CONTACTS_UPDATE,
+        PERMISSIONS.OPPORTUNITIES_VIEW,
+        PERMISSIONS.OPPORTUNITIES_CREATE,
+        PERMISSIONS.OPPORTUNITIES_UPDATE,
+        PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -202,6 +216,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.CONTACTS_VIEW,
         PERMISSIONS.CONTACTS_CREATE,
         PERMISSIONS.CONTACTS_UPDATE,
+        PERMISSIONS.OPPORTUNITIES_VIEW,
+        PERMISSIONS.OPPORTUNITIES_CREATE,
+        PERMISSIONS.OPPORTUNITIES_UPDATE,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -214,6 +231,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.KNOWLEDGE_BASE_VIEW,
+        PERMISSIONS.OPPORTUNITIES_VIEW,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,

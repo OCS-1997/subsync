@@ -44,6 +44,9 @@ import ViewDCR from '@/features/DCR/pages/ViewDCR.jsx';
 import ContactsList from '@/features/Contacts/pages/ContactsList.jsx';
 import ContactForm from '@/features/Contacts/pages/ContactForm.jsx';
 import ContactDetails from '@/features/Contacts/pages/ContactDetails.jsx';
+import OpportunitiesPage from '@/features/Opportunities/pages/OpportunitiesPage.jsx';
+import OpportunityForm from '@/features/Opportunities/components/OpportunityForm.jsx';
+import OpportunityView from '@/features/Opportunities/components/OpportunityView.jsx';
 import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
 import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.jsx';
 import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
@@ -100,6 +103,11 @@ const router = createBrowserRouter([
       { path: "contacts/new", element: <PermissionGate required={PERMISSIONS.CONTACTS_CREATE}><ContactForm /></PermissionGate> },
       { path: "contacts/:id", element: <PermissionGate required={PERMISSIONS.CONTACTS_VIEW}><ContactDetails /></PermissionGate> },
       { path: "contacts/:id/edit", element: <PermissionGate required={PERMISSIONS.CONTACTS_UPDATE}><ContactForm /></PermissionGate> },
+
+      { path: "opportunities", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_VIEW}><OpportunitiesPage /></PermissionGate> },
+      { path: "opportunities/new", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_CREATE}><OpportunityForm /></PermissionGate> },
+      { path: "opportunities/view/:id", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_VIEW}><OpportunityView /></PermissionGate> },
+      { path: "opportunities/edit/:id", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_UPDATE}><OpportunityForm /></PermissionGate> },
 
       { path: "birthdays", element: <PermissionGate required={PERMISSIONS.BIRTHDAYS_VIEW}><BirthdaysPage /></PermissionGate> },
 

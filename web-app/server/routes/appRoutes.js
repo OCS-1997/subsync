@@ -72,6 +72,17 @@ import {
     deleteArticleController,
     getArticleVersionsController
 } from '../controllers/kbController.js';
+import {
+    createOpportunityController,
+    updateOpportunityController,
+    getAllOpportunitiesController,
+    getOpportunityByIdController,
+    deleteOpportunityController,
+    getOpportunityStatusesController,
+    createStatusController,
+    updateStatusController,
+    deleteStatusController
+} from '../controllers/opportunityController.js';
 
 const router = express.Router();
 
@@ -292,5 +303,16 @@ router.get('/kb/public/articles/:slug', getArticleBySlugController);
 router.put('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleController);
 router.delete('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_DELETE), deleteArticleController);
 router.get('/kb/articles/:id/versions', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleVersionsController);
+
+// Opportunities
+router.get('/opportunities', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getAllOpportunitiesController);
+router.post('/opportunities', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_CREATE), createOpportunityController);
+router.get('/opportunities/statuses', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityStatusesController);
+router.post('/opportunities/statuses', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), createStatusController);
+router.get('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityByIdController);
+router.put('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_UPDATE), updateOpportunityController);
+router.delete('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_DELETE), deleteOpportunityController);
+router.put('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), updateStatusController);
+router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), deleteStatusController);
 
 export default router;

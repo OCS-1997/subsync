@@ -9,9 +9,9 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
   const getAlignment = (header) => {
     if (header.align) return header.align;
     // Auto-detect: center for numbers, dates, quantities, rates, prices
-    const centerKeys = ['quantity', 'rate', 'price', 'amount', 'total', 'subtotal', 'tax', 'discount', 
-                        'created_at', 'updated_at', 'start_date', 'end_date', 'registration_date',
-                        'phone_number', 'phone_with_country_code', 'primary_phone_number', 'actions'];
+    const centerKeys = ['quantity', 'rate', 'price', 'amount', 'total', 'subtotal', 'tax', 'discount',
+      'created_at', 'updated_at', 'start_date', 'end_date', 'registration_date',
+      'phone_number', 'phone_with_country_code', 'primary_phone_number', 'actions'];
     return centerKeys.some(k => header.key.toLowerCase().includes(k)) ? 'center' : 'left';
   };
 
@@ -26,11 +26,9 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
               return (
                 <TableCell
                   as="th"
-                  className={`px-4 py-3 font-semibold cursor-pointer select-none whitespace-nowrap ${
-                    isCenter ? 'text-center' : 'text-left'
-                  } ${
-                    sortBy === header.key ? "bg-blue-700 text-white" : ""
-                  }`}
+                  className={`px-4 py-3 font-semibold cursor-pointer select-none whitespace-nowrap ${isCenter ? 'text-center' : 'text-left'
+                    } ${sortBy && sortBy === header.key ? "bg-blue-700 text-white" : ""
+                    }`}
                   key={header.key}
                   onClick={() => onSort && onSort(header.key)}
                 >
@@ -56,15 +54,14 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                   <TableCell
                     key={`${item[primaryKey]}-${header.key}`}
                     className={
-                      `px-4 py-3 text-wrap whitespace-nowrap ${
-                        isCenter ? 'text-center' : 'text-left'
+                      `px-4 py-3 text-wrap whitespace-nowrap ${isCenter ? 'text-center' : 'text-left'
                       } ` +
                       (header.key === "customer_status" || header.key === "vendor_status" || header.key === "domain_status"
                         ? item[header.key] === "Active"
                           ? "text-green-500 font-bold"
                           : item[header.key] === "Inactive" || item[header.key] === "Expired"
-                          ? "text-red-500 font-bold"
-                          : ""
+                            ? "text-red-500 font-bold"
+                            : ""
                         : "")
                     }
                   >

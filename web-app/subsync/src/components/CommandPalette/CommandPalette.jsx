@@ -15,7 +15,7 @@ import {
     CommandSeparator,
     CommandShortcut,
 } from "@/components/ui/command.jsx";
-import { Dialog, DialogContent } from "@/components/ui/dialog.jsx";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import {
@@ -168,6 +168,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             permission: PERMISSIONS.CONTACTS_VIEW,
         },
         {
+            id: "opportunities",
+            category: "Navigation",
+            icon: ClipboardList,
+            title: "Opportunities",
+            subtitle: "Manage sales opportunities",
+            path: `${baseUrl}/opportunities`,
+            keywords: ["sales", "leads", "pipeline"],
+            permission: PERMISSIONS.OPPORTUNITIES_VIEW,
+        },
+        {
             id: "birthdays",
             category: "Navigation",
             icon: Cake,
@@ -258,6 +268,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             path: `${baseUrl}/contacts/new`,
             keywords: ["new", "create", "person"],
             permission: PERMISSIONS.CONTACTS_CREATE,
+        },
+        {
+            id: "add-opportunity",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "Add Opportunity",
+            subtitle: "Create a new sales opportunity",
+            path: `${baseUrl}/opportunities/new`,
+            keywords: ["new", "create", "sale", "lead"],
+            permission: PERMISSIONS.OPPORTUNITIES_CREATE,
         },
         {
             id: "kb-articles",
@@ -472,6 +492,7 @@ export default function CommandPalette({ open, onOpenChange }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="overflow-hidden p-0 max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/50 shadow-2xl">
+                <DialogTitle className="sr-only">Command Palette</DialogTitle>
                 <Command className="bg-transparent">
                     <div className="flex items-center border-b border-gray-200 dark:border-gray-700/50 px-4 py-3">
 
