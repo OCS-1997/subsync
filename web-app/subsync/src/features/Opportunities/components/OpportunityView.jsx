@@ -196,7 +196,7 @@ export default function OpportunityView() {
                                 <User className="w-4 h-4" />
                                 Owner
                             </div>
-                            <div className="text-base font-medium mt-1">{currentOpportunity.owner}</div>
+                            <div className="text-base font-medium mt-1">{currentOpportunity.owner_name || currentOpportunity.owner}</div>
                         </div>
 
                         {currentOpportunity.last_contacted_at && (

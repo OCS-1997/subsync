@@ -139,10 +139,11 @@ export const getAllOpportunities = async ({
 
     // Get data - Using .query instead of .execute to avoid LIMIT placeholder issues with binary protocol
     const query = `
-        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color
+        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color, u.name as owner_name
         FROM opportunities o
         JOIN customers c ON o.customer_id = c.customer_id
         JOIN opportunity_statuses s ON o.status_id = s.id
+        LEFT JOIN users u ON o.owner = u.username
         ${whereSql}
         ORDER BY ${finalSort} ${finalOrder}
         LIMIT ? OFFSET ?
@@ -163,10 +164,11 @@ export const getAllOpportunities = async ({
  */
 export const getOpportunityById = async (opportunityId) => {
     const query = `
-        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color
+        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color, u.name as owner_name
         FROM opportunities o
         JOIN customers c ON o.customer_id = c.customer_id
         JOIN opportunity_statuses s ON o.status_id = s.id
+        LEFT JOIN users u ON o.owner = u.username
         WHERE o.opportunity_id = ? AND o.is_deleted = 0
     `;
     const [rows] = await appDB.execute(query, [opportunityId]);

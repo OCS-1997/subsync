@@ -8,6 +8,8 @@ import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import { fetchOpportunities, fetchStatuses } from "../opportunitySlice.js";
 import opportunityService from "../services/opportunityService.js";
+import ViewSwitcher from "./ViewSwitcher.jsx";
+import OpportunityPipelineView from "./OpportunityPipelineView.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
@@ -40,6 +42,9 @@ const OpportunityList = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [viewMode, setViewMode] = useState(() => {
+        return localStorage.getItem('opportunitiesViewMode') || 'pipeline';
+    });
 
     useEffect(() => {
         dispatch(fetchStatuses());
@@ -112,6 +117,7 @@ const OpportunityList = () => {
         ...item,
         opportunity_date: item.opportunity_date ? new Date(item.opportunity_date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' }) : "N/A",
         opportunity_value: new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(item.opportunity_value),
+        owner: item.owner_name || item.owner, // Display owner name instead of username
         status_name: (
             <Badge className="font-medium" style={{ backgroundColor: item.status_color || "#3b82f6", color: "white" }}>
                 {item.status_name}
@@ -154,10 +160,25 @@ const OpportunityList = () => {
         { label: "Opportunities" }
     ];
 
+    const handleViewChange = (mode) => {
+        setViewMode(mode);
+        localStorage.setItem('opportunitiesViewMode', mode);
+    };
+
+    const handleRefresh = () => {
+        dispatch(fetchOpportunities({
+            search: searchTerm,
+            status: statusFilter === "all" ? null : statusFilter,
+            page: page,
+            sort: sortBy,
+            order: sortOrder
+        }));
+    };
+
     return (
         <div className="w-full space-y-6 pb-12">
             <PageHeader
-                title="Sales Pipeline"
+                title="Opportunities"
                 description="Manage and track active sales opportunities and leads"
                 breadcrumbItems={breadcrumbItems}
                 actions={
@@ -203,40 +224,51 @@ const OpportunityList = () => {
                         </SelectContent>
                     </Select>
                 </div>
+                <ViewSwitcher viewMode={viewMode} onViewChange={handleViewChange} />
             </div>
 
-            <div className="bg-white dark:bg-gray-800/20 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden backdrop-blur-md">
-                <GenericTable
-                    headers={headers}
-                    data={processedData}
-                    primaryKey="opportunity_id"
-                    sortBy={sortBy}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                />
-                {!loading && list.length === 0 && (
-                    <div className="p-24 text-center space-y-3">
-                        <div className="bg-gray-50 dark:bg-gray-800/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Search className="h-10 w-10 text-gray-300 dark:text-gray-600" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">No results found</h3>
-                        <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">We couldn't find any opportunities matching your current search or filters.</p>
-                        {(searchTerm || statusFilter !== "all") && (
-                            <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }} className="mt-4 border-blue-100 text-blue-600 hover:bg-blue-50">
-                                Clear all active filters
-                            </Button>
-                        )}
-                    </div>
-                )}
-                <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-transparent">
-                    <Pagination
-                        currentPage={page}
-                        setCurrentPage={setPage}
-                        totalPages={totalPages}
-                        totalRecords={totalRecords}
+            {viewMode === 'table' ? (
+                <div className="bg-white dark:bg-gray-800/20 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden backdrop-blur-md">
+                    <GenericTable
+                        headers={headers}
+                        data={processedData}
+                        primaryKey="opportunity_id"
+                        sortBy={sortBy}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
                     />
+                    {!loading && list.length === 0 && (
+                        <div className="p-24 text-center space-y-3">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Search className="h-10 w-10 text-gray-300 dark:text-gray-600" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">No results found</h3>
+                            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">We couldn't find any opportunities matching your current search or filters.</p>
+                            {(searchTerm || statusFilter !== "all") && (
+                                <Button variant="outline" onClick={() => { setSearchTerm(""); setStatusFilter("all"); }} className="mt-4 border-blue-100 text-blue-600 hover:bg-blue-50">
+                                    Clear all active filters
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                    <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-transparent">
+                        <Pagination
+                            currentPage={page}
+                            setCurrentPage={setPage}
+                            totalPages={totalPages}
+                            totalRecords={totalRecords}
+                        />
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <OpportunityPipelineView
+                    opportunities={list}
+                    statuses={statuses}
+                    loading={loading}
+                    onRefresh={handleRefresh}
+                    onDeleteClick={handleDeleteClick}
+                />
+            )}
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
