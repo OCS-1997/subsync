@@ -10,6 +10,7 @@ export const createOpportunity = async (opportunityData) => {
     const {
         opportunity_date,
         customer_id,
+        customer_details,
         contact_person_id,
         opportunity_type,
         referred_by,
@@ -22,18 +23,30 @@ export const createOpportunity = async (opportunityData) => {
         opportunity_value
     } = opportunityData;
 
+    // Validation: For "New" type, require customer_details; for "Existing", require customer_id
+    if (opportunity_type === 'New') {
+        if (!customer_details || !customer_details.display_name) {
+            throw new Error('Customer details with display_name are required for New opportunities');
+        }
+    } else {
+        if (!customer_id) {
+            throw new Error('Customer ID is required for Existing opportunities');
+        }
+    }
+
     const query = `
         INSERT INTO opportunities (
-            opportunity_id, opportunity_date, customer_id, contact_person_id,
+            opportunity_id, opportunity_date, customer_id, customer_details, contact_person_id,
             opportunity_type, referred_by, domain, owner,
             product_services, last_contacted_at, status_id, remarks, opportunity_value
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
         opportunity_id,
         opportunity_date,
-        customer_id,
+        customer_id || null,
+        customer_details ? JSON.stringify(customer_details) : null,
         contact_person_id || null,
         opportunity_type || 'Existing',
         referred_by || null,
@@ -59,12 +72,13 @@ export const updateOpportunity = async (opportunityId, updatedData) => {
 
     for (const [key, value] of Object.entries(updatedData)) {
         if ([
-            'opportunity_date', 'customer_id', 'contact_person_id', 'opportunity_type',
+            'opportunity_date', 'customer_id', 'customer_details', 'contact_person_id', 'opportunity_type',
             'referred_by', 'domain', 'owner', 'product_services',
             'last_contacted_at', 'status_id', 'remarks', 'opportunity_value', 'is_deleted'
         ].includes(key)) {
             fields.push(`${key} = ?`);
-            values.push(value);
+            // Stringify customer_details if it's an object
+            values.push(key === 'customer_details' && typeof value === 'object' ? JSON.stringify(value) : value);
         }
     }
 
@@ -139,9 +153,14 @@ export const getAllOpportunities = async ({
 
     // Get data - Using .query instead of .execute to avoid LIMIT placeholder issues with binary protocol
     const query = `
-        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color, u.name as owner_name
+        SELECT o.*, 
+               c.company_name, 
+               COALESCE(c.display_name, JSON_UNQUOTE(JSON_EXTRACT(o.customer_details, '$.display_name'))) as customer_name,
+               s.status_name, 
+               s.status_color, 
+               u.name as owner_name
         FROM opportunities o
-        JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
         JOIN opportunity_statuses s ON o.status_id = s.id
         LEFT JOIN users u ON o.owner = u.username
         ${whereSql}
@@ -150,6 +169,17 @@ export const getAllOpportunities = async ({
     `;
 
     const [opportunities] = await appDB.query(query, [...values, limitNum, offset]);
+
+    // Parse customer_details JSON for each opportunity if it's a string
+    opportunities.forEach(opp => {
+        if (opp.customer_details && typeof opp.customer_details === 'string') {
+            try {
+                opp.customer_details = JSON.parse(opp.customer_details);
+            } catch (e) {
+                console.error('Error parsing customer_details JSON in list:', e);
+            }
+        }
+    });
 
     return {
         totalRecords,
@@ -164,14 +194,29 @@ export const getAllOpportunities = async ({
  */
 export const getOpportunityById = async (opportunityId) => {
     const query = `
-        SELECT o.*, c.company_name, c.display_name as customer_name, s.status_name, s.status_color, u.name as owner_name
+        SELECT o.*, 
+               c.company_name, 
+               COALESCE(c.display_name, JSON_UNQUOTE(JSON_EXTRACT(o.customer_details, '$.display_name'))) as customer_name,
+               s.status_name, 
+               s.status_color, 
+               u.name as owner_name
         FROM opportunities o
-        JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
         JOIN opportunity_statuses s ON o.status_id = s.id
         LEFT JOIN users u ON o.owner = u.username
         WHERE o.opportunity_id = ? AND o.is_deleted = 0
     `;
     const [rows] = await appDB.execute(query, [opportunityId]);
+
+    // Parse customer_details JSON if it exists and is a string
+    if (rows[0] && rows[0].customer_details && typeof rows[0].customer_details === 'string') {
+        try {
+            rows[0].customer_details = JSON.parse(rows[0].customer_details);
+        } catch (e) {
+            console.error('Error parsing customer_details JSON:', e);
+        }
+    }
+
     return rows[0] || null;
 };
 

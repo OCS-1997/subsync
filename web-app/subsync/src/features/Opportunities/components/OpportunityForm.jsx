@@ -41,6 +41,14 @@ const OpportunityForm = () => {
     const [formData, setFormData] = useState({
         opportunity_date: new Date().toISOString().split("T")[0],
         customer_id: "",
+        customer_details: {
+            display_name: "",
+            company_name: "",
+            email: "",
+            phone: "",
+            address: "",
+            notes: ""
+        },
         contact_person_id: "",
         opportunity_type: "Existing",
         referred_by: "",
@@ -53,15 +61,7 @@ const OpportunityForm = () => {
         opportunity_value: 0
     });
 
-    const [newCustomerData, setNewCustomerData] = useState({
-        company_name: "",
-        display_name: "",
-        primary_email: "",
-        primary_phone_number: "",
-        salutation: "Mr.",
-        first_name: "",
-        last_name: ""
-    });
+
 
     useEffect(() => {
         dispatch(fetchStatuses());
@@ -82,6 +82,14 @@ const OpportunityForm = () => {
             setFormData({
                 opportunity_date: currentOpportunity.opportunity_date?.split("T")[0] || "",
                 customer_id: currentOpportunity.customer_id || "",
+                customer_details: currentOpportunity.customer_details || {
+                    display_name: "",
+                    company_name: "",
+                    email: "",
+                    phone: "",
+                    address: "",
+                    notes: ""
+                },
                 contact_person_id: currentOpportunity.contact_person_id || "",
                 opportunity_type: currentOpportunity.opportunity_type || "Existing",
                 referred_by: currentOpportunity.referred_by || "",
@@ -93,12 +101,12 @@ const OpportunityForm = () => {
                 remarks: currentOpportunity.remarks || "",
                 opportunity_value: currentOpportunity.opportunity_value || 0
             });
-            setCustomerMode("existing");
+            setCustomerMode(currentOpportunity.opportunity_type === "New" ? "new" : "existing");
             if (currentOpportunity.customer_id) {
                 fetchCustomerContacts(currentOpportunity.customer_id);
             }
         }
-    }, [currentOpportunity, isEdit]);
+    }, [isEdit, currentOpportunity]);
 
     const fetchCustomers = async () => {
         try {
@@ -156,18 +164,9 @@ const OpportunityForm = () => {
         }
 
         if (customerMode === "new") {
-            const newFields = [
-                { key: "company_name", label: "Company Name" },
-                { key: "display_name", label: "Display Name" },
-                { key: "primary_email", label: "Email Address" },
-                { key: "primary_phone_number", label: "Phone Number" },
-                { key: "first_name", label: "Contact First Name" }
-            ];
-            for (const field of newFields) {
-                if (!newCustomerData[field.key]) {
-                    toast.error(`${field.label} is required`);
-                    return false;
-                }
+            if (!formData.customer_details.display_name) {
+                toast.error("Customer Name is required");
+                return false;
             }
         }
 
@@ -190,21 +189,18 @@ const OpportunityForm = () => {
         try {
             let customerId = formData.customer_id;
 
+            // If new customer mode, we don't create a customer record anymore.
+            // Details are stored in the opportunity itself.
             if (customerMode === "new") {
-                const customerPayload = {
-                    ...newCustomerData,
-                    gst_treatment: "Unregistered Business",
-                    customer_address: { city: "", state: "", country: "IN", zipCode: "", addressLine: "" },
-                    payment_terms: { term_id: 4 }
-                };
-                const res = await api.post("/create-customer", customerPayload);
-                customerId = res.data.customer_id;
+                customerId = null;
             }
 
             // Sanitize payload: convert empty strings to null for backend type safety
             const sanitizedPayload = {
                 ...formData,
+                opportunity_type: customerMode === "new" ? "New" : "Existing",
                 customer_id: customerId,
+                customer_details: customerMode === "new" ? formData.customer_details : null,
                 contact_person_id: formData.contact_person_id === "" ? null : formData.contact_person_id,
                 referred_by: formData.referred_by === "" ? null : formData.referred_by,
                 domain: formData.domain === "" ? null : formData.domain,
@@ -357,79 +353,85 @@ const OpportunityForm = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 border-l-4 border-blue-500 pl-4">
+                                    <div className="md:col-span-2">
+                                        <p className="text-sm text-blue-600 dark:text-blue-400 mb-4">
+                                            <strong>Note:</strong> Customer details will be stored with this opportunity. You can convert this to a full customer record later.
+                                        </p>
+                                    </div>
                                     <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">Company Name <Mandatory /></Label>
+                                        <Label className="flex items-center text-sm font-medium">Customer Name <Mandatory /></Label>
                                         <Input
                                             className="h-11"
                                             required
-                                            placeholder="Full legal entity name"
-                                            value={newCustomerData.company_name}
-                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, company_name: e.target.value })}
+                                            placeholder="Full name or business name"
+                                            value={formData.customer_details.display_name}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, display_name: e.target.value }
+                                            })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">Display Name <Mandatory /></Label>
+                                        <Label className="text-sm font-medium">Company Name</Label>
                                         <Input
                                             className="h-11"
-                                            required
-                                            placeholder="Friendly name for UI"
-                                            value={newCustomerData.display_name}
-                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, display_name: e.target.value })}
+                                            placeholder="Optional company name"
+                                            value={formData.customer_details.company_name}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, company_name: e.target.value }
+                                            })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">Email Address <Mandatory /></Label>
+                                        <Label className="text-sm font-medium">Email Address</Label>
                                         <Input
                                             className="h-11"
                                             type="email"
-                                            required
-                                            placeholder="primary@company.com"
-                                            value={newCustomerData.primary_email}
-                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, primary_email: e.target.value })}
+                                            placeholder="contact@example.com"
+                                            value={formData.customer_details.email}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, email: e.target.value }
+                                            })}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">Phone Number <Mandatory /></Label>
+                                        <Label className="text-sm font-medium">Phone Number</Label>
                                         <Input
                                             className="h-11"
-                                            required
                                             placeholder="+91 XXXXX XXXXX"
-                                            value={newCustomerData.primary_phone_number}
-                                            onChange={(e) => setNewCustomerData({ ...newCustomerData, primary_phone_number: e.target.value })}
+                                            value={formData.customer_details.phone}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, phone: e.target.value }
+                                            })}
                                         />
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
-                                        <Label className="flex items-center text-sm font-medium">Contact Person Name <Mandatory /></Label>
-                                        <div className="flex gap-4">
-                                            <Select
-                                                value={newCustomerData.salutation}
-                                                onValueChange={(val) => setNewCustomerData({ ...newCustomerData, salutation: val })}
-                                            >
-                                                <SelectTrigger className="h-11 w-24">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Mr.">Mr.</SelectItem>
-                                                    <SelectItem value="Ms.">Ms.</SelectItem>
-                                                    <SelectItem value="Mrs.">Mrs.</SelectItem>
-                                                    <SelectItem value="Dr.">Dr.</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <Input
-                                                className="h-11 flex-1"
-                                                placeholder="First Name"
-                                                required
-                                                value={newCustomerData.first_name}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, first_name: e.target.value })}
-                                            />
-                                            <Input
-                                                className="h-11 flex-1"
-                                                placeholder="Last Name"
-                                                value={newCustomerData.last_name}
-                                                onChange={(e) => setNewCustomerData({ ...newCustomerData, last_name: e.target.value })}
-                                            />
-                                        </div>
+                                        <Label className="text-sm font-medium">Address</Label>
+                                        <Textarea
+                                            className="min-h-[80px]"
+                                            placeholder="Full address (optional)"
+                                            value={formData.customer_details.address}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, address: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-sm font-medium">Notes</Label>
+                                        <Textarea
+                                            className="min-h-[60px]"
+                                            placeholder="Any additional notes about this customer"
+                                            value={formData.customer_details.notes}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, notes: e.target.value }
+                                            })}
+                                        />
                                     </div>
                                 </div>
                             )}

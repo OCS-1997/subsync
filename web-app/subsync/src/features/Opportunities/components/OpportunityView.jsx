@@ -118,10 +118,49 @@ export default function OpportunityView() {
                             )}
                         </div>
 
+                        {currentOpportunity.opportunity_type === 'New' && currentOpportunity.customer_details && (
+                            <>
+                                {currentOpportunity.customer_details.email && (
+                                    <div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">Customer Email</div>
+                                        <div className="text-base font-medium mt-1">{currentOpportunity.customer_details.email}</div>
+                                    </div>
+                                )}
+                                {currentOpportunity.customer_details.phone && (
+                                    <div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">Customer Phone</div>
+                                        <div className="text-base font-medium mt-1">{currentOpportunity.customer_details.phone}</div>
+                                    </div>
+                                )}
+                                {currentOpportunity.customer_details.address && (
+                                    <div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">Customer Address</div>
+                                        <div className="text-base font-medium mt-1 whitespace-pre-wrap">{currentOpportunity.customer_details.address}</div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
                         <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">Opportunity Type</div>
-                            <div className="text-base font-medium mt-1">{currentOpportunity.opportunity_type}</div>
+                            <div className="text-base font-medium mt-1">
+                                {currentOpportunity.opportunity_type}
+                                {currentOpportunity.opportunity_type === 'New' && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                        Prospective
+                                    </span>
+                                )}
+                            </div>
                         </div>
+
+                        {currentOpportunity.opportunity_type === 'New' && currentOpportunity.customer_details?.notes && (
+                            <div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">Customer Notes</div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 italic italic">
+                                    "{currentOpportunity.customer_details.notes}"
+                                </div>
+                            </div>
+                        )}
 
                         {currentOpportunity.referred_by && (
                             <div>
