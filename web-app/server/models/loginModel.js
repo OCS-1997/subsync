@@ -26,6 +26,12 @@ async function checkLogin(username, inputPassword) {
         );
         if (!rows || rows.length === 0) { return null; }
         const user = rows[0];
+
+        // Ensure case sensitivity for username matches
+        if (user.username !== username) {
+            return null;
+        }
+
         const match = await bcrypt.compare(inputPassword.trim(), user.password.trim());
         if (!match) return null;
         // Remove password before returning

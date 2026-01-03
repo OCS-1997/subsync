@@ -2,13 +2,34 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance";
-import { UserPlus, UserRoundPen, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  UserPlus,
+  UserRoundPen,
+  ArrowLeft,
+  Loader2,
+  User,
+  Mail,
+  Lock,
+  Calendar,
+  Shield,
+  Activity,
+  ChevronLeft
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select.jsx";
+import { Switch } from "@/components/ui/switch.jsx";
+import { motion, AnimatePresence } from "framer-motion";
 
 const AddUser = () => {
   const { editUsername } = useParams();
@@ -49,7 +70,10 @@ const AddUser = () => {
         const { data } = await api.get("/rbac/roles");
         setRoleOptions(data);
         if (!editing) {
-          setForm((prev) => ({ ...prev, roleKey: data.find((role) => role.roleKey === 'viewer')?.roleKey || data[0]?.roleKey || "" }));
+          setForm((prev) => ({
+            ...prev,
+            roleKey: data.find((role) => role.roleKey === 'viewer')?.roleKey || data[0]?.roleKey || ""
+          }));
         }
       } catch (error) {
         toast.error("Failed to load roles");
@@ -91,11 +115,16 @@ const AddUser = () => {
   }, [editing, editUsername, location.state]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm(f => ({
-      ...f,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
+
+  const handleSelectChange = (value) => {
+    setForm(f => ({ ...f, roleKey: value }));
+  };
+
+  const handleSwitchChange = (checked) => {
+    setForm(f => ({ ...f, is_active: checked }));
   };
 
   const handleSubmit = async (e) => {
@@ -118,153 +147,238 @@ const AddUser = () => {
     setLoading(false);
   };
 
-  const handleBack = () => {
-    navigate(-1);
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
   };
 
   return (
-    <div className="p-4 bg-background dark:bg-background min-h-screen">
-      <div className="max-w-2xl mx-auto">
-        <Breadcrumb
-          items={[
-            { label: "Settings", href: `/${location.pathname.split('/')[1]}/dashboard/settings` },
-            { label: "User Management", href: `/${location.pathname.split('/')[1]}/dashboard/settings/users` },
-            { label: editing ? 'Edit User' : 'New User' }
-          ]}
-          className="mb-6"
-        />
-        <h1 className="text-2xl font-semibold text-foreground mb-6">
-          {editing ? 'Edit User' : 'New User'}
-        </h1>
+    <div className="p-6 bg-gradient-to-b from-background to-muted/20 min-h-screen">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Breadcrumb
+              items={[
+                { label: "Settings", href: `/${location.pathname.split('/')[1]}/dashboard/settings` },
+                { label: "User Management", href: `/${location.pathname.split('/')[1]}/dashboard/settings/user-management` },
+                { label: editing ? 'Edit User' : 'New User' }
+              ]}
+              className="mb-4"
+            />
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {editing ? 'User Profile' : 'Add New Member'}
+            </h1>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="rounded-xl hover:bg-muted group"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
+            Back to List
+          </Button>
+        </div>
 
-        {/* Form Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {editing ? <UserRoundPen className="w-5 h-5 text-blue-600" /> : <UserPlus className="w-5 h-5 text-blue-600" />}
-              {editing ? "Edit User" : "Add User"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    required
-                    disabled={editing}
-                    className={editing ? "bg-muted dark:bg-muted" : ""}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
-                  <Input
-                    id="date_of_birth"
-                    type="date"
-                    name="date_of_birth"
-                    value={form.date_of_birth}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">
-                    Password {editing && <span className="text-xs text-muted-foreground font-normal">(leave blank to keep unchanged)</span>}
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    required={!editing}
-                    autoComplete="new-password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="roleKey">Role</Label>
-                  <select
-                    id="roleKey"
-                    name="roleKey"
-                    value={form.roleKey}
-                    onChange={handleChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    required
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Left Column: Avatar & Basic Status */}
+              <div className="md:col-span-1 space-y-6">
+                <Card className="border-none shadow-lg bg-card/50 backdrop-blur-xl overflow-hidden text-center p-8">
+                  <div className="mx-auto w-32 h-32 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-5xl font-bold mb-6 shadow-xl shadow-blue-500/20 transform hover:scale-105 transition-transform duration-300">
+                    {form.name ? form.name.charAt(0).toUpperCase() : <User className="w-16 h-16" />}
+                  </div>
+                  <h3 className="text-xl font-bold truncate">{form.name || "New User"}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 truncate">{form.email || "user@example.com"}</p>
+
+                  <div className="mt-8 pt-8 border-t border-border/50">
+                    <div className="flex items-center justify-between p-4 bg-muted/40 rounded-2xl border border-border/50 group hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Activity className={`w-5 h-5 ${form.is_active ? 'text-emerald-500' : 'text-red-500'}`} />
+                        <div className="text-left">
+                          <p className="text-sm font-semibold">Account Status</p>
+                          <p className="text-xs text-muted-foreground">{form.is_active ? 'Active' : 'Inactive'}</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={form.is_active}
+                        onCheckedChange={handleSwitchChange}
+                        className="data-[state=checked]:bg-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Right Column: Detailed Form Fields */}
+              <div className="md:col-span-2 space-y-6">
+                <Card className="border-none shadow-lg bg-card/50 backdrop-blur-xl">
+                  <CardHeader className="border-b border-border/50 px-8 py-6">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Lock className="w-5 h-5 text-blue-600" /> Account Security
+                    </CardTitle>
+                    <CardDescription>Enter the user's primary credentials and access level.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="username" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Username</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="username"
+                            name="username"
+                            value={form.username}
+                            onChange={handleChange}
+                            required
+                            disabled={editing}
+                            autoComplete="username"
+                            placeholder="johndoe"
+                            className={`pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all ${editing ? "bg-muted cursor-not-allowed" : ""}`}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="roleKey" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Access Role</Label>
+                        <Select value={form.roleKey} onValueChange={handleSelectChange}>
+                          <SelectTrigger className="h-11 border-border/50 bg-background/50 focus:bg-background transition-all">
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl shadow-xl">
+                            {roleOptions.map(role => (
+                              <SelectItem key={role.id} value={role.roleKey} className="rounded-lg">
+                                <div className="flex flex-col">
+                                  <span className="font-semibold">{role.name}</span>
+                                  <span className="text-[10px] text-muted-foreground uppercase">{role.roleKey}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          {editing ? "Change Password" : "Password"}
+                        </Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            required={!editing}
+                            autoComplete="new-password"
+                            placeholder={editing ? "••••••••" : "Min. 8 characters"}
+                            className="pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all"
+                          />
+                        </div>
+                        {editing && <p className="text-[10px] text-muted-foreground italic">Leave blank to keep current password.</p>}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg bg-card/50 backdrop-blur-xl">
+                  <CardHeader className="border-b border-border/50 px-8 py-6">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <User className="w-5 h-5 text-blue-600" /> Personal Information
+                    </CardTitle>
+                    <CardDescription>These details are used for profile display and communications.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          value={form.name}
+                          onChange={handleChange}
+                          required
+                          autoComplete="name"
+                          placeholder="John Doe"
+                          className="h-11 border-border/50 bg-background/50 focus:bg-background transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                            autoComplete="email"
+                            placeholder="john@subsync.com"
+                            className="pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all"
+                          />
+                        </div>
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="date_of_birth" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date of Birth</Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="date_of_birth"
+                            type="date"
+                            name="date_of_birth"
+                            value={form.date_of_birth}
+                            onChange={handleChange}
+                            className="pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex items-center justify-end gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => navigate(-1)}
+                    disabled={loading}
+                    className="h-12 px-8 rounded-xl"
                   >
-                    <option value="" disabled>Select a role</option>
-                    {roleOptions.map(role => (
-                      <option key={role.id} value={role.roleKey}>{role.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="is_active" className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="is_active"
-                      checked={form.is_active}
-                      onChange={handleChange}
-                      id="is_active"
-                      className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                    />
-                    <span>Active Status</span>
-                  </Label>
+                    Discard
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="h-12 px-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 font-bold tracking-tight min-w-[160px]"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editing ? "Save Changes" : "Create Account"
+                    )}
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(-1)}
-                  disabled={loading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {editing ? "Updating..." : "Adding..."}
-                    </>
-                  ) : (
-                    editing ? "Update User" : "Add User"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+          </form>
+        </motion.div>
       </div>
     </div>
   );
