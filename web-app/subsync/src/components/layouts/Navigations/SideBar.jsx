@@ -84,8 +84,14 @@ function SideBar({ isOpen, toggleSidebar }) {
         <div className="flex items-center justify-between p-4 border-b border-white/10 dark:border-white/5 h-20">
           {isOpen ? (
             <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2 px-1">
-                <div className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center p-1.5 focus:scale-110 transition-transform">
+              <div
+                className="flex items-center gap-2 px-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
+                onClick={toggleSidebar}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
+              >
+                <div className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center p-1.5 group-hover/header:rotate-6 transition-transform">
                   <img src="/logo.png" alt="RMS" className="w-full h-full object-contain brightness-100 contrast-125" />
                 </div>
                 <div className="flex flex-col">
@@ -105,8 +111,14 @@ function SideBar({ isOpen, toggleSidebar }) {
               </Button>
             </div>
           ) : (
-            <div className="w-full flex justify-center py-1">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 p-2 shadow-inner">
+            <div
+              className="w-full flex justify-center py-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
+              onClick={toggleSidebar}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
+            >
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 p-2 shadow-inner group-hover/header:scale-110 transition-transform">
                 <img src="/logo.png" alt="R" className="w-full h-full object-contain invert brightness-0" />
               </div>
             </div>

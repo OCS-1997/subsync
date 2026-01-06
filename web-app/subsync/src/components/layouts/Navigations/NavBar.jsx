@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -101,9 +101,23 @@ function NavBar({ toggleSidebar }) {
         </div>
         <div className="flex items-center gap-3">
           {loginTime && (
-            <div className="px-4 py-2 text-xs text-foreground dark:text-foreground border-r border-border">
-              <div className="text-muted-foreground">Logged in: {new Date(loginTime).toLocaleString()}</div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/30 border border-border/30 hover:bg-accent/50 transition-all duration-300 whitespace-nowrap group"
+            >
+              <Clock className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary transition-colors" />
+              <div className="flex items-center gap-1.5 text-[11px] font-bold">
+                <span className="text-[10px] uppercase tracking-tighter opacity-40 group-hover:opacity-60 transition-opacity">Login:</span>
+                <span className="text-foreground/80 tabular-nums">
+                  {new Date(loginTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <span className="opacity-20">/</span>
+                <span className="text-muted-foreground tabular-nums font-medium">
+                  {new Date(loginTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            </motion.div>
           )}
 
           {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (

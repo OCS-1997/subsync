@@ -145,7 +145,9 @@ export default function ArticleEditor() {
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
-                <Hamster />
+                <div className="w-16 h-16">
+                    <Hamster />
+                </div>
             </div>
         );
     }

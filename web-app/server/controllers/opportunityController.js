@@ -1,5 +1,6 @@
 import * as opportunityModel from "../models/opportunityModel.js";
 import { logActivity } from "../models/activityLogModel.js";
+import { getClientIp } from "../utils/ipHelper.js";
 
 /**
  * Create a new opportunity
@@ -13,7 +14,8 @@ export const createOpportunityController = async (req, res) => {
             action: "Create Opportunity",
             details: `Created opportunity ${opportunityId} for customer ${req.body.customer_id}`,
             resourceType: "Opportunity",
-            resourceId: opportunityId
+            resourceId: opportunityId,
+            ipAddress: getClientIp(req)
         });
 
         res.status(201).json({
@@ -44,7 +46,8 @@ export const updateOpportunityController = async (req, res) => {
             action: "Update Opportunity",
             details: `Updated opportunity ${id}`,
             resourceType: "Opportunity",
-            resourceId: id
+            resourceId: id,
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ success: true, message: "Opportunity updated successfully" });
@@ -114,7 +117,8 @@ export const deleteOpportunityController = async (req, res) => {
             action: "Delete Opportunity",
             details: `Soft deleted opportunity ${id}`,
             resourceType: "Opportunity",
-            resourceId: id
+            resourceId: id,
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ success: true, message: "Opportunity deleted successfully" });

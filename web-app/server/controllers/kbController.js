@@ -14,6 +14,7 @@ import {
 } from "../models/kbModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import { getDcrEntryById } from "../models/dcrModel.js";
+import { getClientIp } from "../utils/ipHelper.js";
 
 // --- CATEGORIES ---
 
@@ -29,7 +30,8 @@ export const createCategoryController = async (req, res) => {
             action: 'CREATE_KB_CATEGORY',
             resourceType: 'KB_CATEGORY',
             resourceId: id.toString(),
-            details: { name }
+            details: { name },
+            ipAddress: getClientIp(req)
         });
 
         res.status(201).json({ id, message: "Category created" });
@@ -64,7 +66,8 @@ export const updateCategoryController = async (req, res) => {
             action: 'UPDATE_KB_CATEGORY',
             resourceType: 'KB_CATEGORY',
             resourceId: id,
-            details: { name }
+            details: { name },
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ message: "Category updated" });
@@ -87,7 +90,8 @@ export const deleteCategoryController = async (req, res) => {
             username: req.user.username,
             action: 'DELETE_KB_CATEGORY',
             resourceType: 'KB_CATEGORY',
-            resourceId: id
+            resourceId: id,
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ message: "Category deleted" });
@@ -165,7 +169,8 @@ export const createArticleFromDCRController = async (req, res) => {
             action: 'PROMOTE_DCR_TO_KB',
             resourceType: 'KB_ARTICLE',
             resourceId: articleId.toString(),
-            details: { dcr_id: dcrId, title }
+            details: { dcr_id: dcrId, title },
+            ipAddress: getClientIp(req)
         });
 
         res.status(201).json({
@@ -202,7 +207,8 @@ export const createArticleController = async (req, res) => {
             action: 'CREATE_KB_ARTICLE',
             resourceType: 'KB_ARTICLE',
             resourceId: articleId.toString(),
-            details: { title, source }
+            details: { title, source },
+            ipAddress: getClientIp(req)
         });
 
         res.status(201).json({ id: articleId, message: "Article created successfully" });
@@ -299,7 +305,8 @@ export const updateArticleController = async (req, res) => {
             action: 'UPDATE_KB_ARTICLE',
             resourceType: 'KB_ARTICLE',
             resourceId: id,
-            details: { title_updated: !!title, content_updated: !!content }
+            details: { title_updated: !!title, content_updated: !!content },
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ message: "Article updated successfully" });
@@ -318,7 +325,8 @@ export const deleteArticleController = async (req, res) => {
             username: req.user.username,
             action: 'DELETE_KB_ARTICLE',
             resourceType: 'KB_ARTICLE',
-            resourceId: id
+            resourceId: id,
+            ipAddress: getClientIp(req)
         });
 
         res.status(200).json({ message: "Article deleted" });

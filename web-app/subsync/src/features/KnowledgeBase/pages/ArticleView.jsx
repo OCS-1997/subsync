@@ -150,7 +150,7 @@ export default function ArticleView({ publicView = false }) {
 
     if (loading) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#f8fafc] dark:bg-[#0f172a]">
+            <div className="flex flex-col items-center justify-center bg-[#f8fafc] dark:bg-[#0f172a]">
                 <Hamster />
                 <p className="mt-4 text-sm font-medium text-gray-500 animate-pulse">Loading technical documentation...</p>
             </div>
@@ -159,7 +159,7 @@ export default function ArticleView({ publicView = false }) {
 
     if (!article) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-[#f8fafc] dark:bg-[#0f172a]">
+            <div className="flex flex-col items-center justify-center text-center p-6 bg-[#f8fafc] dark:bg-[#0f172a]">
                 <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <FileText className="w-10 h-10 text-gray-400" />
                 </div>
@@ -340,14 +340,14 @@ export default function ArticleView({ publicView = false }) {
                                     </p>
                                 </div>
                             )}
-                            <div className="text-right">
+                            {/* <div className="text-right">
                                 <p className="text-sm font-bold text-blue-600 mb-0.5">
                                     {article.views || 0}
                                 </p>
                                 <p className="text-xs text-gray-500 font-medium flex items-center justify-end gap-1">
                                     <Eye className="w-3 h-3" /> Reader Views
                                 </p>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </motion.div>
