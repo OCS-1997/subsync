@@ -70,8 +70,34 @@ import {
     getArticleBySlugController,
     updateArticleController,
     deleteArticleController,
-    getArticleVersionsController
+    getArticleVersionsController,
+    // New controllers for security & SEO
+    getPublicArticleBySlugController,
+    recordArticleReadController,
+    getArticleAnalyticsController,
+    updateArticleSEOController,
+    getArticleSEOController,
+    generateSitemapController,
+    getSecurityEventsController
 } from '../controllers/kbController.js';
+
+import {
+    uploadArticleImageController,
+    getArticleImagesController,
+    deleteArticleImageController,
+    setFeaturedImageController,
+    reorderImagesController
+} from '../controllers/kbImageController.js';
+
+import { uploadKBImage } from '../middlewares/uploadMiddleware.js';
+import { createRateLimiter } from '../middlewares/rateLimiter.js';
+import {
+    setSecurityHeaders,
+    configureCORS,
+    validateSlug,
+    logPublicAccess,
+    publicErrorHandler
+} from '../middlewares/publicSecurity.js';
 import {
     createOpportunityController,
     updateOpportunityController,
@@ -290,19 +316,47 @@ router.get('/backup-history/:id', isAuthenticated, authorize(PERMISSIONS.BACKUPS
 router.get('/backup-history/:id/download', isAuthenticated, authorize(PERMISSIONS.BACKUPS_DOWNLOAD), downloadBackup);
 router.post('/backup-history/:id/restore', isAuthenticated, authorize(PERMISSIONS.BACKUPS_RESTORE), restoreFromBackup);
 
-// Knowledge Base
+// Knowledge Base - Categories
 router.post('/kb/categories', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), createCategoryController);
 router.get('/kb/categories', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getCategoriesController);
 router.put('/kb/categories/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), updateCategoryController);
 router.delete('/kb/categories/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES), deleteCategoryController);
+
+// Knowledge Base - DCR Integration
 router.post('/dcr/:dcrId/promote-to-kb', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_CREATE), createArticleFromDCRController);
+
+// Knowledge Base - Articles (Authenticated)
 router.post('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_CREATE), createArticleController);
 router.get('/kb/articles', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticlesController);
 router.get('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleByIdController);
-router.get('/kb/public/articles/:slug', getArticleBySlugController);
 router.put('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleController);
 router.delete('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_DELETE), deleteArticleController);
 router.get('/kb/articles/:id/versions', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleVersionsController);
+
+// Knowledge Base - Analytics (Authenticated)
+router.get('/kb/articles/:id/analytics', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleAnalyticsController);
+
+// Knowledge Base - SEO Management (Authenticated)
+router.get('/kb/articles/:id/seo', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), getArticleSEOController);
+router.put('/kb/articles/:id/seo', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleSEOController);
+
+// Knowledge Base - Security Monitoring (Authenticated)
+router.get('/kb/security/events', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getSecurityEventsController);
+
+// Knowledge Base - Image Attachments
+router.post('/kb/articles/:id/images', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), uploadKBImage.single('image'), uploadArticleImageController);
+router.get('/kb/articles/:id/images', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleImagesController);
+router.delete('/kb/articles/:id/images/:imageId', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), deleteArticleImageController);
+router.put('/kb/articles/:id/images/:imageId/featured', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), setFeaturedImageController);
+router.put('/kb/articles/:id/images/reorder', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), reorderImagesController);
+
+// Serve uploaded images (static files)
+router.use('/uploads', express.static('uploads'));
+
+// Knowledge Base - Public Routes (SEO & Analytics)
+router.get('/kb/public/sitemap.xml', generateSitemapController);
+router.get('/kb/public/articles/:slug', setSecurityHeaders, configureCORS, validateSlug, logPublicAccess, getPublicArticleBySlugController, publicErrorHandler);
+router.post('/kb/public/articles/:slug/read', setSecurityHeaders, configureCORS, validateSlug, recordArticleReadController, publicErrorHandler);
 
 // Opportunities
 router.get('/opportunities', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getAllOpportunitiesController);

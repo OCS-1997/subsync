@@ -23,7 +23,7 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
         try {
             setLoading(true);
             const res = await api.get('/kb/categories');
-            console.log('Categories fetched:', res.data); // Debug log
+            // console.log('Categories fetched:', res.data); // Debug log
             const cats = res.data.categories || [];
             setCategories(cats);
 

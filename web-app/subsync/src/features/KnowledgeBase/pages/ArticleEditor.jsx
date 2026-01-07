@@ -23,6 +23,8 @@ import {
     CommandList,
 } from "@/components/ui/command.jsx";
 import { cn } from "@/lib/utils.js";
+import ImageUploader from "../components/ImageUploader.jsx";
+import ImageGallery from "../components/ImageGallery.jsx";
 
 export default function ArticleEditor() {
     const { id } = useParams();
@@ -47,10 +49,14 @@ export default function ArticleEditor() {
         tags: []
     });
 
+    const [images, setImages] = useState([]);
+
     useEffect(() => {
+        console.log('ArticleEditor - ID:', id, 'isEditMode:', isEditMode);
         fetchCategories();
         if (isEditMode) {
             fetchArticle();
+            fetchImages();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
@@ -91,6 +97,35 @@ export default function ArticleEditor() {
             navigate(`/${username}/dashboard/kb`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchImages = async () => {
+        try {
+            const res = await api.get(`/kb/articles/${id}/images`);
+            console.log('Fetched images response:', res.data);
+            console.log('Images array:', res.data.images);
+            setImages(res.data.images || []);
+        } catch (error) {
+            console.error('Failed to fetch images:', error);
+        }
+    };
+
+    const handleDeleteImage = async (imageId) => {
+        try {
+            await api.delete(`/kb/articles/${id}/images/${imageId}`);
+            await fetchImages();
+        } catch (error) {
+            toast.error('Failed to delete image');
+        }
+    };
+
+    const handleSetFeatured = async (imageId) => {
+        try {
+            await api.put(`/kb/articles/${id}/images/${imageId}/featured`);
+            await fetchImages();
+        } catch (error) {
+            toast.error('Failed to set featured image');
         }
     };
 
@@ -204,9 +239,33 @@ export default function ArticleEditor() {
                                         value={formData.content}
                                         onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                                         placeholder="Write your article content here..."
+                                        articleId={id}
                                     />
                                 </CardContent>
                             </Card>
+
+                            {/* Image Attachments - Only show in edit mode */}
+                            {isEditMode && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Image Attachments</CardTitle>
+                                        <CardDescription>Upload and manage images for this article</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <ImageUploader
+                                            articleId={id}
+                                            onUploadComplete={fetchImages}
+                                            maxFiles={10}
+                                        />
+                                        <ImageGallery
+                                            images={images}
+                                            onDelete={handleDeleteImage}
+                                            onSetFeatured={handleSetFeatured}
+                                            editable={true}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
 
                         {/* Sidebar */}

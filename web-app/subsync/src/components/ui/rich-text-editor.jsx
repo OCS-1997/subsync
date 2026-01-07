@@ -54,11 +54,13 @@ const HIGHLIGHTS = [
     { name: 'Slate', value: '#f1f5f9' },
 ];
 
-export function RichTextEditor({ value, onChange, placeholder = "Start writing..." }) {
+export function RichTextEditor({ value, onChange, placeholder = "Start writing...", articleId }) {
     const editorRef = useRef(null);
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
     const [dialogUrl, setDialogUrl] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const [activeStates, setActiveStates] = useState({
         bold: false,
@@ -241,12 +243,37 @@ export function RichTextEditor({ value, onChange, placeholder = "Start writing..
         setDialogUrl('');
     };
 
-    const handleInsertImage = () => {
-        if (dialogUrl) {
-            execCommand('insertImage', dialogUrl);
+    const handleInsertImage = async () => {
+        try {
+            let imageUrl = dialogUrl;
+
+            // If a file is selected, upload it first
+            if (selectedFile && articleId) {
+                setUploading(true);
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const api = (await import('@/lib/axiosInstance.js')).default;
+                const response = await api.post(`/kb/articles/${articleId}/images`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                // Use the URL path returned from the backend
+                imageUrl = response.data.attachment.url;
+            }
+
+            if (imageUrl) {
+                execCommand('insertImage', imageUrl);
+            }
+        } catch (error) {
+            console.error('Image upload error:', error);
+            alert('Failed to upload image. Please try again.');
+        } finally {
+            setUploading(false);
+            setIsImageDialogOpen(false);
+            setDialogUrl('');
+            setSelectedFile(null);
         }
-        setIsImageDialogOpen(false);
-        setDialogUrl('');
     };
 
     const toolbarGroups = [
@@ -445,6 +472,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Start writing..
                     </DialogContent>
                 </Dialog>
 
+
                 <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
@@ -457,15 +485,74 @@ export function RichTextEditor({ value, onChange, placeholder = "Start writing..
                                     id="image-url"
                                     placeholder="https://example.com/image.png"
                                     value={dialogUrl}
-                                    onChange={(e) => setDialogUrl(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleInsertImage()}
+                                    onChange={(e) => {
+                                        setDialogUrl(e.target.value);
+                                        setSelectedFile(null); // Clear file if URL is entered
+                                    }}
+                                    onKeyDown={(e) => e.key === 'Enter' && !uploading && handleInsertImage()}
+                                    disabled={!!selectedFile}
                                 />
                                 <p className="text-[10px] text-gray-500 italic">Paste a public image URL to embed it in the article.</p>
                             </div>
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-white dark:bg-gray-950 px-2 text-gray-500">Or upload from device</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="image-file">Upload Image File</Label>
+                                <Input
+                                    id="image-file"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setSelectedFile(file);
+                                            // Create a temporary URL for preview only
+                                            const url = URL.createObjectURL(file);
+                                            setDialogUrl(url);
+                                        }
+                                    }}
+                                    disabled={!articleId}
+                                />
+                                {!articleId && (
+                                    <p className="text-[10px] text-amber-600 italic">⚠️ Save the article first to upload images</p>
+                                )}
+                                {articleId && (
+                                    <p className="text-[10px] text-gray-500 italic">Select an image file from your computer (JPEG, PNG, GIF, WebP)</p>
+                                )}
+                            </div>
+                            {dialogUrl && (
+                                <div className="mt-4">
+                                    <Label className="text-xs text-gray-500 mb-2 block">Preview:</Label>
+                                    <img
+                                        src={dialogUrl}
+                                        alt="Preview"
+                                        className="max-h-48 rounded-lg border border-gray-200 dark:border-gray-700 mx-auto"
+                                        onError={() => {
+                                            setDialogUrl('');
+                                            setSelectedFile(null);
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={handleInsertImage}>Embed Image</Button>
+                            <Button variant="outline" onClick={() => {
+                                setIsImageDialogOpen(false);
+                                setDialogUrl('');
+                                setSelectedFile(null);
+                            }} disabled={uploading}>Cancel</Button>
+                            <Button
+                                onClick={handleInsertImage}
+                                disabled={!dialogUrl || uploading}
+                            >
+                                {uploading ? 'Uploading...' : (selectedFile ? 'Upload & Insert' : 'Embed Image')}
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

@@ -10,11 +10,21 @@ import {
     getArticleBySlug,
     updateArticle,
     deleteArticle,
-    getArticleVersions
+    getArticleVersions,
+    // New imports for security & SEO
+    recordArticleRead,
+    getArticleAnalytics,
+    updateArticleSEO,
+    getArticleSEO,
+    getPublicArticlesForSitemap,
+    getPublicArticleBySlug,
+    getSecurityEvents
 } from "../models/kbModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import { getDcrEntryById } from "../models/dcrModel.js";
 import { getClientIp } from "../utils/ipHelper.js";
+import { generateMetaTags, generateStructuredData, generateSitemap } from "../utils/seoHelper.js";
+import { generateFingerprint, hashIP, isBot } from "../utils/securityHelper.js";
 
 // --- CATEGORIES ---
 
@@ -344,5 +354,206 @@ export const getArticleVersionsController = async (req, res) => {
     } catch (error) {
         console.error("Get versions error:", error);
         res.status(500).json({ error: "Failed to fetch versions" });
+    }
+};
+
+// --- PUBLIC ARTICLE ACCESS (SECURITY-ENHANCED) ---
+
+/**
+ * Get public article by slug with SEO metadata
+ * This endpoint is public and includes security measures
+ */
+export const getPublicArticleBySlugController = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const article = await getPublicArticleBySlug(slug);
+
+        if (!article) {
+            return res.status(404).json({ error: "Article not found" });
+        }
+
+        // Generate SEO metadata
+        const seoMeta = generateMetaTags(article);
+        const structuredData = generateStructuredData(article);
+
+        res.status(200).json({
+            article,
+            seo: seoMeta,
+            structuredData
+        });
+    } catch (error) {
+        console.error("Get public article error:", error);
+        res.status(500).json({ error: "Failed to fetch article" });
+    }
+};
+
+// --- READ TRACKING ---
+
+/**
+ * Record article read (public endpoint)
+ */
+export const recordArticleReadController = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const { readDuration, scrollDepth } = req.body;
+
+        // Get article by slug first
+        const article = await getPublicArticleBySlug(slug);
+        if (!article) {
+            return res.status(404).json({ error: "Article not found" });
+        }
+
+        // Extract metadata from request
+        const ipAddress = getClientIp(req);
+        const userAgent = req.get('user-agent') || '';
+        const referrer = req.get('referer') || req.get('referrer') || '';
+
+        // Extract UTM parameters
+        const utmSource = req.query.utm_source || null;
+        const utmMedium = req.query.utm_medium || null;
+        const utmCampaign = req.query.utm_campaign || null;
+
+        // Generate anonymous fingerprint
+        const sessionFingerprint = generateFingerprint(req);
+        const ipHash = hashIP(ipAddress);
+
+        // Record the read
+        await recordArticleRead(article.id, {
+            sessionFingerprint,
+            ipHash,
+            userAgent,
+            referrer,
+            utmSource,
+            utmMedium,
+            utmCampaign,
+            readDuration: readDuration || 0,
+            scrollDepth: scrollDepth || 0
+        });
+
+        res.status(200).json({ message: "Read recorded successfully" });
+    } catch (error) {
+        console.error("Record read error:", error);
+        // Don't fail the request if tracking fails
+        res.status(200).json({ message: "Read tracking unavailable" });
+    }
+};
+
+// --- ANALYTICS (ADMIN ONLY) ---
+
+/**
+ * Get article analytics
+ */
+export const getArticleAnalyticsController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const analytics = await getArticleAnalytics(id, {
+            startDate: startDate ? new Date(startDate) : null,
+            endDate: endDate ? new Date(endDate) : null
+        });
+
+        res.status(200).json({ analytics });
+    } catch (error) {
+        console.error("Get analytics error:", error);
+        res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+};
+
+// --- SEO MANAGEMENT (ADMIN ONLY) ---
+
+/**
+ * Update article SEO metadata
+ */
+export const updateArticleSEOController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { meta_title, meta_description, keywords, canonical_url, og_image } = req.body;
+
+        const success = await updateArticleSEO(id, {
+            meta_title,
+            meta_description,
+            keywords,
+            canonical_url,
+            og_image
+        });
+
+        if (!success) {
+            return res.status(404).json({ error: "Article not found" });
+        }
+
+        await logActivity({
+            username: req.user.username,
+            action: 'UPDATE_KB_ARTICLE_SEO',
+            resourceType: 'KB_ARTICLE',
+            resourceId: id,
+            details: { meta_title, meta_description },
+            ipAddress: getClientIp(req)
+        });
+
+        res.status(200).json({ message: "SEO metadata updated successfully" });
+    } catch (error) {
+        console.error("Update SEO error:", error);
+        res.status(500).json({ error: "Failed to update SEO metadata" });
+    }
+};
+
+/**
+ * Get article SEO metadata
+ */
+export const getArticleSEOController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const seoData = await getArticleSEO(id);
+
+        if (!seoData) {
+            return res.status(404).json({ error: "Article not found" });
+        }
+
+        res.status(200).json({ seo: seoData });
+    } catch (error) {
+        console.error("Get SEO error:", error);
+        res.status(500).json({ error: "Failed to fetch SEO metadata" });
+    }
+};
+
+// --- SITEMAP GENERATION (PUBLIC) ---
+
+/**
+ * Generate XML sitemap for public articles
+ */
+export const generateSitemapController = async (req, res) => {
+    try {
+        const articles = await getPublicArticlesForSitemap();
+        const sitemap = generateSitemap(articles);
+
+        res.set('Content-Type', 'application/xml');
+        res.status(200).send(sitemap);
+    } catch (error) {
+        console.error("Generate sitemap error:", error);
+        res.status(500).json({ error: "Failed to generate sitemap" });
+    }
+};
+
+// --- SECURITY MONITORING (ADMIN ONLY) ---
+
+/**
+ * Get security events
+ */
+export const getSecurityEventsController = async (req, res) => {
+    try {
+        const { eventType, severity, isResolved, limit } = req.query;
+
+        const events = await getSecurityEvents({
+            eventType,
+            severity,
+            isResolved: isResolved === 'true' ? true : isResolved === 'false' ? false : undefined,
+            limit: limit ? parseInt(limit) : 100
+        });
+
+        res.status(200).json({ events });
+    } catch (error) {
+        console.error("Get security events error:", error);
+        res.status(500).json({ error: "Failed to fetch security events" });
     }
 };
