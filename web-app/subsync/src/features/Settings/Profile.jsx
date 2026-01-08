@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake, AtSign } from "lucide-react";
+import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake, AtSign, LogOut } from "lucide-react";
+import { logoutUser } from "@/features/Auth/authSlice";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -14,6 +15,7 @@ import { useTheme } from "@/context/ThemeContext.jsx";
 
 export default function Profile() {
   const currentUser = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
   const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -137,7 +139,44 @@ export default function Profile() {
       }
 
       await api.put(`/users/${currentUser.username}`, payload);
-      toast.success("Profile updated successfully!");
+
+      if (form.password) {
+        // Professional security notification with logout action
+        const LogoutAction = ({ closeToast }) => (
+          <div className="flex flex-col gap-3 p-1">
+            <p className="text-sm font-medium leading-relaxed">
+              Security update complete. Your password has been successfully updated.
+              We recommend re-authenticating to ensure all active sessions are refreshed.
+            </p>
+            <div className="flex justify-end pr-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold"
+                onClick={() => {
+                  closeToast();
+                  dispatch(logoutUser());
+                }}
+              >
+                <LogOut className="w-3 h-3 mr-2" />
+                Logout Now
+              </Button>
+            </div>
+          </div>
+        );
+
+        toast.info(<LogoutAction />, {
+          position: "top-center",
+          autoClose: 10000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          className: "rounded-2xl border-none shadow-2xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 max-w-md",
+        });
+      } else {
+        toast.success("Profile updated successfully!");
+      }
 
       // Update local state
       setForm((prev) => ({

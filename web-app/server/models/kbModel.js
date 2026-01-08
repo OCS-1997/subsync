@@ -158,9 +158,12 @@ export async function getArticles({ search, categoryId, tag, isPublished, visibi
     const where = [];
     const params = [];
 
-    if (categoryId) {
+    //console.log('getArticles DEBUG - Input categoryId:', categoryId, 'Type:', typeof categoryId);
+
+    if (categoryId && categoryId !== 'null' && categoryId !== 'undefined') {
         where.push(`ka.category_id = ?`);
         params.push(categoryId);
+        //console.log('getArticles DEBUG - Added category filter:', categoryId);
     }
 
     if (isPublished !== undefined) {
@@ -197,23 +200,27 @@ export async function getArticles({ search, categoryId, tag, isPublished, visibi
         params.push(tag);
     }
 
+    let finalQuery = query;
     if (where.length > 0) {
-        query += ` WHERE ${where.join(' AND ')}`;
+        finalQuery += ` WHERE ${where.join(' AND ')}`;
     }
 
-    query += ` ORDER BY ka.created_at DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+    finalQuery += ` ORDER BY ka.created_at DESC LIMIT ? OFFSET ?`;
 
-    const [rows] = await appDB.query(query, params);
+    // Create params for the final query
+    const queryParams = [...params, limit, offset];
+
+    //console.log('getArticles DEBUG - Executing SQL:', finalQuery);
+   // console.log('getArticles DEBUG - With Params:', queryParams);
+
+    const [rows] = await appDB.query(finalQuery, queryParams);
 
     // Get total count
     let countQuery = `SELECT COUNT(*) as total FROM knowledge_articles ka`;
     if (where.length > 0) {
-        // Remove MATCH for count if it's too heavy? Or keep it for accuracy. 
-        // Re-construct where/params for count
         countQuery += ` WHERE ${where.join(' AND ')}`;
     }
-    const [countRows] = await appDB.query(countQuery, params.slice(0, params.length - 2));
+    const [countRows] = await appDB.query(countQuery, params);
 
     return {
         articles: rows,

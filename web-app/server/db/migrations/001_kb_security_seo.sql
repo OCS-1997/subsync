@@ -7,7 +7,7 @@
 -- The CREATE TABLE statements use IF NOT EXISTS so they're safe to re-run.
 -- =============================================
 
-USE ocs_srms;
+USE ocs_srms_staging;
 
 -- =============================================
 -- 1. ALTER knowledge_articles table (if exists)

@@ -125,7 +125,10 @@ export default function ArticleList() {
             const params = new URLSearchParams();
 
             if (search) params.append('search', search);
-            if (selectedCategoryId) params.append('category_id', selectedCategoryId);
+            // Ensure category_id is properly stringified
+            if (selectedCategoryId) {
+                params.append('category_id', String(selectedCategoryId));
+            }
             if (selectedTags.length > 0) params.append('tags', selectedTags.join(','));
 
             if (advancedFilters.status !== 'all') params.append('status', advancedFilters.status);
@@ -202,6 +205,34 @@ export default function ArticleList() {
             return typeof tagsJson === 'string' ? JSON.parse(tagsJson) : tagsJson;
         } catch {
             return [];
+        }
+    };
+
+    // Extract plain text from HTML content for preview
+    const getPlainTextPreview = (htmlContent, maxLength = 150) => {
+        if (!htmlContent) return 'This article contains technical details and documentation summaries.';
+
+        try {
+            // Create a temporary div to decode HTML entities and strip tags
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // Get text content (this automatically strips all HTML tags)
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+            // Clean up whitespace and truncate
+            const cleaned = plainText.replace(/\s+/g, ' ').trim();
+
+            if (cleaned.length === 0) {
+                return 'This article contains technical details and documentation summaries.';
+            }
+
+            return cleaned.length > maxLength
+                ? cleaned.substring(0, maxLength) + '...'
+                : cleaned;
+        } catch (error) {
+            console.error('Error extracting plain text:', error);
+            return 'This article contains technical details and documentation summaries.';
         }
     };
 
@@ -408,6 +439,7 @@ export default function ArticleList() {
                                             onDelete={() => setDeleteDialog({ open: true, articleId: article.id, title: article.title })}
                                             extractTags={extractTags}
                                             formatDate={formatDate}
+                                            getPlainTextPreview={getPlainTextPreview}
                                         />
                                     ))}
                                 </motion.div>
@@ -479,7 +511,7 @@ export default function ArticleList() {
 }
 
 // Sub-component for better organization and Framer Motion stagger
-function ArticleCard({ article, username, navigate, hasPermission, onDelete, extractTags, formatDate }) {
+function ArticleCard({ article, username, navigate, hasPermission, onDelete, extractTags, formatDate, getPlainTextPreview }) {
     const tags = extractTags(article.tags);
 
     return (
@@ -557,7 +589,7 @@ function ArticleCard({ article, username, navigate, hasPermission, onDelete, ext
 
                 <CardContent className="flex-1 flex flex-col px-6">
                     <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 mb-6 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
-                        {article.content ? article.content.substring(0, 150).replace(/<[^>]*>/g, '') + '...' : 'This article contains technical details and documentation summaries.'}
+                        {getPlainTextPreview ? getPlainTextPreview(article.content, 150) : 'This article contains technical details and documentation summaries.'}
                     </p>
 
                     <div className="mt-auto">

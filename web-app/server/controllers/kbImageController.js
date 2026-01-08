@@ -18,8 +18,22 @@ export const uploadArticleImageController = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Check for multer errors
+        if (req.fileValidationError) {
+            return res.status(400).json({ error: req.fileValidationError });
+        }
+
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Additional file size check (belt and suspenders approach)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (req.file.size > maxSize) {
+            deleteUploadedFile(req.file.path);
+            return res.status(413).json({
+                error: 'File too large. Maximum size is 5MB per image.'
+            });
         }
 
         // Get image dimensions
@@ -65,7 +79,13 @@ export const uploadArticleImageController = async (req, res) => {
         if (req.file) {
             deleteUploadedFile(req.file.path);
         }
-        res.status(500).json({ error: 'Failed to upload image' });
+
+        // Provide more specific error messages
+        if (error.message && error.message.includes('LIMIT_FILE_SIZE')) {
+            return res.status(413).json({ error: 'File too large. Maximum size is 5MB per image.' });
+        }
+
+        res.status(500).json({ error: 'Failed to upload image. Please try again.' });
     }
 };
 

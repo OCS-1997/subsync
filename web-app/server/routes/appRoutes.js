@@ -343,8 +343,35 @@ router.put('/kb/articles/:id/seo', isAuthenticated, authorize(PERMISSIONS.KNOWLE
 // Knowledge Base - Security Monitoring (Authenticated)
 router.get('/kb/security/events', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getSecurityEventsController);
 
+
+// Multer error handling middleware
+const handleMulterError = (err, req, res, next) => {
+    if (err) {
+        console.error('Multer error:', err);
+
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({
+                error: 'File too large. Maximum size is 5MB per image.'
+            });
+        }
+
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({
+                error: 'Unexpected file field. Please use "image" as the field name.'
+            });
+        }
+
+        if (err.message) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        return res.status(500).json({ error: 'File upload failed' });
+    }
+    next();
+};
+
 // Knowledge Base - Image Attachments
-router.post('/kb/articles/:id/images', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), uploadKBImage.single('image'), uploadArticleImageController);
+router.post('/kb/articles/:id/images', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), uploadKBImage.single('image'), handleMulterError, uploadArticleImageController);
 router.get('/kb/articles/:id/images', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleImagesController);
 router.delete('/kb/articles/:id/images/:imageId', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), deleteArticleImageController);
 router.put('/kb/articles/:id/images/:imageId/featured', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), setFeaturedImageController);

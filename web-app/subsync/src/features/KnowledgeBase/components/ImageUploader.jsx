@@ -46,6 +46,16 @@ export default function ImageUploader({ articleId, onUploadComplete, maxFiles = 
             return;
         }
 
+        // Check file sizes (5MB limit per file)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        const oversizedFiles = imageFiles.filter(file => file.size > maxSize);
+
+        if (oversizedFiles.length > 0) {
+            const fileNames = oversizedFiles.map(f => f.name).join(', ');
+            toast.error(`The following files exceed 5MB limit: ${fileNames}. Please compress them and try again.`);
+            return;
+        }
+
         // Create previews
         const newPreviews = imageFiles.map(file => ({
             file,
@@ -88,7 +98,26 @@ export default function ImageUploader({ articleId, onUploadComplete, maxFiles = 
             if (onUploadComplete) onUploadComplete();
         } catch (error) {
             console.error('Upload error:', error);
-            toast.error(error.response?.data?.error || 'Failed to upload images');
+
+            // Handle specific error cases
+            if (error.response) {
+                const status = error.response.status;
+                const errorMessage = error.response.data?.error;
+
+                if (status === 413) {
+                    toast.error('File too large! Maximum size is 5MB per image. Please compress your images and try again.');
+                } else if (status === 400) {
+                    toast.error(errorMessage || 'Invalid file format. Only JPEG, PNG, GIF, and WebP are allowed.');
+                } else if (status === 401 || status === 403) {
+                    toast.error('You do not have permission to upload images.');
+                } else {
+                    toast.error(errorMessage || 'Failed to upload images. Please try again.');
+                }
+            } else if (error.request) {
+                toast.error('Network error. Please check your connection and try again.');
+            } else {
+                toast.error('An unexpected error occurred. Please try again.');
+            }
         } finally {
             setUploading(false);
         }

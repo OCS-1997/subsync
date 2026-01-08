@@ -82,7 +82,7 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
                     isCollapsed && "px-0 justify-center h-10 w-10 mx-auto mb-1"
                 )}
                 style={!isCollapsed ? { paddingLeft: `${level * 16 + 12}px` } : {}}
-                onClick={() => onCategorySelect(category.id)}
+                onClick={() => onCategorySelect(String(category.id))}
             >
                 {!isCollapsed && hasChildren && (
                     <button

@@ -15,9 +15,10 @@ import { setupCronJobs } from './cron/reconciliationCron.js';
 
 dotenv.config();
 const app = express();
-app.use(express.json());
+// Increase body size limits to support file uploads (50MB)
+app.use(express.json({ limit: '50mb' }));
 // app.use(morgan('dev'))
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(helmet());
 app.set('trust proxy', true);
 

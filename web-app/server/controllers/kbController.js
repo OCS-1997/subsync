@@ -230,16 +230,45 @@ export const createArticleController = async (req, res) => {
 
 export const getArticlesController = async (req, res) => {
     try {
-        const { search, categoryId, tag, status, visibility, page = 1, limit = 20 } = req.query;
+        const {
+            search,
+            category_id,  // Accept snake_case from frontend
+            categoryId,   // Also accept camelCase for backward compatibility
+            tag,
+            status,
+            visibility,
+            author,       // Accept author parameter
+            date_from,    // Accept date filters
+            date_to,
+            has_dcr,      // Accept DCR filter
+            page = 1,
+            limit = 20
+        } = req.query;
+
+        // Use category_id if provided, otherwise fall back to categoryId
+        const finalCategoryId = category_id || categoryId;
 
         const isPublished = status === 'published' ? true : (status === 'draft' ? false : undefined);
 
+        // console.log('getArticlesController - Filters:', {
+        //     search,
+        //     categoryId: finalCategoryId,
+        //     tag,
+        //     status,
+        //     isPublished,
+        //     visibility,
+        //     author,
+        //     page,
+        //     limit
+        // });
+
         const { articles, total } = await getArticles({
             search,
-            categoryId,
+            categoryId: finalCategoryId,  // Pass the resolved category ID
             tag,
             isPublished,
             visibility,
+            authorId: author,
             limit: parseInt(limit),
             offset: (parseInt(page) - 1) * parseInt(limit),
         });
@@ -247,6 +276,7 @@ export const getArticlesController = async (req, res) => {
         res.status(200).json({
             articles,
             total,
+            totalRecords: total,  // Add totalRecords for frontend compatibility
             totalPages: Math.ceil(total / limit),
             currentPage: parseInt(page)
         });

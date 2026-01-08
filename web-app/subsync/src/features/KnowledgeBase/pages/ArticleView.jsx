@@ -16,7 +16,11 @@ import {
     ChevronRight,
     Share2,
     BookOpen,
-    BarChart3
+    BarChart3,
+    Copy,
+    Check,
+    X,
+    Globe
 } from "lucide-react";
 import { motion, useScroll, useSpring, AnimatePresence } from "framer-motion";
 
@@ -37,6 +41,8 @@ import {
 } from "@/components/ui/dialog.jsx";
 import { Separator } from "@/components/ui/separator.jsx";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card.jsx";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
+import { Input } from "@/components/ui/input.jsx";
 
 // SEO and Tracking components
 import SEOMetaTags from "../components/SEOMetaTags.jsx";
@@ -59,6 +65,7 @@ export default function ArticleView({ publicView = false }) {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [categoryPath, setCategoryPath] = useState([]);
+    const [isCopied, setIsCopied] = useState(false);
 
     // Enable read tracking for public view
     useReadTracking(slug, publicView);
@@ -164,6 +171,19 @@ export default function ArticleView({ publicView = false }) {
         } catch {
             return [];
         }
+    };
+
+    // Decode HTML entities and ensure proper rendering
+    const decodeHTMLContent = (content) => {
+        if (!content) return '<p class="text-gray-500">No content available</p>';
+
+        // Create a temporary div to decode HTML entities
+        const txt = document.createElement('textarea');
+        txt.innerHTML = content;
+        const decoded = txt.value;
+
+        // Return the decoded content
+        return decoded || '<p class="text-gray-500">No content available</p>';
     };
 
     if (loading) {
@@ -283,21 +303,82 @@ export default function ArticleView({ publicView = false }) {
                                     </Button>
                                 </>
                             )}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    const url = article.visibility !== 'internal'
-                                        ? `${window.location.origin}/kb/p/${article.slug}`
-                                        : window.location.href;
-                                    navigator.clipboard.writeText(url);
-                                    toast.success(article.visibility !== 'internal' ? "Shareable link copied!" : "Link copied!");
-                                }}
-                                className="rounded-full h-8 w-8 p-0"
-                                title={article.visibility !== 'internal' ? "Copy shareable public link" : "Copy dashboard link"}
-                            >
-                                <Share2 className="w-4 h-4" />
-                            </Button>
+                            <Popover onOpenChange={(open) => { if (!open) setIsCopied(false); }}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="rounded-full h-8 w-8 p-0"
+                                        title={article.visibility !== 'internal' ? "Shareable public link" : "Link options"}
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-0 rounded-2xl border-none shadow-2xl overflow-hidden bg-white dark:bg-gray-900" align="end" sideOffset={10}>
+                                    <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                <Share2 className="w-3.5 h-3.5" />
+                                                Share Article
+                                            </h4>
+                                            <div className="flex items-center gap-1">
+                                                <Badge className="bg-white/20 text-white border-none text-[9px] px-1.5 font-black uppercase tracking-widest leading-none h-4">
+                                                    {article.visibility}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-blue-100/80 font-medium">Anyone with this link can view the article.</p>
+                                    </div>
+                                    <div className="p-4 space-y-4">
+                                        <div className="relative group">
+                                            <Input
+                                                readOnly
+                                                value={article.visibility !== 'internal'
+                                                    ? `${window.location.origin}/kb/p/${article.slug}`
+                                                    : window.location.href}
+                                                className="pr-20 bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 rounded-xl text-xs h-10 font-medium"
+                                            />
+                                            <Button
+                                                size="sm"
+                                                variant={isCopied ? "success" : "default"}
+                                                onClick={() => {
+                                                    const url = article.visibility !== 'internal'
+                                                        ? `${window.location.origin}/kb/p/${article.slug}`
+                                                        : window.location.href;
+                                                    navigator.clipboard.writeText(url);
+                                                    setIsCopied(true);
+                                                    // toast.success("Link copied!");
+                                                    setTimeout(() => setIsCopied(false), 2000);
+                                                }}
+                                                className={`absolute right-1 top-1 h-8 rounded-lg px-3 transition-all duration-300 ${isCopied ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                            >
+                                                {isCopied ? (
+                                                    <Check className="w-3.5 h-3.5" />
+                                                ) : (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Copy className="w-3.5 h-3.5" />
+                                                        <span className="text-[10px] font-bold">COPY</span>
+                                                    </div>
+                                                )}
+                                            </Button>
+                                        </div>
+
+                                        {article.visibility !== 'internal' && (
+                                            <div className="pt-2">
+                                                <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                                                    <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center shrink-0">
+                                                        <Globe className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] font-bold text-blue-800 dark:text-blue-300 leading-tight">Public URL</p>
+                                                        <p className="text-[9px] text-blue-600 dark:text-blue-400 truncate opacity-80 font-medium">/{article.slug}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                             {!publicView && hasPermission(PERMISSIONS.KNOWLEDGE_BASE_DELETE) && (
                                 <Button
                                     variant="ghost"
@@ -440,7 +521,7 @@ export default function ArticleView({ publicView = false }) {
                                 [&_a]:text-blue-600 [&_a]:underline-offset-4 [&_a]:decoration-2 hover:[&_a]:text-blue-700
                                 [&_hr]:my-16 [&_hr]:border-gray-100 dark:[&_hr]:border-gray-800
                             "
-                                dangerouslySetInnerHTML={{ __html: article.content || '<p class="text-gray-500">No content available</p>' }}
+                                dangerouslySetInnerHTML={{ __html: decodeHTMLContent(article.content) }}
                             />
 
                             {/* Article Footer Tags */}
@@ -676,24 +757,4 @@ export default function ArticleView({ publicView = false }) {
     );
 }
 
-// Minimalist X Icon for dialogs since it's missing in some contexts
-function X({ className, ...props }) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            {...props}
-        >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-        </svg>
-    );
-}
+
