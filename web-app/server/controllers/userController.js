@@ -18,12 +18,12 @@ export const getUser = async (req, res) => {
     try {
         const { username } = req.params;
         const isSelfView = req.user.username === username;
-        
+
         // Allow users to view their own profile without USERS_VIEW permission
         if (!isSelfView && !req.user.permissions?.includes(PERMISSIONS.USERS_VIEW) && req.user.roleKey !== 'admin') {
             return res.status(403).json({ message: "Insufficient permission to view other users" });
         }
-        
+
         const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
         res.json(user);
@@ -84,9 +84,22 @@ export const updateUserController = async (req, res) => {
         const isSelfUpdate = req.user.username === username;
         const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
-        
+
         const updateData = { ...req.body };
-        
+
+        // Handle potential username change
+        if (updateData.username && updateData.username !== username) {
+            // Only Admins or Managers can change usernames
+            if (req.user.roleKey !== 'admin' && req.user.roleKey !== 'manager') {
+                return res.status(403).json({ message: "Insufficient permission to change username" });
+            }
+            // Check if new username already exists
+            const existing = await getUserByUsername(updateData.username);
+            if (existing) {
+                return res.status(409).json({ message: "The new username is already taken" });
+            }
+        }
+
         // Allow self-updates for name, email, and password without USERS_UPDATE permission
         // But require permission for role changes or updating other users
         if (updateData.roleKey || updateData.roleId) {
@@ -100,40 +113,49 @@ export const updateUserController = async (req, res) => {
             updateData.roleName = role.name;
             updateData.roleId = role.id;
         }
-        
-        // For non-self updates, require USERS_UPDATE permission (unless it's just role assignment)
-        if (!isSelfUpdate && !updateData.roleKey && !updateData.roleId) {
+
+        // For non-self updates, require USERS_UPDATE permission (unless it's just role assignment or username change by admin/manager)
+        if (!isSelfUpdate && !updateData.roleKey && !updateData.roleId && !updateData.username) {
             if (!req.user.permissions?.includes(PERMISSIONS.USERS_UPDATE) && req.user.roleKey !== 'admin') {
                 return res.status(403).json({ message: "Insufficient permission to update other users" });
             }
         }
-        
+
         // For self-updates, only allow name, email, password, and date_of_birth
+        // Also block self-username change if not admin/manager
         if (isSelfUpdate) {
             const allowedFields = ['name', 'email', 'password', 'date_of_birth'];
+            // Admins/Managers can change their own username too? 
+            // The prompt says "admins and managers should be able to change username", 
+            // which implies they can change ANY username including their own if needed.
+            if (req.user.roleKey === 'admin' || req.user.roleKey === 'manager') {
+                allowedFields.push('username');
+            }
+
             Object.keys(updateData).forEach(key => {
                 if (!allowedFields.includes(key)) {
                     delete updateData[key];
                 }
             });
         }
-        
+
         if (updateData.password) {
             updateData.password = await bcrypt.hash(updateData.password, 10);
         }
-        
+
         await updateUser(username, updateData);
+
         if (req.user && req.user.username) {
             await logActivity({
                 username: req.user.username,
                 action: isSelfUpdate ? 'UPDATE_OWN_PROFILE' : 'UPDATE_USER',
                 resourceType: 'User',
-                resourceId: username,
+                resourceId: updateData.username || username,
                 ipAddress: req.ip,
                 details: Object.keys(updateData).reduce((acc, key) => {
                     if (key !== 'password') acc[key] = updateData[key];
                     return acc;
-                }, {})
+                }, { originalUsername: username })
             });
         }
         res.json({ message: "User updated successfully" });
