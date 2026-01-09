@@ -14,7 +14,12 @@ import {
   ShieldCheck,
   UserCheck,
   Filter,
-  MoreHorizontal
+  MoreHorizontal,
+  AtSign,
+  Cake,
+  History,
+  ExternalLink,
+  Clock
 } from "lucide-react";
 import { useNavigate, useParams, Outlet } from "react-router-dom";
 import api from "@/lib/axiosInstance";
@@ -80,6 +85,8 @@ const UserManagement = () => {
   const navigate = useNavigate();
   const { username } = useParams();
   const { hasPermission } = usePermissions();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const canCreate = hasPermission(PERMISSIONS.USERS_CREATE);
   const canEdit = hasPermission(PERMISSIONS.USERS_UPDATE);
   const canDelete = hasPermission(PERMISSIONS.USERS_DELETE);
@@ -262,7 +269,11 @@ const UserManagement = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.2, delay: idx * 0.03 }}
-                        className="group border-b border-border/30 last:border-0 hover:bg-muted/30 transition-all cursor-default"
+                        className="group border-b border-border/30 last:border-0 hover:bg-muted/30 transition-all cursor-pointer"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowDetailDialog(true);
+                        }}
                       >
                         <td className="p-5 first:pl-8">
                           <div className="flex items-center gap-4">
@@ -320,7 +331,7 @@ const UserManagement = () => {
                           </div>
                         </td>
                         {(canEdit || canDelete) && (
-                          <td className="p-5 text-right last:pr-8">
+                          <td className="p-5 text-right last:pr-8" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-9 w-9 p-0 rounded-xl hover:bg-muted">
@@ -330,9 +341,23 @@ const UserManagement = () => {
                               <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    setSelectedUser(user);
+                                    setTimeout(() => setShowDetailDialog(true), 50);
+                                  }}
+                                  className="rounded-lg gap-2 cursor-pointer focus:bg-blue-50 focus:text-blue-700 dark:focus:bg-blue-900/10"
+                                >
+                                  <Shield className="w-4 h-4 text-blue-500" />
+                                  View Details
+                                </DropdownMenuItem>
                                 {canEdit && (
                                   <DropdownMenuItem
-                                    onClick={() => navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })
+                                    }}
                                     className="rounded-lg gap-2 cursor-pointer focus:bg-blue-50 focus:text-blue-700 dark:focus:bg-blue-900/20"
                                   >
                                     <UserRoundPen className="w-4 h-4" />
@@ -341,7 +366,11 @@ const UserManagement = () => {
                                 )}
                                 {canDelete && (
                                   <DropdownMenuItem
-                                    onClick={() => { setUserToDelete(user); setShowDeleteDialog(true); }}
+                                    onSelect={(e) => {
+                                      e.preventDefault();
+                                      setUserToDelete(user);
+                                      setTimeout(() => setShowDeleteDialog(true), 50);
+                                    }}
                                     className="rounded-lg gap-2 cursor-pointer focus:bg-red-50 focus:text-red-700 dark:focus:bg-red-900/20"
                                   >
                                     <UserRoundMinus className="w-4 h-4" />
@@ -392,8 +421,14 @@ const UserManagement = () => {
       </Card>
 
       {/* Delete Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl">
+      <Dialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) setUserToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl [&>button]:hidden">
           <div className="bg-destructive/10 p-6 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mb-4 ring-8 ring-destructive/5">
               <UserRoundMinus className="w-8 h-8 text-destructive" />
@@ -425,6 +460,122 @@ const UserManagement = () => {
                 Delete User
               </Button>
             </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Detail Modal */}
+      <Dialog
+        open={showDetailDialog}
+        onOpenChange={(open) => {
+          setShowDetailDialog(open);
+          if (!open) setSelectedUser(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none rounded-3xl shadow-2xl bg-card [&>button]:hidden">
+          <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-600">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-8 w-8 z-10"
+              onClick={() => setShowDetailDialog(false)}
+            >
+              <XCircle className="w-5 h-5" />
+            </Button>
+            <div className="absolute -bottom-12 left-8 p-1 bg-card rounded-[2rem]">
+              <div className="w-24 h-24 rounded-[1.8rem] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl">
+                {selectedUser?.name?.charAt(0).toUpperCase()}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-16 pb-8 px-8 space-y-8 text-card-foreground">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">{selectedUser?.name}</h2>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <AtSign className="w-4 h-4" />
+                  <span className="font-medium">{selectedUser?.username}</span>
+                  <Badge variant="outline" className="ml-2 bg-blue-50/50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50 font-bold uppercase tracking-wider text-[10px]">
+                    {selectedUser?.role}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {canEdit && (
+                  <Button
+                    onClick={() => {
+                      setShowDetailDialog(false);
+                      navigate(`/${username}/dashboard/settings/user-management/add-user/${selectedUser?.username}`, { state: { user: selectedUser } });
+                    }}
+                    className="rounded-xl shadow-lg shadow-blue-500/10"
+                  >
+                    <UserRoundPen className="w-4 h-4 mr-2" /> Edit
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1.5 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                  <Mail className="w-3.5 h-3.5" /> Email Address
+                </div>
+                <p className="font-semibold text-sm truncate">{selectedUser?.email}</p>
+              </div>
+              <div className="space-y-1.5 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                  <Cake className="w-3.5 h-3.5" /> Date of Birth
+                </div>
+                <p className="font-semibold text-sm">
+                  {selectedUser?.date_of_birth ? new Date(selectedUser.date_of_birth).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                  }) : "Not specified"}
+                </p>
+              </div>
+              <div className="space-y-1.5 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                  <History className="w-3.5 h-3.5" /> Account Joined
+                </div>
+                <p className="font-semibold text-sm">
+                  {selectedUser?.created_at ? new Date(selectedUser.created_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric'
+                  }) : "-"}
+                </p>
+              </div>
+              <div className="space-y-1.5 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Status
+                </div>
+                <div className="pt-0.5">
+                  {selectedUser?.is_active ? (
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-none px-2 py-0 text-[10px] h-5">ACTIVE</Badge>
+                  ) : (
+                    <Badge className="bg-red-500/10 text-red-600 border-none px-2 py-0 text-[10px] h-5">BLOCKED</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 italic">
+                <Clock className="w-3 h-3" /> Last updated: {selectedUser?.updated_at ? new Date(selectedUser.updated_at).toLocaleDateString() : 'N/A'}
+              </span>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-blue-600 font-bold"
+                onClick={() => {
+                  setShowDetailDialog(false);
+                  navigate(`/${username}/dashboard/settings/user-management/overrides/${selectedUser?.username}`);
+                }}
+              >
+                Manage Permissions <ExternalLink className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

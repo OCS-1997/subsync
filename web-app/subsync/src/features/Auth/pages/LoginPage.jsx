@@ -4,15 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { toast, Bounce } from "react-toastify";
 import { useState, useEffect } from "react";
 import { loginUser } from "../authSlice";
+import { getActiveFestival } from "../../../utils/festivalThemes";
+import * as LucideIcons from "lucide-react";
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [festival, setFestival] = useState(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { error, isLoading, isAuthenticated } = useSelector((state) => state.auth);
+
+  // Check for active festival on component mount
+  useEffect(() => {
+    const activeFestival = getActiveFestival();
+    if (activeFestival) {
+      setFestival(activeFestival);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading && !error) {
@@ -47,7 +58,7 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans">
       {/* Left Panel - Branding & Visuals */}
-      <div className="hidden lg:flex lg:w-3/5 relative bg-blue-600 dark:bg-blue-900 overflow-hidden items-center justify-center p-16">
+      <div className={`hidden lg:flex lg:w-3/5 relative overflow-hidden items-center justify-center p-16 transition-colors duration-700 ${festival ? festival.colors.bg : 'bg-blue-600 dark:bg-blue-900'}`}>
         {/* Abstract Background Elements */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
@@ -66,10 +77,10 @@ function LoginPage() {
               className="h-12 w-auto filter brightness-0 invert mb-8 drop-shadow-lg"
             />
             <h1 className="text-5xl font-extrabold text-white leading-tight mb-6">
-              Empower Your <span className="text-blue-200 italic">Organisation</span> Pipeline
+              {festival ? festival.wish : <>Empower Your <span className="text-blue-200 italic">Organisation</span> Pipeline</>}
             </h1>
-            <p className="text-xl text-blue-100/90 leading-relaxed max-w-lg mb-10">
-              The next-generation CRM designed for scalability, intelligence, and seamless workflow management.
+            <p className={`text-xl leading-relaxed max-w-lg mb-10 ${festival ? festival.colors.accent : 'text-blue-100/90'}`}>
+              {festival ? festival.subWish : "The next-generation CRM designed for scalability, intelligence, and seamless workflow management."}
             </p>
           </div>
 
@@ -112,6 +123,20 @@ function LoginPage() {
               </div>
             </div>
           </div>
+
+          {/* Festival Icons Decoration */}
+          {festival && festival.icons && (
+            <div className="flex gap-4 mb-8">
+              {festival.icons.map((iconName, index) => {
+                const IconComponent = LucideIcons[iconName];
+                return IconComponent ? (
+                  <div key={index} className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 animate-bounce" style={{ animationDelay: `${index * 0.2}s` }}>
+                    <IconComponent size={32} className="text-white" />
+                  </div>
+                ) : null;
+              })}
+            </div>
+          )}
 
           <div className="flex items-center gap-6 pt-6 border-t border-white/10">
             <div className="flex -space-x-4">
@@ -236,6 +261,18 @@ function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Festival Theme Notification */}
+          {/* {festival && (
+            <div className="mt-6 p-4 rounded-xl border border-dashed bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 border-blue-300 dark:border-slate-600 flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-600 text-white animate-pulse">
+                <LucideIcons.Sparkles size={16} />
+              </div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                🎉 Special {festival.name} Theme Active!
+              </p>
+            </div>
+          )} */}
 
           <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center">
             <p className="text-slate-500 text-sm flex items-center justify-center gap-4">

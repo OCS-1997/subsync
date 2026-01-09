@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance";
 import {
@@ -35,6 +36,8 @@ const AddUser = () => {
   const { editUsername } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const currentUser = useSelector((state) => state.auth.user);
+  const isPrivileged = currentUser?.roleKey === 'admin' || currentUser?.roleKey === 'manager';
   const editing = !!editUsername;
   const [loading, setLoading] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
@@ -95,7 +98,7 @@ const AddUser = () => {
         roleKey: user.roleKey || "",
         is_active: !!user.is_active,
       });
-    } else {
+    } else if (editUsername) {
       setLoading(true);
       api.get(`/users/${editUsername}`)
         .then(res => {
@@ -105,7 +108,7 @@ const AddUser = () => {
             email: res.data.email,
             password: "",
             date_of_birth: res.data.date_of_birth || "",
-            roleKey: res.data.roleKey || "",
+            roleKey: res.data.roleKey || res.data.role?.toLowerCase() || "",
             is_active: !!res.data.is_active,
           });
         })
@@ -244,26 +247,27 @@ const AddUser = () => {
                             value={form.username}
                             onChange={handleChange}
                             required
-                            disabled={editing}
+                            disabled={editing && !isPrivileged}
                             autoComplete="username"
                             placeholder="johndoe"
-                            className={`pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all ${editing ? "bg-muted cursor-not-allowed" : ""}`}
+                            className={`pl-10 h-11 border-border/50 bg-background/50 focus:bg-background transition-all ${editing && !isPrivileged ? "bg-muted cursor-not-allowed" : ""}`}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="roleKey" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Access Role</Label>
-                        <Select value={form.roleKey} onValueChange={handleSelectChange}>
+                        <Select
+                          key={`role-select-${roleOptions.length}-${form.roleKey}`}
+                          value={form.roleKey || ""}
+                          onValueChange={handleSelectChange}
+                        >
                           <SelectTrigger className="h-11 border-border/50 bg-background/50 focus:bg-background transition-all">
                             <SelectValue placeholder="Select a role" />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl shadow-xl">
                             {roleOptions.map(role => (
                               <SelectItem key={role.id} value={role.roleKey} className="rounded-lg">
-                                <div className="flex flex-col">
-                                  <span className="font-semibold">{role.name}</span>
-                                  <span className="text-[10px] text-muted-foreground uppercase">{role.roleKey}</span>
-                                </div>
+                                {role.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
