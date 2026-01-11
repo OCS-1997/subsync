@@ -109,6 +109,7 @@ import {
     updateStatusController,
     deleteStatusController
 } from '../controllers/opportunityController.js';
+import { getPreference, updatePreference } from '../controllers/userPreferencesController.js';
 
 const router = express.Router();
 
@@ -395,5 +396,9 @@ router.put('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUN
 router.delete('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_DELETE), deleteOpportunityController);
 router.put('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), updateStatusController);
 router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), deleteStatusController);
+
+// User Preferences
+router.get('/preferences/:username/:key', isAuthenticated, getPreference);
+router.put('/preferences/:username/:key', isAuthenticated, updatePreference);
 
 export default router;

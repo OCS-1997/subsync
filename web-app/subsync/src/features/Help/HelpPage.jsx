@@ -1,3 +1,24 @@
+import { useRef, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+    rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion.jsx";
@@ -29,10 +50,190 @@ import {
     HelpCircle,
     Info,
     Calendar,
-    Target
+    Target,
+    PartyPopper,
+    Sparkles,
+    Ghost,
+    Smartphone,
+    Monitor,
+    Share,
+    MoreVertical,
+    Download
 } from "lucide-react";
+import { usePreferenceOrder } from "@/hooks/usePreferenceOrder.js";
+
+function SupportBuddy() {
+    const [isHovered, setIsHovered] = useState(false);
+    const [message, setMessage] = useState("Need help?");
+
+    // 3D Tilt Logic
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+
+    const mouseXSpring = useSpring(x);
+    const mouseYSpring = useSpring(y);
+
+    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
+    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
+
+    const handleMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const xPct = mouseX / width - 0.5;
+        const yPct = mouseY / height - 0.5;
+        x.set(xPct);
+        y.set(yPct);
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+        x.set(0);
+        y.set(0);
+    };
+
+    const messages = [
+        "You're doing great!",
+        "Drag the modules around!",
+        "Ctrl+K is your friend.",
+        "Need a coffee break?",
+        "Subsync 1.9.4 is here!",
+        "I like your style.",
+        "Everything's stable."
+    ];
+
+    const handleClick = () => {
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        setMessage(randomMsg);
+    };
+
+    return (
+        <motion.div
+            style={{
+                perspective: "1000px",
+                transformStyle: "preserve-3d"
+            }}
+            className="fixed bottom-12 right-12 z-[100] cursor-pointer group"
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={handleMouseLeave}
+            onClick={handleClick}
+        >
+            <AnimatePresence>
+                {isHovered && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8, x: 20, rotateY: "-20deg" }}
+                        animate={{ opacity: 1, scale: 1, x: 0, rotateY: "0deg" }}
+                        exit={{ opacity: 0, scale: 0.8, x: 20, rotateY: "-20deg" }}
+                        className="absolute right-full mr-6 bottom-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-900 dark:text-white px-5 py-3 rounded-2xl shadow-2xl border border-blue-500/20 whitespace-nowrap font-bold text-sm z-50 pointer-events-none"
+                    >
+                        {message}
+                        <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white/90 dark:bg-slate-800/90 border-r border-t border-blue-500/20 rotate-45" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <motion.div
+                style={{
+                    rotateX,
+                    rotateY,
+                    transformStyle: "preserve-3d"
+                }}
+                className="relative w-20 h-20"
+            >
+                {/* Back Outer Glow */}
+                <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
+
+                {/* Main Body Layers for 3D depth */}
+                {/* Back shadow layer */}
+                <div className="absolute inset-0 bg-slate-900/20 rounded-full blur-md translate-z-[-10px] scale-90" />
+
+                {/* Layer 1 (Base) */}
+                <div
+                    className="absolute inset-0 bg-gradient-to-tr from-blue-900 to-indigo-900 rounded-full shadow-inner border-b-4 border-black/20"
+                    style={{ transform: "translateZ(0px)" }}
+                />
+
+                {/* Layer 2 (Middle) */}
+                <div
+                    className="absolute inset-1 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full border-2 border-white/10 shadow-lg"
+                    style={{ transform: "translateZ(10px)" }}
+                />
+
+                {/* Layer 3 (Top / Face) */}
+                <motion.div
+                    className="absolute inset-0 flex items-center justify-center text-white"
+                    style={{ transform: "translateZ(20px)" }}
+                >
+                    {isHovered ? <Sparkles size={34} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" /> : <Ghost size={34} className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />}
+                </motion.div>
+
+                {/* Small floating accessory */}
+                <motion.div
+                    animate={{
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 90, 180, 270, 360]
+                    }}
+                    transition={{
+                        scale: { repeat: Infinity, duration: 2 },
+                        rotate: { repeat: Infinity, duration: 8, ease: "linear" }
+                    }}
+                    style={{ transform: "translateZ(35px)" }}
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-2 border-white z-20"
+                >
+                    <Zap size={12} className="text-white fill-white" />
+                </motion.div>
+
+                {/* Shine effect */}
+                <div className="absolute top-2 left-4 w-6 h-3 bg-white/20 rounded-full blur-[1px] rotate-[-25deg] pointer-events-none" style={{ transform: "translateZ(25px)" }} />
+            </motion.div>
+        </motion.div>
+    );
+}
+
+function SortableModule({ mod }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: mod.title });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : 'auto',
+        opacity: isDragging ? 0.6 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            <Card className={`group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden relative h-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+                <CardContent className="p-6 space-y-4">
+                    <div className={`p-3 rounded-2xl bg-${mod.color}-100 dark:bg-${mod.color}-900/30 text-${mod.color}-600 dark:text-${mod.color}-400 w-fit group-hover:scale-110 group-hover:rotate-6 transition-transform`}>
+                        {mod.icon}
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-xl text-slate-900 dark:text-white">{mod.title}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{mod.description}</p>
+                    </div>
+                    <div className={`absolute top-0 right-0 p-1 bg-${mod.color}-500/10 rounded-bl-xl opacity-0 group-hover:opacity-100 transition-opacity`}>
+                        <Info size={12} className={`text-${mod.color}-500`} />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
 
 export default function HelpPage() {
+    const { username } = useParams();
+    const [showConfetti, setShowConfetti] = useState(false);
+
     const shortcuts = [
         {
             category: "Navigation",
@@ -50,13 +251,14 @@ export default function HelpPage() {
             category: "Quick Actions",
             icon: <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
             items: [
+                { keys: ["Drag Icon"], description: "Reorder Sidebar Items", icon: <Menu className="w-4 h-4" /> },
                 { keys: ["Esc"], description: "Close Modals / Cancel Actions", icon: <ChevronRight className="w-4 h-4" /> },
                 { keys: ["Enter"], description: "Confirm / Submit Forms", icon: <ChevronRight className="w-4 h-4" /> },
             ]
         }
     ];
 
-    const modules = [
+    const defaultModules = [
         {
             title: "Pipeline & Opportunities",
             icon: <Target className="w-6 h-6" />,
@@ -107,6 +309,22 @@ export default function HelpPage() {
         },
     ];
 
+    const { orderedItems: modules, reorderItems: setModules, isLoading } = usePreferenceOrder('help_modules_order', defaultModules, 'title');
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = modules.findIndex(i => i.title === active.id);
+            const newIndex = modules.findIndex(i => i.title === over.id);
+            setModules(arrayMove(modules, oldIndex, newIndex));
+        }
+    };
+
     const faqs = [
         {
             question: "How do I create an opportunity for a 'Prospective' customer?",
@@ -139,6 +357,10 @@ export default function HelpPage() {
         {
             question: "Can I customize my dashboard view?",
             answer: "The dashboard currently shows a fixed set of high-priority graphs and lists. You can toggle between different chart views (Monthly vs Yearly) and use the 'Birthday Widget' in the header to track upcoming customer milestones."
+        },
+        {
+            question: "How do I reorder the sidebar menu?",
+            answer: "The sidebar navigation is fully customizable! Simply click and hold any sidebar icon, then drag it to your preferred position. Your custom order is saved automatically to your profile and will persist across sessions."
         }
     ];
 
@@ -151,6 +373,7 @@ export default function HelpPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 space-y-8 font-sans transition-colors duration-500">
+            <SupportBuddy />
             <div className="max-w-6xl mx-auto space-y-12">
 
                 {/* Hero Header */}
@@ -174,25 +397,33 @@ export default function HelpPage() {
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-2 bg-blue-600 rounded-full"></div>
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">System Modules</h2>
+                        <Badge variant="outline" className="ml-2 text-[10px] uppercase opacity-50">Draggable</Badge>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {modules.map((mod, idx) => (
-                            <Card key={idx} className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden relative">
-                                <CardContent className="p-6 space-y-4">
-                                    <div className={`p-3 rounded-2xl bg-${mod.color}-100 dark:bg-${mod.color}-900/30 text-${mod.color}-600 dark:text-${mod.color}-400 w-fit group-hover:scale-110 group-hover:rotate-6 transition-transform`}>
-                                        {mod.icon}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <h3 className="font-bold text-xl text-slate-900 dark:text-white">{mod.title}</h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{mod.description}</p>
-                                    </div>
-                                    <div className={`absolute top-0 right-0 p-1 bg-${mod.color}-500/10 rounded-bl-xl opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                        <Info size={12} className={`text-${mod.color}-500`} />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+
+                    {isLoading && modules.length === 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className="h-40 bg-white dark:bg-slate-900 rounded-3xl animate-pulse border border-slate-200 dark:border-slate-800" />
+                            ))}
+                        </div>
+                    ) : (
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={modules.map(m => m.title)}
+                                strategy={rectSortingStrategy}
+                            >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {modules.map((mod) => (
+                                        <SortableModule key={mod.title} mod={mod} />
+                                    ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    )}
                 </div>
 
                 {/* FAQ and Shortcuts Split */}
@@ -260,6 +491,93 @@ export default function HelpPage() {
                     </div>
                 </div>
 
+                {/* PWA Installation Section */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-2 bg-violet-600 rounded-full"></div>
+                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">App Installation (PWA)</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* iOS */}
+                        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group hover:shadow-lg transition-all">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                                        <Smartphone size={24} />
+                                    </div>
+                                    <CardTitle>iOS (iPhone/iPad)</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3 pt-4">
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">1</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Open <b>RMS</b> in Safari</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">2</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Tap the <b>Share</b> button <Share size={14} className="inline mx-1" /></p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">3</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Select <b>Add to Home Screen</b></p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Android */}
+                        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group hover:shadow-lg transition-all">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                        <Zap size={24} />
+                                    </div>
+                                    <CardTitle>Android (Chrome)</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3 pt-4">
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">1</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Open <b>RMS</b> in Chrome</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">2</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Tap the <b>Menu</b> <MoreVertical size={14} className="inline mx-1" /> (three dots)</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">3</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Tap <b>Install App</b> or <b>Add to Home Screen</b></p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Desktop */}
+                        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 group hover:shadow-lg transition-all">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                                        <Monitor size={24} />
+                                    </div>
+                                    <CardTitle>Desktop (Chrome/Edge)</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3 pt-4">
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">1</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Look for the <b>Install Icon</b> <Download size={14} className="inline mx-1" /> in address bar</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">2</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Click <b>Install</b></p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">3</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Launch from your <b>Applications</b> or <b>Desktop</b></p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+
                 {/* Administration Card */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-3">
@@ -302,7 +620,26 @@ export default function HelpPage() {
                             </button>
                         </div>
                         <div className="pt-6 flex items-center justify-center gap-6">
-                            <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">Stable Build 1.8.4</Badge>
+                            <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => {
+                                    setShowConfetti(true);
+                                    setTimeout(() => setShowConfetti(false), 3000);
+                                }}
+                                className="cursor-pointer relative"
+                            >
+                                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">Stable Build 1.9.4</Badge>
+                                {showConfetti && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 0 }}
+                                        animate={{ opacity: 1, y: -50 }}
+                                        className="absolute -top-10 left-1/2 -translate-x-1/2 pointer-events-none"
+                                    >
+                                        <PartyPopper className="text-amber-500 animate-bounce" />
+                                    </motion.div>
+                                )}
+                            </motion.div>
                             <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">Latency: 24ms</Badge>
                             <span className="text-slate-500 text-xs italic">&copy; 2026 OCS Renewal Management Systems</span>
                         </div>

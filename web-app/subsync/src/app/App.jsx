@@ -9,6 +9,7 @@ import ErrorBoundary from './ErrorBoundary.jsx'
 import { PermissionsProvider } from '@/context/PermissionsContext.jsx'
 import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
+import InstallPrompt from '@/components/PWA/InstallPrompt'
 
 function App() {
   useEffect(() => {
@@ -60,6 +61,7 @@ function App() {
         <ThemeProvider>
           <PermissionsProvider>
             <RouterProvider router={router} />
+            <InstallPrompt />
           </PermissionsProvider>
         </ThemeProvider>
       </ErrorBoundary>

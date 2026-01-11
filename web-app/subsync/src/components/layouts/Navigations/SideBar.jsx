@@ -1,26 +1,127 @@
 import { Link, useParams, useLocation } from 'react-router-dom';
-import { Command, X } from 'lucide-react';
+import { Command, X, Menu, Settings, Link2, Home, Users, Globe, Package, Building2, FileText, Shield, Bell, Mail, Palette, Zap, Calculator, Moon, Sun, Search, ChevronRight, Database, BookOpen, LayoutDashboard, TrendingUp, HelpCircle, Info, Calendar, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
+import { usePreferenceOrder } from '@/hooks/usePreferenceOrder.js';
 
 const sidebarItems = [
-  { path: 'dashboard', title: 'Home', icon: 'home', permission: PERMISSIONS.DASHBOARD_VIEW },
-  { path: 'dashboard/customers', title: 'Customers', icon: 'person', permission: PERMISSIONS.CUSTOMERS_VIEW },
-  { path: 'dashboard/domains', title: 'Domains', icon: 'language', permission: PERMISSIONS.DOMAINS_VIEW },
-  { path: 'dashboard/services', title: 'Services', icon: 'shop', permission: PERMISSIONS.SERVICES_VIEW },
-  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', permission: PERMISSIONS.VENDORS_VIEW },
-  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW },
-  { path: 'dashboard/dcr', title: 'DCR Module', icon: 'phone', permission: PERMISSIONS.DCR_VIEW },
-  { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', permission: PERMISSIONS.CONTACTS_VIEW },
-  { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
-  { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', permission: PERMISSIONS.BIRTHDAYS_VIEW },
-  { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
+  { path: 'dashboard', title: 'Home', icon: 'home', icon_type: 'lucide', permission: PERMISSIONS.DASHBOARD_VIEW },
+  { path: 'dashboard/customers', title: 'Customers', icon: 'person', icon_type: 'material', permission: PERMISSIONS.CUSTOMERS_VIEW },
+  { path: 'dashboard/domains', title: 'Domains', icon: 'language', icon_type: 'material', permission: PERMISSIONS.DOMAINS_VIEW },
+  { path: 'dashboard/services', title: 'Services', icon: 'shop', icon_type: 'material', permission: PERMISSIONS.SERVICES_VIEW },
+  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', icon_type: 'material', permission: PERMISSIONS.VENDORS_VIEW },
+  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', icon_type: 'material', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW },
+  { path: 'dashboard/dcr', title: 'DCR Module', icon: 'phone', icon_type: 'material', permission: PERMISSIONS.DCR_VIEW },
+  { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW },
+  { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
+  { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW },
+  { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', icon_type: 'material', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
+  // { path: 'dashboard/help', title: 'Help', icon: 'help', icon_type: 'material', permission: null },
 ];
+
+function SortableItem({ item, active, isOpen, username, toggleSidebar }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: item.path });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 'auto',
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  const destination = `/${username}/${item.path}`;
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`relative group list-none`}
+    >
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <Link
+            to={destination}
+            onClick={() => {
+              if (window.innerWidth < 1024) toggleSidebar();
+            }}
+            className={`flex items-center gap-3 py-1.5 px-3 rounded-xl transition-all duration-300 relative
+            ${active
+                ? 'bg-white/20 shadow-lg text-white font-bold'
+                : 'text-blue-100 hover:text-white hover:bg-white/10'}
+            ${active || !isOpen ? '' : 'hover:translate-x-1'}
+            active:scale-[0.98]`}
+          >
+            <div
+              {...attributes}
+              {...listeners}
+              className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg transition-all duration-300
+              ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+              ${active ? 'text-white' : 'group-hover:bg-white/10'}`}
+            >
+              {item.icon_type === 'material' ? (
+                <span className={`material-symbols-outlined text-[22px] ${active ? 'fill-1' : 'opacity-80'}`}>
+                  {item.icon}
+                </span>
+              ) : (
+                <Home size={22} className={`${active ? 'fill-white' : 'opacity-80'}`} />
+              )}
+            </div>
+
+            {isOpen && (
+              <span className={`text-sm whitespace-nowrap tracking-tight transition-all duration-300
+              ${active ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
+                {item.title}
+              </span>
+            )}
+
+            {active && isOpen && (
+              <motion.div
+                layoutId="activeSideIndicator"
+                className="absolute right-0 top-2 bottom-2 w-1 bg-white rounded-l-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                initial={{ opacity: 0, x: 5 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
+          </Link>
+        </TooltipTrigger>
+        {!isOpen && (
+          <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
+            {item.title}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </li>
+  );
+}
 
 function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
@@ -28,8 +129,28 @@ function SideBar({ isOpen, toggleSidebar }) {
   const { hasAnyPermission } = usePermissions();
   const sidebarRef = useRef(null);
 
+  const { orderedItems, reorderItems, isLoading } = usePreferenceOrder(
+    'sidebar_order',
+    sidebarItems,
+    'path',
+    (item) => !item.permission || hasAnyPermission(item.permission)
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = orderedItems.findIndex(i => i.path === active.id);
+      const newIndex = orderedItems.findIndex(i => i.path === over.id);
+      reorderItems(arrayMove(orderedItems, oldIndex, newIndex));
+    }
+  };
+
   const handleOpenCommandPalette = () => {
-    // Trigger custom event to open command palette in NavBar
     window.dispatchEvent(new CustomEvent('openCommandPalette'));
   };
 
@@ -38,15 +159,11 @@ function SideBar({ isOpen, toggleSidebar }) {
     return location.pathname === fullPath || (path === 'dashboard' && location.pathname === `/${username}/dashboard`);
   };
 
-  // Close sidebar on click outside for mobile/floating states
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        // Check if the click was not on a toggle button in the navbar
         const isNavBarToggle = event.target.closest('button')?.className?.includes('menu');
-        if (!isNavBarToggle) {
-          toggleSidebar();
-        }
+        if (!isNavBarToggle) toggleSidebar();
       }
     };
 
@@ -60,7 +177,6 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   return (
     <>
-      {/* Mobile Backdrop */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -101,7 +217,6 @@ function SideBar({ isOpen, toggleSidebar }) {
                 </div>
               </div>
 
-              {/* Mobile Close Button */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -129,61 +244,35 @@ function SideBar({ isOpen, toggleSidebar }) {
         <nav className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar mt-6">
           <ul className="space-y-1 px-3">
             <TooltipProvider>
-              {sidebarItems
-                .filter((item) => !item.permission || hasAnyPermission(item.permission))
-                .map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <li key={item.title || item.path} className="relative">
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                          <Link
-                            to={`/${username}/${item.path}`}
-                            onClick={() => {
-                              // On mobile, close sidebar after clicking a link
-                              if (window.innerWidth < 1024) toggleSidebar();
-                            }}
-                            className={`group flex items-center gap-3 py-1 px-1 rounded-xl transition-all duration-300 relative
-                            ${active
-                                ? 'bg-white/20 shadow-lg text-white font-bold'
-                                : 'text-blue-100 hover:text-white hover:bg-white/10'}
-                            ${active || !isOpen ? '' : 'hover:translate-x-1.5'}
-                            active:scale-[0.97]`}
-                          >
-                            <div className={`flex items-center justify-center w-10 h-10 shrink-0 rounded-xl transition-all duration-300
-                            ${active ? '  text-white' : 'group-hover:bg-white/5'}`}>
-                              <span className={`material-symbols-outlined text-[24px] ${active ? 'fill-1' : 'opacity-80'}`}>
-                                {item.icon}
-                              </span>
-                            </div>
-
-                            {isOpen && (
-                              <span className={`text-sm whitespace-nowrap tracking-tight transition-all duration-300
-                              ${active ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
-                                {item.title}
-                              </span>
-                            )}
-
-                            {active && isOpen && (
-                              <motion.div
-                                layoutId="activeSideIndicator"
-                                className="absolute right-0 top-2 bottom-2 w-1 bg-white rounded-l-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                                initial={{ opacity: 0, x: 5 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3 }}
-                              />
-                            )}
-                          </Link>
-                        </TooltipTrigger>
-                        {!isOpen && (
-                          <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
-                            {item.title}
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </li>
-                  );
-                })}
+              {isLoading && orderedItems.length === 0 ? (
+                <div className="space-y-2">
+                  {[...Array(10)].map((_, i) => (
+                    <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse mx-2" />
+                  ))}
+                </div>
+              ) : (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={orderedItems.map(i => i.path)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {orderedItems.map((item) => (
+                      <SortableItem
+                        key={item.path}
+                        item={item}
+                        active={isActive(item.path)}
+                        isOpen={isOpen}
+                        username={username}
+                        toggleSidebar={toggleSidebar}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              )}
             </TooltipProvider>
           </ul>
         </nav>
@@ -217,4 +306,3 @@ function SideBar({ isOpen, toggleSidebar }) {
 }
 
 export default SideBar;
-
