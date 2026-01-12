@@ -10,6 +10,7 @@ import { fetchOpportunities, fetchStatuses } from "../opportunitySlice.js";
 import opportunityService from "../services/opportunityService.js";
 import ViewSwitcher from "./ViewSwitcher.jsx";
 import OpportunityPipelineView from "./OpportunityPipelineView.jsx";
+import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
@@ -188,41 +189,36 @@ const OpportunityList = () => {
                 }
             />
 
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center py-2 px-1">
-                <div className="flex flex-1 gap-4 w-full md:max-w-3xl">
-                    <div className="relative flex-1 group">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                        <Input
+            <div className="flex flex-col md:flex-row gap-6 items-center px-1">
+                <div className="flex flex-1 gap-6 w-full items-center">
+                    <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+                        <SearchFilterForm
+                            search={searchTerm}
+                            setSearch={setSearchTerm}
                             placeholder="Search by customer, products or owner..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 h-11 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/40 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
+                            className="w-full"
                         />
-                        {searchTerm && (
-                            <button onClick={() => setSearchTerm("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
+                        <div className="h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full md:w-56 h-11 border-none bg-transparent shadow-none focus:ring-0 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-3.5 w-3.5" />
+                                    <SelectValue placeholder="All Stages" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent className="dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-2xl p-2">
+                                <SelectItem value="all" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">All Stages</SelectItem>
+                                {(statuses || []).map((s) => (
+                                    <SelectItem key={s.id} value={s.id.toString()} className="rounded-xl my-1 mx-1 font-bold text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.status_color }} />
+                                            {s.status_name}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full md:w-60 h-11 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/40 shadow-sm">
-                            <div className="flex items-center gap-2">
-                                <Filter className="h-3.5 w-3.5 text-gray-400" />
-                                <SelectValue placeholder="All Stages" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent className="dark:bg-gray-900 border-gray-100 dark:border-gray-800">
-                            <SelectItem value="all">All Stages</SelectItem>
-                            {(statuses || []).map((s) => (
-                                <SelectItem key={s.id} value={s.id.toString()}>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.status_color }} />
-                                        {s.status_name}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
                 </div>
                 <ViewSwitcher viewMode={viewMode} onViewChange={handleViewChange} />
             </div>

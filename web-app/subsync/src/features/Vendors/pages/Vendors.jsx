@@ -13,6 +13,7 @@ import api from "@/lib/axiosInstance.js";
 import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { fetchVendors } from "@/features/Services/vendorSlice.js";
 
 const headers = [
@@ -150,103 +151,111 @@ function Vendors() {
 
 
   return (
-    <div className="p-4">
-      <Breadcrumb items={[{ label: "Vendors" }]} />
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">Vendors</h1>
-        <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white w-40"
-          onClick={handleAddVendor}
-        >
-          <UserPlus /> Add
-        </Button>
-      </div>
-      <hr className="mb-6 border-blue-500 border-1" />
-      <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm
-          search={search}
-          setSearch={setSearch}
-          handleSearch={handleSearch}
-        />
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchVendorsAndExport}>
-          <FileUp /> Export
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <span />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={fetchVendorsAndExport}>Export as CSV</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+    <div className="max-w-[1600px] mx-auto py-8 px-4">
+      <PageHeader
+        title="Vendors"
+        description="Unified registry of all service providers, suppliers, and external partners."
+        breadcrumbItems={[{ label: "Vendors" }]}
+        actions={
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+            onClick={handleAddVendor}
+          >
+            <UserPlus className="w-5 h-5 mr-3" />
+            Add Vendor
+          </Button>
+        }
+      />
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="space-y-8 mt-12">
+        {/* Control Bar */}
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+            <SearchFilterForm
+              search={search}
+              setSearch={setSearch}
+              placeholder="Search by name, company, email..."
+              className="w-full"
+            />
+            <div className="h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
+            <Button
+              variant="ghost"
+              className="rounded-xl h-11 px-6 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400 gap-2"
+              onClick={fetchVendorsAndExport}
+            >
+              <FileUp className="w-4 h-4" />
+              Export
+            </Button>
+          </div>
+        </div>
 
-      {loading ? (
-        <div className="p-6 flex flex-col justify-center items-center">
-          <Hamster />
-        </div>
-      ) : vendors.length > 0 ? (
-        <>
-          <GenericTable
-            headers={headers}
-            data={vendors.map((v) => {
-              const isInactive = (v.vendor_status || '').toLowerCase() === 'inactive';
-              // Ensure phone number is always a string and includes country code
-              const countryCode = typeof v.country_code === 'string' ? v.country_code : (v.country_code ? String(v.country_code) : '');
-              const phoneNumber = typeof v.primary_phone_number === 'string' ? v.primary_phone_number : (v.primary_phone_number ? String(v.primary_phone_number) : '');
-              // Format: country code + phone number, or just phone number, or "Not provided"
-              let phoneDisplay = "Not provided";
-              if (countryCode && phoneNumber) {
-                phoneDisplay = `${countryCode} ${phoneNumber}`;
-              } else if (phoneNumber) {
-                phoneDisplay = phoneNumber;
-              } else if (countryCode) {
-                phoneDisplay = countryCode;
-              }
-              return {
-                ...v,
-                display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
-                primary_phone_number: phoneDisplay,
-                gst_treatment: v.gst_treatment || "Not specified",
-                actions: renderActions(v),
-                _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : '',
-              };
-            })}
-            primaryKey="vendor_id"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
-          <Pagination
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            totalPages={backendTotalPages}
-            totalRecords={totalRecords}
-          />
-        </>
-      ) : (
-        <div className="p-10 border rounded-md bg-white text-center">
-          {debouncedSearch ? (
-            <>
-              <div className="text-lg font-semibold mb-2">No results found</div>
-              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
-            </>
-          ) : (
-            <>
-              <div className="text-lg font-semibold mb-2">No vendors yet</div>
-              <div className="text-sm text-gray-600 mb-4">Create your first vendor to get started.</div>
-              <Button onClick={handleAddVendor}><UserPlus className="w-4 h-4" /> Add Vendor</Button>
-            </>
-          )}
-        </div>
-      )}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading ? (
+          <div className="p-6 flex flex-col justify-center items-center">
+            <Hamster />
+          </div>
+        ) : vendors.length > 0 ? (
+          <>
+            <GenericTable
+              headers={headers}
+              data={vendors.map((v) => {
+                const isInactive = (v.vendor_status || '').toLowerCase() === 'inactive';
+                // Ensure phone number is always a string and includes country code
+                const countryCode = typeof v.country_code === 'string' ? v.country_code : (v.country_code ? String(v.country_code) : '');
+                const phoneNumber = typeof v.primary_phone_number === 'string' ? v.primary_phone_number : (v.primary_phone_number ? String(v.primary_phone_number) : '');
+                // Format: country code + phone number, or just phone number, or "Not provided"
+                let phoneDisplay = "Not provided";
+                if (countryCode && phoneNumber) {
+                  phoneDisplay = `${countryCode} ${phoneNumber}`;
+                } else if (phoneNumber) {
+                  phoneDisplay = phoneNumber;
+                } else if (countryCode) {
+                  phoneDisplay = countryCode;
+                }
+                return {
+                  ...v,
+                  display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
+                  primary_phone_number: phoneDisplay,
+                  gst_treatment: v.gst_treatment || "Not specified",
+                  actions: renderActions(v),
+                  _rowClassName: isInactive ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : '',
+                };
+              })}
+              primaryKey="vendor_id"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={backendTotalPages}
+              totalRecords={totalRecords}
+            />
+          </>
+        ) : (
+          <div className="p-10 border rounded-md bg-white text-center">
+            {debouncedSearch ? (
+              <>
+                <div className="text-lg font-semibold mb-2">No results found</div>
+                <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-semibold mb-2">No vendors yet</div>
+                <div className="text-sm text-gray-600 mb-4">Create your first vendor to get started.</div>
+                <Button onClick={handleAddVendor}><UserPlus className="w-4 h-4" /> Add Vendor</Button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

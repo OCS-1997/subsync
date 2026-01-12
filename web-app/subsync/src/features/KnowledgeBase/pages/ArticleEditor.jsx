@@ -188,162 +188,176 @@ export default function ArticleEditor() {
     }
 
     return (
-        <div className="w-full h-full overflow-auto">
-            <div className="max-w-[1400px] mx-auto p-6">
+        <div className="container py-8 max-w mx-auto px-4 md:px-0">
+            <div className="mb-6">
                 <Breadcrumb
                     items={[
                         { label: "Knowledge Base", href: `/${username}/dashboard/kb` },
                         { label: isEditMode ? "Edit Article" : "New Article" }
                     ]}
                 />
-
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-3xl font-bold">
-                        {isEditMode ? 'Edit Article' : 'Create New Article'}
+                <div className="flex items-center justify-between mt-2">
+                    <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                        {isEditMode ? 'Edit Article' : 'New Article'}
                     </h1>
-                    <Button variant="ghost" onClick={() => navigate(`/${username}/dashboard/kb`)}>
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate(`/${username}/dashboard/kb`)}
+                        className="rounded-xl font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                    >
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Cancel
+                        Back to List
                     </Button>
                 </div>
+            </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Main Content */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Title */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Article Title</CardTitle>
-                                    <CardDescription>Choose a clear, descriptive title</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Input
-                                        placeholder="e.g., How to Reset Your Password"
-                                        value={formData.title}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                        className="text-2xl font-semibold h-14"
-                                        required
-                                    />
-                                </CardContent>
-                            </Card>
+            <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Title */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm transition-all focus-within:ring-2 focus-within:ring-blue-500/20">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                                    Article Metadata
+                                </CardTitle>
+                                <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">Choose a clear, descriptive title</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-8">
+                                <Input
+                                    placeholder="e.g., How to Reset Your Password"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                                    className="text-2xl font-black h-16 rounded-2xl bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 shadow-inner px-6 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-slate-700"
+                                    required
+                                />
+                            </CardContent>
+                        </Card>
 
-                            {/* Content with Rich Text Editor */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Content</CardTitle>
-                                    <CardDescription>Use the toolbar to format your content</CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                        {/* Content with Rich Text Editor */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                                    Body Content
+                                </CardTitle>
+                                <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">Use the toolbar to format your documentation</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-8 p-0">
+                                <div className="px-8 pb-8">
                                     <RichTextEditor
                                         value={formData.content}
                                         onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                                         placeholder="Write your article content here..."
                                         articleId={id}
                                     />
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* Image Attachments - Only show in edit mode */}
-                            {isEditMode && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Image Attachments</CardTitle>
-                                        <CardDescription>Upload and manage images for this article</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
+                        {/* Image Attachments - Only show in edit mode */}
+                        {isEditMode && (
+                            <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                                <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                    <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                                        Visual Assets
+                                    </CardTitle>
+                                    <CardDescription className="text-[10px] font-bold uppercase tracking-widest opacity-60">Upload and manage images for this article</CardDescription>
+                                </CardHeader>
+                                <CardContent className="pt-8 space-y-6">
+                                    <div className="bg-gray-50 dark:bg-slate-950/50 p-6 rounded-3xl border border-gray-100 dark:border-white/5">
                                         <ImageUploader
                                             articleId={id}
                                             onUploadComplete={fetchImages}
                                             maxFiles={10}
                                         />
-                                        <ImageGallery
-                                            images={images}
-                                            onDelete={handleDeleteImage}
-                                            onSetFeatured={handleSetFeatured}
-                                            editable={true}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
-
-                        {/* Sidebar */}
-                        <div className="space-y-6">
-                            {/* Visibility Settings */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Article Visibility</CardTitle>
-                                    <CardDescription>Determine who can access this article</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <select
-                                        className="w-full border rounded-md h-10 px-3 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                                        value={formData.visibility}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
-                                    >
-                                        <option value="internal">Internal Only (Staff Only)</option>
-                                        <option value="customer">Customer Only (Public Link)</option>
-                                        <option value="both">Both (Staff & Public)</option>
-                                    </select>
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                                        {formData.visibility === 'internal'
-                                            ? '🔒 Only authenticated staff can view this document.'
-                                            : '🌐 Anyone with the link can view this document if published.'}
-                                    </p>
+                                    </div>
+                                    <ImageGallery
+                                        images={images}
+                                        onDelete={handleDeleteImage}
+                                        onSetFeatured={handleSetFeatured}
+                                        editable={true}
+                                    />
                                 </CardContent>
                             </Card>
+                        )}
+                    </div>
 
-                            {/* Publish Settings */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Publishing</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="is_published" className="cursor-pointer">
+                    {/* Sidebar */}
+                    <div className="space-y-8">
+                        {/* Quick Controls */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                                    Publishing
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800/50 transition-all hover:border-blue-500/30">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="is_published" className="text-xs font-black uppercase tracking-widest cursor-pointer text-gray-700 dark:text-slate-300">
                                             Live Status
                                         </Label>
-                                        <Switch
-                                            id="is_published"
-                                            checked={formData.is_published}
-                                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                                        />
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                            {formData.is_published ? 'Publicly Visible' : 'Draft Mode'}
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-gray-500">
-                                        {formData.is_published
-                                            ? '✅ This article is live and accessible.'
-                                            : '📝 This article is saved as a draft (Staff only).'}
-                                    </p>
-                                </CardContent>
-                            </Card>
+                                    <Switch
+                                        id="is_published"
+                                        checked={formData.is_published}
+                                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
+                                    />
+                                </div>
 
-                            {/* Category */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Category</CardTitle>
-                                    <CardDescription>Organize your articles</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
+                                <div className="space-y-4 pt-2">
+                                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl font-black uppercase tracking-widest text-[11px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all" disabled={saving}>
+                                        <Save className="w-4 h-4 mr-2" />
+                                        {saving ? 'Processing...' : (isEditMode ? 'Update Article' : 'Launch Article')}
+                                    </Button>
+
+                                    {isEditMode && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full h-12 rounded-xl font-black uppercase tracking-widest text-[11px] border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
+                                            onClick={() => navigate(`/${username}/dashboard/kb/${id}`)}
+                                        >
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            View Content
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Taxonomy */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 dark:text-purple-400">
+                                    Categorization
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6 space-y-6">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Article Folder / Category</Label>
                                     <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
                                                 aria-expanded={isCategoryPopoverOpen}
-                                                className="w-full justify-between font-normal h-10 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                                className="w-full justify-between h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800 transition-all shadow-sm"
                                             >
                                                 {formData.category_id
                                                     ? categories.find((cat) => cat.id.toString() === formData.category_id.toString())?.name
-                                                    : "Select category..."}
+                                                    : "Search categories..."}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                                            <Command>
-                                                <CommandInput placeholder="Search categories..." />
-                                                <CommandList>
-                                                    <CommandEmpty>No category found.</CommandEmpty>
+                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                            <Command className="dark:bg-slate-900">
+                                                <CommandInput placeholder="Search..." className="font-bold border-none focus:ring-0 h-11" />
+                                                <CommandList className="max-h-64 overflow-auto p-2 scrollbar-thin">
+                                                    <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">No results</CommandEmpty>
                                                     <CommandGroup>
                                                         <CommandItem
                                                             value="none"
@@ -351,7 +365,7 @@ export default function ArticleEditor() {
                                                                 setFormData(prev => ({ ...prev, category_id: "" }));
                                                                 setIsCategoryPopoverOpen(false);
                                                             }}
-                                                            className="cursor-pointer"
+                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400 cursor-pointer"
                                                         >
                                                             <Check
                                                                 className={cn(
@@ -359,7 +373,7 @@ export default function ArticleEditor() {
                                                                     formData.category_id === "" ? "opacity-100" : "opacity-0"
                                                                 )}
                                                             />
-                                                            No Category
+                                                            <span className="font-bold text-xs uppercase tracking-widest">Uncategorized</span>
                                                         </CommandItem>
                                                         {categories.map((cat) => (
                                                             <CommandItem
@@ -369,7 +383,7 @@ export default function ArticleEditor() {
                                                                     setFormData(prev => ({ ...prev, category_id: cat.id.toString() }));
                                                                     setIsCategoryPopoverOpen(false);
                                                                 }}
-                                                                className="cursor-pointer"
+                                                                className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400 cursor-pointer"
                                                             >
                                                                 <Check
                                                                     className={cn(
@@ -377,7 +391,7 @@ export default function ArticleEditor() {
                                                                         formData.category_id.toString() === cat.id.toString() ? "opacity-100" : "opacity-0"
                                                                     )}
                                                                 />
-                                                                {cat.name}
+                                                                <span className="font-bold text-sm">{cat.name}</span>
                                                             </CommandItem>
                                                         ))}
                                                     </CommandGroup>
@@ -385,102 +399,125 @@ export default function ArticleEditor() {
                                             </Command>
                                         </PopoverContent>
                                     </Popover>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowCategoryDialog(true)}
-                                        className="w-full border-dashed border-2 hover:border-blue-500 hover:text-blue-500 transition-all"
-                                    >
-                                        <FolderPlus className="w-4 h-4 mr-2" />
-                                        Create New Category
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                                </div>
 
-                            {/* Tags with Enhanced Input */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Tags</CardTitle>
-                                    <CardDescription>Help users find this article</CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowCategoryDialog(true)}
+                                    className="w-full h-11 rounded-xl border-dashed border-2 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-xs uppercase tracking-widest"
+                                >
+                                    <FolderPlus className="w-4 h-4 mr-2" />
+                                    New Collection
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Visibility & Access */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-pink-600 dark:text-pink-400">
+                                    Access Control
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Visibility Scope</Label>
+                                    <select
+                                        className="w-full h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white transition-all focus:ring-2 focus:ring-pink-500/20 appearance-none"
+                                        value={formData.visibility}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
+                                    >
+                                        <option value="internal">Staff Vault (Internal)</option>
+                                        <option value="customer">Client Portal (Public)</option>
+                                        <option value="both">Hybrid Access (Universal)</option>
+                                    </select>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
+                                    <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest leading-relaxed">
+                                        {formData.visibility === 'internal'
+                                            ? '🔒 Restricted to authorized employees only.'
+                                            : '🌐 Accessible to clients via public documentation links.'}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Search Optimization */}
+                        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
+                                    Discoverability
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Index Tags</Label>
                                     <TagInput
                                         tags={formData.tags}
                                         onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
                                     />
-                                </CardContent>
-                            </Card>
-
-                            {/* Actions */}
-                            <Card>
-                                <CardContent className="pt-6 space-y-3">
-                                    <Button type="submit" className="w-full" disabled={saving}>
-                                        <Save className="w-4 h-4 mr-2" />
-                                        {saving ? 'Saving...' : (isEditMode ? 'Update Article' : 'Create Article')}
-                                    </Button>
-
-                                    {isEditMode && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={() => navigate(`/${username}/dashboard/kb/${id}`)}
-                                        >
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            View Article
-                                        </Button>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                </form>
+                </div>
+            </form>
 
-                {/* Create Category Dialog */}
-                <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-                    <DialogContent>
+            {/* Premium Styled Dialogs */}
+            <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+                <DialogContent className="max-w-md rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-900">
+                    <div className="p-8 bg-blue-600">
                         <DialogHeader>
-                            <DialogTitle>Create New Category</DialogTitle>
-                            <DialogDescription>
-                                Add a new category to organize your knowledge base articles
+                            <DialogTitle className="text-2xl font-black text-white">Create Category</DialogTitle>
+                            <DialogDescription className="text-blue-100 font-medium text-sm">
+                                Define a new organizational bucket for your knowledge assets.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div>
-                                <Label htmlFor="cat-name">Category Name *</Label>
-                                <Input
-                                    id="cat-name"
-                                    placeholder="e.g., Troubleshooting"
-                                    value={newCategory.name}
-                                    onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="cat-desc">Description</Label>
-                                <Input
-                                    id="cat-desc"
-                                    placeholder="Optional description"
-                                    value={newCategory.description}
-                                    onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                                />
-                            </div>
+                    </div>
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="cat-name" className="text-[10px] font-black uppercase tracking-widest text-gray-500">Identity Name <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="cat-name"
+                                placeholder="e.g., Troubleshooting Protocols"
+                                value={newCategory.name}
+                                onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                                className="h-11 rounded-xl bg-gray-50 dark:bg-slate-950 border-gray-100 dark:border-slate-800 font-bold"
+                            />
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => {
+                        <div className="space-y-2">
+                            <Label htmlFor="cat-desc" className="text-[10px] font-black uppercase tracking-widest text-gray-500">Internal Description</Label>
+                            <Input
+                                id="cat-desc"
+                                placeholder="Describe use-case for this category..."
+                                value={newCategory.description}
+                                onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                                className="h-11 rounded-xl bg-gray-50 dark:bg-slate-950 border-gray-100 dark:border-slate-800 font-bold"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="p-8 pt-0 gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => {
                                 setShowCategoryDialog(false);
                                 setNewCategory({ name: '', description: '' });
-                            }}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleCreateCategory}>
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create Category
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                            }}
+                            className="rounded-xl h-11 font-bold text-gray-500"
+                        >
+                            Discard
+                        </Button>
+                        <Button
+                            onClick={handleCreateCategory}
+                            className="bg-blue-600 hover:bg-blue-700 h-11 rounded-xl font-black uppercase tracking-widest text-[10px] text-white px-8"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Initialize Collection
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

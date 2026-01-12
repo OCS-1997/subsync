@@ -3,23 +3,23 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeft, Save, X, UserPlus, Building2, User, Check, ChevronsUpDown } from "lucide-react";
 
-import { Button } from "@/components/ui/button.jsx";
-import { Input } from "@/components/ui/input.jsx";
-import { Label } from "@/components/ui/label.jsx";
-import { Textarea } from "@/components/ui/textarea.jsx";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.jsx";
-import { Card, CardContent } from "@/components/ui/card.jsx";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command.jsx";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { toast } from "react-toastify";
-import { PageHeader } from "@/components/ui/breadcrumb.jsx";
+import { PageHeader } from "@/components/ui/breadcrumb";
 
 import { fetchStatuses, fetchOpportunityById, clearCurrentOpportunity } from "../opportunitySlice.js";
 import opportunityService from "../services/opportunityService.js";
 import api from "@/lib/axiosInstance.js";
 
-const Mandatory = () => <span className="text-red-500 ml-1">*</span>;
+const Mandatory = () => <span className="text-red-500 font-bold ml-1">*</span>;
 
 const OpportunityForm = () => {
     const { id, username } = useParams();
@@ -231,317 +231,94 @@ const OpportunityForm = () => {
     ];
 
     return (
-        <div className="w-full space-y-6 pb-12 px-2 md:px-6">
-            <PageHeader
-                title={isEdit ? "Edit Opportunity" : "Create New Opportunity"}
-                description={isEdit ? `Modifying opportunity ${id}` : "Register a new sales opportunity in the pipeline"}
-                breadcrumbItems={breadcrumbItems}
-                actions={
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => navigate(`${baseUrl}/opportunities`)}>
-                            <X className="h-4 w-4 mr-2" /> Cancel
-                        </Button>
-                        <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                            <Save className="h-4 w-4 mr-2" /> {loading ? "Saving..." : (isEdit ? "Update" : "Create")}
-                        </Button>
-                    </div>
-                }
-            />
+        <div className="container py-8 max-w mx-auto px-4 md:px-0">
+            <div className="mb-6">
+                <PageHeader
+                    title={isEdit ? "Edit Opportunity" : "New Opportunity"}
+                    description={isEdit ? `Modifying opportunity ${id}` : "Register a new sales opportunity in the pipeline"}
+                    breadcrumbItems={breadcrumbItems}
+                />
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+                    {isEdit ? "Edit Opportunity" : "New Opportunity"}
+                </h1>
+            </div>
 
-            <Card className="border-none shadow-sm bg-white dark:bg-gray-800/50">
-                <CardContent className="p-6 md:p-8">
-                    <form onSubmit={handleSubmit} className="space-y-10">
-                        {/* Section 1: Customer Info */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                <Building2 className="h-5 w-5 text-blue-500" />
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Customer Details</h3>
-                            </div>
-
-                            {!isEdit && (
-                                <RadioGroup
-                                    value={customerMode}
-                                    onValueChange={setCustomerMode}
-                                    className="flex flex-wrap gap-8"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="existing" id="existing" className="text-blue-600" />
-                                        <Label htmlFor="existing" className="cursor-pointer">Existing Customer</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="new" id="new" className="text-blue-600" />
-                                        <Label htmlFor="new" className="cursor-pointer">New Customer Entry</Label>
-                                    </div>
-                                </RadioGroup>
-                            )}
-
-                            {customerMode === "existing" ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">
-                                            Select Customer <Mandatory />
-                                        </Label>
-                                        <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen}>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    role="combobox"
-                                                    aria-expanded={customerPopoverOpen}
-                                                    className="h-11 w-full justify-between font-normal"
-                                                    disabled={isEdit}
-                                                >
-                                                    {formData.customer_id
-                                                        ? (() => {
-                                                            const customer = customers.find((c) => c.customer_id === formData.customer_id);
-                                                            return customer
-                                                                ? `${customer.display_name}${customer.company_name ? ` (${customer.company_name})` : ''}`
-                                                                : "Select customer";
-                                                        })()
-                                                        : "Begin typing company name..."}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-full p-0" align="start">
-                                                <Command>
-                                                    <CommandInput placeholder="Search customers..." />
-                                                    <CommandEmpty>No customer found.</CommandEmpty>
-                                                    <CommandGroup className="max-h-64 overflow-auto">
-                                                        {(customers || []).map((c) => (
-                                                            <CommandItem
-                                                                key={c.customer_id}
-                                                                value={`${c.display_name} ${c.company_name || ''} ${c.customer_id}`}
-                                                                onSelect={() => {
-                                                                    handleCustomerChange(c.customer_id);
-                                                                    setCustomerPopoverOpen(false);
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                    className={`mr-2 h-4 w-4 ${formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0"
-                                                                        }`}
-                                                                />
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-medium">{c.display_name}</span>
-                                                                    {c.company_name && (
-                                                                        <span className="text-xs text-muted-foreground">{c.company_name}</span>
-                                                                    )}
-                                                                </div>
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </Command>
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium">Primary Contact Person</Label>
-                                        <Select
-                                            value={formData.contact_person_id?.toString() || "none"}
-                                            onValueChange={(val) => setFormData({ ...formData, contact_person_id: val === "none" ? "" : val })}
-                                        >
-                                            <SelectTrigger className="h-11">
-                                                <SelectValue placeholder="Optional contact selection" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">Default Contact</SelectItem>
-                                                {(customerContacts || []).map((contact, idx) => (
-                                                    <SelectItem key={idx} value={idx.toString()}>
-                                                        {contact.salutation} {contact.first_name} {contact.last_name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Section 1: Customer Identification */}
+                <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                    <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+                            Customer Identification
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-8 space-y-8">
+                        {!isEdit && (
+                            <RadioGroup
+                                value={customerMode}
+                                onValueChange={setCustomerMode}
+                                className="flex flex-wrap gap-8 bg-gray-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-100 dark:border-slate-800/50 w-max"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="existing" id="existing" className="text-blue-600" />
+                                    <Label htmlFor="existing" className="text-xs font-black uppercase tracking-widest text-gray-600 dark:text-slate-400 cursor-pointer">Existing Customer</Label>
                                 </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 border-l-4 border-blue-500 pl-4">
-                                    <div className="md:col-span-2">
-                                        <p className="text-sm text-blue-600 dark:text-blue-400 mb-4">
-                                            <strong>Note:</strong> Customer details will be stored with this opportunity. You can convert this to a full customer record later.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center text-sm font-medium">Customer Name <Mandatory /></Label>
-                                        <Input
-                                            className="h-11"
-                                            required
-                                            placeholder="Full name or business name"
-                                            value={formData.customer_details.display_name}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, display_name: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium">Company Name</Label>
-                                        <Input
-                                            className="h-11"
-                                            placeholder="Optional company name"
-                                            value={formData.customer_details.company_name}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, company_name: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium">Email Address</Label>
-                                        <Input
-                                            className="h-11"
-                                            type="email"
-                                            placeholder="contact@example.com"
-                                            value={formData.customer_details.email}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, email: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium">Phone Number</Label>
-                                        <Input
-                                            className="h-11"
-                                            placeholder="+91 XXXXX XXXXX"
-                                            value={formData.customer_details.phone}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, phone: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label className="text-sm font-medium">Address</Label>
-                                        <Textarea
-                                            className="min-h-[80px]"
-                                            placeholder="Full address (optional)"
-                                            value={formData.customer_details.address}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, address: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label className="text-sm font-medium">Notes</Label>
-                                        <Textarea
-                                            className="min-h-[60px]"
-                                            placeholder="Any additional notes about this customer"
-                                            value={formData.customer_details.notes}
-                                            onChange={(e) => setFormData({
-                                                ...formData,
-                                                customer_details: { ...formData.customer_details, notes: e.target.value }
-                                            })}
-                                        />
-                                    </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="new" id="new" className="text-blue-600" />
+                                    <Label htmlFor="new" className="text-xs font-black uppercase tracking-widest text-gray-600 dark:text-slate-400 cursor-pointer">New Prospect Entry</Label>
                                 </div>
-                            )}
-                        </div>
+                            </RadioGroup>
+                        )}
 
-                        {/* Section 2: Opportunity Metrics */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                <User className="h-5 w-5 text-indigo-500" />
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Sale Specifics</h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {customerMode === "existing" ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Opportunity Date <Mandatory /></Label>
-                                    <Input
-                                        className="h-11"
-                                        type="date"
-                                        required
-                                        value={formData.opportunity_date}
-                                        onChange={(e) => setFormData({ ...formData, opportunity_date: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Type <Mandatory /></Label>
-                                    <Select
-                                        value={formData.opportunity_type}
-                                        onValueChange={(val) => setFormData({ ...formData, opportunity_type: val })}
-                                    >
-                                        <SelectTrigger className="h-11">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="New">New Project</SelectItem>
-                                            <SelectItem value="Existing">Expansion / Renewal</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Est. Value (₹) <Mandatory /></Label>
-                                    <Input
-                                        className="h-11"
-                                        type="number"
-                                        required
-                                        placeholder="0.00"
-                                        value={formData.opportunity_value}
-                                        onChange={(e) => setFormData({ ...formData, opportunity_value: parseFloat(e.target.value) || 0 })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Current Stage <Mandatory /></Label>
-                                    <Select
-                                        value={formData.status_id}
-                                        onValueChange={(val) => setFormData({ ...formData, status_id: val })}
-                                    >
-                                        <SelectTrigger className="h-11">
-                                            <SelectValue placeholder="Pipeline Stage" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {(statuses || []).map((s) => (
-                                                <SelectItem key={s.id} value={s.id.toString()}>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.status_color }} />
-                                                        {s.status_name}
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Owner <Mandatory /></Label>
-                                    <Popover open={ownerPopoverOpen} onOpenChange={setOwnerPopoverOpen}>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
+                                        Select Customer <Mandatory />
+                                    </Label>
+                                    <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen}>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
-                                                aria-expanded={ownerPopoverOpen}
-                                                className="h-11 w-full justify-between font-normal"
+                                                aria-expanded={customerPopoverOpen}
+                                                className="h-11 w-full justify-between px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                                                disabled={isEdit}
                                             >
-                                                {formData.owner
-                                                    ? users.find((u) => u.username === formData.owner)?.name || formData.owner
-                                                    : "Select team member"}
+                                                {formData.customer_id
+                                                    ? (() => {
+                                                        const customer = customers.find((c) => c.customer_id === formData.customer_id);
+                                                        return customer
+                                                            ? `${customer.display_name}${customer.company_name ? ` (${customer.company_name})` : ''}`
+                                                            : "Select customer";
+                                                    })()
+                                                    : "Search by company name..."}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-full p-0" align="start">
-                                            <Command>
-                                                <CommandInput placeholder="Search users..." />
-                                                <CommandEmpty>No user found.</CommandEmpty>
-                                                <CommandGroup className="max-h-64 overflow-auto">
-                                                    {(users || []).map((u) => (
+                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                            <Command className="dark:bg-slate-900">
+                                                <CommandInput placeholder="Search customers..." className="font-bold border-none focus:ring-0" />
+                                                <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No customer found.</CommandEmpty>
+                                                <CommandGroup className="max-h-64 overflow-auto p-2">
+                                                    {(customers || []).map((c) => (
                                                         <CommandItem
-                                                            key={u.username}
-                                                            value={`${u.name || u.username} ${u.email || ''} ${u.username}`}
+                                                            key={c.customer_id}
+                                                            value={`${c.display_name} ${c.company_name || ''} ${c.customer_id}`}
                                                             onSelect={() => {
-                                                                setFormData({ ...formData, owner: u.username });
-                                                                setOwnerPopoverOpen(false);
+                                                                handleCustomerChange(c.customer_id);
+                                                                setCustomerPopoverOpen(false);
                                                             }}
+                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400"
                                                         >
                                                             <Check
-                                                                className={`mr-2 h-4 w-4 ${formData.owner === u.username ? "opacity-100" : "opacity-0"
+                                                                className={`mr-2 h-4 w-4 ${formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0"
                                                                     }`}
                                                             />
                                                             <div className="flex flex-col">
-                                                                <span className="font-medium">{u.name || u.username}</span>
-                                                                {u.email && <span className="text-xs text-muted-foreground">{u.email}</span>}
+                                                                <span className="font-bold text-sm">{c.display_name}</span>
+                                                                {c.company_name && (
+                                                                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest">{c.company_name}</span>
+                                                                )}
                                                             </div>
                                                         </CommandItem>
                                                     ))}
@@ -551,76 +328,321 @@ const OpportunityForm = () => {
                                     </Popover>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Last Contacted</Label>
-                                    <Input
-                                        className="h-11"
-                                        type="date"
-                                        value={formData.last_contacted_at}
-                                        onChange={(e) => setFormData({ ...formData, last_contacted_at: e.target.value })}
-                                    />
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Primary Contact Person</Label>
+                                    <Select
+                                        value={formData.contact_person_id?.toString() || "none"}
+                                        onValueChange={(val) => setFormData({ ...formData, contact_person_id: val === "none" ? "" : val })}
+                                    >
+                                        <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white shadow-sm transition-all focus:ring-blue-500">
+                                            <SelectValue placeholder="Optional contact selection" />
+                                        </SelectTrigger>
+                                        <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                                            <SelectItem value="none" className="text-xs font-bold">Default Contact</SelectItem>
+                                            {(customerContacts || []).map((contact, idx) => (
+                                                <SelectItem key={idx} value={idx.toString()} className="text-xs font-bold">
+                                                    {contact.salutation} {contact.first_name} {contact.last_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-top-2">
+                                <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-[1.5rem]">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                                        Note: Prospect details will be stored within this opportunity. You can finalize the customer record upon successful conversion.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Prospect Name <Mandatory /></Label>
+                                        <Input
+                                            className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                            required
+                                            placeholder="Full name or business identity"
+                                            value={formData.customer_details.display_name}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, display_name: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Company Name</Label>
+                                        <Input
+                                            className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                            placeholder="Business entity name"
+                                            value={formData.customer_details.company_name}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, company_name: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Email Address</Label>
+                                        <Input
+                                            className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                            type="email"
+                                            placeholder="contact@prospective-client.com"
+                                            value={formData.customer_details.email}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, email: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Phone Number</Label>
+                                        <Input
+                                            className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                            placeholder="+91 XXXXX XXXXX"
+                                            value={formData.customer_details.phone}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, phone: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Address Details</Label>
+                                        <Textarea
+                                            className="min-h-[80px] rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white resize-none"
+                                            placeholder="Physical or billing address..."
+                                            value={formData.customer_details.address}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, address: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Prospect Notes</Label>
+                                        <Textarea
+                                            className="min-h-[60px] rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white resize-none"
+                                            placeholder="Initial observations or historical context..."
+                                            value={formData.customer_details.notes}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                customer_details: { ...formData.customer_details, notes: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Section 2: Sale Specifics */}
+                <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                    <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                            Sale Specifics
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-8 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Opportunity Date <Mandatory /></Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    type="date"
+                                    required
+                                    value={formData.opportunity_date}
+                                    onChange={(e) => setFormData({ ...formData, opportunity_date: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Inquiry Type <Mandatory /></Label>
+                                <Select
+                                    value={formData.opportunity_type}
+                                    onValueChange={(val) => setFormData({ ...formData, opportunity_type: val })}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                                        <SelectItem value="New" className="text-xs font-bold">New Project</SelectItem>
+                                        <SelectItem value="Existing" className="text-xs font-bold">Expansion / Renewal</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Est. Value (₹) <Mandatory /></Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    type="number"
+                                    required
+                                    placeholder="0.00"
+                                    value={formData.opportunity_value}
+                                    onChange={(e) => setFormData({ ...formData, opportunity_value: parseFloat(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Pipeline Stage <Mandatory /></Label>
+                                <Select
+                                    value={formData.status_id}
+                                    onValueChange={(val) => setFormData({ ...formData, status_id: val })}
+                                >
+                                    <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
+                                        <SelectValue placeholder="Select stage" />
+                                    </SelectTrigger>
+                                    <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                                        {(statuses || []).map((s) => (
+                                            <SelectItem key={s.id} value={s.id.toString()} className="text-xs font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.status_color }} />
+                                                    {s.status_name}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
-                        {/* Section 3: Product Info */}
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-                                <UserPlus className="h-5 w-5 text-emerald-500" />
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Product & Sourcing</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-50 dark:border-slate-800">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Opportunity Owner <Mandatory /></Label>
+                                <Popover open={ownerPopoverOpen} onOpenChange={setOwnerPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={ownerPopoverOpen}
+                                            className="h-11 w-full justify-between px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800 shadow-sm transition-all"
+                                        >
+                                            {formData.owner
+                                                ? users.find((u) => u.username === formData.owner)?.name || formData.owner
+                                                : "Select responsible team member"}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                        <Command className="dark:bg-slate-900">
+                                            <CommandInput placeholder="Search team..." className="font-bold border-none focus:ring-0" />
+                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No member found.</CommandEmpty>
+                                            <CommandGroup className="max-h-64 overflow-auto p-2">
+                                                {(users || []).map((u) => (
+                                                    <CommandItem
+                                                        key={u.username}
+                                                        value={`${u.name || u.username} ${u.email || ''} ${u.username}`}
+                                                        onSelect={() => {
+                                                            setFormData({ ...formData, owner: u.username });
+                                                            setOwnerPopoverOpen(false);
+                                                        }}
+                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400"
+                                                    >
+                                                        <Check
+                                                            className={`mr-2 h-4 w-4 ${formData.owner === u.username ? "opacity-100" : "opacity-0"
+                                                                }`}
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-sm">{u.name || u.username}</span>
+                                                            {u.email && <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest">{u.email}</span>}
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label className="flex items-center text-sm font-medium">Products / Services <Mandatory /></Label>
-                                    <Input
-                                        className="h-11"
-                                        required
-                                        placeholder="Briefly describe the inquiry..."
-                                        value={formData.product_services}
-                                        onChange={(e) => setFormData({ ...formData, product_services: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Referral Source</Label>
-                                    <Input
-                                        className="h-11"
-                                        placeholder="How did they find us?"
-                                        value={formData.referred_by || ""}
-                                        onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Related Domain</Label>
-                                    <Input
-                                        className="h-11 font-mono text-sm"
-                                        placeholder="example.com"
-                                        value={formData.domain || ""}
-                                        onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Internal Remarks</Label>
-                                    <Textarea
-                                        placeholder="Confidential notes or next steps..."
-                                        rows={3}
-                                        value={formData.remarks || ""}
-                                        onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Last Interaction Date</Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    type="date"
+                                    value={formData.last_contacted_at}
+                                    onChange={(e) => setFormData({ ...formData, last_contacted_at: e.target.value })}
+                                />
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
 
-                        <div className="pt-6 flex justify-end gap-4 border-t border-gray-100 dark:border-gray-700">
-                            <Button size="lg" variant="ghost" type="button" onClick={() => navigate(`${baseUrl}/opportunities`)}>
-                                Discard Changes
-                            </Button>
-                            <Button size="lg" type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 px-8 transition-all hover:shadow-lg hover:shadow-blue-500/20">
-                                {loading ? "Processing..." : (isEdit ? "Update Opportunity" : "Save Opportunity")}
-                            </Button>
+                {/* Section 3: Product & Sourcing */}
+                <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                    <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                            Product & Sourcing
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-8 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Involved Products / Services <Mandatory /></Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    required
+                                    placeholder="Brief inventory or inquiry summary..."
+                                    value={formData.product_services}
+                                    onChange={(e) => setFormData({ ...formData, product_services: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Referral Source</Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    placeholder="Lead origin (e.g., Website, LinkedIn, Internal)"
+                                    value={formData.referred_by || ""}
+                                    onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Related Domain Identity</Label>
+                                <Input
+                                    className="h-11 px-4 rounded-xl font-bold text-sm md:font-mono bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                                    placeholder="primary-domain.com"
+                                    value={formData.domain || ""}
+                                    onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Confidential Remarks</Label>
+                                <Textarea
+                                    className="min-h-[100px] rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white resize-none"
+                                    placeholder="Next immediate steps or internal blockers..."
+                                    rows={3}
+                                    value={formData.remarks || ""}
+                                    onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                                />
+                            </div>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+
+                {/* Form Actions */}
+                <div className="flex justify-end items-center gap-4 pt-4 pb-12">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate(`${baseUrl}/opportunities`)}
+                        className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all font-bold"
+                    >
+                        Discard
+                    </Button>
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <div className="flex items-center">
+                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                                Processing...
+                            </div>
+                        ) : (
+                            <>
+                                <Save className="w-4 h-4 mr-2" />
+                                {isEdit ? "Update Opportunity" : "Launch Opportunity"}
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </form>
         </div>
     );
 };

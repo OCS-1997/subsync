@@ -318,31 +318,32 @@ export default function DCRForm() {
   }
 
   return (
-    <div className="p-6">
-      <Breadcrumb
-        items={[
-          { label: "Daily Call Reports", href: `/${username}/dashboard/dcr` },
-          { label: isEditing ? 'Edit Entry' : 'New Entry' }
-        ]}
-        className="mb-4"
-      />
-
-      {/* Header */}
-      <h1 className="text-2xl font-bold mb-6 dark:text-white">
-        {isEditing ? "Edit DCR Entry" : "New DCR Entry"}
-      </h1>
+    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+      <div className="mb-6">
+        <Breadcrumb
+          items={[
+            { label: "Daily Call Reports", href: `/${username}/dashboard/dcr` },
+            { label: isEditing ? 'Edit Entry' : 'New Entry' }
+          ]}
+        />
+        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+          {isEditing ? "Edit DCR Entry" : "New DCR Entry"}
+        </h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Core Fields */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Core Fields</CardTitle>
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+              Basic Information
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-8 space-y-6">
             {/* Date */}
-            <div>
-              <Label htmlFor="date">
-                Date <span className="text-red-500">*</span>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="date" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
+                Entry Date <span className="text-red-500 font-bold ml-1">*</span>
               </Label>
               <Input
                 id="date"
@@ -350,125 +351,44 @@ export default function DCRForm() {
                 value={formData.date}
                 onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                 required
-                className="mt-2"
+                className="max-w-[200px] h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
               />
-              <p className="text-xs text-gray-500 mt-1">Default: Today</p>
+              <p className="text-[10px] font-medium text-gray-400 dark:text-slate-500 ml-1">Default: Today</p>
             </div>
 
             {/* Time Spent */}
-            <div>
-              <Label>
-                Time Spent <span className="text-red-500">*</span>
+            <div className="flex flex-col gap-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
+                Time Spent <span className="text-red-500 font-bold ml-1">*</span>
               </Label>
-              <div className="flex gap-4 mt-2">
-                <div className="w-32">
-                  <Label htmlFor="hours" className="text-sm">Hours</Label>
+              <div className="flex gap-4">
+                <div className="w-24">
                   <Select
                     value={formData.hours}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, hours: value }))}
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
                       <SelectValue placeholder="HH" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="00">00</SelectItem>
-                      <SelectItem value="01">01</SelectItem>
-                      <SelectItem value="02">02</SelectItem>
-                      <SelectItem value="03">03</SelectItem>
-                      <SelectItem value="04">04</SelectItem>
-                      <SelectItem value="05">05</SelectItem>
-                      <SelectItem value="06">06</SelectItem>
-                      <SelectItem value="07">07</SelectItem>
-                      <SelectItem value="08">08</SelectItem>
-                      <SelectItem value="09">09</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="11">11</SelectItem>
-                      <SelectItem value="12">12</SelectItem>
-                      <SelectItem value="13">13</SelectItem>
-                      <SelectItem value="14">14</SelectItem>
-                      <SelectItem value="15">15</SelectItem>
-                      <SelectItem value="16">16</SelectItem>
-                      <SelectItem value="17">17</SelectItem>
-                      <SelectItem value="18">18</SelectItem>
-                      <SelectItem value="19">19</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="21">21</SelectItem>
-                      <SelectItem value="22">22</SelectItem>
-                      <SelectItem value="23">23</SelectItem>
-                      <SelectItem value="24">24</SelectItem>
+                    <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                      {["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"].map(h => (
+                        <SelectItem key={h} value={h} className="text-xs font-bold">{h} h</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-32">
-                  <Label htmlFor="minutes" className="text-sm">Minutes</Label>
+                <div className="w-24">
                   <Select
                     value={formData.minutes}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, minutes: value }))}
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
                       <SelectValue placeholder="MM" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="00">00</SelectItem>
-                      <SelectItem value="01">01</SelectItem>
-                      <SelectItem value="02">02</SelectItem>
-                      <SelectItem value="03">03</SelectItem>
-                      <SelectItem value="04">04</SelectItem>
-                      <SelectItem value="05">05</SelectItem>
-                      <SelectItem value="06">06</SelectItem>
-                      <SelectItem value="07">07</SelectItem>
-                      <SelectItem value="08">08</SelectItem>
-                      <SelectItem value="09">09</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="11">11</SelectItem>
-                      <SelectItem value="12">12</SelectItem>
-                      <SelectItem value="13">13</SelectItem>
-                      <SelectItem value="14">14</SelectItem>
-                      <SelectItem value="15">15</SelectItem>
-                      <SelectItem value="16">16</SelectItem>
-                      <SelectItem value="17">17</SelectItem>
-                      <SelectItem value="18">18</SelectItem>
-                      <SelectItem value="19">19</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="21">21</SelectItem>
-                      <SelectItem value="22">22</SelectItem>
-                      <SelectItem value="23">23</SelectItem>
-                      <SelectItem value="24">24</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="26">26</SelectItem>
-                      <SelectItem value="27">27</SelectItem>
-                      <SelectItem value="28">28</SelectItem>
-                      <SelectItem value="29">29</SelectItem>
-                      <SelectItem value="30">30</SelectItem>
-                      <SelectItem value="31">31</SelectItem>
-                      <SelectItem value="32">32</SelectItem>
-                      <SelectItem value="33">33</SelectItem>
-                      <SelectItem value="34">34</SelectItem>
-                      <SelectItem value="35">35</SelectItem>
-                      <SelectItem value="36">36</SelectItem>
-                      <SelectItem value="37">37</SelectItem>
-                      <SelectItem value="38">38</SelectItem>
-                      <SelectItem value="39">39</SelectItem>
-                      <SelectItem value="40">40</SelectItem>
-                      <SelectItem value="41">41</SelectItem>
-                      <SelectItem value="42">42</SelectItem>
-                      <SelectItem value="43">43</SelectItem>
-                      <SelectItem value="44">44</SelectItem>
-                      <SelectItem value="45">45</SelectItem>
-                      <SelectItem value="46">46</SelectItem>
-                      <SelectItem value="47">47</SelectItem>
-                      <SelectItem value="48">48</SelectItem>
-                      <SelectItem value="49">49</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="51">51</SelectItem>
-                      <SelectItem value="52">52</SelectItem>
-                      <SelectItem value="53">53</SelectItem>
-                      <SelectItem value="54">54</SelectItem>
-                      <SelectItem value="55">55</SelectItem>
-                      <SelectItem value="56">56</SelectItem>
-                      <SelectItem value="57">57</SelectItem>
-                      <SelectItem value="58">58</SelectItem>
-                      <SelectItem value="59">59</SelectItem>
+                    <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                      {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                        <SelectItem key={m} value={m} className="text-xs font-bold">{m} m</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -476,26 +396,26 @@ export default function DCRForm() {
             </div>
 
             {/* Call Type */}
-            <div>
-              <Label>
-                Call Type <span className="text-red-500">*</span>
+            <div className="flex flex-col gap-3">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">
+                Call Type <span className="text-red-500 font-bold ml-1">*</span>
               </Label>
               <RadioGroup
                 value={formData.call_type}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, call_type: value }))}
-                className="flex gap-6 mt-2"
+                className="flex gap-8"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="incoming" id="incoming" />
-                  <Label htmlFor="incoming" className="font-normal cursor-pointer">Incoming</Label>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="incoming" id="incoming" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-blue-500 data-[state=checked]:text-blue-500" />
+                  <Label htmlFor="incoming" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-blue-500 transition-colors">Incoming</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="outgoing" id="outgoing" />
-                  <Label htmlFor="outgoing" className="font-normal cursor-pointer">Outgoing</Label>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="outgoing" id="outgoing" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-blue-500 data-[state=checked]:text-blue-500" />
+                  <Label htmlFor="outgoing" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-blue-500 transition-colors">Outgoing</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="follow-up" id="follow-up" />
-                  <Label htmlFor="follow-up" className="font-normal cursor-pointer">Follow-up</Label>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="follow-up" id="follow-up" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-blue-500 data-[state=checked]:text-blue-500" />
+                  <Label htmlFor="follow-up" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-blue-500 transition-colors">Follow-up</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -503,78 +423,76 @@ export default function DCRForm() {
         </Card>
 
         {/* Domain / Company Details */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Domain / Company Details</CardTitle>
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+              Company Connection
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-8 space-y-8">
             {/* Customer Toggle */}
-            <div>
-              <Label className="mb-3 block">Customer Type</Label>
+            <div className="flex flex-col gap-3">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Classification</Label>
               <RadioGroup
                 value={isExistingCustomer ? "existing" : "new"}
                 onValueChange={(value) => handleCustomerToggle(value === "existing")}
-                className="flex gap-6"
+                className="flex gap-8"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="existing" id="existing-customer" />
-                  <Label htmlFor="existing-customer" className="font-normal cursor-pointer">Existing Customer</Label>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="existing" id="existing-customer" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-indigo-500 data-[state=checked]:text-indigo-500" />
+                  <Label htmlFor="existing-customer" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-indigo-500 transition-colors">Existing Customer</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="new" id="new-customer" />
-                  <Label htmlFor="new-customer" className="font-normal cursor-pointer">New Contact</Label>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="new" id="new-customer" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-indigo-500 data-[state=checked]:text-indigo-500" />
+                  <Label htmlFor="new-customer" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-indigo-500 transition-colors">New Contact</Label>
                 </div>
               </RadioGroup>
             </div>
 
             {/* Existing Customer Flow */}
             {isExistingCustomer && (
-              <div>
-                <Label>Domain</Label>
+              <div className="flex flex-col gap-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Select Domain</Label>
                 <ReactSelect
                   value={selectedDomain}
                   onChange={handleDomainChange}
                   options={domains}
-                  placeholder="Search domain..."
+                  placeholder="Search and select domain..."
                   isClearable
-                  className="react-select-container mt-2"
+                  className="react-select-container"
                   classNamePrefix="react-select"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
                   styles={{
-                    control: (base, state) => ({
+                    control: (base) => ({
                       ...base,
-                      backgroundColor: 'transparent',
-                      borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-                      '&:hover': { borderColor: '#9ca3af' }
+                      backgroundColor: "hsl(var(--background))",
+                      borderColor: "hsl(var(--input))",
+                      minHeight: "2.75rem",
+                      borderRadius: "0.75rem",
+                      fontSize: "0.875rem",
+                      padding: "0px 8px",
+                      boxShadow: "none",
+                      "&:hover": { borderColor: "hsl(var(--ring))" },
                     }),
-                    menu: (base) => ({
-                      ...base,
-                      backgroundColor: 'var(--select-menu-bg, white)',
-                      color: 'var(--select-menu-text, black)'
-                    }),
+                    singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+                    input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+                    menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                     option: (base, state) => ({
                       ...base,
-                      backgroundColor: state.isFocused
-                        ? 'var(--select-option-hover, #e5e7eb)'
-                        : 'transparent',
-                      color: 'var(--select-option-text, black)',
-                      '&:hover': { backgroundColor: 'var(--select-option-hover, #e5e7eb)' }
+                      backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
+                      color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                      "&:active": { backgroundColor: "hsl(var(--accent))" }
                     }),
-                    singleValue: (base) => ({
-                      ...base,
-                      color: 'var(--select-value-text, black)'
-                    }),
-                    input: (base) => ({
-                      ...base,
-                      color: 'var(--select-input-text, black)'
-                    })
                   }}
                 />
 
                 {/* Auto-filled Company Details */}
                 {domainDetails && (
-                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                    <Label className="text-sm font-semibold">Company Name</Label>
-                    <p className="mt-1 text-sm dark:text-white">{domainDetails.company_name || domainDetails.customer_name || 'N/A'}</p>
+                  <div className="mt-4 p-5 bg-indigo-50/30 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-500/70 mb-1 block">Connected Company</Label>
+                    <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{domainDetails.company_name || domainDetails.customer_name || 'N/A'}</p>
                   </div>
                 )}
               </div>
@@ -582,35 +500,32 @@ export default function DCRForm() {
 
             {/* New Customer Flow */}
             {!isExistingCustomer && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="domain_free_text">
-                    Domain <span className="text-red-500">*</span>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="domain_free_text" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
+                    Domain Name <span className="text-red-500 font-bold ml-1">*</span>
                   </Label>
                   <Input
                     id="domain_free_text"
                     type="text"
-                    placeholder="Enter domain name"
+                    placeholder="example.com"
                     value={formData.domain_free_text}
                     onChange={(e) => setFormData(prev => ({ ...prev, domain_free_text: e.target.value }))}
-                    className="mt-2"
+                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                     required={!isExistingCustomer}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="company_name">Company Name</Label>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="company_name" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Company Name</Label>
                   <Input
                     id="company_name"
                     type="text"
-                    placeholder="Enter company name"
+                    placeholder="Legal entity name"
                     value={formData.company_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                    className="mt-2"
+                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Save customer entity only if DCR is saved successfully
-                  </p>
                 </div>
               </div>
             )}
@@ -618,27 +533,29 @@ export default function DCRForm() {
         </Card>
 
         {/* Contact Details */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Contact Details</CardTitle>
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+              Personal Representative
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6 space-y-4">
+          <CardContent className="pt-8 space-y-8">
             {/* Contact Toggle */}
             {isExistingCustomer && domainDetails && domainDetails.contacts && domainDetails.contacts.length > 0 && (
-              <div>
-                <Label className="mb-3 block">Contact Type</Label>
+              <div className="flex flex-col gap-3">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Contact Source</Label>
                 <RadioGroup
                   value={isExistingContact ? "existing" : "new"}
                   onValueChange={(value) => handleContactToggle(value === "existing")}
-                  className="flex gap-6"
+                  className="flex gap-8"
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="existing" id="existing-contact" />
-                    <Label htmlFor="existing-contact" className="font-normal cursor-pointer">Existing Contact</Label>
+                  <div className="flex items-center space-x-2 group">
+                    <RadioGroupItem value="existing" id="existing-contact" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-emerald-500 data-[state=checked]:text-emerald-500" />
+                    <Label htmlFor="existing-contact" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-emerald-500 transition-colors">Existing Contact</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="new" id="new-contact" />
-                    <Label htmlFor="new-contact" className="font-normal cursor-pointer">New Contact</Label>
+                  <div className="flex items-center space-x-2 group">
+                    <RadioGroupItem value="new" id="new-contact" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-emerald-500 data-[state=checked]:text-emerald-500" />
+                    <Label htmlFor="new-contact" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-emerald-500 transition-colors">Manual Entry</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -646,8 +563,8 @@ export default function DCRForm() {
 
             {/* Existing Contact Selection */}
             {isExistingCustomer && isExistingContact && domainDetails && domainDetails.contacts && domainDetails.contacts.length > 0 && (
-              <div>
-                <Label className="text-sm">Select Contact Person</Label>
+              <div className="flex flex-col gap-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Search Contacts</Label>
                 <ReactSelect
                   options={domainDetails.contacts.map(contact => ({
                     value: contact,
@@ -666,37 +583,33 @@ export default function DCRForm() {
                       }));
                     }
                   }}
-                  placeholder="Select contact person"
-                  className="mt-2 react-select-container"
+                  placeholder="Select a registered contact..."
+                  className="react-select-container"
                   classNamePrefix="react-select"
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
                   styles={{
-                    control: (base, state) => ({
+                    control: (base) => ({
                       ...base,
-                      backgroundColor: 'transparent',
-                      borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-                      '&:hover': { borderColor: '#9ca3af' }
+                      backgroundColor: "hsl(var(--background))",
+                      borderColor: "hsl(var(--input))",
+                      minHeight: "2.75rem",
+                      borderRadius: "0.75rem",
+                      fontSize: "0.875rem",
+                      padding: "0px 8px",
+                      boxShadow: "none",
+                      "&:hover": { borderColor: "hsl(var(--ring))" },
                     }),
-                    menu: (base) => ({
-                      ...base,
-                      backgroundColor: 'var(--select-menu-bg, white)',
-                      color: 'var(--select-menu-text, black)'
-                    }),
+                    singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+                    input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+                    menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                     option: (base, state) => ({
                       ...base,
-                      backgroundColor: state.isFocused
-                        ? 'var(--select-option-hover, #e5e7eb)'
-                        : 'transparent',
-                      color: 'var(--select-option-text, black)',
-                      '&:hover': { backgroundColor: 'var(--select-option-hover, #e5e7eb)' }
+                      backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
+                      color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                      "&:active": { backgroundColor: "hsl(var(--accent))" }
                     }),
-                    singleValue: (base) => ({
-                      ...base,
-                      color: 'var(--select-value-text, black)'
-                    }),
-                    input: (base) => ({
-                      ...base,
-                      color: 'var(--select-input-text, black)'
-                    })
                   }}
                 />
               </div>
@@ -704,86 +617,106 @@ export default function DCRForm() {
 
             {/* New Contact or Manual Entry Fields */}
             {(!isExistingContact || !domainDetails?.contacts || domainDetails.contacts.length === 0) && (
-              <div className="space-y-4">
-                {/* Contact Name & Email */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contact_name">Contact Name</Label>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="contact_name" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Full Name</Label>
                     <Input
                       id="contact_name"
                       type="text"
                       value={formData.contact_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, contact_name: e.target.value }))}
-                      className="mt-2"
-                      placeholder="Enter contact name"
+                      className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                      placeholder="e.g. John Doe"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="contact_email">Contact Email</Label>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="contact_email" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Email Address</Label>
                     <Input
                       id="contact_email"
                       type="email"
                       value={formData.contact_email}
                       onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
-                      className="mt-2"
-                      placeholder="contact@example.com"
+                      className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                      placeholder="john@example.com"
                     />
                   </div>
                 </div>
 
-                {/* Phone Number */}
-                <div>
-                  <Label className="mb-2">Phone Number</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="contact_phone_country_code" className="text-sm">Country Code</Label>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Phone Connectivity</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div className="md:col-span-3">
                       <CountrySelect
                         value={formData.contact_phone_country_code}
                         onChange={(value) => setFormData(prev => ({ ...prev, contact_phone_country_code: value }))}
-                        className="mt-1"
+                        className="h-11 rounded-xl bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800"
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            backgroundColor: "hsl(var(--background))",
+                            borderColor: "hsl(var(--input))",
+                            minHeight: "2.75rem",
+                            borderRadius: "0.75rem",
+                            fontSize: "0.875rem",
+                            padding: "0px 8px",
+                            boxShadow: "none",
+                            "&:hover": { borderColor: "hsl(var(--ring))" },
+                          }),
+                          singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+                          input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+                          menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
+                            color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                            "&:active": { backgroundColor: "hsl(var(--accent))" }
+                          }),
+                        }}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <Label htmlFor="contact_phone_number" className="text-sm">Phone Number</Label>
+                    <div className="md:col-span-9">
                       <Input
                         id="contact_phone_number"
                         type="text"
                         value={formData.contact_phone_number}
                         onChange={(e) => setFormData(prev => ({ ...prev, contact_phone_number: e.target.value }))}
-                        className="mt-1"
-                        placeholder="Enter phone number"
+                        className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                        placeholder="e.g. 9876543210"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Domain readonly if inherited */}
                 {isExistingCustomer && selectedDomain && (
-                  <div>
-                    <Label htmlFor="domain_readonly">Domain (readonly)</Label>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="domain_readonly" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Inherited Domain</Label>
                     <Input
                       id="domain_readonly"
                       type="text"
                       value={selectedDomain.label}
                       readOnly
                       disabled
-                      className="mt-2 bg-gray-100 dark:bg-gray-800"
+                      className="h-11 px-4 rounded-xl font-bold text-sm bg-gray-50 dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-500 cursor-not-allowed"
                     />
                   </div>
                 )}
 
-                {/* Add to Contacts Button */}
                 {!isExistingCustomer && formData.domain_free_text && formData.contact_name && !formData.contact_id && (
-                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-600 rounded-lg">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
-                      This domain is not in the database. Would you like to add the contact to your contacts list?
+                  <div className="p-6 bg-yellow-50/50 dark:bg-yellow-500/5 border border-yellow-200 dark:border-yellow-500/10 rounded-[1.5rem] flex flex-col md:flex-row items-center justify-between gap-4 shadow-inner">
+                    <p className="text-xs font-bold text-yellow-700 dark:text-yellow-500 leading-relaxed max-w-md">
+                      This domain identity is new. Would you like to register this representative to your permanent contacts?
                     </p>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleAddToContacts}
+                      className="h-10 px-6 rounded-xl border-yellow-500/50 text-yellow-600 hover:bg-yellow-500 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all shrink-0"
                     >
-                      Add to Contacts
+                      Sync to Contacts
                     </Button>
                   </div>
                 )}
@@ -793,41 +726,45 @@ export default function DCRForm() {
         </Card>
 
         {/* Description */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Description <span className="text-red-500">*</span></CardTitle>
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400">
+              Session Narrative <span className="text-red-500 font-bold ml-1">*</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-8 pb-10">
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              rows={6}
-              className="resize-none"
-              placeholder="Enter call description and any additional notes... (Mandatory)"
+              rows={8}
+              className="resize-none rounded-[1.5rem] px-6 py-4 text-sm font-medium bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white min-h-[200px] focus:ring-2 focus:ring-blue-500/20 transition-all"
+              placeholder="Detailed log of the discussion, action items, or resolutions... (Mandatory)"
               required
             />
-            <p className="text-xs text-gray-500 mt-2">
-              This field is mandatory and stores clean, readable text
+            <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 mt-4 ml-1 uppercase tracking-widest">
+              Critical Step: Please ensure the narrative is clear for operational records.
             </p>
           </CardContent>
         </Card>
 
         {/* Submit Buttons */}
-        <div className="flex justify-end gap-3 pb-6">
+        <div className="flex justify-end items-center gap-4 pt-4 pb-12">
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate(`/${username}/dashboard/dcr`)}
+            className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
           >
-            Cancel
+            Discard
           </Button>
           <Button
             type="submit"
             disabled={saving}
+            className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? "Saving..." : isEditing ? "Update Entry" : "Create Entry"}
+            <Save className="w-3.5 h-3.5 mr-2" />
+            {saving ? "Processing..." : isEditing ? "Update Report" : "Commit Report"}
           </Button>
         </div>
       </form>

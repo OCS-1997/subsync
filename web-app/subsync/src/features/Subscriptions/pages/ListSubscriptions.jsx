@@ -13,7 +13,7 @@ import Pagination from "@/components/layouts/Pagination.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
-import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
+import { Breadcrumb, PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu.jsx";
@@ -29,20 +29,7 @@ const sortMap = {
   total: 's.total',
 };
 
-function formatDate(value) {
-  if (!value) return "-";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
-}
 
-const StatusPill = ({ status }) => {
-  const variant = status === 'Active' ? 'secondary' : status === 'Expired' ? 'destructive' : 'default';
-  return <Badge variant={variant}>{status}</Badge>;
-};
 
 export default function ListSubscriptions({ onAddNew, onEdit }) {
   const { hasPermission } = usePermissions();
@@ -172,7 +159,7 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     { key: 'end_date', label: 'End Date' },
     { key: 'dynamic_status', label: 'Status' },
     { key: 'total', label: 'Total' },
-    { key: 'actions', label: 'Actions' },
+    { key: 'actions', label: '' },
   ]), []);
 
   const onSort = (key) => {
@@ -186,65 +173,60 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     setSortBy(key); setSortOrder('asc');
   };
 
-  const ServiceTooltip = ({ items, children }) => {
-    if (!items || items.length === 0) return children;
-    const itemsList = items.map((item, idx) => (
-      <div key={idx} className="py-1 border-b border-white/20 last:border-0">
-        <div className="font-medium">{item.service_name || 'Unknown Service'}</div>
-        <div className="text-xs opacity-80">Qty: {item.quantity} × ₹{Number(item.rate || 0).toFixed(2)}</div>
-      </div>
-    ));
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {children}
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs bg-gray-900 text-white">
-            <div className="space-y-1">
-              <div className="font-semibold mb-2">Services ({items.length}):</div>
-              {itemsList}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
   const rows = (data || []).map(row => ({
     ...row,
     sub_id_display: (
       <button
         type="button"
-        className="text-blue-600 hover:underline font-mono text-sm"
+        className="text-blue-500 hover:text-blue-400 font-bold font-mono text-xs uppercase"
         onClick={() => navigate(`/${username}/dashboard/subscriptions/${row.sub_id}`)}
       >
         {row.sub_id}
       </button>
     ),
-    domain_name: row.domain_name || '-',
+    domain_name: (
+      <span className="font-bold text-slate-800 dark:text-slate-200">{row.domain_name || '-'}</span>
+    ),
     service_summary: (
       <ServiceTooltip items={row.items || []}>
-        <span className="cursor-help underline decoration-dotted">
+        <span className="cursor-help underline decoration-slate-300 dark:decoration-slate-700 decoration-dotted text-sm font-medium">
           {row.items_count ? `${row.items_count} item(s)` : (row.service_name || '-')}
         </span>
       </ServiceTooltip>
     ),
-    start_date: formatDate(row.start_date),
-    end_date: formatDate(row.end_date),
-    dynamic_status: <StatusPill status={row.dynamic_status || row.status || '-'} />,
-    total: `₹${row.total ? Number(row.total).toFixed(2) : '-'}`,
+    customer_name: (
+      <span className="font-bold text-slate-700 dark:text-slate-300">{row.customer_name || '-'}</span>
+    ),
+    start_date: (
+      <span className="text-slate-600 dark:text-slate-400 text-sm">{formatDate(row.start_date)}</span>
+    ),
+    end_date: (
+      <span className="text-rose-500/80 text-sm font-medium">{formatDate(row.end_date)}</span>
+    ),
+    dynamic_status: (
+      <span className={`text-[10px] font-bold uppercase tracking-wider ${(row.dynamic_status || row.status) === 'Active' ? 'text-emerald-500' :
+        (row.dynamic_status || row.status) === 'Expired' ? 'text-rose-500' :
+          (row.dynamic_status || row.status) === 'Expiring Soon' ? 'text-amber-500' :
+            'text-blue-500'
+        }`}>
+        {row.dynamic_status || row.status || '-'}
+      </span>
+    ),
+    total: (
+      <span className="font-bold text-slate-900 dark:text-white tabular-nums">
+        ₹{row.total ? Number(row.total).toFixed(2) : '0.00'}
+      </span>
+    ),
     actions: (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-            <MoreVertical className="h-4 w-4" />
+          <Button size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-lg">
+            <MoreVertical className="h-4 w-4 text-slate-500" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit && onEdit(row.sub_id)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
+        <DropdownMenuContent align="end" className="p-1 dark:bg-slate-900 dark:border-slate-800 rounded-xl">
+          <DropdownMenuItem onClick={() => onEdit && onEdit(row.sub_id)} className="rounded-lg p-2 text-sm gap-2">
+            <Edit className="h-4 w-4" /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={async () => {
             try {
@@ -253,42 +235,26 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
             } catch (e) {
               toast.error(e.normalizedMessage || 'Failed to queue reminder');
             }
-          }}>
-            <Mail className="mr-2 h-4 w-4" />
-            Send Reminder
+          }} className="rounded-lg p-2 text-sm gap-2">
+            <Mail className="h-4 w-4" /> Send Reminder
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => {
             setSelectedSubId(row.sub_id);
             setHistoryDialogOpen(true);
-          }}>
-            <History className="mr-2 h-4 w-4" />
-            View History
+          }} className="rounded-lg p-2 text-sm gap-2">
+            <History className="h-4 w-4" /> View History
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openDetailsDialog(row.sub_id)}>
-            <Edit className="mr-2 h-4 w-4" />
-            View Details
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={async () => {
-            try {
-              await api.post(`/subscriptions/${row.sub_id}/archive`);
-              toast.success('Subscription archived');
-              fetchData();
-            } catch (e) {
-              toast.error(e.normalizedMessage || 'Failed to archive subscription');
-            }
-          }}>
-            <Archive className="mr-2 h-4 w-4" />
-            Archive
+          <DropdownMenuItem onClick={() => openDetailsDialog(row.sub_id)} className="rounded-lg p-2 text-sm gap-2">
+            <Archive className="h-4 w-4" /> View Details
           </DropdownMenuItem>
           {hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE) && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => openDeleteDialog(row.sub_id, row.domain_name)}
-                className="text-destructive focus:text-destructive"
+                className="rounded-lg p-2 text-sm gap-2 text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                <Trash2 className="h-4 w-4" /> Delete
               </DropdownMenuItem>
             </>
           )}
@@ -298,65 +264,92 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
   }));
 
   return (
-    <div className="p-4">
-      <Breadcrumb items={[{ label: "Subscriptions" }]} />
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">All Subscriptions</h1>
+    <div className="space-y-8 w-full">
+      <PageHeader
+        title="Subscriptions"
+        description="Comprehensive manifest of active recurring service contracts and domain identities."
+        breadcrumbItems={[{ label: "Subscriptions" }]}
+        actions={
+          <Button onClick={onAddNew} className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
+            <Plus className="w-5 h-5 mr-3" /> Add Subscription
+          </Button>
+        }
+      />
 
-        <Button onClick={onAddNew}><Plus className="w-4 h-4" /> Add Subscription</Button>
-
-      </div>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
-
-      <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} />
-        <div className="flex items-center gap-2">
-          <Label>Status</Label>
-          <select className="border rounded-md h-9 px-2 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="soon">Soon Expiring</option>
-            <option value="expired">Expired</option>
-          </select>
+      <div className="mt-12 flex flex-col md:flex-row items-center gap-4 mb-8">
+        <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} className="w-full" />
         </div>
-        <Button variant="outline" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }}>
-          <RotateCcw className="w-4 h-4" /> Reset
-        </Button>
+
+        <div className="flex items-center gap-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 h-14 flex items-center shadow-sm">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-4">Status</span>
+            <select
+              className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase tracking-widest dark:text-white cursor-pointer"
+              value={statusFilter}
+              onChange={e => { setPage(1); setStatusFilter(e.target.value); }}
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="soon">Soon Expiring</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <Button
+            variant="ghost"
+            onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }}
+            className="h-14 w-14 rounded-2xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <RotateCcw className="w-5 h-5 text-slate-500" />
+          </Button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="flex flex-col justify-center items-center my-8">
+        <div className="flex flex-col justify-center items-center my-32">
           <Hamster />
+          <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Fetching Manifest...</p>
         </div>
       ) : rows.length === 0 ? (
-        <div className="p-10 border rounded-md bg-white dark:bg-gray-800 dark:border-gray-700 text-center">
+        <div className="py-32 px-10 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[3rem] bg-white dark:bg-slate-950/20 text-center">
           {debouncedSearch || statusFilter ? (
-            <>
-              <div className="text-lg font-semibold mb-2 dark:text-white">No results found</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">Try adjusting your search or filter criteria.</div>
-              <Button variant="outline" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }}>
-                <RotateCcw className="w-4 h-4 mr-2" /> Clear Filters
+            <div className="max-w-md mx-auto">
+              <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Trash2 className="w-10 h-10 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Zero Matches</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">No telemetry found matching your specific filter parameters. Try clearing your constraints.</p>
+              <Button onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }} className="rounded-2xl h-12 px-8 font-black text-[10px] uppercase tracking-widest">
+                Clear System Filters
               </Button>
-            </>
+            </div>
           ) : (
-            <>
-              <div className="text-lg font-semibold mb-2 dark:text-white">No subscriptions yet</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">Add a subscription to see it listed here.</div>
-              {onAddNew && (
-                <Button onClick={onAddNew}><Plus className="w-4 h-4" /> Add Subscription</Button>
-              )}
-            </>
+            <div className="max-w-md mx-auto">
+              <div className="h-20 w-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Plus className="w-10 h-10 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Empty Database</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">The subscription manifest is currently offline. Add your first service contract to begin tracking.</p>
+              <Button onClick={onAddNew} className="bg-blue-600 hover:bg-blue-700 rounded-2xl h-12 px-8 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                Register First Contract
+              </Button>
+            </div>
           )}
         </div>
       ) : (
-        <GenericTable headers={headers} data={rows} primaryKey="sub_id" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+        <>
+          <GenericTable headers={headers} data={rows} primaryKey="sub_id" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+          <div className="mt-10">
+            <Pagination currentPage={page} setCurrentPage={setPage} totalPages={totalPages} totalRecords={totalRecords} />
+          </div>
+        </>
       )}
-
-      <Pagination currentPage={page} setCurrentPage={setPage} totalPages={totalPages} totalRecords={totalRecords} />
 
       {/* History Dialog */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-slate-950 dark:border-slate-800 rounded-[2.5rem] p-10">
+          <DialogTitle className="sr-only">Subscription History</DialogTitle>
           {selectedSubId && (
             <SubscriptionHistory
               subId={selectedSubId}
@@ -368,21 +361,18 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
 
       {/* Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-slate-950 dark:border-slate-800 rounded-[2.5rem] p-10">
+          <DialogTitle className="sr-only">Subscription Details</DialogTitle>
           {detailsLoading ? (
             <div className="flex flex-col justify-center items-center my-8">
               <Hamster />
             </div>
           ) : detailsSubscription ? (
-            <>
+            <div className="space-y-8">
               <DialogHeader>
-                <DialogTitle>Subscription Details</DialogTitle>
-                <DialogDescription>
-                  Quick view of subscription{" "}
-                  <span className="font-mono font-medium">
-                    {detailsSubscription.sub_id}
-                  </span>
-                  .
+                <DialogTitle className="text-3xl font-black tracking-tight text-white uppercase">System Audit: {detailsSubscription.sub_id}</DialogTitle>
+                <DialogDescription className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] pt-1">
+                  Comprehensive payload inspection for domain contract management.
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
@@ -391,49 +381,102 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
                   showActions={false}
                 />
               </div>
-            </>
+            </div>
           ) : (
-            <p className="text-sm text-gray-600">Unable to load subscription details.</p>
+            <p className="text-sm text-gray-600 font-bold uppercase tracking-widest text-center py-12">Failed to decrypt subscription payload.</p>
           )}
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => {
         if (!open) closeDeleteDialog();
       }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Subscription</DialogTitle>
-            <DialogDescription>
-              Type the subscription domain name <strong>{deleteDialog.domain || "subscription"}</strong> to confirm deletion. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <Label htmlFor="delete-confirm-input">Subscription Name</Label>
-            <Input
-              id="delete-confirm-input"
-              value={deleteConfirmValue}
-              onChange={(e) => setDeleteConfirmValue(e.target.value)}
-              placeholder="Enter subscription name"
-            />
+        <DialogContent className="max-w-md dark:bg-slate-950 dark:border-slate-800 rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-rose-500 p-8 flex flex-col items-center text-center gap-4">
+            <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center animate-bounce">
+              <Trash2 className="w-10 h-10 text-white" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-white mb-2 tracking-tight uppercase">Purge Contract?</DialogTitle>
+              <DialogDescription className="text-rose-100 text-sm font-medium leading-relaxed opacity-90">
+                This will irrevocably remove <span className="font-black text-white underline decoration-2 underline-offset-4">"{deleteDialog.domain}"</span> from the manifest. All history will be permanently lost.
+              </DialogDescription>
+            </DialogHeader>
           </div>
-          <DialogFooter className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={closeDeleteDialog}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={
-                !deleteDialog.domain ||
-                deleteConfirmValue.trim().toLowerCase() !== deleteDialog.domain.trim().toLowerCase()
-              }
-            >
-              Delete
-            </Button>
-          </DialogFooter>
+          <div className="p-8 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm-input" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Security Challenge</Label>
+              <Input
+                id="delete-confirm-input"
+                value={deleteConfirmValue}
+                onChange={(e) => setDeleteConfirmValue(e.target.value)}
+                placeholder={`Type "${deleteDialog.domain}" to confirm`}
+                className="h-14 px-5 rounded-2xl font-bold bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800 focus:ring-rose-500/20"
+              />
+            </div>
+            <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Button
+                variant="ghost"
+                onClick={closeDeleteDialog}
+                className="rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-widest text-slate-500"
+              >
+                Abort
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={
+                  !deleteDialog.domain ||
+                  deleteConfirmValue.trim().toLowerCase() !== deleteDialog.domain.trim().toLowerCase()
+                }
+                className="rounded-2xl h-14 flex-1 bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-500/20 font-black text-[11px] uppercase tracking-widest"
+              >
+                Confirm Purge
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+// Helpers
+function formatDate(value) {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+const ServiceTooltip = ({ items, children }) => {
+  if (!items || items.length === 0) return children;
+  const itemsList = items.map((item, idx) => (
+    <div key={idx} className="py-2 border-b border-white/10 last:border-0 hover:bg-white/5 transition-colors px-1">
+      <div className="font-black text-[11px] uppercase tracking-tight text-white mb-0.5">{item.service_name || 'Generic Service'}</div>
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between">
+        <span>Qty: {item.quantity}</span>
+        <span className="text-blue-400">₹{Number(item.rate || 0).toFixed(2)}</span>
+      </div>
+    </div>
+  ));
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {children}
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-2xl">
+          <div className="space-y-1">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3 border-b border-slate-800 pb-2">Manifest Components ({items.length})</div>
+            {itemsList}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};

@@ -248,37 +248,40 @@ export default function ArticleList() {
     }, [selectedCategoryId, categories, username]);
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row bg-[#f8fafc] dark:bg-[#0f172a] overflow-hidden">
+        <div className="w-full h-full flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 overflow-hidden">
             {/* Sidebar - Fixed on desktop */}
             <motion.aside
                 initial={false}
-                animate={{ width: isSidebarCollapsed ? 80 : 320 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="hidden md:flex flex-col h-full bg-white dark:bg-[#1e293b] border-r border-gray-200 dark:border-gray-800 shadow-sm z-30 relative group"
+                animate={{ width: isSidebarCollapsed ? 90 : 340 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                className="hidden md:flex flex-col h-full bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-30 relative group"
             >
                 {/* Collapse Toggle Button */}
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    className="absolute -right-3 top-20 h-6 w-6 rounded-full p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-800 shadow-sm z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -right-3 top-24 h-6 w-6 rounded-full p-0 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-90"
                 >
                     {isSidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
                 </Button>
 
                 <div className={cn(
-                    "p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between overflow-hidden transition-all duration-300",
-                    isSidebarCollapsed ? "p-4 justify-center" : "p-6"
+                    "p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between overflow-hidden transition-all duration-300",
+                    isSidebarCollapsed ? "p-6 justify-center" : "p-8"
                 )}>
                     {!isSidebarCollapsed && (
-                        <motion.h2
+                        <motion.div
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="text-xl font-bold text-[#1e293b] dark:text-white flex items-center gap-2 whitespace-nowrap"
+                            className="flex flex-col"
                         >
-                            <BookOpen className="w-5 h-5 text-blue-600" />
-                            Knowledge
-                        </motion.h2>
+                            <h2 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2 whitespace-nowrap">
+                                <BookOpen className="w-4 h-4" />
+                                Repository
+                            </h2>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Knowledge Base</p>
+                        </motion.div>
                     )}
                     {isSidebarCollapsed && <BookOpen className="w-6 h-6 text-blue-600 shrink-0" />}
 
@@ -287,10 +290,10 @@ export default function ArticleList() {
                             variant="ghost"
                             size="sm"
                             onClick={() => navigate(`/${username}/dashboard/kb/categories`)}
-                            className="h-8 w-8 p-0"
-                            title="Manage Categories"
+                            className="h-10 w-10 p-0 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-600 transition-all"
+                            title="Manage Hierarchy"
                         >
-                            <FolderOpen className="w-4 h-4" />
+                            <FolderOpen className="w-5 h-5" />
                         </Button>
                     )}
                 </div>
@@ -303,13 +306,13 @@ export default function ArticleList() {
                             setSelectedCategoryId(id);
                             setPage(1);
                         }}
-                        className="pb-20"
+                        className="pb-24"
                     />
                 </div>
             </motion.aside>
 
-            {/* Mobile Sidebar (Always narrow or different logic, but for simplicity let's keep it desktop only toggle for now) */}
-            <aside className="md:hidden w-full bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-800 p-4">
+            {/* Mobile Sidebar */}
+            <aside className="md:hidden w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-6">
                 <CategorySidebar
                     selectedCategoryId={selectedCategoryId}
                     onCategorySelect={(id) => {
@@ -320,46 +323,47 @@ export default function ArticleList() {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-[#0f172a]">
+            <main className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950">
                 {/* Header / Breadcrumb - High-end look */}
-                <header className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-[#0f172a]/50 backdrop-blur-md sticky top-0 z-20">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <Breadcrumb items={breadcrumbItems} className="mb-1" />
-                            <h1 className="text-2xl font-extrabold text-[#1e293b] dark:text-white flex items-center gap-2">
+                <header className="px-10 py-8 border-b border-gray-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-20">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-1">
+                            <Breadcrumb items={breadcrumbItems} className="mb-2" />
+                            <h1 className="text-4xl font-black text-slate-900 dark:text-white flex items-center gap-4 tracking-tight">
                                 {getCategoryName()}
-                                <Badge variant="secondary" className="ml-2 bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300">
-                                    {totalRecords}
+                                <div className="h-8 w-[2px] bg-slate-200 dark:bg-slate-700 hidden md:block" />
+                                <Badge className="bg-blue-600 text-white border-none px-4 py-1 text-xs font-black rounded-full shadow-lg shadow-blue-500/20">
+                                    {totalRecords} ARTICLES
                                 </Badge>
                             </h1>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
                             {hasPermission(PERMISSIONS.KNOWLEDGE_BASE_CREATE) && (
                                 <Button
-                                    size="sm"
+                                    size="lg"
                                     onClick={() => navigate(`/${username}/dashboard/kb/new`)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all hover:scale-105"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
                                 >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    New Article
+                                    <Plus className="w-5 h-5 mr-3" />
+                                    Create New Article
                                 </Button>
                             )}
                         </div>
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-                    <div className="max-w-[1400px] mx-auto space-y-6">
+                <div className="flex-1 overflow-y-auto p-10 scrollbar-thin">
+                    <div className="max-w-[1600px] mx-auto space-y-10">
                         {/* Control Bar: Search & Tags Combined */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                             <div className="lg:col-span-4 relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-all" />
                                 <Input
-                                    placeholder="Search in documentation..."
+                                    placeholder="Search architectural documentation..."
                                     value={search}
                                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                                    className="pl-10 h-11 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                    className="pl-14 h-16 bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-900 dark:text-white shadow-sm placeholder:text-slate-400 placeholder:font-medium"
                                 />
                             </div>
                             <div className="lg:col-span-8">
@@ -427,7 +431,7 @@ export default function ArticleList() {
                                     variants={containerVariants}
                                     initial="hidden"
                                     animate="show"
-                                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
                                 >
                                     {articles.map((article) => (
                                         <ArticleCard
@@ -448,60 +452,67 @@ export default function ArticleList() {
 
                         {/* Pagination - Modern minimalist */}
                         {!loading && articles.length > 0 && totalPages > 1 && (
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-8 border-t border-gray-200 dark:border-gray-800">
-                                <p className="text-sm font-medium text-gray-500">
-                                    Showing <span className="text-gray-900 dark:text-white">{((page - 1) * 12) + 1}</span> to <span className="text-gray-900 dark:text-white">{Math.min(page * 12, totalRecords)}</span> of <span className="text-blue-600 font-bold">{totalRecords}</span> articles
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-12 border-t border-gray-100 dark:border-slate-800">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                    Displaying <span className="text-slate-900 dark:text-white">{((page - 1) * 12) + 1}</span> — <span className="text-slate-900 dark:text-white">{Math.min(page * 12, totalRecords)}</span> of <span className="text-blue-600 dark:text-blue-400">{totalRecords}</span> entries
                                 </p>
-                                <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                                <div className="flex items-center gap-3 p-2 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-slate-800">
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
-                                        className="h-10 px-4 rounded-lg font-bold disabled:opacity-30"
+                                        className="h-10 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                                     >
                                         Prev
                                     </Button>
-                                    <div className="flex items-center px-4 h-10 bg-white dark:bg-gray-700 rounded-lg text-sm font-bold text-blue-600 shadow-sm border border-gray-200 dark:border-gray-600">
-                                        {page} / {totalPages}
+                                    <div className="flex items-center px-6 h-10 bg-blue-600 dark:bg-blue-600 rounded-xl text-[10px] font-black text-white shadow-lg shadow-blue-500/20">
+                                        {page} <span className="mx-2 opacity-50">/</span> {totalPages}
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
-                                        className="h-10 px-4 rounded-lg font-bold disabled:opacity-30"
+                                        className="h-10 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                                     >
                                         Next
                                     </Button>
                                 </div>
                             </div>
                         )}
-                        <div className="h-20" /> {/* Extra padding for better scroll feel */}
+                        <div className="h-24" /> {/* Extra padding for better scroll feel */}
                     </div>
                 </div>
             </main>
 
-            {/* Delete Dialog */}
+            {/* Delete Dialog - Premium Styled */}
             <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, articleId: null, title: "" })}>
-                <DialogContent className="max-w-md rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-red-600 flex items-center gap-2">
-                            <Trash2 className="w-5 h-5" />
-                            Confirm Deletion
-                        </DialogTitle>
-                        <DialogDescription className="text-base py-4">
-                            Are you sure you want to delete the article
-                            <span className="block font-bold text-gray-900 dark:text-white mt-1">"{deleteDialog.title}"</span>
-                            This action is permanent and will remove all version history.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0 font-medium">
-                        <Button variant="outline" onClick={() => setDeleteDialog({ open: false, articleId: null, title: "" })} className="rounded-xl">
-                            Keep Article
+                <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-900">
+                    <div className="p-10 bg-red-600">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6">
+                            <Trash2 className="w-10 h-10 text-white" />
+                        </div>
+                        <DialogHeader>
+                            <DialogTitle className="text-3xl font-black text-white mb-2 tracking-tight">Purge Document?</DialogTitle>
+                            <DialogDescription className="text-red-100 text-sm font-medium leading-relaxed opacity-90">
+                                This will irrevocably remove <span className="font-black text-white underline decoration-2 underline-offset-4">"{deleteDialog.title}"</span>. All indices and metadata will be permanently lost.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+                    <DialogFooter className="p-10 pt-0 flex-col sm:flex-row gap-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setDeleteDialog({ open: false, articleId: null, title: "" })}
+                            className="rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                        >
+                            Negative, Abort
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete} className="bg-red-600 rounded-xl px-6">
-                            Delete Permanently
+                        <Button
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-red-500/30 active:scale-95 transition-all"
+                        >
+                            Execute Purge
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -517,67 +528,63 @@ function ArticleCard({ article, username, navigate, hasPermission, onDelete, ext
     return (
         <motion.div variants={itemVariants}>
             <Card
-                className="group h-full flex flex-col overflow-hidden border-gray-200 dark:border-gray-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all duration-300 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 cursor-pointer rounded-2xl relative bg-white dark:bg-gray-800/40"
+                className="group h-[380px] flex flex-col overflow-hidden border-gray-100 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 transition-all duration-500 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_60px_rgba(59,130,246,0.08)] cursor-pointer rounded-[2rem] relative bg-white dark:bg-slate-900"
                 onClick={() => navigate(`/${username}/dashboard/kb/${article.id}`)}
             >
                 {/* Visual Accent */}
-                <div className={`absolute top-0 left-0 right-0 h-1 transition-all duration-300 opacity-0 group-hover:opacity-100 ${article.is_published ? 'bg-blue-500' : 'bg-amber-500'}`} />
+                <div className={cn(
+                    "absolute top-0 left-0 right-0 h-1.5 transition-all duration-500 opacity-60 group-hover:opacity-100",
+                    article.is_published ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]" : "bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                )} />
 
-                <CardHeader className="pb-3 pt-6 px-6">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-3">
+                <CardHeader className="pb-4 pt-8 px-8">
+                    <div className="flex items-start justify-between gap-6">
+                        <div className="flex-1 space-y-4">
+                            <div className="flex items-center flex-wrap gap-2">
                                 {article.is_published ? (
-                                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                                        <Eye className="w-3 h-3 mr-1" />
-                                        Published
+                                    <Badge className="bg-emerald-50 text-emerald-700 border-none dark:bg-emerald-900/40 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
+                                        Verified
                                     </Badge>
                                 ) : (
-                                    <Badge className="bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                                        Draft
+                                    <Badge className="bg-amber-50 text-amber-700 border-none dark:bg-amber-900/40 dark:text-amber-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
+                                        Drafting
                                     </Badge>
                                 )}
                                 {article.category_name && (
-                                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">
+                                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-gray-100 dark:border-slate-800 text-slate-400 py-1 px-3">
                                         {article.category_name}
                                     </Badge>
                                 )}
-                                {article.visibility !== 'internal' && (
-                                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-blue-200 text-blue-600 dark:border-blue-900 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10">
-                                        <Globe className="w-2.5 h-2.5 mr-1" />
-                                        {article.visibility}
-                                    </Badge>
-                                )}
                             </div>
-                            <CardTitle className="text-xl font-bold text-[#1e293b] dark:text-white group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
+                            <CardTitle className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors line-clamp-2 leading-[1.2] tracking-tight">
                                 {article.title}
                             </CardTitle>
                         </div>
                         {hasPermission(PERMISSIONS.KNOWLEDGE_BASE_UPDATE) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                        <MoreVertical className="h-4 w-4 text-gray-400" />
+                                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all opacity-0 group-hover:opacity-100">
+                                        <MoreVertical className="h-5 w-5 text-slate-400" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-2xl">
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/${username}/dashboard/kb/${article.id}`); }} className="rounded-lg py-2">
+                                <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-gray-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/${username}/dashboard/kb/${article.id}`); }} className="rounded-xl py-3 font-bold text-xs uppercase tracking-widest">
                                         <Eye className="mr-3 h-4 w-4 text-blue-500" />
-                                        <span>View Reader</span>
+                                        <span>Read Asset</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/${username}/dashboard/kb/${article.id}/edit`); }} className="rounded-lg py-2">
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/${username}/dashboard/kb/${article.id}/edit`); }} className="rounded-xl py-3 font-bold text-xs uppercase tracking-widest">
                                         <Edit className="mr-3 h-4 w-4 text-amber-500" />
-                                        <span>Edit Content</span>
+                                        <span>Modify State</span>
                                     </DropdownMenuItem>
                                     {hasPermission(PERMISSIONS.KNOWLEDGE_BASE_DELETE) && (
                                         <>
-                                            <DropdownMenuSeparator className="my-1" />
+                                            <DropdownMenuSeparator className="bg-gray-100 dark:bg-slate-800 my-1" />
                                             <DropdownMenuItem
                                                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                                                className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-900/20 rounded-lg py-2"
+                                                className="text-red-500 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20 rounded-xl py-3 font-bold text-xs uppercase tracking-widest"
                                             >
                                                 <Trash2 className="mr-3 h-4 w-4" />
-                                                <span>Delete Article</span>
+                                                <span>Purge Article</span>
                                             </DropdownMenuItem>
                                         </>
                                     )}
@@ -587,53 +594,47 @@ function ArticleCard({ article, username, navigate, hasPermission, onDelete, ext
                     </div>
                 </CardHeader>
 
-                <CardContent className="flex-1 flex flex-col px-6">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 mb-6 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
-                        {getPlainTextPreview ? getPlainTextPreview(article.content, 150) : 'This article contains technical details and documentation summaries.'}
+                <CardContent className="flex-1 flex flex-col px-8 pb-8">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3 mb-8 leading-relaxed font-bold opacity-60 group-hover:opacity-100 transition-all">
+                        {getPlainTextPreview ? getPlainTextPreview(article.content, 120) : 'This article contains technical details and documentation summaries.'}
                     </p>
 
-                    <div className="mt-auto">
+                    <div className="mt-auto space-y-6">
                         {/* Tags with premium look */}
                         {tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mb-5">
-                                {tags.slice(0, 3).map((tag, idx) => (
+                            <div className="flex flex-wrap gap-2">
+                                {tags.slice(0, 2).map((tag, idx) => (
                                     <Badge
                                         key={idx}
                                         variant="secondary"
-                                        className="text-[10px] font-medium bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-none hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-700 transition-all rounded-md px-2 py-0.5"
+                                        className="text-[9px] font-black uppercase tracking-wider bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-none hover:bg-blue-600 hover:text-white transition-all rounded-lg px-3 py-1"
                                     >
-                                        #{tag}
+                                        {tag}
                                     </Badge>
                                 ))}
-                                {tags.length > 3 && (
-                                    <span className="text-[10px] text-gray-400 font-bold">+{tags.length - 3} more</span>
+                                {tags.length > 2 && (
+                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">+{tags.length - 2}</span>
                                 )}
                             </div>
                         )}
 
                         {/* Footer Meta */}
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 dark:text-gray-500 pt-4 border-t border-gray-100 dark:border-gray-800 group-hover:border-blue-100 dark:group-hover:border-blue-900/30 transition-colors">
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border border-blue-200 dark:border-blue-800 overflow-hidden">
-                                    <span className="text-blue-600 dark:text-blue-400 text-[10px] uppercase font-bold">
-                                        {(article.author_name || 'U').charAt(0)}
+                        <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-slate-800 group-hover:border-blue-500/20 transition-all">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center border border-blue-100 dark:border-blue-800 overflow-hidden shadow-sm">
+                                    <span className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase">
+                                        {(article.author_name || 'S').charAt(0)}
                                     </span>
                                 </div>
-                                <span className="hover:text-blue-600 transition-colors truncate max-w-[80px]">
-                                    {article.author_name || 'System User'}
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors truncate max-w-[100px]">
+                                    {article.author_name || 'System Nucleus'}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3" />
+                            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-3.5 h-3.5" />
                                     <span>{formatDate(article.created_at)}</span>
                                 </div>
-                                {article.views > 0 && (
-                                    <div className="flex items-center gap-1">
-                                        <Eye className="w-3 h-3" />
-                                        {article.views}
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>

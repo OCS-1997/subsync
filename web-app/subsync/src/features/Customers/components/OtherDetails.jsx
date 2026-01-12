@@ -111,23 +111,23 @@ const OtherDetails = ({
     <div className="space-y-6">
       {/* AddressSection is now only in the Address tab, not here */}
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
         {/* GST Treatment full width, all options visible */}
         <div className="space-y-2 md:col-span-1">
-          <Label>GST Treatment<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">GST Treatment<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={gstTreatmentValue}
             onValueChange={(value) => handleSelectChange("gst_treatment", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300 text-left ">
+            <SelectTrigger className="w-full rounded-xl px-4 h-11 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white text-left ">
               <SelectValue placeholder="Select treatment" className="text-left" />
             </SelectTrigger>
-            <SelectContent className="w-full min-w-[350px] max-w-full">
+            <SelectContent className="w-full min-w-[350px] max-w-full bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800">
               {gstTreatmentOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="whitespace-normal break-words min-h-[3.5rem] py-2">
+                <SelectItem key={opt.value} value={opt.value} className="whitespace-normal break-words min-h-[3.5rem] py-2 focus:bg-blue-50 dark:focus:bg-blue-900/20">
                   <div>
-                    <div className="font-sans ">{opt.label}</div>
-                    <div className="text-xs text-gray-500 whitespace-pre-line">{opt.description}</div>
+                    <div className="font-bold text-gray-900 dark:text-white">{opt.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-slate-500 whitespace-pre-line">{opt.description}</div>
                   </div>
                 </SelectItem>
               ))}
@@ -137,9 +137,9 @@ const OtherDetails = ({
 
         {/* GSTIN */}
         <div className="space-y-2">
-          <Label htmlFor="gstin">
+          <Label htmlFor="gstin" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
             GSTIN
-            {isIndia && <span className="text-red-800">*</span>}
+            {isIndia && <span className="text-red-500 font-bold ml-1">*</span>}
           </Label>
           <Input
             id="gstin"
@@ -149,10 +149,10 @@ const OtherDetails = ({
             required={isIndia}
             disabled={!isIndia}
             placeholder={isIndia ? "Enter GSTIN" : "Not required for non-India"}
-            className="rounded-xl px-4 py-3 text-base border border-gray-300"
+            className="rounded-xl px-4 h-11 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white disabled:opacity-50"
           />
           {isIndia && (
-            <p className="text-sm text-gray-500 ml-2">
+            <p className="text-xs text-gray-500 dark:text-slate-500 ml-2">
               Enter "GST_NA" if not applicable
             </p>
           )}
@@ -160,17 +160,17 @@ const OtherDetails = ({
 
         {/* Currency Code */}
         <div className="space-y-2">
-          <Label>Currency Code<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Currency Code<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={currencyValue}
             onValueChange={(value) => handleSelectChange("currencyCode", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300">
+            <SelectTrigger className="w-full rounded-xl px-4 h-11 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800">
               {currencyOptions.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                <SelectItem key={opt} value={opt} className="focus:bg-blue-50 dark:focus:bg-blue-900/20">{opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -178,17 +178,17 @@ const OtherDetails = ({
 
         {/* Tax Preference parallel to Currency Code */}
         <div className="space-y-2">
-          <Label>Tax Preference<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Tax Preference<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={customerData.tax_preference || ""}
             onValueChange={(value) => handleSelectChange("tax_preference", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300">
+            <SelectTrigger className="w-full rounded-xl px-4 h-11 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
               <SelectValue placeholder="Select tax preference" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800">
               {taxPreferenceOptions.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                <SelectItem key={opt} value={opt} className="focus:bg-blue-50 dark:focus:bg-blue-900/20">{opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -199,14 +199,14 @@ const OtherDetails = ({
 
       {customerData.tax_preference === "Tax Exempt" && (
         <div className="space-y-2">
-          <Label htmlFor="exemption_reason">Tax Exemption Reason<span className="text-red-800">*</span></Label>
+          <Label htmlFor="exemption_reason" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Tax Exemption Reason<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="exemption_reason"
             name="exemption_reason"
             value={customerData.exemption_reason}
             onChange={handleInputChange}
             required
-            className="rounded-xl px-4 py-3 text-base border border-gray-300"
+            className="rounded-xl px-4 h-11 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       )}

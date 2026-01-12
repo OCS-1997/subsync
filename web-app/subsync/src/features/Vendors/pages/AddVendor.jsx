@@ -361,15 +361,19 @@ const AddVendor = () => {
   const isIndia = countryVal === "IN" || countryVal === "India";
 
   return (
-    <div className="container mt-4 ml-4">
-      <Breadcrumb
-        items={[
-          { label: "Vendors", href: `/${location.pathname.split('/')[1]}/dashboard/vendors` },
-          { label: isEditing ? 'Edit Vendor' : 'New Vendor' }
-        ]}
-      />
-      <h1 className="mb-4 text-3xl font-bold">{isEditing ? "Edit Vendor" : "Add Vendor"}</h1>
-      <hr className="mb-4 border-blue-500 border-3 size-auto" />
+    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+      <div className="mb-6">
+        <Breadcrumb
+          items={[
+            { label: "Vendors", href: `/${location.pathname.split('/')[1]}/dashboard/vendors` },
+            { label: isEditing ? 'Edit Vendor' : 'New Vendor' }
+          ]}
+        />
+        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+          {isEditing ? "Edit Vendor" : "Add Vendor"}
+        </h1>
+      </div>
+      <hr className="mb-8 border-yellow-500/30 dark:border-yellow-500/20" />
 
       <form onSubmit={handleSubmit}>
         <VendorPersonalDetails
@@ -386,29 +390,29 @@ const AddVendor = () => {
           isVendor={true}
         />
 
-        <hr className="mb-4 border-gray-500 border-1 size-auto" />
+        <hr className="my-8 border-gray-200 dark:border-slate-800" />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-2">
-          <TabsList className="flex flex-wrap justify-start w-fit border-1 border-gray-300 bg-gray-200 mb-4 gap-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="inline-flex h-12 items-center justify-start rounded-xl bg-gray-100 dark:bg-slate-800/50 p-1 text-muted-foreground mb-6">
             <TabsTrigger
               value="contactPersons"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              className="rounded-lg px-4 py-2 text-sm font-bold transition-all data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-sm">
               Contacts
             </TabsTrigger>
             <TabsTrigger
               value="address"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              className="rounded-lg px-4 py-2 text-sm font-bold transition-all data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-sm">
               Address
             </TabsTrigger>
             <TabsTrigger
               value="otherDetails"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              className="rounded-lg px-4 py-2 text-sm font-bold transition-all data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-sm">
               Tax Details
             </TabsTrigger>
             <TabsTrigger
               value="remarks"
-              className="tabs-trigger-transition transition-colors duration-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-              Notes / Instructions
+              className="rounded-lg px-4 py-2 text-sm font-bold transition-all data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-sm">
+              Notes
             </TabsTrigger>
           </TabsList>
 
@@ -457,10 +461,32 @@ const AddVendor = () => {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 mt-4 mr-4">
-          <Button type="submit" className="bg-blue-500 " disabled={loading}>{isEditing ? "Update" : "Save"}</Button>
-          <Button type="button" className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={resetVendorData} disabled={loading}>Reset</Button>
-          <Button type="button" variant="destructive" onClick={handleCancel} disabled={loading}>Cancel</Button>
+        <div className="flex justify-end gap-3 mt-12 pb-12 border-t border-gray-100 dark:border-slate-800 pt-8">
+          <Button
+            type="submit"
+            className="bg-yellow-500 hover:bg-yellow-600 h-11 px-8 rounded-xl font-black uppercase tracking-widest text-xs text-white"
+            disabled={loading}
+          >
+            {isEditing ? "Update Vendor" : "Save Vendor"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-xs dark:border-slate-800 dark:text-slate-400"
+            onClick={resetVendorData}
+            disabled={loading}
+          >
+            Reset
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-xs"
+            onClick={handleCancel}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
         </div>
       </form>
     </div>

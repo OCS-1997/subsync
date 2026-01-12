@@ -1,5 +1,5 @@
-import { Pencil, Plus, FileUp } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Pencil, Plus, FileUp, Globe, Users, Database, RotateCcw } from "lucide-react";
+import { Link, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "@/lib/axiosInstance.js";
@@ -7,14 +7,14 @@ import * as Papa from "papaparse";
 import { saveAs } from "file-saver";
 import "jspdf-autotable";
 import { toast } from "react-toastify";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import Hamster from "@/components/animations/Hamster.jsx";
-import GenericTable from "@/components/layouts/GenericTable";
-import Pagination from "@/components/layouts/Pagination";
-import SearchFilterForm from "@/components/layouts/SearchFilterForm";
+import GenericTable from "@/components/layouts/GenericTable.jsx";
+import Pagination from "@/components/layouts/Pagination.jsx";
+import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 
 import { fetchDomains } from "../domainSlice";
 
@@ -26,58 +26,28 @@ function Domains() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const itemsPerPage = 10;
   const { username } = useParams();
+  const location = useLocation();
   const dispatch = useDispatch();
-  // Update selector to get totalPages and totalRecords from backend
   const { list: domains, loading, error, totalPages, totalRecords } = useSelector((state) => state.domains);
 
-  //  const loading = true;
   const headers = [
     { key: "domain_name", label: "Domain Name" },
     { key: "customer_name", label: "Customer Name" },
-    { key: "registered_with", label: "Registered With" }, // OCS (RC) will show automatically if present in data
+    { key: "registered_with", label: "Registered With" },
     { key: "name_servers", label: "Name Servers" },
     { key: "mail_service_provider", label: "Mail Services" },
-    { key: "description", label: "Description" },
     { key: "registration_date", label: "Registration Date" },
-    { key: "domain_status", label: "Status" },
-    { key: "actions", label: "Actions" }
+    { key: "actions", label: "" }
   ];
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return "-";
     const d = new Date(dateString);
-    if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("en-GB");
-  };
-
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    // If it's already in yyyy-MM-dd format, return as is
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
-
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return "";
-
-    // Get the date in local timezone
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
+    if (isNaN(d.getTime())) return dateString;
     const day = String(d.getDate()).padStart(2, '0');
-
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
     return `${day}-${month}-${year}`;
-  };
-
-  const formatNameServers = (nameServers) => {
-    if (!nameServers || nameServers.length === 0) return "-";
-    return nameServers.map((ns, i) => <div key={i}>{ns}<br /></div>);
-  };
-
-  const formatMailServices = (provider, details) => {
-    if (!provider) return "-";
-    return provider === "Others" ? `${provider} (${details || ""})` : provider;
-  };
-
-  const handleSearch = (e) => {
-    if (e.key === "Enter") setCurrentPage(1);
   };
 
   const debounceTimeout = useRef();
@@ -86,7 +56,7 @@ function Domains() {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     debounceTimeout.current = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 500); // 500ms debounce
+    }, 500);
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
@@ -99,7 +69,6 @@ function Domains() {
       params.sort = sortBy;
       params.order = sortOrder;
     }
-    // Fetch domains whenever search, sort, order, or page changes
     dispatch(fetchDomains(params));
   }, [dispatch, debouncedSearch, sortBy, sortOrder, currentPage]);
 
@@ -117,131 +86,130 @@ function Domains() {
       setSortBy(key);
       setSortOrder("asc");
     }
-
   };
 
   const fetchDomainsAndExport = async () => {
     try {
-      //console.log("Fetching all domains for export...");
       const response = await api.get(`/all-domains`);
       const data = response.data;
 
-      if (!data.domains || !Array.isArray(data.domains)) throw new Error("Invalid domain data received!");
-      if (data.domains.length === 0) throw new Error("No domain data available to export!");
+      if (!data.domains || !Array.isArray(data.domains)) throw new Error("Invalid domain telemetry!");
+      if (data.domains.length === 0) throw new Error("No payload available for extraction.");
 
       const formattedData = data.domains.map((d) => ({
         "Domain ID": d.domain_id || "",
-        "Domain Name": d.domain_name || "",
-        "Customer ID": d.customer_id || "",
+        "Domain Identity": d.domain_name || "",
         "Customer Name": d.customer_name || "",
-        "Registered With": d.registered_with || "",
-        "Name Servers": d.name_servers?.join(", ") || "",
+        "Registrar": d.registered_with || "",
+        "DNS Nodes": d.name_servers?.join(", ") || "",
         "Mail Services": d.mail_service_provider || "",
-        "Description": d.description || "",
-        "Registration Date": formatDate(d.registration_date) || "",
+        "Lifecycle": formatDateForDisplay(d.registration_date) || "",
       }));
 
       const csv = Papa.unparse(formattedData);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      saveAs(blob, `domains_export_${new Date().toISOString()}.csv`);
-      toast.success("CSV file downloaded successfully!");
+      saveAs(blob, `domain_manifest_${new Date().toISOString()}.csv`);
+      toast.success("Telemetry extracted successfully!");
     } catch (err) {
-      toast.error(err.message || "Failed to generate CSV file.");
+      toast.error(err.message || "Failed to initiate extraction.");
     }
   };
 
   return (
-    <div className="p-4">
-      <Breadcrumb items={[{ label: "Domains" }]} />
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold">Domains</h1>
-        <Link to="add">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
-            <Plus /> Add
-          </Button>
-        </Link>
-      </div>
-      <hr className="mb-6 border-blue-500 border-1" />
-      <div className="flex items-center gap-3 mb-3">
-        <SearchFilterForm
-          search={search}
-          setSearch={setSearch}
-          handleSearch={handleSearch}
-        />
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={fetchDomainsAndExport}>
-          <FileUp /> Export
+    <div className="container py-8 max-w-none mx-auto px-4 md:px-8">
+      <PageHeader
+        title="Domains"
+        description="Dynamic directory of registered enterprise domains and DNS telemetry."
+        breadcrumbItems={[{ label: "Domains" }]}
+        actions={
+          <div className="flex gap-3">
+            <Button onClick={fetchDomainsAndExport} variant="outline" className="rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+              <FileUp size={16} className="mr-3 text-slate-500" />
+              Export
+            </Button>
+            <Link to="add">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
+                <Plus size={16} className="mr-3" />
+                Add Domain
+              </Button>
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="mt-12 flex flex-col md:flex-row items-center gap-4 mb-8">
+        <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} className="w-full" />
+        </div>
+        <Button
+          variant="ghost"
+          onClick={() => { setSearch(""); setSortBy(null); setSortOrder(null); setCurrentPage(1); }}
+          className="h-14 w-14 rounded-2xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
+        >
+          <RotateCcw className="w-5 h-5 text-slate-500" />
         </Button>
       </div>
 
       {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" className="mb-8 rounded-3xl border-rose-500/20 bg-rose-500/5">
+          <AlertTitle className="text-rose-500 font-black uppercase tracking-widest text-[10px]">System Fault</AlertTitle>
+          <AlertDescription className="text-rose-600/80 font-bold">{error}</AlertDescription>
         </Alert>
       )}
 
       {loading ? (
-        <div className="p-6 flex flex-col justify-center items-center">
+        <div className="flex flex-col justify-center items-center my-32">
           <Hamster />
+          <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Scanning Registry...</p>
         </div>
       ) : domains.length > 0 ? (
         <>
           <GenericTable
             headers={headers}
             data={domains.map((domain) => {
-              const {
-                domain_id,
-                domain_name,
-                customer_id,
-                customer_name,
-                registered_with,
-                other_provider,
-                name_servers,
-                mail_service_provider,
-                other_mail_service_details,
-                description,
-                registration_date
-              } = domain;
-
               const isExpired = domain.domain_status === 'Expired';
               return {
                 ...domain,
-                name_servers: formatNameServers(domain.name_servers),
-                registration_date: formatDateForInput(domain.registration_date),
-                _rowClassName: isExpired ? 'bg-red-50 hover:bg-red-100' : '',
+                domain_name: (
+                  <span className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{domain.domain_name}</span>
+                ),
+                customer_name: (
+                  <span className="font-bold text-slate-700 dark:text-slate-300">{domain.customer_name}</span>
+                ),
+                registered_with: (
+                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 whitespace-normal text-center min-w-[80px] inline-block">
+                    {domain.registered_with === "Others" ? (domain.other_provider || "Others") : (domain.registered_with || "-")}
+                  </span>
+                ),
+                name_servers: (
+                  <div className="flex flex-col gap-1">
+                    {domain.name_servers?.map((ns, idx) => (
+                      <span key={idx} className="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {ns}
+                      </span>
+                    )) || "-"}
+                  </div>
+                ),
+                mail_service_provider: (
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                    {domain.mail_service_provider === "Others" ? `${domain.mail_service_provider} (${domain.other_mail_service_details || ""})` : domain.mail_service_provider || "-"}
+                  </span>
+                ),
+                registration_date: (
+                  <span className="text-xs font-bold text-slate-500">
+                    {formatDateForDisplay(domain.registration_date)}
+                  </span>
+                ),
+                _rowClassName: isExpired ? 'bg-rose-500/5 hover:bg-rose-500/10' : '',
                 actions: (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to={`/${username}/dashboard/domains/edit/${domain_id}`}
-                          state={{
-                            domain: {
-                              domain_id,
-                              domain_name,
-                              customer_id,
-                              customer_name,
-                              registered_with,
-                              other_provider,
-                              name_servers,
-                              mail_service_provider,
-                              other_mail_service_details,
-                              description,
-                              registration_date,
-                              domain_status: domain.domain_status
-                            }
-                          }}
-                        >
-                          <Button size="icon" variant="ghost" className="ml-1">
-                            <Pencil size={12} />
-                          </Button>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Edit</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Link
+                    to={`/${username}/dashboard/domains/edit/${domain.domain_id}`}
+                    state={{ domain }}
+                  >
+                    <Button size="icon" variant="ghost" className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500">
+                      <Pencil size={14} className="opacity-60" />
+                    </Button>
+                  </Link>
                 )
               };
             })}
@@ -250,29 +218,29 @@ function Domains() {
             sortOrder={sortOrder}
             onSort={handleSort}
           />
-          <Pagination
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            totalPages={totalPages}
-            totalRecords={totalRecords}
-          />
+          <div className="mt-10">
+            <Pagination
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+            />
+          </div>
         </>
       ) : (
-        <div className="p-10 border rounded-md bg-white text-center">
-          {debouncedSearch ? (
-            <>
-              <div className="text-lg font-semibold mb-2">No results found</div>
-              <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
-            </>
-          ) : (
-            <>
-              <div className="text-lg font-semibold mb-2">No domains yet</div>
-              <div className="text-sm text-gray-600 mb-4">Create your first domain to get started.</div>
-              <Link to="add">
-                <Button><Plus className="w-4 h-4" /> Add Domain</Button>
-              </Link>
-            </>
-          )}
+        <div className="py-32 px-10 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[3rem] bg-white dark:bg-slate-950/20 text-center">
+          <div className="max-w-md mx-auto">
+            <div className="h-20 w-20 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Globe className="w-10 h-10 text-blue-500" />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Registry Offline</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">The domain manifest is currently empty. Synchronize your digital assets to begin telemetry tracking.</p>
+            <Link to="add">
+              <Button className="bg-blue-600 hover:bg-blue-700 rounded-2xl h-12 px-8 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                Register First Domain
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
     </div>

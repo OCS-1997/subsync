@@ -23,8 +23,8 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
 
   // Initialize with default preferences when data is loaded
   useEffect(() => {
-    if (!loading && defaultPreferences.intra && defaultPreferences.inter && 
-        (!defaultTaxRates.intra.kind && !defaultTaxRates.inter.kind)) {
+    if (!loading && defaultPreferences.intra && defaultPreferences.inter &&
+      (!defaultTaxRates.intra.kind && !defaultTaxRates.inter.kind)) {
       loadDefaultTaxPreferences();
     }
   }, [loading, defaultPreferences]);
@@ -33,7 +33,7 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [taxesRes, groupsRes, prefsRes] = await Promise.all([
         api.get("/all-taxes"),
         api.get("/tax-groups?include=members"),
@@ -112,7 +112,7 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
 
     const [kind, id] = value.split('-');
     const group = groups.find(g => g.group_id === id);
-    
+
     if (group && group.members) {
       const totalRate = group.members.reduce((sum, member) => sum + (parseFloat(member.tax_rate) || 0), 0);
       setDefaultTaxRates(prev => ({
@@ -133,7 +133,7 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
 
     const [kind, id] = value.split('-');
     const tax = taxes.find(t => t.tax_id === id);
-    
+
     if (tax) {
       setDefaultTaxRates(prev => ({
         ...prev,
@@ -144,15 +144,15 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
 
   const getTaxTypeBadge = (taxType) => {
     const colors = {
-      'CGST': 'bg-blue-100 text-blue-800',
-      'SGST': 'bg-green-100 text-green-800', 
-      'IGST': 'bg-purple-100 text-purple-800',
-      'SEZ': 'bg-yellow-100 text-yellow-800',
-      'NO_TAX': 'bg-gray-100 text-gray-800'
+      'CGST': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+      'SGST': 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+      'IGST': 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+      'SEZ': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+      'NO_TAX': 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300'
     };
-    
+
     return (
-      <Badge className={`text-xs ${colors[taxType] || 'bg-gray-100 text-gray-800'}`}>
+      <Badge className={`text-[10px] font-black uppercase tracking-widest ${colors[taxType] || 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300'}`}>
         {taxType}
       </Badge>
     );
@@ -172,33 +172,33 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
 
   const renderTaxDetails = (option, type) => {
     if (!option) return null;
-    
+
     return (
-      <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-medium text-sm text-gray-900">{type === 'group' ? option.group_name : option.tax_name}</span>
-          <span className="text-lg font-bold text-blue-600">{defaultTaxRates[type === 'group' ? 'intra' : 'inter'].rate}%</span>
+      <div className="mt-2 p-4 bg-gray-50/50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-2xl">
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-bold text-sm text-gray-900 dark:text-white">{type === 'group' ? option.group_name : option.tax_name}</span>
+          <span className="text-lg font-black text-blue-600 dark:text-blue-400">{defaultTaxRates[type === 'group' ? 'intra' : 'inter'].rate}%</span>
         </div>
-        
+
         {type === 'group' && option.members && (
-          <div className="space-y-1">
-            <p className="text-xs text-gray-600 mb-1">Tax Components:</p>
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-2">Tax Components</p>
             {option.members.map((member, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1">
+              <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-xl border border-gray-50 dark:border-slate-800/50">
+                <span className="flex items-center gap-2">
                   {getTaxTypeBadge(member.tax_type)}
-                  <span>{member.tax_name}</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{member.tax_name}</span>
                 </span>
-                <span className="font-medium">{member.tax_rate}%</span>
+                <span className="font-black text-xs text-blue-600 dark:text-blue-400">{member.tax_rate}%</span>
               </div>
             ))}
           </div>
         )}
-        
+
         {type === 'tax' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-xl border border-gray-50 dark:border-slate-800/50">
             {getTaxTypeBadge(option.tax_type)}
-            <span className="text-xs text-gray-600">{option.description}</span>
+            <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{option.description}</span>
           </div>
         )}
       </div>
@@ -206,57 +206,46 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
   };
 
   const igstTaxes = taxes.filter(tax => tax.tax_type === 'IGST');
-  
+
   if (loading) {
     return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Percent className="h-5 w-5 text-blue-500" />
-            Default Tax Rates
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
-            <span>Loading tax configurations...</span>
-          </div>
+      <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm mt-6">
+        <CardContent className="py-12 flex flex-col justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+          <p className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Loading tax configurations...</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Percent className="h-5 w-5 text-blue-500" />
-              Default Tax Rates
-            </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              Configure tax rates that will be applied to this service
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={loadDefaultTaxPreferences}
-            disabled={loadingDefaults}
-            className="flex items-center gap-1"
-          >
-            {loadingDefaults ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Load Defaults
-          </Button>
+    <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm mt-6">
+      <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 flex flex-row items-center justify-between py-4">
+        <div>
+          <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400">
+            Default Tax Rates
+          </CardTitle>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+            Service-level Tax Compliance
+          </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={loadDefaultTaxPreferences}
+          disabled={loadingDefaults}
+          className="h-9 px-4 rounded-xl border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-[10px] uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+        >
+          {loadingDefaults ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          Sync Defaults
+        </Button>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {error && (
           <Alert variant="destructive">
@@ -265,25 +254,25 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Intra State Tax Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <h3 className="font-semibold text-gray-900">Intra State Tax</h3>
-              <Info className="h-4 w-4 text-gray-400" title="Tax applicable within the same state (typically CGST + SGST)" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Intra State Tax</h3>
+              <Info className="h-3 w-3 text-gray-400" />
             </div>
-            
-            <Select 
-              value={defaultTaxRates.intra.id ? `group-${defaultTaxRates.intra.id}` : 'none'} 
+
+            <Select
+              value={defaultTaxRates.intra.id ? `group-${defaultTaxRates.intra.id}` : 'none'}
               onValueChange={handleIntraStateChange}
             >
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
                 <SelectValue placeholder="Select intra-state tax configuration" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">
-                  <span className="text-gray-500">No Tax</span>
+              <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                <SelectItem value="none" className="text-xs font-bold text-gray-500">
+                  No Tax
                 </SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group.group_id} value={`group-${group.group_id}`}>
@@ -297,28 +286,28 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
                 ))}
               </SelectContent>
             </Select>
-            
+
             {renderTaxDetails(getSelectedIntraDetails(), 'group')}
           </div>
 
           {/* Inter State Tax Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              <h3 className="font-semibold text-gray-900">Inter State Tax</h3>
-              <Info className="h-4 w-4 text-gray-400" title="Tax applicable for transactions across states (typically IGST)" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Inter State Tax</h3>
+              <Info className="h-3 w-3 text-gray-400" />
             </div>
-            
-            <Select 
-              value={defaultTaxRates.inter.id ? `tax-${defaultTaxRates.inter.id}` : 'none'} 
+
+            <Select
+              value={defaultTaxRates.inter.id ? `tax-${defaultTaxRates.inter.id}` : 'none'}
               onValueChange={handleInterStateChange}
             >
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
                 <SelectValue placeholder="Select inter-state tax configuration" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">
-                  <span className="text-gray-500">No Tax</span>
+              <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                <SelectItem value="none" className="text-xs font-bold text-gray-500">
+                  No Tax
                 </SelectItem>
                 {igstTaxes.map((tax) => (
                   <SelectItem key={tax.tax_id} value={`tax-${tax.tax_id}`}>
@@ -330,7 +319,7 @@ const DefaultTaxRatesSection = ({ defaultTaxRates, setDefaultTaxRates }) => {
                 ))}
               </SelectContent>
             </Select>
-            
+
             {renderTaxDetails(getSelectedInterDetails(), 'tax')}
           </div>
         </div>

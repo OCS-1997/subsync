@@ -27,6 +27,7 @@ import {
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
+import api from '@/lib/axiosInstance.js';
 
 const COLORS = [
     { name: 'Default', value: 'inherit' },
@@ -253,7 +254,6 @@ export function RichTextEditor({ value, onChange, placeholder = "Start writing..
                 const formData = new FormData();
                 formData.append('image', selectedFile);
 
-                const api = (await import('@/lib/axiosInstance.js')).default;
                 const response = await api.post(`/kb/articles/${articleId}/images`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });

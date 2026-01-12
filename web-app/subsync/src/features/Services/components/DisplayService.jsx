@@ -42,11 +42,11 @@ function DisplayService({ serviceDetails }) {
     let displayValue = value ?? "N/A";
 
     if (label.includes("Created At") || label.includes("Updated At")) {
-        displayValue = formatTimestamp(value);
+      displayValue = formatTimestamp(value);
     } else if (label.toLowerCase().includes("price") && value !== "N/A") {
-        displayValue = `Rs.${parseFloat(value).toFixed(2)}`;
+      displayValue = `Rs.${parseFloat(value).toFixed(2)}`;
     } else if (label.toLowerCase().includes("tax rates") && value !== "N/A") {
-        displayValue = `${value}%`;
+      displayValue = `${value}%`;
     }
 
     return (
@@ -90,7 +90,7 @@ function DisplayService({ serviceDetails }) {
   const renderVendorDetails = (service) => {
     const vendorName = service.preferred_vendor_name;
     const vendorId = service.preferred_vendor_id;
-    
+
     if (!vendorName || vendorName === "N/A") {
       return (
         <div className="mb-4">
@@ -128,12 +128,12 @@ function DisplayService({ serviceDetails }) {
   const getTaxTypeBadge = (taxType) => {
     const colors = {
       'CGST': 'bg-blue-100 text-blue-800',
-      'SGST': 'bg-green-100 text-green-800', 
+      'SGST': 'bg-green-100 text-green-800',
       'IGST': 'bg-purple-100 text-purple-800',
       'SEZ': 'bg-yellow-100 text-yellow-800',
       'NO_TAX': 'bg-gray-100 text-gray-800'
     };
-    
+
     return (
       <Badge className={`text-xs ${colors[taxType] || 'bg-gray-100 text-gray-800'}`}>
         {taxType}
@@ -184,79 +184,53 @@ function DisplayService({ serviceDetails }) {
       );
     }
 
-    const renderTaxDetail = (preference, title, bgColor, textColor) => {
-      if (!preference || (!preference.kind && preference.rate === '0')) {
+    const renderTaxDetail = (type, title, bgColor, textColor) => {
+      const details = serviceDetails.tax_details?.[type];
+
+      if (!details || parseFloat(details.tax_rate || 0) === 0) {
         return (
-          <div className={`p-3 ${bgColor} rounded-lg border`}>
+          <div className={`p-4 ${bgColor} rounded-[2rem] border dark:border-slate-800`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-3 h-3 ${textColor.replace('text-', 'bg-')} rounded-full`}></div>
-              <span className="font-medium text-gray-900">{title}</span>
+              <span className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-widest">{title}</span>
             </div>
-            <div className="text-lg font-bold text-gray-500">No Tax (0%)</div>
+            <div className="text-lg font-black text-slate-400">NO TAX (0%)</div>
           </div>
         );
       }
 
-      if (preference.kind === 'group') {
-        const group = taxGroups.find(g => g.group_id === preference.id);
-        return (
-          <div className={`p-3 ${bgColor} rounded-lg border`}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3 h-3 ${textColor.replace('text-', 'bg-')} rounded-full`}></div>
-              <span className="font-medium text-gray-900">{title}</span>
-            </div>
-            <div className={`text-2xl font-bold ${textColor} mb-2`}>{preference.rate}%</div>
-            {group && (
-              <>
-                <div className="text-sm font-medium text-gray-800 mb-1">{group.group_name}</div>
-                {group.members && (
-                  <div className="space-y-1">
-                    <div className="text-xs text-gray-600">Tax Components:</div>
-                    {group.members.map((member, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-1">
-                          {getTaxTypeBadge(member.tax_type)}
-                          <span>{member.tax_name}</span>
-                        </span>
-                        <span className="font-medium">{member.tax_rate}%</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        );
-      } else if (preference.kind === 'tax') {
-        const tax = taxes.find(t => t.tax_id === preference.id);
-        return (
-          <div className={`p-3 ${bgColor} rounded-lg border`}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-3 h-3 ${textColor.replace('text-', 'bg-')} rounded-full`}></div>
-              <span className="font-medium text-gray-900">{title}</span>
-            </div>
-            <div className={`text-2xl font-bold ${textColor} mb-2`}>{preference.rate}%</div>
-            {tax && (
-              <>
-                <div className="text-sm font-medium text-gray-800 mb-1">{tax.tax_name}</div>
-                <div className="flex items-center gap-2">
-                  {getTaxTypeBadge(tax.tax_type)}
-                  <span className="text-xs text-gray-600">{tax.description || 'Tax rate'}</span>
-                </div>
-              </>
-            )}
-          </div>
-        );
-      }
+      const isGroup = !!details.members;
 
       return (
-        <div className={`p-3 ${bgColor} rounded-lg border`}>
-          <div className="flex items-center gap-2 mb-2">
+        <div className={`p-5 ${bgColor} rounded-[2rem] border dark:border-slate-800 shadow-sm`}>
+          <div className="flex items-center gap-2 mb-3">
             <div className={`w-3 h-3 ${textColor.replace('text-', 'bg-')} rounded-full`}></div>
-            <span className="font-medium text-gray-900">{title}</span>
+            <span className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-widest">{title}</span>
           </div>
-          <div className={`text-2xl font-bold ${textColor}`}>{preference.rate || '0'}%</div>
-          <div className="text-xs text-gray-600 mt-1">Rate configured</div>
+          <div className={`text-3xl font-black ${textColor} mb-2 tracking-tighter`}>
+            {parseFloat(details.tax_rate).toFixed(1)}%
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              {isGroup ? details.group_name : details.tax_name}
+            </span>
+            {!isGroup && <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{details.tax_type}</span>}
+          </div>
+
+          {isGroup && details.members && (
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Composition</div>
+              {details.members.map((member, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs font-bold">
+                  <span className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[9px] uppercase">{member.tax_type}</span>
+                    <span className="text-slate-500">{member.tax_name}</span>
+                  </span>
+                  <span className="text-slate-900 dark:text-white">{member.tax_rate}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       );
     };
@@ -264,10 +238,9 @@ function DisplayService({ serviceDetails }) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {renderTaxDetail(taxRates.intra, 'Intra State Tax', 'bg-green-50', 'text-green-600')}
-          {renderTaxDetail(taxRates.inter, 'Inter State Tax', 'bg-purple-50', 'text-purple-600')}
+          {renderTaxDetail('intra', 'Intra State Tax', 'dark:bg-slate-900/50', 'text-blue-600')}
+          {renderTaxDetail('inter', 'Inter State Tax', 'dark:bg-slate-900/50', 'text-indigo-600')}
         </div>
-        {(parseFloat(taxRates.intra?.rate || 0) > 0 || parseFloat(taxRates.inter?.rate || 0) > 0) }
       </div>
     );
   };
@@ -309,7 +282,7 @@ function DisplayService({ serviceDetails }) {
                   Tax Preferences
                 </h3>
                 {renderTaxPreferences(serviceDetails.default_tax_rates)}
-              </div> 
+              </div>
 
               <div className="flex flex-col md:flex-row gap-4 pt-4">
                 {renderDetails("Created At", serviceDetails.created_at)}

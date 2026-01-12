@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table.jsx";
 import ReactSelect from "react-select";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 
 function toTimestamp(dateStr) {
@@ -31,7 +32,7 @@ function clampNumber(n, min, max = Infinity) {
 function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, customerSelected, isNew }) {
   const svc = services.find(s => String(s.id) === String(item.service_id));
   return (
-    <TableRow className={`hover:bg-gray-50 ${isNew ? "item-row-slide-in" : ""}`}>
+    <TableRow className={`hover:bg-gray-50 dark:hover:bg-slate-800/50 border-gray-100 dark:border-slate-800 ${isNew ? "item-row-slide-in" : ""}`}>
       <TableCell className="w-2/5">
         <ReactSelect
           classNamePrefix="rs"
@@ -70,8 +71,11 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
           menuPosition="fixed"
           styles={{
             menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-            menu: (base) => ({ ...base, zIndex: 9999, minWidth: '520px' }),
-            control: (base) => ({ ...base, minHeight: 40, borderColor: '#e5e7eb', boxShadow: 'none', '&:hover': { borderColor: '#d1d5db' } }),
+            menu: (base) => ({ ...base, zIndex: 9999, minWidth: '520px', backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }),
+            control: (base) => ({ ...base, minHeight: 40, backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--input))', color: 'hsl(var(--foreground))', boxShadow: 'none', '&:hover': { borderColor: 'hsl(var(--ring))' } }),
+            singleValue: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
+            input: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
+            placeholder: (base) => ({ ...base, color: 'hsl(var(--muted-foreground))' }),
             option: (base, state) => ({
               ...base,
               paddingTop: 10,
@@ -80,10 +84,12 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
               paddingRight: 12,
               fontSize: 14,
               lineHeight: 1.4,
-              backgroundColor: state.isFocused ? '#f3f4f6' : 'white',
-              color: '#111827'
+              backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'transparent',
+              color: state.isFocused ? 'hsl(var(--accent-foreground))' : 'hsl(var(--popover-foreground))',
+              cursor: 'pointer',
+              '&:active': { backgroundColor: 'hsl(var(--accent))' }
             }),
-            menuList: (base) => ({ ...base, maxHeight: 360, paddingTop: 6, paddingBottom: 6 })
+            menuList: (base) => ({ ...base, maxHeight: 360, paddingTop: 6, paddingBottom: 6, backgroundColor: 'hsl(var(--popover))' })
           }}
         />
       </TableCell>
@@ -116,7 +122,7 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
             disabled={!customerSelected}
             placeholder={!customerSelected ? "Non-taxable" : undefined}
           />
-          <span className="text-sm text-gray-500">%</span>
+          <span className="text-sm text-gray-500 dark:text-slate-400 font-bold">%</span>
         </div>
       </TableCell>
       <TableCell className="text-right font-medium w-32">
@@ -127,7 +133,7 @@ function ItemRow({ idx, item, services, onChange, onRemove, resolveDefaults, cus
           size="icon"
           variant="ghost"
           onClick={() => onRemove(idx)}
-          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -142,6 +148,12 @@ export default function AddEditSubscription({ onBack, editId }) {
   const location = useLocation();
   const id = editId || params.id;
   const isEdit = !!id;
+  const username = params.username || (location.pathname.split('/')?.[1] || '');
+
+  const breadcrumbItems = useMemo(() => [
+    { label: "Subscriptions", href: `/${username}/dashboard/subscriptions` },
+    { label: isEdit ? 'Edit' : 'New' }
+  ], [username, isEdit]);
 
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
@@ -566,22 +578,20 @@ export default function AddEditSubscription({ onBack, editId }) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center">
             <div className="flex items-center gap-3 flex-1">
               <button
                 onClick={goBack}
-                className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Go back"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <div className="text-xs text-gray-500">
-                  Subscriptions {`>`} {isEdit ? 'Edit' : 'New'}
-                </div>
-                <h1 className="text-2xl font-semibold text-gray-900">
+                <Breadcrumb items={breadcrumbItems} className="mb-0.5" />
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
                   {isEdit ? 'Edit Subscription' : 'New Subscription'}
                 </h1>
               </div>
@@ -595,17 +605,17 @@ export default function AddEditSubscription({ onBack, editId }) {
           <Fragment>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                  <div className="h-5 w-40 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-10 bg-gray-100 rounded mb-4"></div>
-                  <div className="h-24 bg-gray-100 rounded"></div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 animate-pulse">
+                  <div className="h-5 w-40 bg-gray-200 dark:bg-slate-800 rounded mb-4"></div>
+                  <div className="h-10 bg-gray-100 dark:bg-slate-800/50 rounded mb-4"></div>
+                  <div className="h-24 bg-gray-100 dark:bg-slate-800/50 rounded"></div>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
-                  <div className="h-5 w-48 bg-gray-200 rounded mb-4"></div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 animate-pulse">
+                  <div className="h-5 w-48 bg-gray-200 dark:bg-slate-800 rounded mb-4"></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="h-10 bg-gray-100 rounded"></div>
-                    <div className="h-10 bg-gray-100 rounded"></div>
-                    <div className="h-10 bg-gray-100 rounded"></div>
+                    <div className="h-10 bg-gray-100 dark:bg-slate-800/50 rounded"></div>
+                    <div className="h-10 bg-gray-100 dark:bg-slate-800/50 rounded"></div>
+                    <div className="h-10 bg-gray-100 dark:bg-slate-800/50 rounded"></div>
                   </div>
                 </div>
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
@@ -631,13 +641,15 @@ export default function AddEditSubscription({ onBack, editId }) {
               {/* Main Content */}
               <div className="space-y-6">
                 {/* Domain Selection Card */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Building2 className="w-5 h-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Domain & Customer</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-gray-200 dark:border-slate-800 p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Domain & Customer</h2>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2">Domain Name</Label>
+                    <Label className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Domain Name</Label>
                     <ReactSelect
                       classNamePrefix="rs"
                       placeholder="Search and select a domain..."
@@ -668,8 +680,18 @@ export default function AddEditSubscription({ onBack, editId }) {
                         control: (base) => ({
                           ...base,
                           minHeight: '42px',
-                          borderColor: '#e5e7eb',
-                          '&:hover': { borderColor: '#d1d5db' }
+                          backgroundColor: 'hsl(var(--background))',
+                          borderColor: 'hsl(var(--input))',
+                          color: 'hsl(var(--foreground))',
+                          '&:hover': { borderColor: 'hsl(var(--ring))' }
+                        }),
+                        singleValue: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
+                        input: (base) => ({ ...base, color: 'hsl(var(--foreground))' }),
+                        menu: (base) => ({ ...base, backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))' }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'transparent',
+                          color: 'hsl(var(--foreground))'
                         })
                       }}
                     />
@@ -677,29 +699,29 @@ export default function AddEditSubscription({ onBack, editId }) {
                   </div>
 
                   {selectedCustomerDetails && (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                    <div className="mt-6 p-6 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Company</div>
-                          <div className="text-sm font-semibold text-gray-900">
+                          <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 opacity-70">Company</div>
+                          <div className="text-sm font-black text-gray-900 dark:text-white">
                             {selectedCustomerDetails.company_name || selectedCustomerDetails.display_name}
                           </div>
                         </div>
                         <div>
-                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Email</div>
-                          <div className="text-sm text-gray-700">{selectedCustomerDetails.primary_email}</div>
+                          <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 opacity-70">Email</div>
+                          <div className="text-sm font-black text-gray-900 dark:text-white">{selectedCustomerDetails.primary_email}</div>
                         </div>
                         <div>
-                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Number</div>
-                          <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_in || 'N/A'}</div>
+                          <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 opacity-70">GST Number</div>
+                          <div className="text-sm font-black text-gray-900 dark:text-white">{selectedCustomerDetails.gst_in || 'N/A'}</div>
                         </div>
                         <div>
-                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">GST Treatment</div>
-                          <div className="text-sm text-gray-700">{selectedCustomerDetails.gst_treatment}</div>
+                          <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 opacity-70">GST Treatment</div>
+                          <div className="text-sm font-black text-gray-900 dark:text-white">{selectedCustomerDetails.gst_treatment}</div>
                         </div>
                         <div className="col-span-2">
-                          <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-1">Address</div>
-                          <div className="text-sm text-gray-700">
+                          <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-1 opacity-70">Address</div>
+                          <div className="text-sm font-black text-gray-900 dark:text-white">
                             {(() => {
                               try {
                                 const a = typeof selectedCustomerDetails.customer_address === 'string'
@@ -716,14 +738,16 @@ export default function AddEditSubscription({ onBack, editId }) {
                 </div>
 
                 {/* Subscription Period Card */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Subscription Period</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-gray-200 dark:border-slate-800 p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Subscription Period</h2>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2">Start Date</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Start Date</Label>
                       <Input
                         type="date"
                         value={form.startDate}
@@ -748,7 +772,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                       {errors.startDate && <div className="text-xs text-red-600 mt-1">{errors.startDate}</div>}
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2">End Date</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">End Date</Label>
                       <Input
                         type="date"
                         value={form.endDate}
@@ -760,27 +784,27 @@ export default function AddEditSubscription({ onBack, editId }) {
                       {!form.never_expires && errors.endDate && <div className="text-xs text-red-600 mt-1">{errors.endDate}</div>}
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2">Currency</Label>
-                      <div className="h-10 flex items-center px-3 border rounded-md bg-gray-50 text-gray-700 font-medium">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Currency</Label>
+                      <div className="h-10 flex items-center px-3 border border-gray-200 dark:border-slate-700 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold">
                         {form.currency}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="mt-6 p-6 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-gray-200 dark:border-slate-800">
                     <label className="flex items-center gap-2 mb-3">
                       <input
                         type="checkbox"
                         checked={form.never_expires}
                         onChange={e => setForm({ ...form, never_expires: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        className="w-4 h-4 text-blue-600 dark:text-blue-500 rounded bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 accent-blue-600"
                       />
-                      <span className="text-sm font-medium text-gray-700">Never Expires</span>
+                      <span className="text-sm font-black text-gray-700 dark:text-slate-300">Never Expires</span>
                     </label>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-sm font-medium text-gray-700">Repeat Every</span>
+                      <span className="text-sm font-black text-gray-700 dark:text-slate-300">Repeat Every</span>
                       <Input
-                        className="w-24 h-9 bg-white"
+                        className="w-24 h-9 bg-white dark:bg-slate-900"
                         type="number"
                         value={form.repeat_every_value || ""}
                         onChange={e => {
@@ -800,7 +824,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                       />
                       {errors.repeat_every_value && <div className="text-xs text-red-600">{errors.repeat_every_value}</div>}
                       <select
-                        className="border border-gray-300 rounded-md h-9 px-3 bg-white text-sm"
+                        className="border border-gray-300 dark:border-slate-700 rounded-md h-9 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={form.repeat_every_unit}
                         onChange={e => setForm({ ...form, repeat_every_unit: e.target.value })}
                       >
@@ -811,48 +835,50 @@ export default function AddEditSubscription({ onBack, editId }) {
                       </select>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <Label className="text-sm font-medium text-gray-700 mb-2">Billing Cycle Type</Label>
+                  <div className="mt-6">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Billing Cycle Type</Label>
                     <select
-                      className="w-full border border-gray-300 rounded-md h-10 px-3 bg-white text-sm"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={form.billing_cycle_type || "contract"}
                       onChange={e => setForm({ ...form, billing_cycle_type: e.target.value })}
                     >
-                      <option value="contract">Contract-Based (default)</option>
-                      <option value="financial_year">Financial Year (Apr–Mar)</option>
-                      <option value="calendar_year">Calendar Year (Jan–Dec)</option>
+                      <option value="contract" className="bg-white dark:bg-slate-900">Contract-Based (default)</option>
+                      <option value="financial_year" className="bg-white dark:bg-slate-900">Financial Year (Apr–Mar)</option>
+                      <option value="calendar_year" className="bg-white dark:bg-slate-900">Calendar Year (Jan–Dec)</option>
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                       Select how billing periods should be calculated for this subscription.
                     </p>
                   </div>
-                  <div className="mt-4">
-                    <Label className="text-sm font-medium text-gray-700 mb-2">Reminder Policy</Label>
+                  <div className="mt-6">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Reminder Policy</Label>
                     <select
-                      className="w-full border border-gray-300 rounded-md h-10 px-3 bg-white text-sm"
+                      className="w-full border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={form.reminder_policy_id || ""}
                       onChange={e => setForm({ ...form, reminder_policy_id: e.target.value ? parseInt(e.target.value, 10) : null })}
                     >
-                      <option value="">Default Policy (Auto)</option>
+                      <option value="" className="bg-white dark:bg-slate-900">Default Policy (Auto)</option>
                       {reminderPolicies.map(policy => (
-                        <option key={policy.id} value={policy.id}>
+                        <option key={policy.id} value={policy.id} className="bg-white dark:bg-slate-900">
                           {policy.name} {policy.is_default ? "(Default)" : ""}
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                       Select a reminder policy to schedule renewal notifications. Leave as "Default" to use the system default policy.
                     </p>
                   </div>
                 </div>
 
                 {/* Items Table Card */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        Items Table <span className="text-sm font-normal text-gray-500">({form.items.length})</span>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-gray-200 dark:border-slate-800 p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400">
+                        <CreditCard className="w-5 h-5" />
+                      </div>
+                      <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                        Items Table <span className="text-sm font-bold text-gray-400 ml-2">({form.items.length})</span>
                       </h2>
                     </div>
                     <Button
@@ -869,12 +895,12 @@ export default function AddEditSubscription({ onBack, editId }) {
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableCell as="th" className="font-semibold text-gray-700">Item Details</TableCell>
-                          <TableCell as="th" className="font-semibold text-gray-700">Qty</TableCell>
-                          <TableCell as="th" className="font-semibold text-gray-700">Rate</TableCell>
-                          <TableCell as="th" className="font-semibold text-gray-700">Tax %</TableCell>
-                          <TableCell as="th" className="text-right font-semibold text-gray-700">Amount</TableCell>
+                        <TableRow className="bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-800">
+                          <TableCell as="th" className="font-black uppercase tracking-widest text-[10px] text-gray-500 dark:text-slate-500 py-4">Item Details</TableCell>
+                          <TableCell as="th" className="font-black uppercase tracking-widest text-[10px] text-gray-500 dark:text-slate-500 py-4">Qty</TableCell>
+                          <TableCell as="th" className="font-black uppercase tracking-widest text-[10px] text-gray-500 dark:text-slate-500 py-4">Rate</TableCell>
+                          <TableCell as="th" className="font-black uppercase tracking-widest text-[10px] text-gray-500 dark:text-slate-500 py-4">Tax %</TableCell>
+                          <TableCell as="th" className="text-right font-black uppercase tracking-widest text-[10px] text-gray-500 dark:text-slate-500 py-4">Amount</TableCell>
                           <TableCell as="th" />
                         </TableRow>
                       </TableHeader>
@@ -908,10 +934,9 @@ export default function AddEditSubscription({ onBack, editId }) {
                   </div>
                   {inlineAddRowVisible && (
                     <button
-                      key={inlineAddRowKey}
                       type="button"
                       onClick={handleAnimatedAddItem}
-                      className="inline-add-row mt-4  rounded-lg border border-dashed border-blue-300 bg-blue-50/70 py-3 px-4 text-blue-700 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+                      className="inline-add-row mt-4 w-full rounded-2xl border border-dashed border-blue-300 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/50 py-4 px-4 text-blue-700 dark:text-blue-400 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-slate-800 transition-all"
                       disabled={loadingInitial}
                     >
                       <Plus className="w-4 h-4" />
@@ -921,21 +946,21 @@ export default function AddEditSubscription({ onBack, editId }) {
                 </div>
 
                 {/* Summary (moved below Items) */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Summary</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-gray-200 dark:border-slate-800 p-8">
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight mb-8">Summary</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Left: Inputs */}
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2">Discount</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Discount</Label>
                         <div className="flex gap-2">
                           <select
-                            className="border border-gray-300 rounded-md h-10 px-3 bg-white text-sm w-24"
+                            className="border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={form.discount_type}
                             onChange={e => setForm({ ...form, discount_type: e.target.value })}
                           >
-                            <option value="amount">₹</option>
-                            <option value="percent">%</option>
+                            <option value="amount" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">₹</option>
+                            <option value="percent" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">%</option>
                           </select>
                           <Input
                             type="number"
@@ -950,18 +975,18 @@ export default function AddEditSubscription({ onBack, editId }) {
                         {errors.discount_value && <div className="text-xs text-red-600 mt-1">{errors.discount_value}</div>}
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2">Round Off</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Round Off</Label>
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-3 border border-gray-300 rounded-md px-3 h-10 bg-white">
+                          <div className="flex items-center gap-3 border border-gray-300 dark:border-slate-700 rounded-md px-3 h-10 bg-white dark:bg-slate-900">
                             <label className="flex items-center gap-1.5 cursor-pointer">
                               <input
                                 type="radio"
                                 name="roundsign"
                                 checked={form.rounding_sign === '+'}
                                 onChange={() => setForm({ ...form, rounding_sign: '+' })}
-                                className="w-4 h-4 text-blue-600"
+                                className="w-4 h-4 text-blue-600 dark:text-blue-500 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 accent-blue-600"
                               />
-                              <span className="text-sm font-medium">+</span>
+                              <span className="text-sm font-black text-gray-700 dark:text-slate-300">+</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
                               <input
@@ -969,9 +994,9 @@ export default function AddEditSubscription({ onBack, editId }) {
                                 name="roundsign"
                                 checked={form.rounding_sign === '-'}
                                 onChange={() => setForm({ ...form, rounding_sign: '-' })}
-                                className="w-4 h-4 text-blue-600"
+                                className="w-4 h-4 text-blue-600 dark:text-blue-500 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 accent-blue-600"
                               />
-                              <span className="text-sm font-medium">-</span>
+                              <span className="text-sm font-black text-gray-700 dark:text-slate-300">-</span>
                             </label>
                           </div>
                           <Input
@@ -988,57 +1013,61 @@ export default function AddEditSubscription({ onBack, editId }) {
                     <div>
                       <div className="space-y-3">
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Sub Total</span>
-                          <span className="font-medium text-gray-900">₹{totals.subtotal.toFixed(2)}</span>
+                          <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">Sub Total</span>
+                          <span className="font-black text-gray-900 dark:text-white text-lg">₹{totals.subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Discount</span>
-                          <span className="font-medium text-gray-900">{form.discount_type === 'percent' ? `${Number(form.discount_value || 0).toFixed(2)}%` : `₹${Number(form.discount_value || 0).toFixed(2)}`}</span>
+                          <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">Discount</span>
+                          <span className="font-black text-gray-900 dark:text-white">
+                            {form.discount_type === 'percent' ? `${Number(form.discount_value || 0).toFixed(2)}%` : `₹${Number(form.discount_value || 0).toFixed(2)}`}
+                          </span>
                         </div>
                         {totals.nonTaxable ? (
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Tax</span>
-                            <span className="font-medium text-gray-900">₹0.00</span>
+                            <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">Tax</span>
+                            <span className="font-black text-gray-900 dark:text-white">₹0.00</span>
                           </div>
                         ) : (
                           <>
                             {geoInfo.isIntra ? (
                               <>
                                 <div className="flex justify-between items-center text-sm">
-                                  <span className="text-gray-600">CGST</span>
-                                  <span className="font-medium text-gray-900">₹{totals.cgst.toFixed(2)}</span>
+                                  <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">CGST</span>
+                                  <span className="font-black text-gray-900 dark:text-white">₹{totals.cgst.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                  <span className="text-gray-600">SGST</span>
-                                  <span className="font-medium text-gray-900">₹{totals.sgst.toFixed(2)}</span>
+                                  <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">SGST</span>
+                                  <span className="font-black text-gray-900 dark:text-white">₹{totals.sgst.toFixed(2)}</span>
                                 </div>
                               </>
                             ) : (
                               <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">IGST</span>
-                                <span className="font-medium text-gray-900">₹{totals.igst.toFixed(2)}</span>
+                                <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">IGST</span>
+                                <span className="font-black text-gray-900 dark:text-white">₹{totals.igst.toFixed(2)}</span>
                               </div>
                             )}
                           </>
                         )}
                         {Number(form.rounding) !== 0 && (
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Round Off</span>
-                            <span className="font-medium text-gray-900">{form.rounding_sign}{Math.abs(Number(form.rounding)).toFixed(2)}</span>
+                            <span className="text-gray-500 font-bold uppercase tracking-tight text-xs">Round Off</span>
+                            <span className="font-black text-gray-900 dark:text-white">
+                              {form.rounding_sign}{Math.abs(Number(form.rounding)).toFixed(2)}
+                            </span>
                           </div>
                         )}
-                        <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                          <span className="text-base font-semibold text-gray-900">Total ({form.currency})</span>
-                          <span className="text-xl font-bold text-blue-600">₹{totals.total.toFixed(2)}</span>
+                        <div className="border-t border-gray-100 dark:border-slate-800 pt-6 flex justify-between items-center">
+                          <span className="text-base font-black text-gray-900 dark:text-white uppercase tracking-widest">Total ({form.currency})</span>
+                          <span className="text-3xl font-black text-blue-600 dark:text-blue-500 tracking-tighter">₹{totals.total.toFixed(2)}</span>
                         </div>
                       </div>
-                      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                        <div className="text-xs font-medium text-blue-900 uppercase tracking-wide mb-2">Payment Terms</div>
-                        <div className="text-sm text-gray-700">
+                      <div className="mt-8 p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                        <div className="text-[10px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-widest mb-3 opacity-70">Payment Terms</div>
+                        <div className="text-sm font-black text-gray-900 dark:text-white">
                           {form.repeat_every_value && form.repeat_every_unit ? (
                             <span>Recurring every {form.repeat_every_value} {form.repeat_every_unit}</span>
                           ) : (
-                            <span className="text-gray-400">Not configured</span>
+                            <span className="text-gray-400 dark:text-slate-500">Not configured</span>
                           )}
                         </div>
                       </div>
@@ -1047,12 +1076,12 @@ export default function AddEditSubscription({ onBack, editId }) {
                 </div>
 
                 {/* Notes, Terms & Recipients Card */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="space-y-6">
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-gray-200 dark:border-slate-800 p-8">
+                  <div className="space-y-8">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2">Notes / Instructions</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Notes / Instructions</Label>
                       <textarea
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full border border-gray-300 dark:border-slate-700 rounded-xl p-4 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows={4}
                         placeholder="Add any additional notes or instructions..."
                         value={form.notes}
@@ -1061,9 +1090,9 @@ export default function AddEditSubscription({ onBack, editId }) {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2">Terms & Conditions</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Terms & Conditions</Label>
                       <textarea
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full border border-gray-300 dark:border-slate-700 rounded-xl p-4 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows={4}
                         placeholder="Add terms and conditions..."
                         value={form.terms_conditions || ''}
@@ -1075,7 +1104,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-blue-600" />
-                          <Label className="text-sm font-medium text-gray-700">Email Recipients</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Email Recipients</Label>
                         </div>
                         <button
                           type="button"
@@ -1085,11 +1114,11 @@ export default function AddEditSubscription({ onBack, editId }) {
                           + Add New
                         </button>
                       </div>
-                      <div className="flex flex-wrap gap-2 border border-gray-300 rounded-lg p-3 min-h-[60px] bg-gray-50">
+                      <div className="flex flex-wrap gap-2 border border-gray-300 dark:border-slate-700 rounded-xl p-4 min-h-[70px] bg-gray-50 dark:bg-slate-800/40">
                         {(form.email_list || []).map((em, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-2 rounded-md bg-blue-100 border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-900"
+                            className="inline-flex items-center gap-2 rounded-lg bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 px-4 py-2 text-sm font-black text-blue-900 dark:text-blue-100"
                           >
                             <Mail className="w-3.5 h-3.5" />
                             <span>{em}</span>
@@ -1119,11 +1148,11 @@ export default function AddEditSubscription({ onBack, editId }) {
                     </div>
 
                     {addEmailOpen && (
-                      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                        <h3 className="font-semibold text-gray-900 mb-4">Add New Recipient</h3>
+                      <div className="border border-blue-200 dark:border-blue-800 rounded-2xl p-6 bg-blue-50 dark:bg-blue-900/10">
+                        <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-tight mb-6">Add New Recipient</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">First Name *</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">First Name *</Label>
                             <Input
                               value={newEmail.first_name}
                               onChange={e => setNewEmail({ ...newEmail, first_name: e.target.value })}
@@ -1131,7 +1160,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">Last Name</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">Last Name</Label>
                             <Input
                               value={newEmail.last_name}
                               onChange={e => setNewEmail({ ...newEmail, last_name: e.target.value })}
@@ -1139,7 +1168,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">Email *</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">Email *</Label>
                             <Input
                               type="email"
                               value={newEmail.email}
@@ -1148,7 +1177,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">Mobile</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">Mobile</Label>
                             <Input
                               value={newEmail.mobile}
                               onChange={e => setNewEmail({ ...newEmail, mobile: e.target.value })}
@@ -1156,7 +1185,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">Salutation</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">Salutation</Label>
                             <Input
                               value={newEmail.salutation}
                               onChange={e => setNewEmail({ ...newEmail, salutation: e.target.value })}
@@ -1164,7 +1193,7 @@ export default function AddEditSubscription({ onBack, editId }) {
                             />
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-1">Designation</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 mb-2 block">Designation</Label>
                             <Input
                               value={newEmail.designation}
                               onChange={e => setNewEmail({ ...newEmail, designation: e.target.value })}
@@ -1213,21 +1242,21 @@ export default function AddEditSubscription({ onBack, editId }) {
               </div>
 
               {/* Action Buttons - Below Recipients Section */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 py-4 px-6 -mx-6 mt-6 shadow-lg z-20">
+              <div className="sticky bottom-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 py-6 px-6 -mx-6 mt-12 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-20">
                 <div className="flex items-center justify-end gap-3 max-w-7xl mx-auto">
-                {isEdit && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      setDeleteConfirmValue("");
-                      setDeleteDialogOpen(true);
-                    }}
-                    className="h-10 px-6 mr-auto"
-                    disabled={isSaving || isDeleting}
-                  >
-                    Delete
-                  </Button>
-                )}
+                  {isEdit && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setDeleteConfirmValue("");
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="h-10 px-6 mr-auto"
+                      disabled={isSaving || isDeleting}
+                    >
+                      Delete
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => handleSave(false)}

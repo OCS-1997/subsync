@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast, Bounce } from "react-toastify";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -7,13 +7,16 @@ import { Label } from "@/components/ui/label.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import {
-  Loader2, Bell, Plus, Trash2, Save, X, Lock, GripVertical,
-  AlertCircle, Search, ChevronDown, ChevronRight, AlertTriangle
+  Bell, Plus, Trash2, Save, Lock, GripVertical,
+  AlertCircle, Search, ChevronRight, AlertTriangle,
+  Settings2, Mail, Clock, ShieldCheck, History
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 import { Checkbox } from "@/components/ui/checkbox.jsx";
+import { cn } from "@/lib/utils";
+import Hamster from "@/components/animations/Hamster.jsx";
 
 const ReminderPolicies = () => {
   const [policies, setPolicies] = useState([]);
@@ -52,8 +55,7 @@ const ReminderPolicies = () => {
         loadPolicy(defaultPolicy);
       }
     } catch (error) {
-      toast.error("Failed to load reminder policies");
-      console.error(error);
+      toast.error("Manifest retrieval failed");
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ const ReminderPolicies = () => {
 
   const handleSavePolicy = async () => {
     if (!policyForm.name.trim()) {
-      toast.error("Policy name is required");
+      toast.error("Identity signature mandatory");
       return;
     }
 
@@ -97,20 +99,20 @@ const ReminderPolicies = () => {
           is_default: policyForm.is_default,
           offsets: offsets,
         });
-        toast.success("Reminder policy updated successfully");
+        toast.success("Protocol updated", { theme: "colored" });
       } else {
         const { data } = await api.post("/reminder-policies", {
           name: policyForm.name,
           is_default: policyForm.is_default,
           offsets: offsets,
         });
-        toast.success("Reminder policy created successfully");
+        toast.success("New protocol operational", { theme: "colored" });
         setSelectedPolicyId(data.policyId);
       }
       setShowPolicyDialog(false);
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to save reminder policy");
+      toast.error(error.response?.data?.error || "Protocol initialization failed");
     } finally {
       setSaving(false);
     }
@@ -118,13 +120,13 @@ const ReminderPolicies = () => {
 
   const handleDeletePolicy = async (policy) => {
     if (policy.is_default) {
-      toast.info("Cannot delete default reminder policy");
+      toast.info("Cannot terminate root protocol");
       return;
     }
 
     try {
       await api.delete(`/reminder-policies/${policy.id}`);
-      toast.success("Reminder policy deleted successfully");
+      toast.success("Protocol terminated", { theme: "colored" });
       setShowDeleteConfirm(null);
       if (selectedPolicyId === policy.id) {
         setSelectedPolicyId(null);
@@ -133,7 +135,7 @@ const ReminderPolicies = () => {
       }
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to delete reminder policy");
+      toast.error(error.response?.data?.error || "Termination failed");
     }
   };
 
@@ -176,441 +178,425 @@ const ReminderPolicies = () => {
 
   if (loading) {
     return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-4 text-muted-foreground">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-lg font-medium animate-pulse">Loading Reminder Policies...</p>
+      <div className="flex flex-col justify-center items-center my-32">
+        <Hamster />
+        <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Scanning Protocols...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-transparent max-w-[1600px] mx-auto px-6 py-8">
       {/* Header */}
-      <div className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-10">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Reminder Policies</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Manage reminder schedules for subscription renewals
-              </p>
-            </div>
-            {canCreate && (
-              <Button onClick={handleNewPolicy} className="shadow-sm">
-                <Plus className="w-4 h-4 mr-2" /> New Policy
-              </Button>
-            )}
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <span>Settings</span>
+            <span className="opacity-40">/</span>
+            <span className="text-blue-500">Autonomous Notifications</span>
           </div>
+          <h1 className="text-4xl font-black uppercase tracking-tight">Reminder Protocols</h1>
+          <p className="text-slate-500 font-medium max-w-xl">Configure intelligent scheduling for subscription lifecycle alerts and renewal sequences.</p>
         </div>
+        {canCreate && (
+          <Button
+            onClick={handleNewPolicy}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-[0.98] transition-all"
+          >
+            <Plus className="w-4 h-4 mr-3" strokeWidth={3} /> Initialize Protocol
+          </Button>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Policy List */}
-        <div className="w-80 border-r border-border bg-card/20 flex flex-col">
-          <div className="p-4 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search policies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
+      <div className="flex-1 flex flex-col lg:flex-row gap-8 overflow-hidden min-h-[700px]">
+        {/* Left Side - Navigator */}
+        <div className="lg:w-[380px] flex flex-col gap-4">
+          <div className="relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+            <Input
+              placeholder="SEARCH PROTOCOLS..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-14 pl-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-blue-500/20 font-black uppercase tracking-widest text-[10px]"
+            />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
             <AnimatePresence>
               {filteredPolicies.map((policy) => (
                 <motion.div
                   key={policy.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
                   onClick={() => handleSelectPolicy(policy)}
-                  className={`
-                    relative px-4 py-3 cursor-pointer border-l-2 transition-all
-                    ${selectedPolicyId === policy.id
-                      ? 'bg-primary/5 border-l-blue-500'
-                      : 'border-l-transparent hover:bg-accent/50'
-                    }
-                  `}
+                  className={cn(
+                    "group relative p-6 cursor-pointer rounded-3xl border transition-all duration-300",
+                    selectedPolicyId === policy.id
+                      ? "bg-blue-600 border-blue-600 shadow-xl shadow-blue-500/20 text-white"
+                      : "bg-white dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 hover:border-blue-500/50"
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-semibold text-sm truncate ${selectedPolicyId === policy.id ? 'text-primary' : 'text-foreground'}`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        {policy.is_default ? (
+                          <div className={cn("h-6 w-6 rounded-lg flex items-center justify-center", selectedPolicyId === policy.id ? "bg-white/20" : "bg-amber-500/10")}>
+                            <Lock size={12} className={selectedPolicyId === policy.id ? "text-white" : "text-amber-500"} />
+                          </div>
+                        ) : (
+                          <div className={cn("h-6 w-6 rounded-lg flex items-center justify-center", selectedPolicyId === policy.id ? "bg-white/20" : "bg-blue-500/10")}>
+                            <Clock size={12} className={selectedPolicyId === policy.id ? "text-white" : "text-blue-500"} />
+                          </div>
+                        )}
+                        <h3 className="font-black uppercase tracking-tight text-xs truncate">
                           {policy.name}
                         </h3>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <History size={10} className="mt-0.5 opacity-60" />
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">
+                            {policy.offsets?.length || 0} SEQS
+                          </span>
+                        </div>
                         {policy.is_default && (
-                          <Lock className="w-3 h-3 text-amber-500 flex-shrink-0" title="Default Policy" />
+                          <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full", selectedPolicyId === policy.id ? "bg-white/20" : "bg-amber-500/10 text-amber-500")}>
+                            MASTER
+                          </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {policy.offsets?.length || 0} reminder(s)
-                      </p>
                     </div>
+                    <ChevronRight size={16} className={cn("mt-1 transition-transform", selectedPolicyId === policy.id ? "text-white rotate-90" : "text-slate-300 group-hover:translate-x-1")} />
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
 
             {filteredPolicies.length === 0 && (
-              <div className="text-center py-12 px-4 text-muted-foreground">
-                <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No policies found</p>
+              <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 text-slate-400">
+                <AlertCircle className="w-10 h-10 mb-4 opacity-20" />
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Zero Protocols Detected</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Panel - Policy Details */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {selectedPolicy ? (
-            <>
-              <div className="border-b border-border bg-card/30 p-6">
-                <div className="max-w-4xl">
-                  <div className="flex items-start justify-between mb-6">
-                    <div>
-                      <h2 className="text-lg font-semibold mb-1">Policy Details</h2>
-                      <p className="text-sm text-muted-foreground">
-                        Configure reminder schedule offsets
-                      </p>
-                    </div>
-                    {selectedPolicy.is_default && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium">
-                        <Lock className="w-3 h-3" />
-                        Default Policy
+        {/* Right Side - Engine */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <AnimatePresence mode="wait">
+            {selectedPolicy ? (
+              <motion.div
+                key={selectedPolicy.id}
+                initial={{ opacity: 0, scale: 0.99 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col h-full gap-6"
+              >
+                {/* Control Hub */}
+                <div className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
+                          <Settings2 className="text-indigo-500" size={20} />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black uppercase tracking-tight">Configuration Deck</h2>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol ID: #{String(selectedPolicy.id).slice(0, 8)}</p>
+                        </div>
                       </div>
-                    )}
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      {(canCreate || canUpdate) && !selectedPolicy.is_default && (
+                        <>
+                          <Button
+                            onClick={handleEditPolicy}
+                            disabled={saving}
+                            className="bg-slate-950 dark:bg-white dark:text-slate-950 text-white rounded-2xl h-12 px-6 font-black uppercase tracking-widest text-[10px] flex-1 sm:flex-none shadow-lg active:scale-95 transition-all"
+                          >
+                            <Save className="w-4 h-4 mr-3" /> Update Protocol
+                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowDeleteConfirm(selectedPolicy)}
+                              className="rounded-2xl h-12 w-12 border-slate-100 dark:border-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {selectedPolicy.is_default && (
+                        <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          <ShieldCheck size={16} />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Immutable Root Protocol</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="policy-name" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Policy Name
-                      </Label>
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <Label htmlFor="policy_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protocol Identifier</Label>
                       <Input
-                        id="policy-name"
+                        id="policy_name"
                         value={policyForm.name}
                         onChange={(e) => setPolicyForm({ ...policyForm, name: e.target.value })}
-                        placeholder="e.g. Standard Renewal Policy"
-                        className="h-9"
+                        placeholder="PROTOCOL NAME"
+                        className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 font-black tracking-tight uppercase"
                         disabled={selectedPolicy.is_default || !canUpdate}
                       />
                     </div>
+                  </div>
+                </div>
 
-                    {(canCreate || canUpdate) && !selectedPolicy.is_default && (
-                      <div className="flex items-center gap-3">
-                        <Button
-                          onClick={handleEditPolicy}
-                          disabled={saving}
-                          size="sm"
-                          className="shadow-sm"
+                {/* Automation Deck */}
+                <div className="flex-1 overflow-visible">
+                  <div className="flex items-center justify-between mb-6 px-1">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                        <Bell className="text-blue-500" size={16} />
+                      </div>
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Trigger Sequences</h3>
+                    </div>
+                    {canUpdate && !selectedPolicy.is_default && (
+                      <Button
+                        onClick={addOffset}
+                        variant="outline"
+                        className="rounded-xl h-10 px-4 border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                      >
+                        <Plus className="w-3 h-3 mr-2" /> Add Sequence
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4 pb-20 overflow-y-auto custom-scrollbar pr-2 max-h-[800px]">
+                    <AnimatePresence>
+                      {offsets.map((offset, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="group relative p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all"
                         >
-                          {saving ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Save className="w-3 h-3 mr-2" />}
-                          Update Policy
-                        </Button>
-                        {canDelete && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowDeleteConfirm(selectedPolicy)}
-                            className="text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-3 h-3 mr-2" />
-                            Delete Policy
+                          <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6">
+                            <div className="flex items-center gap-4">
+                              <div className="flex flex-col gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                                  onClick={() => moveOffset(index, 'up')}
+                                  disabled={selectedPolicy.is_default || !canUpdate || index === 0}
+                                >
+                                  <ChevronRight size={14} className="-rotate-90 text-slate-400" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                                  onClick={() => moveOffset(index, 'down')}
+                                  disabled={selectedPolicy.is_default || !canUpdate || index === offsets.length - 1}
+                                >
+                                  <ChevronRight size={14} className="rotate-90 text-slate-400" />
+                                </Button>
+                              </div>
+                              <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 font-black text-xs text-slate-400">
+                                {String(index + 1).padStart(2, '0')}
+                              </div>
+                            </div>
+
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 w-full font-black">
+                              <div className="md:col-span-3 space-y-2">
+                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">Temporal Offset (Days)</Label>
+                                <div className="relative">
+                                  <Input
+                                    type="number"
+                                    value={offset.days_offset}
+                                    onChange={(e) => updateOffset(index, { days_offset: parseInt(e.target.value) || 0 })}
+                                    className="h-12 rounded-xl border-slate-100 dark:border-slate-800 tabular-nums px-4 font-black"
+                                    disabled={selectedPolicy.is_default || !canUpdate}
+                                  />
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-40 uppercase">Days</div>
+                                </div>
+                                <p className="text-[9px] text-blue-500 uppercase tracking-widest pl-1 font-black">
+                                  {offset.days_offset < 0 ? `${Math.abs(offset.days_offset)} Pre-Expiry` :
+                                    offset.days_offset === 0 ? 'Cycle Termination' :
+                                      `${offset.days_offset} Post-Expiry`}
+                                </p>
+                              </div>
+
+                              <div className="md:col-span-6 space-y-2">
+                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">Manifest Template</Label>
+                                <Select
+                                  value={offset.template_key}
+                                  onValueChange={(value) => updateOffset(index, { template_key: value })}
+                                  disabled={selectedPolicy.is_default || !canUpdate}
+                                >
+                                  <SelectTrigger className="h-12 rounded-xl border-slate-100 dark:border-slate-800 font-black uppercase text-[10px] tracking-widest">
+                                    <SelectValue placeholder="CHOOSE SCHEMATIC" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl dark:bg-slate-900 border-slate-800">
+                                    {templates.map((template) => (
+                                      <SelectItem key={template.template_key} value={template.template_key} className="rounded-xl my-1 mx-1 font-black uppercase text-[10px] tracking-widest">
+                                        <div className="flex items-center gap-3">
+                                          <Mail size={12} className="opacity-40" />
+                                          {template.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="md:col-span-2 flex items-center h-12 mt-auto">
+                                <label className="flex items-center gap-3 cursor-pointer group/check">
+                                  <Checkbox
+                                    checked={offset.active}
+                                    onCheckedChange={(checked) => updateOffset(index, { active: checked })}
+                                    disabled={selectedPolicy.is_default || !canUpdate}
+                                    className="h-6 w-6 rounded-lg border-2 border-slate-200 dark:border-slate-700 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 transition-all"
+                                  />
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/check:text-blue-500 transition-colors">Enabled</span>
+                                </label>
+                              </div>
+
+                              <div className="md:col-span-1 flex items-center justify-end h-12 mt-auto">
+                                {canUpdate && !selectedPolicy.is_default && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl"
+                                    onClick={() => removeOffset(index)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {offsets.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 text-slate-400 italic">
+                        <Mail className="w-16 h-16 mb-4 opacity-10" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4">Sequence Engine Offline</p>
+                        {canUpdate && !selectedPolicy.is_default && (
+                          <Button onClick={addOffset} variant="outline" className="rounded-2xl border-blue-500/20 text-blue-500 font-black uppercase tracking-widest text-[10px] h-12 px-6">
+                            Initialize Sequence
                           </Button>
                         )}
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Offsets Section */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-4xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Reminder Offsets</h3>
-                    {canUpdate && !selectedPolicy.is_default && (
-                      <Button onClick={addOffset} size="sm" variant="outline">
-                        <Plus className="w-3 h-3 mr-2" />
-                        Add Offset
-                      </Button>
-                    )}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex-1 flex items-center justify-center"
+              >
+                <div className="max-w-md text-center">
+                  <div className="h-24 w-24 bg-slate-100 dark:bg-slate-900 rounded-[3rem] items-center justify-center flex mx-auto mb-8 border-2 border-dashed border-slate-200 dark:border-slate-800">
+                    <Settings2 className="w-10 h-10 text-slate-300" strokeWidth={1} />
                   </div>
-
-                  {offsets.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                      <p>No reminder offsets configured</p>
-                      {canUpdate && !selectedPolicy.is_default && (
-                        <Button onClick={addOffset} size="sm" className="mt-4" variant="outline">
-                          Add First Offset
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {offsets.map((offset, index) => (
-                        <div
-                          key={index}
-                          className="border border-border rounded-lg p-4 bg-card/30 flex items-center gap-4"
-                        >
-                          <div className="flex items-center gap-2">
-                            <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
-                            {index > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => moveOffset(index, 'up')}
-                                disabled={selectedPolicy.is_default || !canUpdate}
-                              >
-                                <ChevronRight className="w-3 h-3 rotate-[-90deg]" />
-                              </Button>
-                            )}
-                            {index < offsets.length - 1 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => moveOffset(index, 'down')}
-                                disabled={selectedPolicy.is_default || !canUpdate}
-                              >
-                                <ChevronRight className="w-3 h-3 rotate-90" />
-                              </Button>
-                            )}
-                          </div>
-
-                          <div className="flex-1 grid grid-cols-12 gap-4">
-                            <div className="col-span-2">
-                              <Label className="text-xs">Days Offset</Label>
-                              <Input
-                                type="number"
-                                value={offset.days_offset}
-                                onChange={(e) => updateOffset(index, { days_offset: parseInt(e.target.value) || 0 })}
-                                className="h-9"
-                                disabled={selectedPolicy.is_default || !canUpdate}
-                                placeholder="-30"
-                              />
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {offset.days_offset < 0 ? `${Math.abs(offset.days_offset)} days before` :
-                                 offset.days_offset === 0 ? 'On expiry' :
-                                 `${offset.days_offset} days after`}
-                              </p>
-                            </div>
-
-                            <div className="col-span-6">
-                              <Label className="text-xs">Email Template</Label>
-                              <Select
-                                value={offset.template_key}
-                                onValueChange={(value) => updateOffset(index, { template_key: value })}
-                                disabled={selectedPolicy.is_default || !canUpdate}
-                              >
-                                <SelectTrigger className="h-9">
-                                  <SelectValue placeholder="Select template" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {templates.map((template) => (
-                                    <SelectItem key={template.template_key} value={template.template_key}>
-                                      {template.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="col-span-2 flex items-end">
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`active-${index}`}
-                                  checked={offset.active}
-                                  onCheckedChange={(checked) => updateOffset(index, { active: checked })}
-                                  disabled={selectedPolicy.is_default || !canUpdate}
-                                />
-                                <Label htmlFor={`active-${index}`} className="text-xs cursor-pointer">
-                                  Active
-                                </Label>
-                              </div>
-                            </div>
-
-                            <div className="col-span-2 flex items-end justify-end">
-                              {canUpdate && !selectedPolicy.is_default && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive"
-                                  onClick={() => removeOffset(index)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Protocol Deck Inactive</h3>
+                  <p className="text-slate-500 font-medium">Select a system protocol from the left navigator to initiate sequence management.</p>
                 </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <Bell className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-medium">Select a policy to view details</p>
-                <p className="text-sm mt-1">or create a new policy to get started</p>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Policy Dialog */}
+      {/* Initialize Dialog */}
       <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{policyForm.id ? "Edit Policy" : "Create New Policy"}</DialogTitle>
-            <DialogDescription>
-              {policyForm.id ? "Update policy information" : "Define a new reminder policy"}
+        <DialogContent className="max-w-2xl rounded-[3rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 p-0 overflow-hidden">
+          <DialogHeader className="p-10 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{policyForm.id ? "Modify Logic" : "Establish Logic"}</DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium">
+              Define the architectural parameters for this notification sequence.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="dialog-policy-name">Policy Name *</Label>
+          <div className="p-10 space-y-8">
+            <div className="space-y-3">
+              <Label htmlFor="dialog-policy-name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Logic Identity</Label>
               <Input
                 id="dialog-policy-name"
                 value={policyForm.name}
                 onChange={(e) => setPolicyForm({ ...policyForm, name: e.target.value })}
-                placeholder="e.g. Standard Renewal Policy"
+                placeholder="e.g. ENTERPRISE STANDARD"
+                className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 font-black uppercase"
               />
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-4 p-5 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
               <Checkbox
                 id="is-default"
                 checked={policyForm.is_default}
                 onCheckedChange={(checked) => setPolicyForm({ ...policyForm, is_default: checked })}
+                className="h-6 w-6 rounded-lg"
               />
-              <Label htmlFor="is-default" className="cursor-pointer">
-                Set as default policy
-              </Label>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Reminder Offsets</Label>
-                <Button onClick={addOffset} size="sm" variant="outline">
-                  <Plus className="w-3 h-3 mr-2" />
-                  Add Offset
-                </Button>
+              <div className="flex flex-col">
+                <Label htmlFor="is-default" className="font-black uppercase tracking-widest text-[10px] text-amber-600 cursor-pointer">
+                  Promote to Master Protocol
+                </Label>
+                <p className="text-[9px] text-amber-600/60 font-medium uppercase tracking-widest">This logic will replace existing system defaults.</p>
               </div>
-
-              {offsets.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No offsets added yet
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {offsets.map((offset, index) => (
-                    <div key={index} className="border rounded p-3 flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={offset.days_offset}
-                        onChange={(e) => updateOffset(index, { days_offset: parseInt(e.target.value) || 0 })}
-                        placeholder="Days"
-                        className="w-24 h-8"
-                      />
-                      <Select
-                        value={offset.template_key}
-                        onValueChange={(value) => updateOffset(index, { template_key: value })}
-                      >
-                        <SelectTrigger className="flex-1 h-8">
-                          <SelectValue placeholder="Template" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {templates.map((template) => (
-                            <SelectItem key={template.template_key} value={template.template_key}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Checkbox
-                        checked={offset.active}
-                        onCheckedChange={(checked) => updateOffset(index, { active: checked })}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => removeOffset(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPolicyDialog(false)}>
-              Cancel
+          <DialogFooter className="p-10 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 gap-4">
+            <Button variant="outline" onClick={() => setShowPolicyDialog(false)} className="rounded-2xl h-14 px-8 font-black uppercase text-[11px] tracking-widest">
+              Abort
             </Button>
-            <Button onClick={handleSavePolicy} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              {policyForm.id ? "Update" : "Create"}
+            <Button onClick={handleSavePolicy} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-10 font-black uppercase text-[11px] tracking-widest shadow-xl shadow-blue-500/25">
+              {saving ? "Deploying..." : (policyForm.id ? "Execute Sync" : "Deploy Logic")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      {/* Termination Confirmation */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
             onClick={() => setShowDeleteConfirm(null)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card border border-border rounded-lg shadow-2xl p-6 max-w-md w-full"
+              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[3rem] shadow-2xl p-10 max-w-md w-full text-center"
             >
-              <div className="flex items-start gap-4">
-                <div className="p-2 rounded-full bg-destructive/10">
-                  <AlertTriangle className="w-6 h-6 text-destructive" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">Delete Policy</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Are you sure you want to delete <strong>{showDeleteConfirm.name}</strong>? This action cannot be undone.
-                  </p>
-                  <div className="flex items-center gap-2 justify-end">
-                    <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(null)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeletePolicy(showDeleteConfirm)}
-                    >
-                      <Trash2 className="w-3 h-3 mr-2" />
-                      Delete Policy
-                    </Button>
-                  </div>
-                </div>
+              <div className="h-20 w-20 bg-rose-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle className="w-10 h-10 text-rose-500" />
+              </div>
+              <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Initiate Termination?</h3>
+              <p className="text-slate-500 font-medium mb-8">
+                Confirming termination of <strong className="text-slate-900 dark:text-white">{showDeleteConfirm.name}</strong>. This sequence will be permanently erased from the master records.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button
+                  variant="destructive"
+                  className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-rose-500/25"
+                  onClick={() => handleDeletePolicy(showDeleteConfirm)}
+                >
+                  <Trash2 className="w-4 h-4 mr-3" /> Permanent Termination
+                </Button>
+                <Button variant="outline" className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-slate-100 dark:border-slate-800" onClick={() => setShowDeleteConfirm(null)}>
+                  Discard Request
+                </Button>
               </div>
             </motion.div>
           </motion.div>

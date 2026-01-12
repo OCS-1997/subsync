@@ -50,40 +50,44 @@ const VendorPersonalDetails = ({ vendorData, handleInputChange, handleSelectChan
 
   // Set default salutation to Mr. if not set
   const selectedSalutation = salutationOptions.find(option => option.value === vendorData.salutation) || salutationOptions[0];
-  
+
   // Handle both customerStatus and vendorStatus
   const statusField = isVendor ? 'vendorStatus' : 'customerStatus';
   const currentStatus = vendorData[statusField] || "Active";
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
-        <div className="flex flex-col mb-4 md:col-span-12">
-          <Label htmlFor="customer-status" className="mb-2"> Vendor Status</Label>
-          <div className="inline-flex rounded-md shadow-sm w-max" role="group">
-            <Button
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-6 mb-8">
+        <div className="flex flex-col md:col-span-12">
+          <Label htmlFor="vendor-status" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3">Vendor status</Label>
+          <div className="flex bg-gray-100/50 dark:bg-slate-800/50 p-1 rounded-xl w-fit border border-gray-100 dark:border-slate-800 shadow-inner">
+            <button
               id="tbg-radio-1"
               type="button"
-              variant={currentStatus === "Active" ? "default" : "outline"}
-              className={`rounded-r-none ${currentStatus === "Active" ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-50'}`}
+              className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currentStatus === "Active"
+                  ? 'bg-white dark:bg-slate-900 text-green-600 shadow-sm'
+                  : 'text-gray-400 dark:text-slate-500 hover:text-gray-600'
+                }`}
               onClick={() => handleStatusChange("Active")}
             >
               Active
-            </Button>
-            <Button
+            </button>
+            <button
               id="tbg-radio-2"
               type="button"
-              variant={currentStatus === "Inactive" ? "destructive" : "outline"}
-              className={`rounded-l-none ${currentStatus === "Inactive" ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-50'}`}
+              className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${currentStatus === "Inactive"
+                  ? 'bg-white dark:bg-slate-900 text-red-600 shadow-sm'
+                  : 'text-gray-400 dark:text-slate-500 hover:text-gray-600'
+                }`}
               onClick={() => handleStatusChange("Inactive")}
             >
               Inactive
-            </Button>
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col mb-2 md:col-span-2">
-          <Label htmlFor="salutation" className="mb-2">Salutation<span className="text-red-800">*</span></Label>
+        <div className="flex flex-col md:col-span-2">
+          <Label htmlFor="salutation" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Salutation<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             id="salutation"
             options={salutationOptions}
@@ -92,56 +96,49 @@ const VendorPersonalDetails = ({ vendorData, handleInputChange, handleSelectChan
             getOptionLabel={(option) => option.label}
             getOptionValue={(option) => option.value}
             classNamePrefix="react-select"
-            className="react-select-container rounded-md shadow-sm"
-            placeholder="Select Salutation"
+            className="react-select-container"
+            placeholder="Select"
             styles={{
               control: (base) => ({
                 ...base,
-                backgroundColor: "white",
-                borderColor: "#d1d5db",
-                minHeight: "2.25rem",
-                borderRadius: "0.5rem",
-                fontSize: "1rem",
-                padding: "0px 4px",
-              }),
-              valueContainer: (base) => ({
-                ...base,
-                padding: "0 8px",
+                backgroundColor: "hsl(var(--background))",
+                borderColor: "hsl(var(--input))",
+                minHeight: "2.75rem",
+                borderRadius: "0.75rem",
+                fontSize: "0.875rem",
+                padding: "0px 8px",
+                boxShadow: "none",
+                "&:hover": { borderColor: "hsl(var(--ring))" },
               }),
               singleValue: (base) => ({
                 ...base,
-                color: "#0f172a",
+                color: "hsl(var(--foreground))",
+                fontWeight: "600"
               }),
               input: (base) => ({
                 ...base,
-                margin: 0,
-                padding: 0,
-              }),
-              indicatorSeparator: () => ({
-                display: "none",
-              }),
-              dropdownIndicator: (base) => ({
-                ...base,
-                padding: "0 4px",
+                color: "hsl(var(--foreground))"
               }),
               menu: (base) => ({
                 ...base,
-                borderRadius: "0.5rem",
-                fontSize: "0.875rem",
+                backgroundColor: "hsl(var(--popover))",
+                borderRadius: "0.75rem",
+                border: "1px solid hsl(var(--border))",
                 zIndex: 20,
               }),
               option: (base, state) => ({
                 ...base,
-                backgroundColor: state.isFocused ? "#e0f2fe" : "white",
-                color: "#0f172a",
+                backgroundColor: state.isFocused ? "hsl(var(--accent))" : "transparent",
+                color: state.isFocused ? "hsl(var(--accent-foreground))" : "hsl(var(--foreground))",
                 cursor: "pointer",
+                fontWeight: "500",
               }),
             }}
           />
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-5">
-          <Label htmlFor="firstName" className="mb-2">First Name<span className="text-red-800">*</span></Label>
+        <div className="flex flex-col md:col-span-5">
+          <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">First Name<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="firstName"
             type="text"
@@ -149,54 +146,54 @@ const VendorPersonalDetails = ({ vendorData, handleInputChange, handleSelectChan
             value={vendorData.firstName}
             onChange={handleInputChange}
             required
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" // Shadcn Input classes
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-5">
-          <Label htmlFor="lastName" className="mb-2">Last Name</Label>
+        <div className="flex flex-col md:col-span-5">
+          <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Last Name</Label>
           <Input
             id="lastName"
             type="text"
             name="lastName"
             value={vendorData.lastName}
             onChange={handleInputChange}
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" // Shadcn Input classes
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="primaryPhoneNumber" className="mb-2">Primary Phone Number<span className="text-red-800">*</span></Label>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-6 mb-8">
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="primaryPhoneNumber" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Primary Phone Number<span className="text-red-500 font-bold ml-1">*</span></Label>
           <div className="relative">
             <PhoneInput
               international
               defaultCountry="IN"
               value={getCurrentPhoneNumber('primary')}
               onChange={(value) => handlePhoneNumberChange(value, 'primary')}
-              className="phone-input-custom-style min-h-[2.25rem] shadow-sm"
+              className="phone-input-custom-style rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 px-4 h-11 text-gray-900 dark:text-white"
               placeholder="Enter primary phone number"
             />
           </div>
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="secondaryPhoneNumber" className="mb-2">Secondary Phone Number</Label>
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="secondaryPhoneNumber" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Secondary Phone Number</Label>
           <div className="relative">
             <PhoneInput
               international
               defaultCountry="IN"
               value={getCurrentPhoneNumber('secondary')}
               onChange={(value) => handlePhoneNumberChange(value, 'secondary')}
-              className="phone-input-custom-style min-h-[2.25rem] shadow-sm"
-              placeholder="Enter secondary phone number (optional)"
+              className="phone-input-custom-style rounded-xl text-sm font-bold bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 px-4 h-11 text-gray-900 dark:text-white"
+              placeholder="Enter secondary phone number"
             />
           </div>
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="email" className="mb-2">Email<span className="text-red-800">*</span></Label>
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Email Address<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="email"
             type="email"
@@ -204,18 +201,18 @@ const VendorPersonalDetails = ({ vendorData, handleInputChange, handleSelectChan
             value={vendorData.email}
             onChange={handleInputChange}
             required
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="secondaryEmail" className="mb-2">Secondary Email</Label>
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="secondaryEmail" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Secondary Email</Label>
           <Input
             id="secondaryEmail"
             type="email"
             name="secondary_email"
             value={vendorData.secondary_email}
             onChange={handleInputChange}
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>

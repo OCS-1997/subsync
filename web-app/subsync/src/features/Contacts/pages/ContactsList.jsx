@@ -20,6 +20,7 @@ import Hamster from '@/components/animations/Hamster.jsx';
 import GenericTable from '@/components/layouts/GenericTable.jsx';
 import Pagination from '@/components/layouts/Pagination.jsx';
 import SearchFilterForm from '@/components/layouts/SearchFilterForm.jsx';
+import { PageHeader } from '@/components/ui/breadcrumb.jsx';
 import { fetchContacts, deleteContact, clearError } from '../contactsSlice';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
@@ -290,222 +291,226 @@ export default function ContactsList() {
     }));
 
     return (
-        <div className="p-4">
-            <Breadcrumb items={[{ label: "Contacts" }]} />
+        <div className="max-w-[1600px] mx-auto py-8 px-4">
+            <PageHeader
+                title="Contacts"
+                description="Comprehensive directory of enterprise stakeholders, domain representatives, and individual profiles."
+                breadcrumbItems={[{ label: "Contacts" }]}
+                actions={
+                    <div className="flex gap-4">
+                        <Button
+                            variant="ghost"
+                            className="rounded-xl h-14 px-6 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all gap-2"
+                            onClick={() => setExportDialogOpen(true)}
+                        >
+                            <FileDown className="w-5 h-5 mr-1" /> Export
+                        </Button>
+                        {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
+                            <Link to={`/${username}/dashboard/contacts/new`}>
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
+                                    <Plus className="w-5 h-5 mr-3" /> Add Contact
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                }
+            />
 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3">
-                <h1 className="text-2xl font-bold">Contacts</h1>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        className="border-green-500 text-green-600 hover:bg-green-50"
-                        onClick={() => setExportDialogOpen(true)}
-                    >
-                        <FileDown className="w-4 h-4 mr-2" /> Export
-                    </Button>
-                    {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
-                        <Link to={`/${username}/dashboard/contacts/new`}>
-                            <Button className="bg-blue-500 hover:bg-blue-600 text-white w-40">
-                                <Plus className="w-4 h-4" /> Add
+            <div className="space-y-8 mt-12">
+                {/* Control Bar */}
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+                        <SearchFilterForm
+                            search={search}
+                            setSearch={setSearch}
+                            placeholder="Search by name, company, email..."
+                            className="w-full"
+                        />
+                    </div>
+                </div>
+
+                {/* Table or Empty State */}
+                {loading ? (
+                    <div className="p-6 flex flex-col justify-center items-center">
+                        <Hamster />
+                    </div>
+                ) : tableData.length > 0 ? (
+                    <>
+                        <GenericTable
+                            headers={headers}
+                            data={tableData}
+                            primaryKey="contact_id"
+                            sortBy={sortBy}
+                            sortOrder={sortOrder}
+                            onSort={handleSort}
+                        />
+                        <Pagination
+                            currentPage={currentPage}
+                            setCurrentPage={setCurrentPage}
+                            totalPages={totalPages}
+                            totalRecords={totalRecords}
+                        />
+                    </>
+                ) : (
+                    <div className="p-10 border rounded-md bg-white text-center">
+                        {debouncedSearch ? (
+                            <>
+                                <div className="text-lg font-semibold mb-2">No results found</div>
+                                <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-lg font-semibold mb-2">No contacts yet</div>
+                                <div className="text-sm text-gray-600 mb-4">Create your first contact to get started.</div>
+                                {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
+                                    <Link to={`/${username}/dashboard/contacts/new`}>
+                                        <Button><Plus className="w-4 h-4" /> Add Contact</Button>
+                                    </Link>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Contact</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete {contactToDelete?.first_name} {contactToDelete?.last_name}?
+                                This action cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={closeDeleteDialog}>
+                                Cancel
                             </Button>
-                        </Link>
-                    )}
-                </div>
-            </div>
+                            <Button variant="destructive" onClick={handleDelete}>
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
-            <hr className="mb-6 border-blue-500 border-1" />
+                {/* Export Dialog */}
+                <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Export Contacts</DialogTitle>
+                            <DialogDescription>
+                                Select the export format and fields to include in the export.
+                            </DialogDescription>
+                        </DialogHeader>
 
-            {/* Search Bar */}
-            <div className="flex items-center gap-3 mb-3">
-                <SearchFilterForm
-                    search={search}
-                    setSearch={setSearch}
-                    handleSearch={handleSearch}
-                />
-            </div>
+                        <div className="space-y-6 py-4">
+                            {/* Export Format */}
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Export Format</label>
+                                <Select value={exportFormat} onValueChange={setExportFormat}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="csv">CSV (Comma-Separated Values)</SelectItem>
+                                        <SelectItem value="text">Text Report (Formatted)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {exportFormat === 'csv'
+                                        ? 'Download data as a CSV file for use in Excel or other spreadsheet applications.'
+                                        : 'Download a formatted text report with detailed information.'}
+                                </p>
+                            </div>
 
-            {/* Table or Empty State */}
-            {loading ? (
-                <div className="p-6 flex flex-col justify-center items-center">
-                    <Hamster />
-                </div>
-            ) : tableData.length > 0 ? (
-                <>
-                    <GenericTable
-                        headers={headers}
-                        data={tableData}
-                        primaryKey="contact_id"
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                        onSort={handleSort}
-                    />
-                    <Pagination
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                        totalPages={totalPages}
-                        totalRecords={totalRecords}
-                    />
-                </>
-            ) : (
-                <div className="p-10 border rounded-md bg-white text-center">
-                    {debouncedSearch ? (
-                        <>
-                            <div className="text-lg font-semibold mb-2">No results found</div>
-                            <div className="text-sm text-gray-600 mb-4">Try adjusting your search criteria.</div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="text-lg font-semibold mb-2">No contacts yet</div>
-                            <div className="text-sm text-gray-600 mb-4">Create your first contact to get started.</div>
-                            {hasPermission(PERMISSIONS.CONTACTS_CREATE) && (
-                                <Link to={`/${username}/dashboard/contacts/new`}>
-                                    <Button><Plus className="w-4 h-4" /> Add Contact</Button>
-                                </Link>
-                            )}
-                        </>
-                    )}
-                </div>
-            )}
+                            {/* Fields Selection */}
+                            <div>
+                                <label className="text-sm font-medium mb-3 block">Fields to Include</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-name"
+                                            checked={exportFields.name}
+                                            onCheckedChange={() => toggleExportField('name')}
+                                        />
+                                        <label htmlFor="export-name" className="text-sm cursor-pointer">
+                                            Name
+                                        </label>
+                                    </div>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete Contact</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete {contactToDelete?.first_name} {contactToDelete?.last_name}?
-                            This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={closeDeleteDialog}>
-                            Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-designation"
+                                            checked={exportFields.designation}
+                                            onCheckedChange={() => toggleExportField('designation')}
+                                        />
+                                        <label htmlFor="export-designation" className="text-sm cursor-pointer">
+                                            Designation
+                                        </label>
+                                    </div>
 
-            {/* Export Dialog */}
-            <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Export Contacts</DialogTitle>
-                        <DialogDescription>
-                            Select the export format and fields to include in the export.
-                        </DialogDescription>
-                    </DialogHeader>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-company"
+                                            checked={exportFields.company}
+                                            onCheckedChange={() => toggleExportField('company')}
+                                        />
+                                        <label htmlFor="export-company" className="text-sm cursor-pointer">
+                                            Company
+                                        </label>
+                                    </div>
 
-                    <div className="space-y-6 py-4">
-                        {/* Export Format */}
-                        <div>
-                            <label className="text-sm font-medium mb-2 block">Export Format</label>
-                            <Select value={exportFormat} onValueChange={setExportFormat}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="csv">CSV (Comma-Separated Values)</SelectItem>
-                                    <SelectItem value="text">Text Report (Formatted)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {exportFormat === 'csv'
-                                    ? 'Download data as a CSV file for use in Excel or other spreadsheet applications.'
-                                    : 'Download a formatted text report with detailed information.'}
-                            </p>
-                        </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-email"
+                                            checked={exportFields.email}
+                                            onCheckedChange={() => toggleExportField('email')}
+                                        />
+                                        <label htmlFor="export-email" className="text-sm cursor-pointer">
+                                            Email
+                                        </label>
+                                    </div>
 
-                        {/* Fields Selection */}
-                        <div>
-                            <label className="text-sm font-medium mb-3 block">Fields to Include</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-name"
-                                        checked={exportFields.name}
-                                        onCheckedChange={() => toggleExportField('name')}
-                                    />
-                                    <label htmlFor="export-name" className="text-sm cursor-pointer">
-                                        Name
-                                    </label>
-                                </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-phone"
+                                            checked={exportFields.phone}
+                                            onCheckedChange={() => toggleExportField('phone')}
+                                        />
+                                        <label htmlFor="export-phone" className="text-sm cursor-pointer">
+                                            Phone
+                                        </label>
+                                    </div>
 
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-designation"
-                                        checked={exportFields.designation}
-                                        onCheckedChange={() => toggleExportField('designation')}
-                                    />
-                                    <label htmlFor="export-designation" className="text-sm cursor-pointer">
-                                        Designation
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-company"
-                                        checked={exportFields.company}
-                                        onCheckedChange={() => toggleExportField('company')}
-                                    />
-                                    <label htmlFor="export-company" className="text-sm cursor-pointer">
-                                        Company
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-email"
-                                        checked={exportFields.email}
-                                        onCheckedChange={() => toggleExportField('email')}
-                                    />
-                                    <label htmlFor="export-email" className="text-sm cursor-pointer">
-                                        Email
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-phone"
-                                        checked={exportFields.phone}
-                                        onCheckedChange={() => toggleExportField('phone')}
-                                    />
-                                    <label htmlFor="export-phone" className="text-sm cursor-pointer">
-                                        Phone
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="export-domain"
-                                        checked={exportFields.domain}
-                                        onCheckedChange={() => toggleExportField('domain')}
-                                    />
-                                    <label htmlFor="export-domain" className="text-sm cursor-pointer">
-                                        Domain
-                                    </label>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="export-domain"
+                                            checked={exportFields.domain}
+                                            onCheckedChange={() => toggleExportField('domain')}
+                                        />
+                                        <label htmlFor="export-domain" className="text-sm cursor-pointer">
+                                            Domain
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            className="bg-green-500 hover:bg-green-600 text-white"
-                            onClick={handleExport}
-                            disabled={Object.values(exportFields).every(v => !v)}
-                        >
-                            <FileDown className="w-4 h-4 mr-2" /> Export Data
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                className="bg-green-500 hover:bg-green-600 text-white"
+                                onClick={handleExport}
+                                disabled={Object.values(exportFields).every(v => !v)}
+                            >
+                                <FileDown className="w-4 h-4 mr-2" /> Export Data
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
         </div>
     );
 }

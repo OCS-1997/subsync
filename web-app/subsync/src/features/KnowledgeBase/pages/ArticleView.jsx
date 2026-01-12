@@ -13,6 +13,7 @@ import {
     History,
     FileText,
     ExternalLink,
+    RotateCcw,
     ChevronRight,
     Share2,
     BookOpen,
@@ -29,8 +30,8 @@ import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import api from "@/lib/axiosInstance.js";
 
-import { Button } from "@/components/ui/button.jsx";
-import { Badge } from "@/components/ui/badge.jsx";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
@@ -38,16 +39,16 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter
-} from "@/components/ui/dialog.jsx";
-import { Separator } from "@/components/ui/separator.jsx";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card.jsx";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
-import { Input } from "@/components/ui/input.jsx";
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 
 // SEO and Tracking components
-import SEOMetaTags from "../components/SEOMetaTags.jsx";
-import { useReadTracking, ReadCounter } from "../components/ReadTracking.jsx";
-import ArticleAnalytics from "../components/ArticleAnalytics.jsx";
+import SEOMetaTags from "../components/SEOMetaTags";
+import { useReadTracking, ReadCounter } from "../components/ReadTracking";
+import ArticleAnalytics from "../components/ArticleAnalytics";
 
 export default function ArticleView({ publicView = false }) {
     const { id, slug } = useParams();
@@ -220,7 +221,7 @@ export default function ArticleView({ publicView = false }) {
                 <SEOMetaTags seo={seoData} structuredData={structuredData} />
             )}
 
-            <div className="w-full h-full bg-[#f8fafc] dark:bg-[#0f172a] overflow-x-hidden relative scrollbar-thin">
+            <div className="w-full h-full bg-white dark:bg-slate-950 overflow-x-hidden relative scrollbar-thin">
                 {/* Print Only Styles */}
                 <style dangerouslySetInnerHTML={{
                     __html: `
@@ -251,7 +252,7 @@ export default function ArticleView({ publicView = false }) {
                 />
 
                 {/* Sticky Navigation / Header Bar */}
-                <nav className="sticky top-0 w-full bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 z-50 px-6 py-3 sticky-nav">
+                <nav className="sticky top-0 w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 z-50 px-6 py-3 sticky-nav">
                     <div className="max-w-6xl mx-auto flex items-center justify-between">
                         <div className="flex items-center gap-4 overflow-hidden">
                             <Button
@@ -394,7 +395,7 @@ export default function ArticleView({ publicView = false }) {
                 </nav>
 
                 {/* Hero Section */}
-                <header className="w-full pt-12 pb-8 px-6 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 dark:to-transparent">
+                <header className="w-full pt-12 pb-8 px-6 bg-gradient-to-b from-blue-50/30 to-transparent dark:from-blue-500/5 dark:to-transparent">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -424,11 +425,11 @@ export default function ArticleView({ publicView = false }) {
                             )}
                         </div>
 
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-[#1e293b] dark:text-white leading-[1.1] mb-8 tracking-tight">
+                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-slate-900 dark:text-white leading-[1.1] mb-8 tracking-tight">
                             {article.title}
                         </h1>
 
-                        <div className="flex items-center justify-between flex-wrap gap-6 py-6 border-y border-gray-200 dark:border-gray-800">
+                        <div className="flex items-center justify-between flex-wrap gap-6 py-8 border-y border-gray-100 dark:border-slate-800">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-md">
                                     <span className="text-blue-600 dark:text-blue-400 font-bold text-lg uppercase">
@@ -485,20 +486,20 @@ export default function ArticleView({ publicView = false }) {
                         transition={{ delay: 0.3, duration: 0.8 }}
                         className="lg:col-span-8"
                     >
-                        <article className="bg-white dark:bg-gray-800/20 rounded-3xl p-8 sm:p-12 shadow-sm border border-gray-100 dark:border-gray-800 relative">
+                        <article className="bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none rounded-[2.5rem] p-8 sm:p-16 border border-gray-100 dark:border-slate-800 relative transition-all">
                             {/* Content Header Source Link */}
                             {article.source_type && (
-                                <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
-                                            <ExternalLink className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <div className="mb-12 p-6 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-[1.5rem] flex items-center justify-between group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                            <ExternalLink className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-widest">Linked Resource</p>
-                                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">This document is paired with {article.source_type} #{article.source_reference_id}</p>
+                                            <p className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase tracking-widest">Linked Resource</p>
+                                            <p className="text-sm text-blue-600 dark:text-blue-400 font-bold">This document is paired with {article.source_type} #{article.source_reference_id}</p>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="sm" className="rounded-full hover:bg-blue-100 dark:hover:bg-blue-800 text-blue-600">
+                                    <Button variant="ghost" size="sm" className="rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 font-bold">
                                         View Source
                                     </Button>
                                 </div>
@@ -508,32 +509,32 @@ export default function ArticleView({ publicView = false }) {
                                 ref={contentRef}
                                 className="prose prose-md sm:prose-lg lg:prose-xl dark:prose-invert max-w-none 
                                 selection:bg-blue-500/30
-                                [&_p]:leading-relaxed [&_p]:text-[#334155] dark:[&_p]:text-gray-300 [&_p]:mb-6
-                                [&_h2]:text-3xl [&_h2]:font-extrabold [&_h2]:tracking-tight [&_h2]:mt-12 [&_h2]:mb-6 [&_h2]:border-b [&_h2]:pb-2 [&_h2]:border-gray-100 dark:[&_h2]:border-gray-800
-                                [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mt-10 [&_h3]:mb-4
-                                [&_ul]:my-6 [&_ul]:list-none [&_ul_li]:relative [&_ul_li]:pl-7 [&_ul_li]:mb-4 
-                                [&_ul_li::before]:content-[''] [&_ul_li::before]:absolute [&_ul_li::before]:left-0 [&_ul_li::before]:top-[0.6em] [&_ul_li::before]:w-2 [&_ul_li::before]:h-2 [&_ul_li::before]:bg-blue-500 [&_ul_li::before]:rounded-full
-                                [&_ol]:my-6 [&_ol]:ml-6 [&_ol_li]:mb-4 [&_ol_li]:pl-2 [&_ol_li]:marker:text-blue-600 [&_ol_li]:marker:font-black
-                                [&_blockquote]:border-l-8 [&_blockquote]:border-blue-500/20 [&_blockquote]:bg-blue-50/30 dark:[&_blockquote]:bg-blue-900/10 [&_blockquote]:p-8 [&_blockquote]:rounded-r-3xl [&_blockquote]:italic [&_blockquote]:text-xl [&_blockquote]:my-10 [&_blockquote]:font-serif
-                                [&_code]:bg-gray-100 dark:[&_code]:bg-gray-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:font-mono [&_code]:text-red-600 dark:[&_code]:text-red-400 before:[&_code]:content-none after:[&_code]:content-none
-                                [&_pre]:p-6 [&_pre]:rounded-2xl [&_pre]:bg-[#0f172a] [&_pre]:shadow-xl [&_pre]:border [&_pre]:border-gray-800
-                                [&_img]:rounded-2xl [&_img]:shadow-2xl [&_img]:border [&_img]:border-gray-200 dark:[&_img]:border-gray-800 [&_img]:my-12
-                                [&_a]:text-blue-600 [&_a]:underline-offset-4 [&_a]:decoration-2 hover:[&_a]:text-blue-700
-                                [&_hr]:my-16 [&_hr]:border-gray-100 dark:[&_hr]:border-gray-800
+                                [&_p]:leading-relaxed [&_p]:text-slate-600 dark:[&_p]:text-slate-400 [&_p]:mb-8
+                                [&_h2]:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:mt-16 [&_h2]:mb-8 [&_h2]:border-b [&_h2]:pb-4 [&_h2]:border-gray-100 dark:[&_h2]:border-slate-800 [&_h2]:text-slate-900 dark:[&_h2]:text-white
+                                [&_h3]:text-2xl [&_h3]:font-black [&_h3]:mt-12 [&_h3]:mb-6 [&_h3]:text-slate-800 dark:[&_h3]:text-slate-100
+                                [&_ul]:my-8 [&_ul]:list-none [&_ul_li]:relative [&_ul_li]:pl-8 [&_ul_li]:mb-4 
+                                [&_ul_li::before]:content-[''] [&_ul_li::before]:absolute [&_ul_li::before]:left-0 [&_ul_li::before]:top-[0.6em] [&_ul_li::before]:w-2.5 [&_ul_li::before]:h-2.5 [&_ul_li::before]:bg-blue-600 [&_ul_li::before]:rounded-full
+                                [&_ol]:my-8 [&_ol]:ml-8 [&_ol_li]:mb-4 [&_ol_li]:pl-2 [&_ol_li]:marker:text-blue-600 [&_ol_li]:marker:font-black
+                                [&_blockquote]:border-l-[10px] [&_blockquote]:border-blue-500/20 [&_blockquote]:bg-blue-50/20 dark:[&_blockquote]:bg-blue-900/10 [&_blockquote]:p-10 [&_blockquote]:rounded-r-[2rem] [&_blockquote]:italic [&_blockquote]:text-2xl [&_blockquote]:my-12 [&_blockquote]:font-serif [&_blockquote]:text-slate-700 dark:[&_blockquote]:text-slate-300
+                                [&_code]:bg-slate-100 dark:[&_code]:bg-slate-800 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:text-sm [&_code]:font-bold [&_code]:text-indigo-600 dark:[&_code]:text-indigo-400 before:[&_code]:content-none after:[&_code]:content-none
+                                [&_pre]:p-8 [&_pre]:rounded-3xl [&_pre]:bg-slate-950 [&_pre]:shadow-2xl [&_pre]:border [&_pre]:border-white/5
+                                [&_img]:rounded-[2rem] [&_img]:shadow-2xl [&_img]:border [&_img]:border-gray-100 dark:[&_img]:border-slate-800 [&_img]:my-16
+                                [&_a]:text-blue-600 [&_a]:underline-offset-8 [&_a]:decoration-2 hover:[&_a]:text-blue-700 hover:[&_a]:decoration-blue-700 transition-all font-bold
+                                [&_hr]:my-20 [&_hr]:border-gray-100 dark:[&_hr]:border-slate-800
                             "
                                 dangerouslySetInnerHTML={{ __html: decodeHTMLContent(article.content) }}
                             />
 
                             {/* Article Footer Tags */}
                             {tags.length > 0 && (
-                                <div className="mt-20 pt-10 border-t border-gray-100 dark:border-gray-800">
-                                    <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Related Topics</p>
-                                    <div className="flex flex-wrap gap-2">
+                                <div className="mt-24 pt-12 border-t border-gray-100 dark:border-slate-800">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Article Taxonomy</p>
+                                    <div className="flex flex-wrap gap-3">
                                         {tags.map((tag, idx) => (
                                             <Badge
                                                 key={idx}
                                                 variant="secondary"
-                                                className="px-4 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800 hover:bg-blue-600 hover:text-white transition-all cursor-pointer border border-gray-100 dark:border-gray-700 font-bold"
+                                                className="px-5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all cursor-pointer border border-gray-100 dark:border-slate-800 font-bold text-xs"
                                                 onClick={() => {
                                                     const params = new URLSearchParams();
                                                     params.set('tags', tag);
@@ -541,7 +542,7 @@ export default function ArticleView({ publicView = false }) {
                                                     navigate(`/${username}/dashboard/kb?${params.toString()}`);
                                                 }}
                                             >
-                                                <Tag className="w-3.5 h-3.5 mr-2 opacity-50" />
+                                                <Tag className="w-3.5 h-3.5 mr-2 opacity-60" />
                                                 {tag}
                                             </Badge>
                                         ))}
@@ -554,73 +555,73 @@ export default function ArticleView({ publicView = false }) {
                     {/* Right Side: Meta Sidebar */}
                     <aside className="lg:col-span-4 space-y-8 print:hidden">
                         {/* Action Card */}
-                        <Card className="rounded-3xl border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden bg-white dark:bg-gray-800/40">
+                        <Card className="rounded-[2rem] border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardHeader className="bg-blue-600 py-6">
-                                <CardTitle className="text-white flex items-center gap-2">
-                                    <FileText className="w-5 h-5" />
-                                    Article Details
+                                <CardTitle className="text-white flex items-center gap-2 text-sm font-black uppercase tracking-widest">
+                                    <FileText className="w-4 h-4" />
+                                    Review Document
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="pt-6 space-y-6">
+                            <CardContent className="pt-8 space-y-6">
                                 {versions.length > 0 && (
                                     <div
-                                        className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer border border-gray-100 dark:border-gray-700"
+                                        className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all cursor-pointer border border-gray-100 dark:border-slate-800/50 group"
                                         onClick={() => setShowVersions(true)}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center border border-amber-200 dark:border-amber-800">
                                                 <History className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">Vers. {versions.length}</p>
-                                                <p className="text-xs text-gray-500 font-medium">Full History</p>
+                                                <p className="text-sm font-black text-slate-900 dark:text-white">Revision {versions.length}</p>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Version Control</p>
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 )}
 
-                                <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800/50">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-800">
                                         <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <div className="overflow-hidden">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{article.author_name || 'System'}</p>
-                                        <p className="text-xs text-gray-500 font-medium">Created By</p>
+                                        <p className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{article.author_name || 'System'}</p>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Document Lead</p>
                                     </div>
                                 </div>
 
-                                <Separator />
+                                <Separator className="bg-gray-100 dark:bg-slate-800" />
 
                                 <div className="space-y-4">
-                                    <p className="text-xs font-black uppercase tracking-widest text-gray-400">Quick Actions</p>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Operations</p>
+                                    <div className="grid grid-cols-2 gap-3">
                                         {!publicView && hasPermission(PERMISSIONS.KNOWLEDGE_BASE_UPDATE) && (
                                             <Button
                                                 variant="outline"
-                                                className="rounded-xl border-gray-200 dark:border-gray-700 h-11 font-bold"
+                                                className="rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95 transition-all text-slate-600 dark:text-slate-400"
                                                 onClick={() => navigate(`/${username}/dashboard/kb/${id}/edit`)}
                                             >
-                                                <Edit className="w-4 h-4 mr-2" />
+                                                <Edit className="w-3.5 h-3.5 mr-2" />
                                                 Edit
                                             </Button>
                                         )}
                                         <Button
                                             variant="outline"
-                                            className={`rounded-xl border-gray-200 dark:border-gray-700 h-11 font-bold ${publicView ? 'col-span-2' : ''}`}
+                                            className={`rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-slate-600 dark:text-slate-400 ${publicView ? 'col-span-2' : ''}`}
                                             onClick={() => window.print()}
                                         >
-                                            <Share2 className="w-4 h-4 mr-2" />
-                                            Print Article
+                                            <Share2 className="w-3.5 h-3.5 mr-2" />
+                                            Print
                                         </Button>
                                         {!publicView && hasPermission(PERMISSIONS.KNOWLEDGE_BASE_DELETE) && (
                                             <Button
                                                 variant="ghost"
-                                                className="rounded-xl h-11 font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 col-span-2"
+                                                className="rounded-xl h-11 font-black text-[10px] uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 col-span-2 active:scale-95 transition-all"
                                                 onClick={() => setDeleteDialog(true)}
                                             >
-                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                Remove Document
+                                                <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                                Remove Permanently
                                             </Button>
                                         )}
                                     </div>
@@ -628,21 +629,21 @@ export default function ArticleView({ publicView = false }) {
                             </CardContent>
                         </Card>
 
-                        {/* Table of Contents - Skeleton/Placeholder */}
-                        <div className="p-8 rounded-3xl bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-800">
-                            <h4 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400 mb-6">Reader Info</h4>
-                            <div className="space-y-4 text-sm font-medium text-gray-500">
+                        {/* Metadata Details */}
+                        <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Reading Metadata</h4>
+                            <div className="space-y-6 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                 <div className="flex items-center justify-between">
-                                    <span>Reading Time</span>
-                                    <span className="text-gray-900 dark:text-white">~4 mins</span>
+                                    <span>Pace</span>
+                                    <span className="text-slate-900 dark:text-white">~4 mins</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span>Word Count</span>
-                                    <span className="text-gray-900 dark:text-white">{article.content?.split(' ').length || 0} words</span>
+                                    <span>Quantity</span>
+                                    <span className="text-slate-900 dark:text-white">{article.content?.split(' ').length || 0} words</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span>Visibility</span>
-                                    <span className="capitalize text-blue-600">{article.visibility || 'All'}</span>
+                                    <span>Scope</span>
+                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border-none px-3 py-1 text-[9px]">{article.visibility || 'All'}</Badge>
                                 </div>
                             </div>
                         </div>
@@ -651,53 +652,49 @@ export default function ArticleView({ publicView = false }) {
 
                 {/* Version History Dialog - Premium Styled */}
                 <Dialog open={showVersions} onOpenChange={setShowVersions}>
-                    <DialogContent className="max-w-5xl h-[85vh] overflow-hidden flex flex-col p-0 rounded-3xl border-none shadow-2xl">
-                        <div className="p-8 bg-blue-600 flex items-center justify-between">
+                    <DialogContent className="max-w-5xl h-[85vh] overflow-hidden flex flex-col p-0 rounded-[2.5rem] border-none shadow-2xl dark:bg-slate-900">
+                        <div className="p-10 bg-blue-600 flex items-center justify-between">
                             <div>
-                                <h2 className="text-2xl font-black text-white mb-1">Article Version Control</h2>
-                                <p className="text-blue-100 text-sm font-medium">Review and compare previous iterations of this document.</p>
+                                <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Article Revision Engine</h2>
+                                <p className="text-blue-100 text-sm font-bold uppercase tracking-widest opacity-80">Chronological Archive & State Recovery</p>
                             </div>
-                            {/* <Button variant="ghost" className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0" onClick={() => setShowVersions(false)}>
-                            <X className="w-6 h-6" />
-                        </Button> */}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-8 bg-[#f8fafc] dark:bg-[#0f172a] space-y-8 scrollbar-thin">
+                        <div className="flex-1 overflow-y-auto p-10 bg-white dark:bg-slate-950 space-y-10 scrollbar-thin">
                             <AnimatePresence>
                                 {versions.map((version, idx) => (
                                     <motion.div
                                         key={version.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
+                                        transition={{ delay: idx * 0.05 }}
                                     >
-                                        <div className={`relative border-l-4 pl-8 pb-10 ${idx === 0 ? 'border-blue-500' : 'border-gray-200 dark:border-gray-800'}`}>
-                                            <div className={`absolute -left-2.5 top-0 w-4 h-4 rounded-full border-4 border-[#f8fafc] dark:border-[#0f172a] ${idx === 0 ? 'bg-blue-500 scale-125 shadow-lg shadow-blue-500/50' : 'bg-gray-300 dark:bg-gray-700'}`} />
+                                        <div className={`relative border-l-4 pl-10 pb-12 ${idx === 0 ? 'border-blue-600' : 'border-gray-100 dark:border-slate-800'}`}>
+                                            <div className={`absolute -left-2.5 top-0 w-4 h-4 rounded-full border-4 border-white dark:border-slate-950 ${idx === 0 ? 'bg-blue-600 scale-150 shadow-lg shadow-blue-500/50' : 'bg-gray-200 dark:bg-slate-700'}`} />
 
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div>
-                                                    <h3 className="text-lg font-black text-[#1e293b] dark:text-white flex items-center gap-3">
-                                                        Version {version.version_number}
-                                                        {idx === 0 && <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-none font-bold px-3">CURRENT LIVE VERSION</Badge>}
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div className="space-y-1">
+                                                    <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-4">
+                                                        Revision Layer {version.version_number}
+                                                        {idx === 0 && <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-black text-[10px] uppercase tracking-widest px-3 py-1">Active Snapshot</Badge>}
                                                     </h3>
-                                                    <div className="flex items-center gap-4 mt-1 text-sm font-medium text-gray-500">
-                                                        <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {version.editor_name || version.changed_by}</span>
-                                                        <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(version.created_at)}</span>
+                                                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                                        <span className="flex items-center gap-2"><User className="w-4 h-4 text-blue-500" /> {version.editor_name || version.changed_by}</span>
+                                                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500" /> {formatDate(version.created_at)}</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" className="rounded-xl border-gray-200 dark:border-gray-700 h-9 font-bold px-4 hover:bg-white dark:hover:bg-gray-800">
-                                                    Restore This
+                                                <Button variant="outline" className="rounded-xl border-gray-100 dark:border-slate-800 h-10 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm active:scale-95 transition-all text-slate-600 dark:text-slate-400">
+                                                    <RotateCcw className="w-3.5 h-3.5 mr-2" />
+                                                    Restore
                                                 </Button>
                                             </div>
 
-                                            <Card className="rounded-2xl border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-800/40">
-                                                <CardContent className="p-6">
-                                                    <div
-                                                        className="prose prose-sm dark:prose-invert max-w-none max-h-48 overflow-y-auto scrollbar-hide text-gray-600 dark:text-gray-400"
-                                                        dangerouslySetInnerHTML={{ __html: version.content_snapshot }}
-                                                    />
-                                                </CardContent>
-                                            </Card>
+                                            <div className="rounded-3xl border border-gray-100 dark:border-slate-800 shadow-inner bg-slate-50/50 dark:bg-slate-900/40 p-8 overflow-hidden">
+                                                <div
+                                                    className="prose prose-sm dark:prose-invert max-w-none max-h-64 overflow-y-auto scrollbar-hide text-slate-600 dark:text-slate-400 leading-relaxed font-medium"
+                                                    dangerouslySetInnerHTML={{ __html: version.content_snapshot }}
+                                                />
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -706,48 +703,55 @@ export default function ArticleView({ publicView = false }) {
                     </DialogContent>
                 </Dialog>
 
-                {/* Analytics Dialog */}
+                {/* Analytics Dialog - Premium Styled */}
                 <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
-                    <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5" />
-                                Article Analytics
-                            </DialogTitle>
-                            <DialogDescription>
-                                View detailed statistics and insights for this article
-                            </DialogDescription>
-                        </DialogHeader>
-                        <ArticleAnalytics articleId={id} />
+                    <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-[2.5rem] border-none shadow-2xl dark:bg-slate-900">
+                        <div className="p-10 bg-indigo-600">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-4 text-white text-3xl font-black tracking-tight">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                                        <BarChart3 className="w-7 h-7" />
+                                    </div>
+                                    Discovery Insights
+                                </DialogTitle>
+                                <DialogDescription className="text-indigo-100 text-sm font-bold uppercase tracking-widest opacity-80 mt-2">
+                                    Comprehensive Traffic Distribution & User Interaction Analytics
+                                </DialogDescription>
+                            </DialogHeader>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-10 bg-white dark:bg-slate-950 scrollbar-thin">
+                            <ArticleAnalytics articleId={id} />
+                        </div>
                     </DialogContent>
                 </Dialog>
 
-                {/* Delete Confirmation */}
+                {/* Delete Confirmation - Premium Styled */}
                 <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
-                    <DialogContent className="max-w-md rounded-3xl border-none shadow-2xl p-8">
-                        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6">
-                            <Trash2 className="w-8 h-8 text-red-600" />
+                    <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-900">
+                        <div className="p-10 bg-red-600">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6 scale-animate">
+                                <Trash2 className="w-10 h-10 text-white" />
+                            </div>
+                            <DialogHeader>
+                                <DialogTitle className="text-3xl font-black text-white mb-2 tracking-tight">Purge Document?</DialogTitle>
+                                <DialogDescription className="text-red-100 text-sm font-medium leading-relaxed opacity-90">
+                                    This will irrevocably remove <span className="font-black text-white underline decoration-2 underline-offset-4">"{article.title}"</span>. All indices, metadata, and version snapshots will be lost.
+                                </DialogDescription>
+                            </DialogHeader>
                         </div>
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-black text-gray-900 dark:text-white mb-2">Delete Permanently?</DialogTitle>
-                            <DialogDescription className="text-base text-gray-500 font-medium leading-relaxed">
-                                You are about to remove <span className="font-black text-gray-900 dark:text-white italic">"{article.title}"</span> from the knowledge base. This action will also purge all version history and linked feedback.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="mt-8 gap-3 sm:gap-0">
+                        <DialogFooter className="p-10 pt-0 flex-col sm:flex-row gap-4">
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 onClick={() => setDeleteDialog(false)}
-                                className="rounded-2xl h-12 flex-1 font-bold border-gray-200 dark:border-gray-700"
+                                className="rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                             >
-                                No, Keep it safely
+                                Negative, Abort
                             </Button>
                             <Button
-                                variant="destructive"
                                 onClick={handleDelete}
-                                className="bg-red-600 hover:bg-red-700 rounded-2xl h-12 flex-1 font-bold shadow-lg shadow-red-600/30"
+                                className="bg-red-600 hover:bg-red-700 text-white rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-red-500/30 active:scale-95 transition-all"
                             >
-                                Yes, Purge Document
+                                Execute Purge
                             </Button>
                         </DialogFooter>
                     </DialogContent>

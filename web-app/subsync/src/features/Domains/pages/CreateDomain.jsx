@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function AddDomain() {
   const navigate = useNavigate();
@@ -63,6 +64,30 @@ function AddDomain() {
     { value: "Microsoft 365", label: "Microsoft 365" },
     { value: "Others", label: "Others" },
   ];
+
+  const selectStyles = {
+    control: (base) => ({
+      ...base,
+      backgroundColor: "hsl(var(--background))",
+      borderColor: "hsl(var(--input))",
+      minHeight: "2.75rem",
+      borderRadius: "0.75rem",
+      fontSize: "0.875rem",
+      padding: "0px 8px",
+      boxShadow: "none",
+      "&:hover": { borderColor: "hsl(var(--ring))" },
+    }),
+    singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+    input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+    menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
+      color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+      "&:active": { backgroundColor: "hsl(var(--accent))" }
+    }),
+  };
 
   // Robust date parser: handles ISO dates and ensures yyyy-MM-dd format
   const parseToISODate = (dateString) => {
@@ -232,168 +257,267 @@ function AddDomain() {
   }, [defaultNameServerCount, isEditing]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <Breadcrumb
-        items={[
-          { label: "Domains", href: `/${location.pathname.split('/')[1]}/dashboard/domains` },
-          { label: isEditing ? 'Edit Domain' : 'New Domain' }
-        ]}
-        className="mb-4"
-      />
-      <div className="flex items-center gap-2 mb-2">
-        <h1 className="text-3xl font-bold">{isEditing ? "Edit Domain" : "Add Domain"}</h1>
-        <button
-          type="button"
-          className="ml-2 p-1 rounded hover:bg-gray-200"
-          title="Name Server Settings"
-          onClick={() => setShowNSSettings((v) => !v)}
-        >
-          <Settings size={20} />
-        </button>
-        {showNSSettings && (
-          <div className="ml-4 flex items-center gap-2 bg-gray-100 px-3 py-2 rounded shadow">
-            <span className="text-sm">Default Name Servers:</span>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={defaultNameServerCount}
-              onChange={e => {
-                const val = Math.max(1, Math.min(10, Number(e.target.value)));
-                setDefaultNameServerCount(val);
-                localStorage.setItem("defaultNameServerCount", val);
-              }}
-              className="w-16 px-2 py-1 border rounded"
-            />
-            <span className="text-xs text-gray-500">(applies to new domains)</span>
-          </div>
-        )}
-      </div>
-      <hr className="mb-6 border-blue-500" />
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+      <div className="mb-6 flex justify-between items-start">
         <div>
-          <Label>Status<span className="text-red-800">*</span></Label>
-          <div className="flex flex-row rounded-md shadow-sm w-max mt-2" role="group">
-            <Button
-              type="button"
-              variant={formData.domainStatus === "Active" ? "default" : "outline"}
-              className={`rounded-r-none ${formData.domainStatus === "Active" ? 'bg-green-600 hover:bg-green-700 text-white' : 'border-green-600 text-green-600 hover:bg-green-50'}`}
-              onClick={() => setFormData({ ...formData, domainStatus: "Active" })}
-            >
-              Active
-            </Button>
-            <Button
-              type="button"
-              variant={formData.domainStatus === "Expired" ? "destructive" : "outline"}
-              className={`rounded-l-none ${formData.domainStatus === "Expired" ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-600 text-red-600 hover:bg-red-50'}`}
-              onClick={() => setFormData({ ...formData, domainStatus: "Expired" })}
-            >
-              Expired
-            </Button>
-          </div>
-        </div>
-        <div>
-          <Label>Customer Name<span className="text-red-800">*</span></Label>
-          <Select
-            options={filteredCustomers}
-            inputValue={searchTerm}
-            onInputChange={(val, { action }) => {
-              if (action === "input-change") setSearchTerm(val);
-              if (action === "menu-close") setSearchTerm("");
-            }}
-            onChange={(s) => {
-              setFormData({ ...formData, customerId: s?.value || "" });
-              setSelectedCustomer(s || null);
-              setSearchTerm("");
-            }}
-            value={selectedCustomer}
-            placeholder="Search customer"
-            isClearable
+          <Breadcrumb
+            items={[
+              { label: "Domains", href: `/${location.pathname.split('/')[1]}/dashboard/domains` },
+              { label: isEditing ? 'Edit Domain' : 'New Domain' }
+            ]}
           />
-          {selectedCustomer && (
-            <p className="text-xs text-muted-foreground mt-1">Customer ID: {selectedCustomer.value}</p>
-          )}
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+            {isEditing ? "Edit Domain" : "New Domain"}
+          </h1>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label>Domain Name<span className="text-red-800">*</span></Label>
-            <Input required value={formData.domainName} onChange={(e) => setFormData({ ...formData, domainName: e.target.value })} />
-          </div>
-          <div>
-            <Label>Registration Date<span className="text-red-800">*</span></Label>
-            <Input type="date" required value={formData.registrationDate} onChange={(e) => setFormData({ ...formData, registrationDate: e.target.value })} />
-          </div>
-          <div>
-            <Label>Registered With<span className="text-red-800">*</span></Label>
-            <Select
-              options={registeredWithOptions}
-              value={registeredWithOptions.find(opt => opt.value === formData.registeredWith)}
-              onChange={(s) =>
-                setFormData({
-                  ...formData,
-                  registeredWith: s?.value || "",
-                  otherProvider: s?.value === "Others" ? formData.otherProvider : ""
-                })
-              }
-              isClearable
-              placeholder="Select registrar"
-            />
-          </div>
-          {formData.registeredWith === "Others" && (
-            <div>
-              <Label>Other Registrar</Label>
-              <Input value={formData.otherProvider} onChange={(e) => setFormData({ ...formData, otherProvider: e.target.value })} />
+        <div className="flex items-center gap-2">
+          {showNSSettings && (
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-800 px-3 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 animate-in fade-in slide-in-from-right-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400">Default NS Count:</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={defaultNameServerCount}
+                onChange={e => {
+                  const val = Math.max(1, Math.min(10, Number(e.target.value)));
+                  setDefaultNameServerCount(val);
+                  localStorage.setItem("defaultNameServerCount", val);
+                }}
+                className="w-12 h-7 px-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+              />
             </div>
           )}
-
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-xl border-gray-200 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            onClick={() => setShowNSSettings((v) => !v)}
+            title="Name Server Settings"
+          >
+            <Settings size={18} className="text-gray-500 dark:text-slate-400" />
+          </Button>
         </div>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+              Domain Status & Ownership
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="flex flex-col">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3">Domain Status <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <div className="inline-flex rounded-xl shadow-sm w-max p-1 bg-gray-100 dark:bg-slate-800/50" role="group">
+                  <Button
+                    type="button"
+                    className={`rounded-lg px-6 h-9 font-bold text-xs transition-all ${formData.domainStatus === "Active" ? 'bg-green-600 text-white shadow-sm' : 'bg-transparent text-gray-500 dark:text-slate-400 hover:text-green-600'}`}
+                    onClick={() => setFormData({ ...formData, domainStatus: "Active" })}
+                  >
+                    Active
+                  </Button>
+                  <Button
+                    type="button"
+                    className={`rounded-lg px-6 h-9 font-bold text-xs transition-all ${formData.domainStatus === "Expired" ? 'bg-red-600 text-white shadow-sm' : 'bg-transparent text-gray-500 dark:text-slate-400 hover:text-red-600'}`}
+                    onClick={() => setFormData({ ...formData, domainStatus: "Expired" })}
+                  >
+                    Expired
+                  </Button>
+                </div>
+              </div>
 
-        <div>
-          <Label>Name Servers</Label>
-          {formData.nameServers.map((ns, index) => (
-            <div key={index} className="flex items-center gap-2 mt-2">
-              <Input value={ns} onChange={(e) => handleNameServerChange(index, e.target.value)} placeholder="Enter name server" />
-              <Button variant="destructive" type="button" size="icon" onClick={() => removeNameServer(index)} disabled={formData.nameServers.length === 1}>
-                <Trash2 className="w-3 h-3" />
-              </Button>
-              {index === formData.nameServers.length - 1 && (
-                <Button type="button" size="icon" onClick={addNameServer}>
-                  <Plus className="w-3 h-3" />
-                </Button>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Customer Name <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <Select
+                  options={filteredCustomers}
+                  inputValue={searchTerm}
+                  onInputChange={(val, { action }) => {
+                    if (action === "input-change") setSearchTerm(val);
+                    if (action === "menu-close") setSearchTerm("");
+                  }}
+                  onChange={(s) => {
+                    setFormData({ ...formData, customerId: s?.value || "" });
+                    setSelectedCustomer(s || null);
+                    setSearchTerm("");
+                  }}
+                  value={selectedCustomer}
+                  placeholder="Identify the domain owner..."
+                  isClearable
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+                {selectedCustomer && (
+                  <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-2">ID: {selectedCustomer.value}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+              Technical Specifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Domain Name <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <Input
+                  required
+                  value={formData.domainName}
+                  onChange={(e) => setFormData({ ...formData, domainName: e.target.value })}
+                  placeholder="example.com"
+                  className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Registration Date <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <Input
+                  type="date"
+                  required
+                  value={formData.registrationDate}
+                  onChange={(e) => setFormData({ ...formData, registrationDate: e.target.value })}
+                  className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Registered With <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <Select
+                  options={registeredWithOptions}
+                  value={registeredWithOptions.find(opt => opt.value === formData.registeredWith)}
+                  onChange={(s) =>
+                    setFormData({
+                      ...formData,
+                      registeredWith: s?.value || "",
+                      otherProvider: s?.value === "Others" ? formData.otherProvider : ""
+                    })
+                  }
+                  isClearable
+                  placeholder="Select registrar..."
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+              </div>
+              {formData.registeredWith === "Others" && (
+                <div>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Other Registrar</Label>
+                  <Input
+                    value={formData.otherProvider}
+                    onChange={(e) => setFormData({ ...formData, otherProvider: e.target.value })}
+                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                  />
+                </div>
               )}
             </div>
-          ))}
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label>Mail Services<span className="text-red-800">*</span></Label>
-            <Select
-              options={mailServicesOptions}
-              value={mailServicesOptions.find(opt => opt.value === formData.mailServices)}
-              onChange={(s) => setFormData({ ...formData, mailServices: s?.value || "" })}
-              isClearable
-              placeholder="Select mail service"
-            />
-          </div>
-          {formData.mailServices === "Others" && (
-            <div>
-              <Label>Other Mail Service</Label>
-              <Input value={formData.mailServicesOther} onChange={(e) => setFormData({ ...formData, mailServicesOther: e.target.value })} />
+            <div className="pt-4 border-t border-gray-50 dark:border-slate-800">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Name Servers</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {formData.nameServers.map((ns, index) => (
+                  <div key={index} className="flex items-center gap-2 group animate-in fade-in slide-in-from-top-1">
+                    <div className="relative flex-1">
+                      <Input
+                        value={ns}
+                        onChange={(e) => handleNameServerChange(index, e.target.value)}
+                        placeholder={`Name Server ${index + 1}`}
+                        className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        size="icon"
+                        onClick={() => removeNameServer(index)}
+                        disabled={formData.nameServers.length === 1}
+                        className="h-10 w-10 rounded-xl border-gray-200 dark:border-slate-800 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      {index === formData.nameServers.length - 1 && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          onClick={addNameServer}
+                          className="h-10 w-10 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
-        <div>
-          <Label>Description (optional)</Label>
-          <Textarea rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-        </div>
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+              Email & Narrative
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Mail Services <span className="text-red-500 font-bold ml-1">*</span></Label>
+                <Select
+                  options={mailServicesOptions}
+                  value={mailServicesOptions.find(opt => opt.value === formData.mailServices)}
+                  onChange={(s) => setFormData({ ...formData, mailServices: s?.value || "" })}
+                  isClearable
+                  placeholder="Select mail service..."
+                  styles={selectStyles}
+                  menuPortalTarget={document.body}
+                  menuPosition="fixed"
+                />
+              </div>
+              {formData.mailServices === "Others" && (
+                <div>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Other Mail Service</Label>
+                  <Input
+                    value={formData.mailServicesOther}
+                    onChange={(e) => setFormData({ ...formData, mailServicesOther: e.target.value })}
+                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+                  />
+                </div>
+              )}
+            </div>
 
-        <div className="pt-6">
-          <Button type="submit" className="ml-4 bg-blue-500">{isEditing ? "Update Domain" : "Create Domain"}</Button>
-          <Button type="button" variant="secondary" className="ml-4" onClick={() => navigate(-1)}>
+            <div>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Description (optional)</Label>
+              <Textarea
+                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Internal notes about this domain..."
+                className="rounded-[1.5rem] p-4 font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white resize-none"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end items-center gap-4 pt-4 pb-12">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+          >
             Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isEditing ? "Update Domain" : "Create Domain"}
           </Button>
         </div>
       </form>

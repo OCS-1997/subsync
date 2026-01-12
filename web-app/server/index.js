@@ -46,7 +46,8 @@ app.use(cors({
         `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
         `http://localhost`, // allows requests from your Nginx frontend (port 80)
         `http://127.0.0.1`,
-        `http://ocs365.in`
+        `http://ocs365.in`,
+        `http://localhost:4173`,
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization"],

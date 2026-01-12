@@ -75,13 +75,13 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
         const content = (
             <div
                 className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-all group",
+                    "flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 group relative",
                     isSelected
-                        ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800",
-                    isCollapsed && "px-0 justify-center h-10 w-10 mx-auto mb-1"
+                        ? "bg-blue-600 dark:bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400",
+                    isCollapsed && "px-0 justify-center h-12 w-12 mx-auto mb-2"
                 )}
-                style={!isCollapsed ? { paddingLeft: `${level * 16 + 12}px` } : {}}
+                style={!isCollapsed ? { paddingLeft: `${level * 16 + 16}px` } : {}}
                 onClick={() => onCategorySelect(String(category.id))}
             >
                 {!isCollapsed && hasChildren && (
@@ -90,12 +90,15 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
                             e.stopPropagation();
                             toggleExpand(category.id);
                         }}
-                        className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-transform"
+                        className={cn(
+                            "p-1 rounded-lg transition-all",
+                            isSelected ? "hover:bg-white/20" : "hover:bg-slate-100 dark:hover:bg-slate-700"
+                        )}
                     >
                         {isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronDown className="w-3.5 h-3.5" />
                         ) : (
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3.5 h-3.5" />
                         )}
                     </button>
                 )}
@@ -104,24 +107,33 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
 
                 {isExpanded || isSelected ? (
                     <FolderOpen className={cn(
-                        "w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 transition-transform",
-                        isCollapsed && "w-5 h-5"
+                        "w-4 h-4 flex-shrink-0 transition-all",
+                        isCollapsed && "w-6 h-6",
+                        isSelected ? "text-white" : "text-blue-600 dark:text-blue-400"
                     )} />
                 ) : (
                     <Folder className={cn(
-                        "w-4 h-4 text-gray-500 flex-shrink-0 transition-transform",
-                        isCollapsed && "w-5 h-5"
+                        "w-4 h-4 flex-shrink-0 transition-all opacity-60 group-hover:opacity-100",
+                        isCollapsed && "w-6 h-6"
                     )} />
                 )}
 
                 {!isCollapsed && (
                     <>
-                        <span className="flex-1 text-sm font-medium truncate">
+                        <span className={cn(
+                            "flex-1 text-[11px] font-black uppercase tracking-widest truncate",
+                            isSelected ? "text-white" : "text-inherit"
+                        )}>
                             {category.name}
                         </span>
 
                         {(category.article_count !== undefined && category.article_count > 0) && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex-shrink-0">
+                            <span className={cn(
+                                "text-[9px] font-black px-2 py-0.5 rounded-lg flex-shrink-0 transition-colors",
+                                isSelected
+                                    ? "bg-white/20 text-white"
+                                    : "bg-slate-100 dark:bg-slate-950 text-slate-400 group-hover:bg-blue-600 group-hover:text-white"
+                            )}>
                                 {category.article_count}
                             </span>
                         )}
@@ -183,19 +195,19 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
                         <TooltipTrigger asChild>
                             <div
                                 className={cn(
-                                    "flex items-center justify-center h-10 w-10 mx-auto mb-4 rounded-md cursor-pointer transition-all",
+                                    "flex items-center justify-center h-12 w-12 mx-auto mb-6 rounded-2xl cursor-pointer transition-all duration-300 shadow-sm",
                                     !selectedCategoryId
-                                        ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
-                                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                                        : "bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                                 )}
                                 onClick={() => onCategorySelect(null)}
                             >
-                                <FileText className="w-5 h-5 flex-shrink-0" />
+                                <FileText className="w-6 h-6 flex-shrink-0" />
                             </div>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="flex items-center gap-2">
-                            <span>All Articles</span>
-                            <span className="bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-tight">
+                        <TooltipContent side="right" className="flex items-center gap-3">
+                            <span className="font-black text-[10px] uppercase tracking-widest">Master Archive</span>
+                            <span className="bg-blue-600 text-white px-2 py-0.5 rounded-lg text-[10px] uppercase font-black tracking-tight">
                                 {totalArticles}
                             </span>
                         </TooltipContent>
@@ -203,22 +215,35 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
                 ) : (
                     <div
                         className={cn(
-                            "flex items-center gap-2 px-3 py-2 mb-2 rounded-md cursor-pointer transition-colors",
+                            "flex items-center gap-3 px-4 py-3 mb-4 rounded-2xl cursor-pointer transition-all duration-300 group",
                             !selectedCategoryId
-                                ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
-                                : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                         )}
                         onClick={() => onCategorySelect(null)}
                     >
-                        <FileText className="w-4 h-4 flex-shrink-0" />
-                        <span className="flex-1 text-sm font-medium">All Articles</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex-shrink-0">
+                        <FileText className={cn(
+                            "w-4 h-4 flex-shrink-0",
+                            !selectedCategoryId ? "text-white" : "text-blue-600 dark:text-blue-400"
+                        )} />
+                        <span className={cn(
+                            "flex-1 text-[11px] font-black uppercase tracking-widest truncate",
+                            !selectedCategoryId ? "text-white" : "text-inherit"
+                        )}>
+                            Master Archive
+                        </span>
+                        <span className={cn(
+                            "text-[9px] font-black px-2 py-0.5 rounded-lg flex-shrink-0 transition-colors",
+                            !selectedCategoryId
+                                ? "bg-white/20 text-white"
+                                : "bg-slate-100 dark:bg-slate-950 text-slate-400 group-hover:bg-blue-600 group-hover:text-white"
+                        )}>
                             {totalArticles}
                         </span>
                     </div>
                 )}
 
-                {!isCollapsed && <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />}
+                {!isCollapsed && <div className="h-px bg-slate-100 dark:bg-slate-800 my-6 mx-2" />}
 
                 {/* Category Tree */}
                 <div className={cn("space-y-1", isCollapsed && "space-y-2")}>

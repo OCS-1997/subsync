@@ -223,6 +223,43 @@ const CountrySelect = React.forwardRef(({ value, onChange, className, ...props }
             placeholder="Select code"
             isClearable
             isSearchable
+            menuPortalTarget={typeof document !== "undefined" ? document.body : null}
+            menuPosition="fixed"
+            styles={{
+                control: (base) => ({
+                    ...base,
+                    backgroundColor: "transparent",
+                    borderColor: "transparent",
+                    minHeight: "100%",
+                    borderRadius: "0.65rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "700",
+                    boxShadow: "none",
+                    "&:hover": { borderColor: "transparent" },
+                }),
+                singleValue: (base) => ({ ...base, color: "inherit" }),
+                input: (base) => ({ ...base, color: "inherit" }),
+                menu: (base) => ({
+                    ...base,
+                    backgroundColor: "hsl(var(--popover))",
+                    borderRadius: "1rem",
+                    border: "1px solid hsl(var(--border))",
+                    padding: "4px",
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"
+                }),
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                option: (base, state) => ({
+                    ...base,
+                    borderRadius: "0.5rem",
+                    margin: "2px 0",
+                    backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
+                    color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
+                    fontWeight: "600",
+                    fontSize: "0.75rem",
+                    "&:active": { backgroundColor: "hsl(var(--accent))" }
+                }),
+                valueContainer: (base) => ({ ...base, padding: "0 12px" }),
+            }}
             {...props}
         />
     );

@@ -5,34 +5,34 @@ import { useEffect, useState } from "react";
 import api from "@/lib/axiosInstance.js";
 
 const VendorOtherDetails = ({
- vendorData,
- handleInputChange,
- handleSelectChange,
- taxRates = [],
- countries,
- states,
- setStates,
- isIndia, // <-- accept isIndia prop
+  vendorData,
+  handleInputChange,
+  handleSelectChange,
+  taxRates = [],
+  countries,
+  states,
+  setStates,
+  isIndia, // <-- accept isIndia prop
 }) => {
- const currencyOptions = [
-  "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN",
-  "BAM", "BBD", "BDT", "BGN", "BHD", "BIF", "BMD", "BND", "BOB", "BRL",
-  "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF", "CHF", "CLP", "CNY",
-  "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP",
-  "ERN", "ETB", "EUR", "FJD", "FKP", "FOK", "GBP", "GEL", "GGP", "GHS",
-  "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD", "HNL", "HRK", "HTG", "HUF",
-  "IDR", "ILS", "IMP", "INR", "IQD", "IRR", "ISK", "JEP", "JMD", "JOD",
-  "JPY", "KES", "KGS", "KHR", "KID", "KMF", "KRW", "KWD", "KYD", "KZT",
-  "LAK", "LBP", "LKR", "LRD", "LSL", "LYD", "MAD", "MDL", "MGA", "MKD",
-  "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN", "MYR", "MZN",
-  "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK",
-  "PHP", "PKR", "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR",
-  "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE", "SOS", "SRD", "SSP",
-  "STN", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD",
-  "TVD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VES", "VND",
-  "VUV", "WST", "XAF", "XCD", "XDR", "XOF", "XPF", "YER", "ZAR", "ZMW",
-  "ZWL"
-];
+  const currencyOptions = [
+    "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN",
+    "BAM", "BBD", "BDT", "BGN", "BHD", "BIF", "BMD", "BND", "BOB", "BRL",
+    "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF", "CHF", "CLP", "CNY",
+    "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP",
+    "ERN", "ETB", "EUR", "FJD", "FKP", "FOK", "GBP", "GEL", "GGP", "GHS",
+    "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD", "HNL", "HRK", "HTG", "HUF",
+    "IDR", "ILS", "IMP", "INR", "IQD", "IRR", "ISK", "JEP", "JMD", "JOD",
+    "JPY", "KES", "KGS", "KHR", "KID", "KMF", "KRW", "KWD", "KYD", "KZT",
+    "LAK", "LBP", "LKR", "LRD", "LSL", "LYD", "MAD", "MDL", "MGA", "MKD",
+    "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN", "MYR", "MZN",
+    "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK",
+    "PHP", "PKR", "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR",
+    "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE", "SOS", "SRD", "SSP",
+    "STN", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD",
+    "TVD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VES", "VND",
+    "VUV", "WST", "XAF", "XCD", "XDR", "XOF", "XPF", "YER", "ZAR", "ZMW",
+    "ZWL"
+  ];
 
   const taxPreferenceOptions = ["Taxable", "Tax Exempt"];
 
@@ -134,23 +134,22 @@ const VendorOtherDetails = ({
     <div className="space-y-6">
       {/* AddressSection is now only in the Address tab, not here */}
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* GST Treatment full width, all options visible */}
+      <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
         <div className="space-y-2 md:col-span-1">
-          <Label>GST Treatment<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2 block">GST Treatment<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={gstTreatmentValue}
             onValueChange={(value) => handleSelectChange("gst_treatment", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300 text-left ">
-              <SelectValue placeholder="Select treatment" className="text-left" />
+            <SelectTrigger className="w-full h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
+              <SelectValue placeholder="Select treatment" />
             </SelectTrigger>
-            <SelectContent className="w-full min-w-[350px] max-w-full">
+            <SelectContent className="w-full min-w-[350px] max-w-full dark:bg-slate-900 dark:border-slate-800">
               {gstTreatmentOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="whitespace-normal break-words min-h-[3.5rem] py-2">
+                <SelectItem key={opt.value} value={opt.value} className="whitespace-normal break-words min-h-[3.5rem] py-2 dark:hover:bg-slate-800">
                   <div>
-                    <div className="font-sans ">{opt.label}</div>
-                    <div className="text-xs text-gray-500 whitespace-pre-line">{opt.description}</div>
+                    <div className="font-bold text-sm text-gray-900 dark:text-white">{opt.label}</div>
+                    <div className="text-[10px] text-gray-500 dark:text-slate-400 whitespace-pre-line leading-relaxed">{opt.description}</div>
                   </div>
                 </SelectItem>
               ))}
@@ -158,11 +157,10 @@ const VendorOtherDetails = ({
           </Select>
         </div>
 
-        {/* GSTIN */}
         <div className="space-y-2">
-          <Label htmlFor="gstin">
+          <Label htmlFor="gstin" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2 block">
             GSTIN
-            {requiresGSTIN && <span className="text-red-800">*</span>}
+            {requiresGSTIN && <span className="text-red-500 font-bold ml-1">*</span>}
           </Label>
           <Input
             id="gstin"
@@ -172,64 +170,62 @@ const VendorOtherDetails = ({
             required={requiresGSTIN}
             disabled={!requiresGSTIN}
             placeholder={requiresGSTIN ? "Enter GSTIN" : "GSTIN not required"}
-            className="rounded-xl px-4 py-3 text-base border border-gray-300"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white disabled:bg-gray-50 dark:disabled:bg-slate-950 disabled:text-gray-400 dark:disabled:text-slate-600"
           />
           {!requiresGSTIN && (
-            <p className="text-sm text-gray-500 ml-2">
-              GSTIN not required for selected treatment/country (using GST_NA)
+            <p className="text-[10px] font-medium text-gray-400 dark:text-slate-500 italic ml-1">
+              GSTIN not required for selected treatment/country
             </p>
           )}
         </div>
 
-        {/* Currency Code */}
         <div className="space-y-2">
-          <Label>Currency Code<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2 block">Currency Code<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={currencyValue}
             onValueChange={(value) => handleSelectChange("currencyCode", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300">
+            <SelectTrigger className="w-full h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
               <SelectValue placeholder="Select currency" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
               {currencyOptions.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                <SelectItem key={opt} value={opt} className="font-bold text-xs">{opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Tax Preference parallel to Currency Code */}
         <div className="space-y-2">
-          <Label>Tax Preference<span className="text-red-800">*</span></Label>
+          <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2 block">Tax Preference<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Select
             value={vendorData.tax_preference || ""}
             onValueChange={(value) => handleSelectChange("tax_preference", value)}
           >
-            <SelectTrigger className="w-full rounded-xl px-4 py-3 text-base border border-gray-300">
+            <SelectTrigger className="w-full h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white">
               <SelectValue placeholder="Select tax preference" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
               {taxPreferenceOptions.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                <SelectItem key={opt} value={opt} className="font-bold text-xs">{opt}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-  {/* Tax Exemption Reason remains below if needed */}
+      {/* Tax Exemption Reason remains below if needed */}
 
       {vendorData.tax_preference === "Tax Exempt" && (
-        <div className="space-y-2">
-          <Label htmlFor="exemption_reason">Tax Exemption Reason<span className="text-red-800">*</span></Label>
+        <div className="space-y-2 mt-6">
+          <Label htmlFor="exemption_reason" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2 block">Tax Exemption Reason<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="exemption_reason"
             name="exemption_reason"
             value={vendorData.exemption_reason}
             onChange={handleInputChange}
             required
-            className="rounded-xl px-4 py-3 text-base border border-gray-300"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       )}

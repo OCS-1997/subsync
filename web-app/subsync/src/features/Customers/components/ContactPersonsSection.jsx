@@ -31,43 +31,43 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
 
   return (
     <div className="space-y-6">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border border-gray-300 rounded-md overflow-hidden">
-          <thead className="bg-gray-100 text-gray-700">
+      <div className="overflow-x-auto rounded-[1.5rem] border border-gray-200 dark:border-slate-800">
+        <table className="w-full text-sm text-left border-collapse">
+          <thead className="bg-gray-50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">
             <tr>
-              <th className="px-4 py-2 border-r">Salutation</th>
-              <th className="px-4 py-2 border-r">First Name</th>
-              <th className="px-4 py-2 border-r">Last Name</th>
-              <th className="px-4 py-2 border-r">Designation</th>
-              <th className="px-4 py-2 border-r">
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">Salutation</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">First Name</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">Last Name</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">Designation</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger className="underline decoration-dotted">
                       Email Address (i)
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-slate-900 text-white border-slate-700">
                       Check box to select if communication had to go to that email id too
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </th>
-              <th className="px-4 py-2 border-r">Phone</th>
-              <th className="px-4 py-2 border-r">Birthday</th>
-              <th className="px-4 py-2">Actions</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">Phone</th>
+              <th className="px-6 py-4 border-b border-r border-gray-200 dark:border-slate-800">Birthday</th>
+              <th className="px-6 py-4 border-b border-gray-200 dark:border-slate-800">Actions</th>
             </tr>
           </thead>
           <tbody>
             {contactPersons.map((person, index) => (
-              <tr key={`contact-${index}-${person.email || index}`} className="even:bg-gray-50">
-                <td className="px-4 py-2 border-r">
+              <tr key={`contact-${index}-${person.email || index}`} className="bg-white dark:bg-slate-900 group">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Select
                     value={person.salutation || "Mr."}
                     onValueChange={(value) => handleInputChange(index, "salutation", value)}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800">
                       <SelectItem value="Mr.">Mr.</SelectItem>
                       <SelectItem value="Ms.">Ms.</SelectItem>
                       <SelectItem value="Mrs.">Mrs.</SelectItem>
@@ -75,10 +75,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     </SelectContent>
                   </Select>
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Input
                     value={person.first_name || ""}
                     onChange={(e) => handleInputChange(index, "first_name", e.target.value)}
+                    className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -87,10 +88,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     }}
                   />
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Input
                     value={person.last_name || ""}
                     onChange={(e) => handleInputChange(index, "last_name", e.target.value)}
+                    className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -99,10 +101,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     }}
                   />
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Input
                     value={person.designation || ""}
                     onChange={(e) => handleInputChange(index, "designation", e.target.value)}
+                    className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -111,10 +114,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     }}
                   />
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
+                      className="w-4 h-4 accent-blue-600 rounded"
                       checked={!!person.include_in_communication}
                       onChange={(e) => {
                         e.stopPropagation();
@@ -129,6 +133,7 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                       autoComplete="email"
                       autoCorrect="off"
                       spellCheck={false}
+                      className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                       value={person.email || ""}
                       onChange={(e) => handleInputChange(index, "email", e.target.value)}
                       onKeyDown={(e) => {
@@ -140,12 +145,13 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     />
                   </div>
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Input
                     type="tel"
                     inputMode="tel"
                     value={person.phone_number || ""}
                     onChange={(e) => handleInputChange(index, "phone_number", e.target.value)}
+                    className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -154,11 +160,12 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     }}
                   />
                 </td>
-                <td className="px-4 py-2 border-r">
+                <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <Input
                     type="date"
                     value={person.birthday || ""}
                     onChange={(e) => handleInputChange(index, "birthday", e.target.value)}
+                    className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -167,11 +174,12 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                     }}
                   />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-4 py-3 border-b border-gray-100 dark:border-slate-800/50">
                   <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
                       <input
                         type="checkbox"
+                        className="w-4 h-4 accent-blue-600 rounded"
                         checked={!!person.email_send}
                         onChange={(e) => {
                           e.stopPropagation();
@@ -180,7 +188,7 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
                       />
-                      <span>Email Send</span>
+                      <span className="text-xs font-medium text-gray-600 dark:text-slate-400">Email Send</span>
                     </label>
                     <Button
                       variant="destructive"
@@ -202,7 +210,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
         </table>
       </div>
 
-      <Button onClick={addContactPerson} type="button">
+      <Button
+        onClick={addContactPerson}
+        type="button"
+        className="mt-6 bg-blue-600 hover:bg-blue-700 h-10 px-6 rounded-xl font-black uppercase tracking-widest text-[10px]"
+      >
         <UserPlus className="mr-2 h-4 w-4" /> Add Contact
       </Button>
     </div>

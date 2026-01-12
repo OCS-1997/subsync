@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button";
-import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 import BasicDetailsSection from "../components/BasicDetailsSection";
 import PurchaseInfoSection from "../components/PurchaseInfoSection";
@@ -252,49 +253,86 @@ const AddService = () => {
   };
 
   return (
-    <>
-      <Breadcrumb
-        items={[
-          { label: "Services", href: `/${location.pathname.split('/')[1]}/dashboard/services` },
-          { label: isEditing ? 'Edit Service' : 'New Service' }
-        ]}
-        className="mt-3 mb-4"
-      />
-      <form className="space-y-6 p-6" onSubmit={handleSubmit}>
-        <h1 className="text-3xl font-bold">{isEditing ? "Edit Service" : "New Service"}</h1>
-        <hr className="mb-2 border-blue-500 border-1 size-auto" />
-        <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />
+    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+      <div className="mb-6">
+        <Breadcrumb
+          items={[
+            { label: "Services", href: `/${location.pathname.split('/')[1]}/dashboard/services` },
+            { label: isEditing ? 'Edit Service' : 'New Service' }
+          ]}
+        />
+        <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+          {isEditing ? "Edit Service" : "New Service"}
+        </h1>
+      </div>
 
-        <hr className="mb-4 border-gray-500 border-1 size-auto" />
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* Basic Details */}
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+          <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">
+              Basic Identification
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-6">
+            <BasicDetailsSection formData={formData} setFormData={setFormData} serviceError={serviceError} />
+          </CardContent>
+        </Card>
 
+        {/* Sales and Purchase Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <SalesInfoSection data={salesInfo} setData={setSalesInfo} />
-          </div>
-          <div>
-            <PurchaseInfoSection
-              data={purchaseInfo}
-              setData={setPurchaseInfo}
-              vendors={vendors}
-              isLoadingVendors={isLoadingVendors}
-              vendorsError={vendorsError}
-              fetchVendors={() => dispatch(fetchVendors())}
-            />
-          </div>
+          <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                Sales Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 pb-10">
+              <SalesInfoSection data={salesInfo} setData={setSalesInfo} />
+            </CardContent>
+          </Card>
+
+          <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                Purchase Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-8 pb-10">
+              <PurchaseInfoSection
+                data={purchaseInfo}
+                setData={setPurchaseInfo}
+                vendors={vendors}
+                isLoadingVendors={isLoadingVendors}
+                vendorsError={vendorsError}
+                fetchVendors={() => dispatch(fetchVendors())}
+              />
+            </CardContent>
+          </Card>
         </div>
 
-        <hr className="mb-4 border-gray-500 border-1 size-auto" />
-
+        {/* Tax Rates */}
         <DefaultTaxRatesSection defaultTaxRates={defaultTaxRates} setDefaultTaxRates={setDefaultTaxRates} />
 
-        <div className="flex justify-end gap-4 pt-4">
-          <Button type="submit" className="bg-blue-500" disabled={isSubmittingService}>
+        <div className="flex justify-end items-center gap-4 pt-4 pb-12">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] border-gray-200 dark:border-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmittingService}
+            className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
+          >
             {isSubmittingService ? (isEditing ? "Updating..." : "Saving...") : (isEditing ? "Update Service" : "Save Service")}
           </Button>
-          <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
         </div>
       </form>
-    </>
+    </div>
   );
 };
 

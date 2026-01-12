@@ -10,7 +10,7 @@ const createSubscription = async (req, res) => {
     const ipAddress = req.ip || null;
     const userId = req.user?.id || null;
     const result = await addSubscription(req.body, username, ipAddress);
-    
+
     // Enqueue reminders if subscription has end_date
     try {
       await enqueueReminders(result.subId, userId);
@@ -18,7 +18,7 @@ const createSubscription = async (req, res) => {
       console.error('Error enqueueing reminders for new subscription:', reminderError);
       // Don't fail the subscription creation if reminder enqueueing fails
     }
-    
+
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: result.subId, ipAddress: req.ip, details: req.body });
     }
@@ -43,7 +43,7 @@ const getSubscriptionsController = async (req, res) => {
       limit,
       statusFilter,
       soonDays: soonDays ? parseInt(soonDays, 10) : 30,
-      archivedOnly: archivedOnly === 'true'
+      archivedOnly: archivedOnly === 'true' || archivedOnly === true
     });
 
     const totalPages = Math.ceil((totalCount || 0) / limit);
@@ -83,10 +83,10 @@ const updateSubscriptionController = async (req, res) => {
     const username = req.user?.username || null;
     const ipAddress = req.ip || null;
     const userId = req.user?.id || null;
-    
+
     // Check if end_date or reminder_policy_id is being updated
     const needsRequeue = req.body.end_date !== undefined || req.body.reminder_policy_id !== undefined;
-    
+
     if (needsRequeue) {
       // Cancel existing pending jobs
       try {
@@ -95,9 +95,9 @@ const updateSubscriptionController = async (req, res) => {
         console.error('Error cancelling pending reminder jobs:', cancelError);
       }
     }
-    
+
     await updateSubscriptionById(id, req.body, username, ipAddress);
-    
+
     // Re-enqueue reminders if end_date or reminder_policy_id changed
     if (needsRequeue) {
       try {
@@ -107,7 +107,7 @@ const updateSubscriptionController = async (req, res) => {
         // Don't fail the update if reminder enqueueing fails
       }
     }
-    
+
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'UPDATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip, details: req.body });
     }
@@ -151,12 +151,12 @@ const getSubscriptionHistoryController = async (req, res) => {
     const { id } = req.params;
     const { page = 1, limit = 50 } = req.query;
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    
+
     const [history, totalCount] = await Promise.all([
       getSubscriptionHistory(id, { limit: parseInt(limit, 10), offset }),
       getSubscriptionHistoryCount(id)
     ]);
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -166,19 +166,19 @@ const getSubscriptionHistoryController = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getSubscriptionHistoryController:", error.message);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch subscription history' 
+      error: error.message || 'Failed to fetch subscription history'
     });
   }
 };
 
-export { 
-  getSubscriptionsController, 
-  createSubscription, 
-  getSubscriptionByIdController, 
-  updateSubscriptionController, 
-  deleteSubscriptionController, 
-  sendReminderController, 
-  getSubscriptionHistoryController 
+export {
+  getSubscriptionsController,
+  createSubscription,
+  getSubscriptionByIdController,
+  updateSubscriptionController,
+  deleteSubscriptionController,
+  sendReminderController,
+  getSubscriptionHistoryController
 };

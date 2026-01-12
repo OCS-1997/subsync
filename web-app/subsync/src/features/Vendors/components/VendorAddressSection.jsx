@@ -12,7 +12,7 @@ const VendorAddressSection = ({
   handleSelectChange,
   countries,
   states = [],
-  setStates = () => {}, // fallback to no-op if not provided
+  setStates = () => { }, // fallback to no-op if not provided
   isIndia = false, // new prop
 }) => {
   const countryOptions = countries && Array.isArray(countries) && countries.length > 0
@@ -39,27 +39,27 @@ const VendorAddressSection = ({
   // Handle both object and string values for country
   const getCountryValue = () => {
     if (!address.country) return "IN"; // Default to India
-    
+
     // If country is an object with value property
     if (typeof address.country === 'object' && address.country.value) {
       return address.country.value;
     }
-    
+
     // If country is a string
     return address.country;
   };
-  
+
   const countryValue = getCountryValue();
-  
+
   // Handle both object and string values for state
   const getStateValue = () => {
     if (!address.state) return null;
-    
+
     // If state is an object with value property
     if (typeof address.state === 'object' && address.state.value) {
       return address.state.value;
     }
-    
+
     // If state is a string or has a different structure
     return address.state;
   };
@@ -68,9 +68,9 @@ const VendorAddressSection = ({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
-        <div className="flex flex-col mb-4 md:col-span-12">
-          <Label htmlFor="addressLine" className="mb-2">Address Line<span className="text-red-800">*</span></Label>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-6 mb-8">
+        <div className="flex flex-col md:col-span-12">
+          <Label htmlFor="addressLine" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Address Line<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="addressLine"
             type="text"
@@ -78,15 +78,15 @@ const VendorAddressSection = ({
             value={address.addressLine || ""}
             onChange={handleInputChange}
             required
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="country" className="mb-2">
-            Country<span className="text-red-800">*</span>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-6 mb-8">
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="country" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">
+            Country<span className="text-red-500 font-bold ml-1">*</span>
           </Label>
           <Select
             id="country"
@@ -94,12 +94,12 @@ const VendorAddressSection = ({
             options={countryOptions}
             value={Array.isArray(countryOptions)
               ? countryOptions.find(option => {
-                  // Handle both object and string values
-                  if (typeof address.country === 'object' && address.country.value) {
-                    return option.value === address.country.value;
-                  }
-                  return option.value === countryValue;
-                }) || null
+                // Handle both object and string values
+                if (typeof address.country === 'object' && address.country.value) {
+                  return option.value === address.country.value;
+                }
+                return option.value === countryValue;
+              }) || null
               : null}
             onChange={selectedOption => {
               handleSelectChange("address.country", selectedOption);
@@ -110,14 +110,35 @@ const VendorAddressSection = ({
                 setStates([]);
               }
             }}
-            className="react-select-container shadow-sm"
+            className="react-select-container"
             classNamePrefix="react-select"
+            styles={{
+              control: (base) => ({
+                ...base,
+                backgroundColor: "hsl(var(--background))",
+                borderColor: "hsl(var(--input))",
+                minHeight: "2.75rem",
+                borderRadius: "0.75rem",
+                fontSize: "0.875rem",
+                padding: "0px 8px",
+                boxShadow: "none",
+                "&:hover": { borderColor: "hsl(var(--ring))" },
+              }),
+              singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+              input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+              menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused ? "hsl(var(--accent))" : "transparent",
+                color: state.isFocused ? "hsl(var(--accent-foreground))" : "hsl(var(--foreground))",
+              }),
+            }}
           />
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="state" className="mb-2">
-            State<span className="text-red-800">*</span>
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="state" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">
+            State<span className="text-red-500 font-bold ml-1">*</span>
           </Label>
           {isIndia ? (
             <Select
@@ -126,16 +147,37 @@ const VendorAddressSection = ({
               options={states}
               value={Array.isArray(states)
                 ? states.find(option => {
-                    // Handle both object and string values
-                    if (typeof address.state === 'object' && address.state) {
-                      return option.value === address.state.value;
-                    }
-                    return option.value === stateValue;
-                  }) || null
+                  // Handle both object and string values
+                  if (typeof address.state === 'object' && address.state) {
+                    return option.value === address.state.value;
+                  }
+                  return option.value === stateValue;
+                }) || null
                 : null}
               onChange={handleStateChange}
-              className="react-select-container shadow-sm"
+              className="react-select-container"
               classNamePrefix="react-select"
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  backgroundColor: "hsl(var(--background))",
+                  borderColor: "hsl(var(--input))",
+                  minHeight: "2.75rem",
+                  borderRadius: "0.75rem",
+                  fontSize: "0.875rem",
+                  padding: "0px 8px",
+                  boxShadow: "none",
+                  "&:hover": { borderColor: "hsl(var(--ring))" },
+                }),
+                singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
+                input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
+                menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isFocused ? "hsl(var(--accent))" : "transparent",
+                  color: state.isFocused ? "hsl(var(--accent-foreground))" : "hsl(var(--foreground))",
+                }),
+              }}
             />
           ) : (
             <Input
@@ -146,15 +188,15 @@ const VendorAddressSection = ({
               onChange={handleInputChange}
               required
               placeholder="Enter State/Province"
-              className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
             />
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-4 mb-4">
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="city" className="mb-2">City<span className="text-red-800">*</span></Label>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-6 mb-8">
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="city" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">City<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="city"
             type="text"
@@ -162,12 +204,12 @@ const VendorAddressSection = ({
             value={address.city || ""}
             onChange={handleInputChange}
             required
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
 
-        <div className="flex flex-col mb-4 md:col-span-6">
-          <Label htmlFor="zipCode" className="mb-2">Zip Code<span className="text-red-800">*</span></Label>
+        <div className="flex flex-col md:col-span-6">
+          <Label htmlFor="zipCode" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-2">Zip Code<span className="text-red-500 font-bold ml-1">*</span></Label>
           <Input
             id="zipCode"
             type="text"
@@ -175,7 +217,7 @@ const VendorAddressSection = ({
             value={address.zipCode || ""}
             onChange={handleInputChange}
             required
-            className="rounded-lg px-4 py-2 text-base border border-input focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="rounded-xl h-11 px-4 text-sm font-bold bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>
