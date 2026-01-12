@@ -202,18 +202,18 @@ function SideBar({ isOpen, toggleSidebar }) {
           {isOpen ? (
             <div className="flex items-center justify-between w-full">
               <div
-                className="flex items-center gap-2 px-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
+                className="flex items-center gap-3 px-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
                 onClick={toggleSidebar}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
               >
-                <div className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center p-1.5 group-hover/header:rotate-6 transition-transform">
-                  <img src="/logo.png" alt="RMS" className="w-full h-full object-contain brightness-100 contrast-125" />
+                <div className="w-11 h-11 bg-white shadow-lg rounded-xl flex items-center justify-center p-1 group-hover/header:rotate-6 transition-transform overflow-hidden">
+                  <img src="/pwa-192x192.png" alt="Subsync" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter leading-none">RMS CRM</span>
-                  <span className="text-[10px] text-blue-200 mt-1 uppercase tracking-widest font-black opacity-80">OCS System</span>
+                  <span className="text-xl font-black tracking-tighter leading-none">OCS</span>
+                  <span className="text-[10px] text-blue-200 mt-1 uppercase tracking-widest font-black opacity-80">CRM Platform</span>
                 </div>
               </div>
 
@@ -234,8 +234,8 @@ function SideBar({ isOpen, toggleSidebar }) {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
             >
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 p-2 shadow-inner group-hover/header:scale-110 transition-transform">
-                <img src="/logo.png" alt="R" className="w-full h-full object-contain invert brightness-0" />
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
+                <img src="/pwa-192x192.png" alt="S" className="w-full h-full object-contain" />
               </div>
             </div>
           )}

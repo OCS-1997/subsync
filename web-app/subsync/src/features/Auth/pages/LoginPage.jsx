@@ -1,10 +1,10 @@
-import { Eye, EyeOff, Lock, User, LayoutDashboard, ShieldCheck, BarChart3, Globe, Zap } from "lucide-react";
+import { Eye, EyeOff, Lock, User, LayoutDashboard, ShieldCheck, BarChart3, Globe, Zap, Calendar } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast, Bounce } from "react-toastify";
 import { useState, useEffect } from "react";
 import { loginUser } from "../authSlice";
-import { getActiveFestival } from "../../../utils/festivalThemes";
+import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
 import * as LucideIcons from "lucide-react";
 
 function LoginPage() {
@@ -79,9 +79,17 @@ function LoginPage() {
             <h1 className="text-5xl font-extrabold text-white leading-tight mb-6">
               {festival ? festival.wish : <>Empower Your <span className="text-blue-200 italic">Organisation</span> Pipeline</>}
             </h1>
-            <p className={`text-xl leading-relaxed max-w-lg mb-10 ${festival ? festival.colors.accent : 'text-blue-100/90'}`}>
+            <p className={`text-xl leading-relaxed max-w-lg ${festival ? 'mb-4' : 'mb-10'} ${festival ? festival.colors.accent : 'text-blue-100/90'}`}>
               {festival ? festival.subWish : "The next-generation CRM designed for scalability, intelligence, and seamless workflow management."}
             </p>
+            {festival && (
+              <div className="flex items-center gap-3 mb-10 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit">
+                <Calendar size={16} className="text-white/80" />
+                <span className="text-sm font-semibold text-white/90 tracking-wide">
+                  {getFestivalDateString(festival)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Feature Grid */}

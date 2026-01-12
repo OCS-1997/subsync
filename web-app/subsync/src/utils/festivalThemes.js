@@ -352,25 +352,61 @@ const festivals = [
 ];
 
 /**
+ * Number of days before the festival starts when the theme should activate.
+ * This creates a "pre-festival" buffer for early celebrations.
+ */
+const DAYS_BEFORE_FESTIVAL = 3;
+
+/**
  * Returns the currently active festival based on the date.
+ * The theme activates DAYS_BEFORE_FESTIVAL days before the start date
+ * and stays active until the end date of the festival.
  * @param {Date} date - The date to check (defaults to now).
  * @returns {Object|null} The active festival theme or null.
  */
 export const getActiveFestival = (date = new Date()) => {
-    const month = date.getMonth();
-    const day = date.getDate();
+    const currentYear = date.getFullYear();
+    const currentTime = date.getTime();
 
     return festivals.find(f => {
-        // Exact day check
-        if (f.start.month === f.end.month && f.start.day === f.end.day) {
-            return month === f.start.month && day === f.start.day;
-        }
+        // Calculate the actual start date (with pre-festival buffer)
+        const festivalStartDate = new Date(currentYear, f.start.month, f.start.day);
+        const themeStartDate = new Date(festivalStartDate);
+        themeStartDate.setDate(themeStartDate.getDate() - DAYS_BEFORE_FESTIVAL);
 
-        // Range check (simplified for within same year)
-        const startDate = new Date(date.getFullYear(), f.start.month, f.start.day);
-        const endDate = new Date(date.getFullYear(), f.end.month, f.end.day);
-        const currentDate = new Date(date.getFullYear(), month, day);
+        // Calculate the end date (festival ends at the end of the day)
+        const festivalEndDate = new Date(currentYear, f.end.month, f.end.day, 23, 59, 59, 999);
 
-        return currentDate >= startDate && currentDate <= endDate;
+        // Check if current date falls within the extended range
+        return currentTime >= themeStartDate.getTime() && currentTime <= festivalEndDate.getTime();
     }) || null;
+};
+
+/**
+ * Returns a formatted date string for a festival.
+ * @param {Object} festival - The festival object with start and end dates.
+ * @param {number} year - The year to use (defaults to current year).
+ * @returns {string} Formatted date string (e.g., "Jan 14" or "Jan 14 - 17").
+ */
+export const getFestivalDateString = (festival, year = new Date().getFullYear()) => {
+    if (!festival) return '';
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startMonth = months[festival.start.month];
+    const endMonth = months[festival.end.month];
+    const startDay = festival.start.day;
+    const endDay = festival.end.day;
+
+    // Single day festival
+    if (festival.start.month === festival.end.month && startDay === endDay) {
+        return `${startMonth} ${startDay}, ${year}`;
+    }
+
+    // Multi-day festival within the same month
+    if (festival.start.month === festival.end.month) {
+        return `${startMonth} ${startDay} - ${endDay}, ${year}`;
+    }
+
+    // Multi-day festival spanning multiple months
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
 };
