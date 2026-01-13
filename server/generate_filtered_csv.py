@@ -187,7 +187,7 @@ def generate_customer_import_csv(input_csv_path, output_csv_path="customers_for_
 # --- Script Execution ---
 if __name__ == "__main__":
     # Define your input and output file paths
-    input_file = "C:\\Users\\krish\\Desktop\\Programming\\Self Projects\\subsync\\web-app\\server\\Contacts.csv"
-    output_file = "C:\\Users\\krish\\Desktop\\Programming\\Self Projects\\subsync\\web-app\\server\\filtered_customers_data.csv"
+    input_file = "Contacts.csv"
+    output_file = "filtered_customers_data.csv"
 
     generate_customer_import_csv(input_file, output_file)

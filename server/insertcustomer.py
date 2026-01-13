@@ -31,7 +31,7 @@ def generate_customer_id(dt_object):
 COUNTRY_NAME_TO_CODE = { "India": "IN", "South Africa": "ZA", "United Arab Emirates": "AE", }
 
 # Load CSV
-CSV_FILE_PATH = "C:\\Users\\krish\\Desktop\\Programming\\Self Projects\\subsync\\web-app\\server\\generate_filtered_csv.csv"
+CSV_FILE_PATH = "generate_filtered_csv.csv"
 df = None
 try:
     df = pd.read_csv(CSV_FILE_PATH)
