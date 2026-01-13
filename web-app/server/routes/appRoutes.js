@@ -170,10 +170,6 @@ router.delete('/delete-item-group/:id', isAuthenticated, authorize(PERMISSIONS.S
 
 // Subscriptions
 router.post('/subscription/:id/reminder', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), sendReminderController);
-router.get('/subscriptions/archived', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), (req, res, next) => {
-    req.query.archivedOnly = 'true';
-    next();
-}, getSubscriptionsController);
 router.get('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionsController);
 router.post('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_CREATE), createSubscription);
 router.get('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionByIdController);

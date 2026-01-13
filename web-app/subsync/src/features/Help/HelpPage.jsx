@@ -331,10 +331,6 @@ export default function HelpPage() {
             answer: "In the Opportunities module, click 'Create' and select 'New Customer Entry'. You can enter the customer's name, company, and contact details directly without creating a separate customer record first. These details stay with the opportunity until you're ready to convert them."
         },
         {
-            question: "What happens when a subscription is archived?",
-            answer: "Archiving a subscription stops all automated reminder emails and removes it from the 'Active' list. You can still view archived records in the 'Archived Subscriptions' view for audit purposes or to restore them if needed."
-        },
-        {
             question: "How do automated reminders work?",
             answer: "Reminders are governed by 'Reminder Policies' (found in Settings). You can define when to send emails (e.g., 7 days before expiry, on expiry day). The system automatically queues these based on the subscription's end date."
         },

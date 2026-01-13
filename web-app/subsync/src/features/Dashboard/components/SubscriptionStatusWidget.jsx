@@ -5,7 +5,7 @@ import KPICard from './KPICard.jsx';
 function SubscriptionStatusWidget({ data }) {
     if (!data) return null;
 
-    const { active, soon_expiring, expired, archived } = data;
+    const { active, soon_expiring, expired } = data;
 
     return (
         <Card>
@@ -16,7 +16,7 @@ function SubscriptionStatusWidget({ data }) {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <KPICard
                         title="Active"
                         value={active}
@@ -31,11 +31,6 @@ function SubscriptionStatusWidget({ data }) {
                         title="Expired"
                         value={expired}
                         className="border-red-200 bg-red-50"
-                    />
-                    <KPICard
-                        title="Archived"
-                        value={archived}
-                        className="border-gray-200 bg-gray-50"
                     />
                 </div>
             </CardContent>
