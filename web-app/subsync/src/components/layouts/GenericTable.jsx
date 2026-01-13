@@ -102,7 +102,7 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                           "text-slate-700 dark:text-slate-300 text-sm font-bold"
                         )}
                       >
-                        {isStatus ? (
+                        {isStatus && typeof val === 'string' ? (
                           <span className={cn(
                             "inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
                             String(val).toLowerCase() === "active" || String(val).toLowerCase() === "published"

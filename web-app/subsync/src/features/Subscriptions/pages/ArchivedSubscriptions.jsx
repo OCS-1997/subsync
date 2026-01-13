@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -197,6 +197,7 @@ export default function ArchivedSubscriptions({ onEdit }) {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('end_date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [fetchError, setFetchError] = useState(null);
 
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -204,6 +205,7 @@ export default function ArchivedSubscriptions({ onEdit }) {
   const [renewDialog, setRenewDialog] = useState({ open: false, subId: null, newEndDate: "" });
 
   const debounceTimeout = useRef();
+  const fetchIdRef = useRef(0); // Track fetch requests to handle race conditions
   const username = pathname.split('/')[1] || 'user';
 
   useEffect(() => {
@@ -215,10 +217,18 @@ export default function ArchivedSubscriptions({ onEdit }) {
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
 
-  const fetchData = async (opts = {}) => {
+  // Memoized fetch function to prevent stale closures
+  const fetchData = useCallback(async (overridePage) => {
+    // Increment fetch ID to track this specific request
+    const currentFetchId = ++fetchIdRef.current;
+
     try {
       setLoading(true);
-      const targetPage = opts.page || page;
+      setFetchError(null);
+
+      // Use override page if provided, otherwise use current page state
+      const targetPage = overridePage !== undefined ? overridePage : page;
+
       const params = new URLSearchParams();
       params.set('page', targetPage.toString());
       if (debouncedSearch) params.set('search', debouncedSearch);
@@ -227,26 +237,105 @@ export default function ArchivedSubscriptions({ onEdit }) {
       params.set('sort', serverSort);
       params.set('order', sortOrder);
 
+      console.log('[ArchivedSubscriptions] Fetching data with params:', {
+        page: targetPage,
+        search: debouncedSearch,
+        sort: serverSort,
+        order: sortOrder,
+        fetchId: currentFetchId
+      });
+
       const res = await api.get(`/subscriptions/archived?${params.toString()}`);
 
-      const data = res.data.dataArray || [];
-      setSubscriptions(data);
-      setTotalPages(res.data.totalPages || 1);
-      setTotalRecords(res.data.totalCount || 0);
+      // Race condition protection: only update state if this is the latest fetch
+      if (currentFetchId !== fetchIdRef.current) {
+        console.log('[ArchivedSubscriptions] Stale response discarded, fetchId:', currentFetchId, 'current:', fetchIdRef.current);
+        return;
+      }
+
+      console.log('[ArchivedSubscriptions] Raw API response:', res.data);
+      console.log('[ArchivedSubscriptions] Response type:', typeof res.data);
+      console.log('[ArchivedSubscriptions] Response keys:', res.data ? Object.keys(res.data) : 'null');
+
+      // CRITICAL FIX: Normalize API response - handle multiple possible response structures
+      // The API might return data under different keys depending on version/endpoint
+      const rawData = res.data;
+      let dataArray = [];
+
+      // Try multiple possible response structures
+      if (Array.isArray(rawData)) {
+        // Response is the array directly
+        console.log('[ArchivedSubscriptions] Response is array, using directly');
+        dataArray = rawData;
+      } else if (rawData && typeof rawData === 'object') {
+        // Response is an object, try common keys
+        console.log('[ArchivedSubscriptions] Response is object, extracting dataArray');
+        dataArray = rawData.dataArray || rawData.data || rawData.subscriptions || rawData.items || [];
+        console.log('[ArchivedSubscriptions] Extracted dataArray:', dataArray);
+      }
+
+      // Ensure we have an array
+      if (!Array.isArray(dataArray)) {
+        console.warn('[ArchivedSubscriptions] dataArray is not an array, defaulting to empty:', dataArray);
+        dataArray = [];
+      }
+
+      console.log('[ArchivedSubscriptions] Processed data:', {
+        count: dataArray.length,
+        firstItem: dataArray[0],
+        totalPages: rawData.totalPages,
+        totalCount: rawData.totalCount,
+        currentPage: rawData.currentPage
+      });
+
+      console.log('[ArchivedSubscriptions] Setting state with:', {
+        subscriptionsCount: dataArray.length,
+        totalPages: rawData.totalPages || Math.ceil((rawData.totalCount || dataArray.length) / 10) || 1,
+        totalRecords: rawData.totalCount || dataArray.length || 0
+      });
+
+      setSubscriptions(dataArray);
+      setTotalPages(rawData.totalPages || Math.ceil((rawData.totalCount || dataArray.length) / 10) || 1);
+      setTotalRecords(rawData.totalCount || dataArray.length || 0);
+
+      // Additional logging after state update
+      console.log('[ArchivedSubscriptions] State should now be updated');
 
     } catch (err) {
+      // Race condition protection
+      if (currentFetchId !== fetchIdRef.current) {
+        return;
+      }
+
+      console.error('[ArchivedSubscriptions] Fetch error:', {
+        message: err.message,
+        normalizedStatus: err.normalizedStatus,
+        normalizedMessage: err.normalizedMessage,
+        response: err.response?.data,
+        stack: err.stack
+      });
+
       setSubscriptions([]);
+      setTotalPages(1);
+      setTotalRecords(0);
+      setFetchError(err);
+
+      // Always log the error, only show toast for non-404 errors
       if (err.normalizedStatus !== 404) {
         toast.error(err.normalizedMessage || 'Failed to sync with archive vault');
       }
     } finally {
-      setLoading(false);
+      // Only set loading false if this is still the current fetch
+      if (currentFetchId === fetchIdRef.current) {
+        setLoading(false);
+      }
     }
-  };
+  }, [page, sortBy, sortOrder, debouncedSearch]);
 
+  // Trigger fetch when dependencies change
   useEffect(() => {
     fetchData();
-  }, [page, sortBy, sortOrder, debouncedSearch]);
+  }, [fetchData]);
 
   const handleUnarchive = async (subId) => {
     try {
@@ -284,6 +373,37 @@ export default function ArchivedSubscriptions({ onEdit }) {
         description="Encrypted vault of terminated service contracts and historical domain identities."
         breadcrumbItems={[{ label: "Archive Vault" }]}
       />
+
+      {/* DEBUG PANEL - REMOVE AFTER FIXING */}
+      <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-500 rounded-xl p-4 text-xs font-mono">
+        <strong className="text-yellow-800 dark:text-yellow-300">🔍 DEBUG STATE:</strong>
+        <div className="mt-2 space-y-1 text-yellow-700 dark:text-yellow-400">
+          <div>loading: <span className="font-bold">{String(loading)}</span></div>
+          <div>subscriptions.length: <span className="font-bold">{subscriptions.length}</span></div>
+          <div>totalRecords: <span className="font-bold">{totalRecords}</span></div>
+          <div>totalPages: <span className="font-bold">{totalPages}</span></div>
+          <div>fetchError: <span className="font-bold">{fetchError ? fetchError.message : 'null'}</span></div>
+          <div>page: <span className="font-bold">{page}</span></div>
+          <div>debouncedSearch: <span className="font-bold">"{debouncedSearch}"</span></div>
+          <div>sortBy: <span className="font-bold">{sortBy}</span></div>
+          <div>sortOrder: <span className="font-bold">{sortOrder}</span></div>
+          {subscriptions.length > 0 && (
+            <>
+              <div className="mt-2 pt-2 border-t border-yellow-400">
+                <div className="font-bold mb-1">First Subscription Data:</div>
+                <div className="pl-2 space-y-0.5">
+                  <div>sub_id: {subscriptions[0].sub_id}</div>
+                  <div>status: {subscriptions[0].status}</div>
+                  <div>dynamic_status: {subscriptions[0].dynamic_status}</div>
+                  <div>archived_at: {subscriptions[0].archived_at || 'NULL'}</div>
+                  <div>domain_name: {subscriptions[0].domain_name}</div>
+                  <div>customer_name: {subscriptions[0].customer_name}</div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Premium Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -350,7 +470,7 @@ export default function ArchivedSubscriptions({ onEdit }) {
             <p className="text-slate-500 max-w-sm mx-auto mt-3 text-sm font-medium leading-relaxed">
               {debouncedSearch
                 ? "Zero historical records matching your current query parameters."
-                : "Terminated contracts will appear here for historical reference and restoration."}
+                : "No subscriptions have been manually archived yet. Archived subscriptions are contracts that have been explicitly moved to the archive vault, not just expired ones. Use the 'Archive' action on subscriptions to move them here."}
             </p>
           </div>
         ) : (

@@ -154,7 +154,7 @@ function DefaultTaxPreference() {
 
                                         {selected.intra?.kind && (
                                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Assigned Mapping</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Slect Tax Group</label>
                                                 <Select value={selected.intra?.id || ""} onValueChange={(v) => setSelected(s => ({ ...s, intra: { ...s.intra, id: v } }))}>
                                                     <SelectTrigger className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-emerald-500/20 font-bold px-6">
                                                         <SelectValue placeholder={`Choose a ${selected.intra?.kind}`} />
@@ -211,7 +211,7 @@ function DefaultTaxPreference() {
 
                                         {selected.inter?.kind && (
                                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Assigned Mapping</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Select Tax</label>
                                                 <Select value={selected.inter?.id || ""} onValueChange={(v) => setSelected(s => ({ ...s, inter: { ...s.inter, id: v } }))}>
                                                     <SelectTrigger className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-blue-500/20 font-bold px-6">
                                                         <SelectValue placeholder={`Choose a ${selected.inter?.kind}`} />
@@ -265,7 +265,7 @@ function DefaultTaxPreference() {
                                             <div className="h-8 w-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
                                                 <CheckCircle className="h-5 w-5 text-emerald-500" />
                                             </div>
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Regional Manifest</h3>
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Current Intra State Default</h3>
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500 w-fit">{preferences.intra?.kind} Mapping</span>
@@ -281,7 +281,7 @@ function DefaultTaxPreference() {
                                             <div className="h-8 w-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
                                                 <CheckCircle className="h-5 w-5 text-blue-500" />
                                             </div>
-                                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Global Manifest</h3>
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Current Inter State Default</h3>
                                         </div>
                                         <div className="flex flex-col gap-2">
                                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-500 w-fit">{preferences.inter?.kind} Mapping</span>

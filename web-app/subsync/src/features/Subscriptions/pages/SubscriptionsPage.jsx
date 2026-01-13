@@ -35,7 +35,7 @@ export default function SubscriptionsPage() {
             )}
           >
             <LayoutGrid className="h-4 w-4" />
-            Active Manifest
+            Active Subscriptions
           </button>
           <button
             onClick={() => handleTabChange("archived")}
@@ -47,7 +47,7 @@ export default function SubscriptionsPage() {
             )}
           >
             <Archive className="h-4 w-4" />
-            Archive Vault
+            Archived Subscriptions
           </button>
         </div>
 

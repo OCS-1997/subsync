@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { ArrowLeft, Download, RotateCcw, Search, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, RotateCcw, Search, Loader2, Filter, History, Database, Clock, HardDrive, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -14,6 +14,7 @@ import { PERMISSIONS } from '@/constants/permissions.js';
 import api from '@/lib/axiosInstance.js';
 import Hamster from '@/components/animations/Hamster.jsx';
 import Pagination from '@/components/layouts/Pagination.jsx';
+import { cn } from "@/lib/utils";
 
 export default function BackupHistory() {
     const navigate = useNavigate();
@@ -81,7 +82,6 @@ export default function BackupHistory() {
                 responseType: 'blob'
             });
 
-            // Get filename from content-disposition header or use default
             const contentDisposition = response.headers['content-disposition'];
             let filename = 'backup.sql.gz';
             if (contentDisposition) {
@@ -91,7 +91,6 @@ export default function BackupHistory() {
                 }
             }
 
-            // Create blob and download
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -135,204 +134,265 @@ export default function BackupHistory() {
     const getStatusBadge = (status) => {
         switch (status) {
             case 'completed':
-                return <Badge className="bg-green-500">Completed</Badge>;
+                return (
+                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 font-bold text-[10px] uppercase tracking-wider px-3 py-1">
+                        Completed
+                    </Badge>
+                );
             case 'failed':
-                return <Badge className="bg-red-500">Failed</Badge>;
+                return (
+                    <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-none hover:bg-red-500/20 font-bold text-[10px] uppercase tracking-wider px-3 py-1">
+                        Failed
+                    </Badge>
+                );
             case 'in_progress':
-                return <Badge className="bg-blue-500">In Progress</Badge>;
+                return (
+                    <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none animate-pulse font-bold text-[10px] uppercase tracking-wider px-3 py-1">
+                        In Progress
+                    </Badge>
+                );
             case 'queued':
-                return <Badge variant="secondary">Queued</Badge>;
+                return (
+                    <Badge variant="secondary" className="font-bold text-[10px] uppercase tracking-wider px-3 py-1">
+                        Queued
+                    </Badge>
+                );
             default:
-                return <Badge variant="secondary">{status}</Badge>;
+                return (
+                    <Badge variant="secondary" className="font-bold text-[10px] uppercase tracking-wider px-3 py-1">
+                        {status}
+                    </Badge>
+                );
         }
     };
 
     if (loading && history.length === 0) {
-        return <Hamster />;
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Hamster />
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto p-6">
-            <PageHeader
-                title="Backup History"
-                description="View and manage backup history"
-                breadcrumbItems={[
-                    { label: "Backups", href: `/${username}/dashboard/backups` },
-                    { label: "History" }
-                ]}
-                actions={
-                    <Button variant="ghost" onClick={() => navigate(`/${username}/dashboard/backups`)}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Backups
-                    </Button>
-                }
-            />
+        <div className="min-h-screen bg-slate-50/30 dark:bg-transparent px-4 sm:px-8 py-8">
+            <div className="max-w-[1600px] mx-auto space-y-8">
+                <PageHeader
+                    title="Backup History"
+                    description="Audit trail of all system backups and restoration events"
+                    breadcrumbItems={[
+                        { label: "Backups", href: `/${username}/dashboard/backups` },
+                        { label: "History" }
+                    ]}
+                    actions={
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate(`/${username}/dashboard/backups`)}
+                            className="rounded-xl hover:bg-white dark:hover:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back to Backups
+                        </Button>
+                    }
+                />
 
-            {/* Filters */}
-            <div className="mb-4 flex gap-4">
-                <div className="flex-1">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input
-                            placeholder="Search backups..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
+                {/* Filter Bar */}
+                <div className="flex flex-col lg:flex-row gap-6 items-center px-1">
+                    <div className="flex flex-1 gap-6 w-full items-center">
+                        <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+                            <Search className="text-slate-400 h-5 w-5 mr-3" />
+                            <Input
+                                placeholder="Search backup history..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="border-none bg-transparent shadow-none focus-visible:ring-0 text-base p-0 w-full"
+                            />
+
+                            <div className="h-10 w-[1px] bg-slate-100 dark:bg-slate-800 mx-4" />
+
+                            <Select value={selectedConfigId} onValueChange={(value) => {
+                                setSelectedConfigId(value);
                                 setCurrentPage(1);
-                            }}
-                            className="pl-10"
-                        />
+                            }}>
+                                <SelectTrigger className="w-56 border-none bg-transparent shadow-none focus:ring-0 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="h-3.5 w-3.5" />
+                                        <SelectValue placeholder="All Clusters" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-2xl p-2">
+                                    <SelectItem value="all" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">All Configurations</SelectItem>
+                                    {configs.map((config) => (
+                                        <SelectItem key={config.id} value={config.id.toString()} className="rounded-xl my-1 mx-1 font-bold text-xs uppercase">
+                                            {config.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <div className="h-10 w-[1px] bg-slate-100 dark:bg-slate-800 mx-4" />
+
+                            <Select value={statusFilter} onValueChange={(value) => {
+                                setStatusFilter(value);
+                                setCurrentPage(1);
+                            }}>
+                                <SelectTrigger className="w-44 border-none bg-transparent shadow-none focus:ring-0 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="h-3.5 w-3.5" />
+                                        <SelectValue />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-2xl p-2">
+                                    <SelectItem value="all" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">All Status</SelectItem>
+                                    <SelectItem value="completed" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">Completed</SelectItem>
+                                    <SelectItem value="failed" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">Failed</SelectItem>
+                                    <SelectItem value="in_progress" className="rounded-xl my-1 mx-1 font-bold text-[10px] uppercase tracking-widest">In Progress</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
-                <Select value={selectedConfigId} onValueChange={(value) => {
-                    setSelectedConfigId(value);
-                    setCurrentPage(1);
-                }}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="All Configurations" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Configurations</SelectItem>
-                        {configs.map((config) => (
-                            <SelectItem key={config.id} value={config.id.toString()}>
-                                {config.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={(value) => {
-                    setStatusFilter(value);
-                    setCurrentPage(1);
-                }}>
-                    <SelectTrigger className="w-[150px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="queued">Queued</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
 
-            {/* Table */}
-            <div className="border rounded-lg">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Configuration</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Started</TableHead>
-                            <TableHead>Completed</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead>Size</TableHead>
-                            <TableHead>Database</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {history.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                    No backup history found
-                                </TableCell>
+                {/* Premium Table */}
+                <div className="bg-white dark:bg-gray-800/20 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <Table>
+                        <TableHeader className="bg-gray-50/50 dark:bg-slate-900/50">
+                            <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14">Configuration</TableHead>
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14">Status</TableHead>
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14">Timeline</TableHead>
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14">Metrics</TableHead>
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14">Target</TableHead>
+                                <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 h-14 text-right">Actions</TableHead>
                             </TableRow>
-                        ) : (
-                            history.map((entry) => (
-                                <TableRow key={entry.id}>
-                                    <TableCell className="font-medium">{entry.config_name || 'N/A'}</TableCell>
-                                    <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                                    <TableCell>
-                                        {entry.started_at
-                                            ? new Date(entry.started_at).toLocaleString()
-                                            : 'N/A'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {entry.completed_at
-                                            ? new Date(entry.completed_at).toLocaleString()
-                                            : 'N/A'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {entry.duration_seconds
-                                            ? `${entry.duration_seconds}s`
-                                            : 'N/A'}
-                                    </TableCell>
-                                    <TableCell>{formatFileSize(entry.file_size)}</TableCell>
-                                    <TableCell>{entry.database_name || 'N/A'}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            {canDownload && entry.status === 'completed' && entry.file_path && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleDownload(entry.id)}
-                                                >
-                                                    <Download className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            {canRestore && entry.status === 'completed' && entry.file_path && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setSelectedHistory(entry);
-                                                        setRestoreDialogOpen(true);
-                                                    }}
-                                                >
-                                                    <RotateCcw className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                        </TableHeader>
+                        <TableBody>
+                            {history.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-20">
+                                        <div className="flex flex-col items-center justify-center space-y-3">
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                                                <History className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                                            </div>
+                                            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">No history records</h3>
+                                            <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">History will appear here once your backup schedules begin running.</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            ) : (
+                                history.map((entry) => (
+                                    <TableRow key={entry.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors border-b border-gray-50 dark:border-gray-800/50">
+                                        <TableCell className="py-5">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-900 dark:text-slate-100">{entry.config_name || 'System Auto'}</span>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5 tracking-tighter uppercase">ID: {entry.id.toString().padStart(6, '0')}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                    <Clock className="h-3 w-3 mr-1.5 opacity-50" />
+                                                    {entry.started_at ? new Date(entry.started_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                                </div>
+                                                <div className="flex items-center text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+                                                    Duration: {entry.duration_seconds ? `${entry.duration_seconds}s` : 'N/A'}
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <HardDrive className="h-3.5 w-3.5 text-slate-400" />
+                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatFileSize(entry.file_size)}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                                                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{entry.database_name || 'N/A'}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                {canDownload && entry.status === 'completed' && entry.file_path && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleDownload(entry.id)}
+                                                        className="h-9 w-9 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-900/50"
+                                                        title="Download SQL"
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                {canRestore && entry.status === 'completed' && entry.file_path && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setSelectedHistory(entry);
+                                                            setRestoreDialogOpen(true);
+                                                        }}
+                                                        className="h-9 w-9 rounded-xl text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/50"
+                                                        title="Restore this version"
+                                                    >
+                                                        <RotateCcw className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="mt-4">
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalRecords={totalRecords}
-                        onPageChange={setCurrentPage}
-                    />
+                    {totalPages > 1 && (
+                        <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-transparent">
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalRecords={totalRecords}
+                                onPageChange={setCurrentPage}
+                            />
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* Restore Confirmation Dialog */}
             <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
-                <DialogContent>
+                <DialogContent className="rounded-3xl border-slate-100 dark:border-slate-800 max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Restore Database from Backup</DialogTitle>
-                        <DialogDescription>
-                            <div className="space-y-2 mt-2">
-                                <p className="font-semibold text-red-600">⚠️ WARNING: This is a critical operation!</p>
-                                <p>This will restore the database from the backup taken on:</p>
-                                <p className="font-mono text-sm">
-                                    {selectedHistory?.completed_at
-                                        ? new Date(selectedHistory.completed_at).toLocaleString()
-                                        : 'N/A'}
+                        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                            <RotateCcw className="h-5 w-5 text-red-600" />
+                            System Restoration
+                        </DialogTitle>
+                        <DialogDescription className="space-y-4 pt-4">
+                            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
+                                <p className="font-bold text-red-700 dark:text-red-400 text-sm flex items-center gap-2">
+                                    <Shield className="h-4 w-4" /> CRITICAL OPERATION
                                 </p>
-                                <p className="text-red-600 font-semibold">
-                                    All current data will be replaced with the backup data. This action cannot be undone.
+                                <p className="text-xs text-red-600 dark:text-red-400/80 mt-1">
+                                    This will overwrite your current database with the state from <span className="font-bold underline">{selectedHistory?.completed_at ? new Date(selectedHistory.completed_at).toLocaleString() : 'N/A'}</span>.
                                 </p>
                             </div>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                Restoration replaces all current data including customers, subscriptions, and transactions. This process cannot be reversed once started.
+                            </p>
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setRestoreDialogOpen(false)}>
+                    <DialogFooter className="mt-8 gap-3">
+                        <Button variant="ghost" onClick={() => setRestoreDialogOpen(false)} className="rounded-xl px-6 h-11 font-medium">
                             Cancel
                         </Button>
                         <Button
-                            variant="destructive"
                             onClick={handleRestore}
                             disabled={restoring}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 h-11 font-medium shadow-lg shadow-red-500/20 transition-all min-w-[160px]"
                         >
                             {restoring ? (
                                 <>

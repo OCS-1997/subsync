@@ -203,7 +203,7 @@ const ReminderPolicies = () => {
             onClick={handleNewPolicy}
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-[0.98] transition-all"
           >
-            <Plus className="w-4 h-4 mr-3" strokeWidth={3} /> Initialize Protocol
+            <Plus className="w-4 h-4 mr-3" strokeWidth={3} /> Add Policy
           </Button>
         )}
       </div>
@@ -413,7 +413,7 @@ const ReminderPolicies = () => {
                                 <div className="relative">
                                   <Input
                                     type="number"
-                                    value={offset.days_offset}
+                                    value={offset.days_offset ?? ""}
                                     onChange={(e) => updateOffset(index, { days_offset: parseInt(e.target.value) || 0 })}
                                     className="h-12 rounded-xl border-slate-100 dark:border-slate-800 tabular-nums px-4 font-black"
                                     disabled={selectedPolicy.is_default || !canUpdate}
@@ -517,7 +517,7 @@ const ReminderPolicies = () => {
       <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
         <DialogContent className="max-w-2xl rounded-[3rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 p-0 overflow-hidden">
           <DialogHeader className="p-10 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{policyForm.id ? "Modify Logic" : "Establish Logic"}</DialogTitle>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{policyForm.id ? "Modify Policy" : "Add New Policy"}</DialogTitle>
             <DialogDescription className="text-slate-500 font-medium">
               Define the architectural parameters for this notification sequence.
             </DialogDescription>
@@ -544,7 +544,7 @@ const ReminderPolicies = () => {
               />
               <div className="flex flex-col">
                 <Label htmlFor="is-default" className="font-black uppercase tracking-widest text-[10px] text-amber-600 cursor-pointer">
-                  Promote to Master Protocol
+                  Promote to Default
                 </Label>
                 <p className="text-[9px] text-amber-600/60 font-medium uppercase tracking-widest">This logic will replace existing system defaults.</p>
               </div>
@@ -553,10 +553,10 @@ const ReminderPolicies = () => {
 
           <DialogFooter className="p-10 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 gap-4">
             <Button variant="outline" onClick={() => setShowPolicyDialog(false)} className="rounded-2xl h-14 px-8 font-black uppercase text-[11px] tracking-widest">
-              Abort
+              Cancel
             </Button>
             <Button onClick={handleSavePolicy} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-10 font-black uppercase text-[11px] tracking-widest shadow-xl shadow-blue-500/25">
-              {saving ? "Deploying..." : (policyForm.id ? "Execute Sync" : "Deploy Logic")}
+              {saving ? "Deploying..." : (policyForm.id ? "Update" : "Create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -582,7 +582,7 @@ const ReminderPolicies = () => {
               <div className="h-20 w-20 bg-rose-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                 <AlertTriangle className="w-10 h-10 text-rose-500" />
               </div>
-              <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Initiate Termination?</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Delete Policy?</h3>
               <p className="text-slate-500 font-medium mb-8">
                 Confirming termination of <strong className="text-slate-900 dark:text-white">{showDeleteConfirm.name}</strong>. This sequence will be permanently erased from the master records.
               </p>
@@ -592,10 +592,10 @@ const ReminderPolicies = () => {
                   className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-rose-500/25"
                   onClick={() => handleDeletePolicy(showDeleteConfirm)}
                 >
-                  <Trash2 className="w-4 h-4 mr-3" /> Permanent Termination
+                  <Trash2 className="w-4 h-4 mr-3" /> Delete
                 </Button>
                 <Button variant="outline" className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-slate-100 dark:border-slate-800" onClick={() => setShowDeleteConfirm(null)}>
-                  Discard Request
+                  Cancel
                 </Button>
               </div>
             </motion.div>

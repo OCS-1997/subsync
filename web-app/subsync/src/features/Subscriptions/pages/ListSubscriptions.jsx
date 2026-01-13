@@ -203,15 +203,28 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
     end_date: (
       <span className="text-rose-500/80 text-sm font-medium">{formatDate(row.end_date)}</span>
     ),
-    dynamic_status: (
-      <span className={`text-[10px] font-bold uppercase tracking-wider ${(row.dynamic_status || row.status) === 'Active' ? 'text-emerald-500' :
-        (row.dynamic_status || row.status) === 'Expired' ? 'text-rose-500' :
-          (row.dynamic_status || row.status) === 'Expiring Soon' ? 'text-amber-500' :
-            'text-blue-500'
-        }`}>
-        {row.dynamic_status || row.status || '-'}
-      </span>
-    ),
+    dynamic_status: (() => {
+      const status = row.dynamic_status || row.status || '-';
+      const s = status.toLowerCase();
+      let colorClass = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800";
+
+      if (s === "active") {
+        colorClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+      } else if (s === "expired") {
+        colorClass = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800";
+      } else if (s === "expiring soon" || s === "soon") {
+        colorClass = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800";
+      }
+
+      return (
+        <Badge
+          variant="outline"
+          className={`${colorClass} uppercase tracking-[0.1em] text-[10px] font-bold px-3 py-1 rounded-full border shadow-sm whitespace-nowrap`}
+        >
+          {status}
+        </Badge>
+      );
+    })(),
     total: (
       <span className="font-bold text-slate-900 dark:text-white tabular-nums">
         ₹{row.total ? Number(row.total).toFixed(2) : '0.00'}
