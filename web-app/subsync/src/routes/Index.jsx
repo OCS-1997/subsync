@@ -31,6 +31,7 @@ import SubscriptionsPage from '@/features/Subscriptions/pages/SubscriptionsPage.
 import AddSubscription from '@/features/Subscriptions/pages/AddSubscription.jsx';
 import EditSubscription from '@/features/Subscriptions/pages/EditSubscription.jsx';
 import ViewSubscriptionPage from '@/features/Subscriptions/pages/ViewSubscriptionPage.jsx';
+import ArchivedSubscriptions from '@/features/Subscriptions/pages/ArchivedSubscriptions.jsx';
 import RoleManagement from '@/features/Settings/RoleManagement.jsx';
 import ReminderPolicies from '@/features/Settings/ReminderPolicies.jsx';
 import EmailTemplates from '@/features/Settings/EmailTemplates.jsx';
@@ -91,6 +92,7 @@ const router = createBrowserRouter([
 
       { path: "subscriptions/*", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><SubscriptionsPage /></PermissionGate> },
       { path: "subscriptions/add", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_CREATE}><AddSubscription /></PermissionGate> },
+      { path: "subscriptions/archived", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><ArchivedSubscriptions /></PermissionGate> },
       { path: "subscriptions/:id", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_VIEW}><ViewSubscriptionPage /></PermissionGate> },
       { path: "subscriptions/:id/edit", element: <PermissionGate required={PERMISSIONS.SUBSCRIPTIONS_UPDATE}><EditSubscription /></PermissionGate> },
 

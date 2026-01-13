@@ -30,7 +30,7 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
     let baseQuery = `
       SELECT 
         s.sub_id, s.customer_id, s.start_date, s.end_date, s.status,
-        s.domain_name, s.total,
+        s.domain_name, s.total, s.archived_at,
         c.display_name AS customer_name,
         (SELECT COUNT(*) FROM subscription_items si WHERE si.sub_id = s.sub_id) AS items_count,
         (SELECT JSON_ARRAYAGG(

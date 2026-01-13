@@ -31,7 +31,7 @@ const sortMap = {
 
 
 
-export default function ListSubscriptions({ onAddNew, onEdit }) {
+export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) {
   const { hasPermission } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -283,9 +283,20 @@ export default function ListSubscriptions({ onAddNew, onEdit }) {
         description="Comprehensive manifest of active recurring service contracts and domain identities."
         breadcrumbItems={[{ label: "Subscriptions" }]}
         actions={
-          <Button onClick={onAddNew} className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
-            <Plus className="w-5 h-5 mr-3" /> Add Subscription
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              onClick={onViewArchived}
+              className="bg-slate-600 hover:bg-slate-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-slate-500/25 active:scale-95 transition-all"
+            >
+              <Archive className="w-5 h-5 mr-3" /> View Archive
+            </Button>
+            <Button
+              onClick={onAddNew}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+            >
+              <Plus className="w-5 h-5 mr-3" /> Add Subscription
+            </Button>
+          </div>
         }
       />
 

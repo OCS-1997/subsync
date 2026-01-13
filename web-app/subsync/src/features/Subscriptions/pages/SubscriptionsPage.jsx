@@ -11,6 +11,7 @@ export default function SubscriptionsPage() {
           <ListSubscriptions
             onAddNew={() => navigate("add")}
             onEdit={(id) => navigate(`${id}/edit`)}
+            onViewArchived={() => navigate("archived")}
           />
         </div>
       </div>

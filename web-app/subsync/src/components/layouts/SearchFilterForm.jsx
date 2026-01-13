@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function SearchFilterForm({ search, setSearch, handleSearch, className, placeholder = "Search manifest..." }) {
+function SearchFilterForm({ search, setSearch, handleSearch, className, placeholder = "Search archived subscriptions..." }) {
   return (
     <div className={cn("w-full flex items-center h-full relative group", className)}>
       <div className="absolute left-0 pl-1 pointer-events-none">
