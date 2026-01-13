@@ -491,7 +491,10 @@ export default function CommandPalette({ open, onOpenChange }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="overflow-hidden p-0 max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/50 shadow-2xl">
+            <DialogContent
+                aria-describedby={undefined}
+                className="overflow-hidden p-0 max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/50 shadow-2xl"
+            >
                 <DialogTitle className="sr-only">Command Palette</DialogTitle>
                 <Command className="bg-transparent">
                     <div className="flex items-center border-b border-gray-200 dark:border-gray-700/50 px-4 py-3">

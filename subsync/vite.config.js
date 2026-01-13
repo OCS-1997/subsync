@@ -12,10 +12,11 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['logo.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         devOptions: {
-          enabled: true,
+          enabled: false,
           type: 'module'
         },
         workbox: {
+          debug: false,
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
