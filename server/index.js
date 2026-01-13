@@ -47,7 +47,10 @@ app.use(cors({
         `http://localhost`, // allows requests from your Nginx frontend (port 80)
         `http://127.0.0.1`,
         `http://ocs365.in`,
+        `https://ocs365.in`,
         `http://localhost:4173`,
+        `http://dev.ocs365.in`,
+        `https://dev.ocs365.in`,
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization"],
