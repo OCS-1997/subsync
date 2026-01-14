@@ -52,7 +52,7 @@ export default function ArticleEditor() {
     const [images, setImages] = useState([]);
 
     useEffect(() => {
-        console.log('ArticleEditor - ID:', id, 'isEditMode:', isEditMode);
+        //console.log('ArticleEditor - ID:', id, 'isEditMode:', isEditMode);
         fetchCategories();
         if (isEditMode) {
             fetchArticle();
@@ -103,8 +103,8 @@ export default function ArticleEditor() {
     const fetchImages = async () => {
         try {
             const res = await api.get(`/kb/articles/${id}/images`);
-            console.log('Fetched images response:', res.data);
-            console.log('Images array:', res.data.images);
+            //console.log('Fetched images response:', res.data);
+            //console.log('Images array:', res.data.images);
             setImages(res.data.images || []);
         } catch (error) {
             console.error('Failed to fetch images:', error);
@@ -287,7 +287,7 @@ export default function ArticleEditor() {
                         {/* Quick Controls */}
                         <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                             <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
-                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                                     Publishing
                                 </CardTitle>
                             </CardHeader>
@@ -338,7 +338,7 @@ export default function ArticleEditor() {
                             </CardHeader>
                             <CardContent className="pt-6 space-y-6">
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Article Folder / Category</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 block">Article Folder / Category</Label>
                                     <Popover open={isCategoryPopoverOpen} onOpenChange={setIsCategoryPopoverOpen}>
                                         <PopoverTrigger asChild>
                                             <Button
@@ -422,15 +422,15 @@ export default function ArticleEditor() {
                             </CardHeader>
                             <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Visibility Scope</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 block">Visibility Scope</Label>
                                     <select
                                         className="w-full h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white transition-all focus:ring-2 focus:ring-pink-500/20 appearance-none"
                                         value={formData.visibility}
                                         onChange={(e) => setFormData(prev => ({ ...prev, visibility: e.target.value }))}
                                     >
-                                        <option value="internal">Staff Vault (Internal)</option>
-                                        <option value="customer">Client Portal (Public)</option>
-                                        <option value="both">Hybrid Access (Universal)</option>
+                                        <option value="internal" className="dark:bg-slate-950">Staff Vault (Internal)</option>
+                                        <option value="customer" className="dark:bg-slate-950">Client Portal (Public)</option>
+                                        <option value="both" className="dark:bg-slate-950">Hybrid Access (Universal)</option>
                                     </select>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
@@ -452,7 +452,7 @@ export default function ArticleEditor() {
                             </CardHeader>
                             <CardContent className="pt-6">
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Index Tags</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 block">Index Tags</Label>
                                     <TagInput
                                         tags={formData.tags}
                                         onChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
@@ -477,7 +477,7 @@ export default function ArticleEditor() {
                     </div>
                     <div className="p-8 space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="cat-name" className="text-[10px] font-black uppercase tracking-widest text-gray-500">Identity Name <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="cat-name" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Identity Name <span className="text-red-500">*</span></Label>
                             <Input
                                 id="cat-name"
                                 placeholder="e.g., Troubleshooting Protocols"
@@ -487,7 +487,7 @@ export default function ArticleEditor() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="cat-desc" className="text-[10px] font-black uppercase tracking-widest text-gray-500">Internal Description</Label>
+                            <Label htmlFor="cat-desc" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Internal Description</Label>
                             <Input
                                 id="cat-desc"
                                 placeholder="Describe use-case for this category..."

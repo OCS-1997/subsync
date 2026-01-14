@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import { ArrowLeft, Mail, Plus, RotateCcw, FileDown } from "lucide-react";
+import { ArrowLeft, Mail, Plus, RotateCcw, FileDown, Archive } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 
 import api from "@/lib/axiosInstance.js";
@@ -161,12 +161,23 @@ const ListView = ({ onAddNew }) => {
         <Button size="sm" variant="ghost" onClick={async () => {
           try {
             await api.post(`/subscription/${row.sub_id}/reminder`);
-            toast.success('Reminder queued');
+            toast.success('Reminder sent successfully');
           } catch (e) {
-            toast.error(e.normalizedMessage || 'Failed to queue reminder');
+            toast.error(e.normalizedMessage || 'Failed to send reminder');
           }
         }}>
           <Mail className="w-4 h-4" /> Reminder
+        </Button>
+        <Button size="sm" variant="ghost" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={async () => {
+          try {
+            await api.post(`/subscriptions/${row.sub_id}/archive`);
+            toast.success('Subscription archived successfully');
+            fetchData();
+          } catch (e) {
+            toast.error(e.normalizedMessage || 'Failed to archive subscription');
+          }
+        }}>
+          <Archive className="w-4 h-4" /> Archive
         </Button>
       </div>
     )
@@ -183,12 +194,20 @@ const ListView = ({ onAddNew }) => {
         <SearchFilterForm search={search} setSearch={setSearch} handleSearch={() => { }} />
         <div className="flex items-center gap-2">
           <Label>Status</Label>
-          <select className="border rounded-md h-9 px-2" value={statusFilter} onChange={e => { setPage(1); setStatusFilter(e.target.value); }}>
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="soon">Soon Expiring</option>
-            <option value="expired">Expired</option>
-          </select>
+          <Select
+            value={statusFilter || "all"}
+            onValueChange={val => { setPage(1); setStatusFilter(val === "all" ? "" : val); }}
+          >
+            <SelectTrigger className="w-[150px] h-9">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="soon">Soon Expiring</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Button variant="outline" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); fetchData({ page: 1 }); }}>
           <RotateCcw className="w-4 h-4" /> Reset
@@ -333,10 +352,15 @@ const AddForm = ({ onBack }) => {
 
           <h3 className="text-lg font-semibold mt-4">Customer</h3>
           <Label>Customer</Label>
-          <select className="border rounded-md h-9 px-2" value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value)}>
-            <option value="">Select customer</option>
-            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <Select value={selectedCustomer || "none"} onValueChange={val => setSelectedCustomer(val === "none" ? "" : val)}>
+            <SelectTrigger className="w-full h-9">
+              <SelectValue placeholder="Select customer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select customer</SelectItem>
+              {customers.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
           <Label className="mt-2">Emails</Label>
           <div className="flex flex-wrap gap-2">
@@ -347,10 +371,15 @@ const AddForm = ({ onBack }) => {
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Subscription</h3>
           <Label>Service</Label>
-          <select className="border rounded-md h-9 px-2" value={selectedService} onChange={e => setSelectedService(e.target.value)}>
-            <option value="">Select service</option>
-            {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <Select value={selectedService || "none"} onValueChange={val => setSelectedService(val === "none" ? "" : val)}>
+            <SelectTrigger className="w-full h-9">
+              <SelectValue placeholder="Select service" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select service</SelectItem>
+              {services.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
           <div className="grid grid-cols-2 gap-3 mt-2">
             <div>

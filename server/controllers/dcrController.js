@@ -438,6 +438,101 @@ const getDcrStats = async (req, res) => {
 };
 
 /**
+ * Get per-user DCR stats for admin dashboard
+ */
+const getUserDcrStats = async (req, res) => {
+    try {
+        const isAdmin = req.user.roleKey === 'admin';
+        const currentUserId = req.user.username;
+
+        // Get date range (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+
+        // Import appDB
+        const appDB = (await import("../db/subsyncDB.js")).default;
+
+        if (isAdmin) {
+            // Admin: Get per-user stats
+            const [userStats] = await appDB.query(`
+                SELECT 
+                    de.user_id,
+                    u.name as user_name,
+                    COUNT(*) as total_calls,
+                    SUM(de.time_spent_minutes) as total_minutes,
+                    COUNT(DISTINCT DATE(de.timestamp)) as active_days,
+                    COUNT(DISTINCT de.contact_name) as unique_contacts
+                FROM dcr_entries de
+                LEFT JOIN users u ON de.user_id = u.username
+                WHERE de.timestamp >= ? AND de.timestamp <= ?
+                GROUP BY de.user_id, u.name
+                ORDER BY total_calls DESC
+            `, [startDate, endDate]);
+
+            // Also get today's stats per user
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999);
+
+            const [todayStats] = await appDB.query(`
+                SELECT 
+                    de.user_id,
+                    COUNT(*) as today_calls,
+                    SUM(de.time_spent_minutes) as today_minutes
+                FROM dcr_entries de
+                WHERE de.timestamp >= ? AND de.timestamp <= ?
+                GROUP BY de.user_id
+            `, [today, todayEnd]);
+
+            // Merge today stats with overall stats
+            const todayMap = new Map(todayStats.map(s => [s.user_id, s]));
+            const mergedStats = userStats.map(user => ({
+                ...user,
+                total_hours: Math.round((user.total_minutes || 0) / 60 * 10) / 10,
+                avg_per_day: user.active_days > 0 ? Math.round(user.total_calls / user.active_days * 10) / 10 : 0,
+                today_calls: todayMap.get(user.user_id)?.today_calls || 0,
+                today_hours: Math.round((todayMap.get(user.user_id)?.today_minutes || 0) / 60 * 10) / 10
+            }));
+
+            res.status(200).json({
+                isAdmin: true,
+                userStats: mergedStats
+            });
+        } else {
+            // Non-admin: Just return their own stats
+            const { entries } = await getDcrEntries({
+                user_id: currentUserId,
+                isAdmin: false,
+                filterUserId: currentUserId,
+                startDate,
+                endDate,
+                page: 1,
+                limit: 1000
+            });
+
+            const totalCalls = entries.length;
+            const totalMinutes = entries.reduce((sum, entry) => sum + entry.time_spent_minutes, 0);
+
+            res.status(200).json({
+                isAdmin: false,
+                userStats: [{
+                    user_id: currentUserId,
+                    user_name: req.user.name || currentUserId,
+                    total_calls: totalCalls,
+                    total_hours: Math.round(totalMinutes / 60 * 10) / 10,
+                    unique_contacts: new Set(entries.filter(e => e.contact_name).map(e => e.contact_name)).size
+                }]
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching user DCR stats:", error);
+        res.status(500).json({ error: "Failed to fetch user DCR statistics." });
+    }
+};
+
+/**
  * Get users for DCR filtering (admin only, lightweight)
  */
 const getDcrUsers = async (req, res) => {
@@ -470,6 +565,7 @@ export {
     deleteDcr,
     getWeekMeta,
     getDcrStats,
+    getUserDcrStats,
     getDcrUsers
 };
 

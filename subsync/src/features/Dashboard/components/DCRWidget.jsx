@@ -21,11 +21,13 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts';
+import { useTheme } from '@/context/ThemeContext';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444'];
 
 function DCRWidget() {
     const navigate = useNavigate();
+    const { theme } = useTheme();
     const [loading, setLoading] = useState(true);
     const [dcrData, setDcrData] = useState(null);
     const [todayStats, setTodayStats] = useState({ totalCalls: 0, totalTime: 0 });
@@ -280,7 +282,15 @@ function DCRWidget() {
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                    label={({ name, percent }) => (
+                                        <text
+                                            fill={theme === 'dark' ? '#cbd5e1' : '#475569'}
+                                            fontSize="10"
+                                            fontWeight="600"
+                                        >
+                                            {`${name}: ${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                    )}
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="value"
@@ -291,7 +301,17 @@ function DCRWidget() {
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+                                        border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                    itemStyle={{
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -308,7 +328,17 @@ function DCRWidget() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
                                 <YAxis />
-                                <Tooltip />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+                                        border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                    itemStyle={{
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                />
                                 <Legend />
                                 <Line
                                     type="monotone"
@@ -335,7 +365,17 @@ function DCRWidget() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="domain" />
                                 <YAxis />
-                                <Tooltip />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+                                        border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                    itemStyle={{
+                                        color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+                                    }}
+                                />
                                 <Bar
                                     dataKey="count"
                                     fill="#8b5cf6"

@@ -54,10 +54,10 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
 
     // Filter by archived status
     if (archivedOnly) {
-      console.log('🗄️ [subscriptionModel] Filtering for ARCHIVED subscriptions (archived_at IS NOT NULL)');
+      //console.log('🗄️ [subscriptionModel] Filtering for ARCHIVED subscriptions (archived_at IS NOT NULL)');
       whereClauses.push(`s.archived_at IS NOT NULL`);
     } else {
-      console.log('✅ [subscriptionModel] Filtering for ACTIVE subscriptions (archived_at IS NULL)');
+      //console.log('✅ [subscriptionModel] Filtering for ACTIVE subscriptions (archived_at IS NULL)');
       // By default, exclude archived subscriptions unless explicitly requested
       whereClauses.push(`s.archived_at IS NULL`);
     }
@@ -98,15 +98,15 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
     baseQuery += ` LIMIT ? OFFSET ?`;
     const listParams = [...params, parseInt(limit, 10), parseInt(offset, 10)];
 
-    console.log('📝 [subscriptionModel] Final SQL Query:', baseQuery);
-    console.log('📊 [subscriptionModel] Query Parameters:', listParams);
-    console.log('🔍 [subscriptionModel] archivedOnly flag:', archivedOnly);
+    //console.log('📝 [subscriptionModel] Final SQL Query:', baseQuery);
+    //console.log('📊 [subscriptionModel] Query Parameters:', listParams);
+    //console.log('🔍 [subscriptionModel] archivedOnly flag:', archivedOnly);
 
     const [rows] = await appDB.query(baseQuery, listParams);
 
-    console.log('✅ [subscriptionModel] Query executed successfully');
-    console.log('📦 [subscriptionModel] Rows returned:', rows.length);
-    console.log('📄 [subscriptionModel] First row sample:', rows[0]);
+    //console.log('✅ [subscriptionModel] Query executed successfully');
+    //console.log('📦 [subscriptionModel] Rows returned:', rows.length);
+    //console.log('📄 [subscriptionModel] First row sample:', rows[0]);
 
     // Compute dynamic status and optionally filter
     const enriched = rows.map(r => {

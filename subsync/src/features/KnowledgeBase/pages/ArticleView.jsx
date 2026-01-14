@@ -191,7 +191,7 @@ export default function ArticleView({ publicView = false }) {
         return (
             <div className="flex flex-col items-center justify-center bg-[#f8fafc] dark:bg-[#0f172a]">
                 <Hamster />
-                <p className="mt-4 text-sm font-medium text-gray-500 animate-pulse">Loading technical documentation...</p>
+                <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 animate-pulse">Loading technical documentation...</p>
             </div>
         );
     }
@@ -199,11 +199,11 @@ export default function ArticleView({ publicView = false }) {
     if (!article) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-6 bg-[#f8fafc] dark:bg-[#0f172a]">
-                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <FileText className="w-10 h-10 text-gray-400" />
+                <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <FileText className="w-10 h-10 text-slate-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Article Not Found</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">The document you are looking for might have been moved or deleted.</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Article Not Found</h2>
+                <p className="text-slate-500 dark:text-slate-400 mb-6">The document you are looking for might have been moved or deleted.</p>
                 <Button onClick={() => navigate(`/${username}/dashboard/kb`)} className="rounded-full px-8">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Knowledge Base
@@ -265,7 +265,7 @@ export default function ArticleView({ publicView = false }) {
                                 <span className="hidden sm:inline">Back</span>
                             </Button>
                             <Separator orientation="vertical" className="h-6" />
-                            <div className="flex items-center gap-1.5 overflow-hidden text-xs text-gray-500">
+                            <div className="flex items-center gap-1.5 overflow-hidden text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                 <BookOpen className="w-3.5 h-3.5" />
                                 <span className="truncate max-w-[100px] hover:text-blue-600 transition-colors cursor-pointer" onClick={() => publicView ? navigate('/') : navigate(`/${username}/dashboard/kb`)}>Knowledge Base</span>
                                 {!publicView && categoryPath.map(cat => (
@@ -437,28 +437,28 @@ export default function ArticleView({ publicView = false }) {
                                     </span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                                         {article.author_name || 'System User'}
                                     </p>
-                                    <p className="text-xs text-gray-500 font-medium">Author</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest">Author</p>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-8">
                                 <div className="text-right">
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                                         {formatDate(article.created_at)}
                                     </p>
-                                    <p className="text-xs text-gray-500 font-medium flex items-center justify-end gap-1">
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest flex items-center justify-end gap-1">
                                         <Calendar className="w-3 h-3" /> Published Date
                                     </p>
                                 </div>
                                 {article.updated_at !== article.created_at && (
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
                                             {formatDate(article.updated_at)}
                                         </p>
-                                        <p className="text-xs text-gray-500 font-medium flex items-center justify-end gap-1">
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest flex items-center justify-end gap-1">
                                             <Clock className="w-3 h-3" /> Last Revision
                                         </p>
                                     </div>
@@ -495,8 +495,8 @@ export default function ArticleView({ publicView = false }) {
                                             <ExternalLink className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase tracking-widest">Linked Resource</p>
-                                            <p className="text-sm text-blue-600 dark:text-blue-400 font-bold">This document is paired with {article.source_type} #{article.source_reference_id}</p>
+                                            <p className="text-[10px] font-black text-blue-800 dark:text-blue-400 uppercase tracking-widest">Linked Resource</p>
+                                            <p className="text-sm text-blue-600 dark:text-blue-500 font-bold">This document is paired with {article.source_type} #{article.source_reference_id}</p>
                                         </div>
                                     </div>
                                     <Button variant="ghost" size="sm" className="rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 font-bold">
@@ -509,14 +509,15 @@ export default function ArticleView({ publicView = false }) {
                                 ref={contentRef}
                                 className="prose prose-md sm:prose-lg lg:prose-xl dark:prose-invert max-w-none 
                                 selection:bg-blue-500/30
-                                [&_p]:leading-relaxed [&_p]:text-slate-600 dark:[&_p]:text-slate-400 [&_p]:mb-8
-                                [&_h2]:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:mt-16 [&_h2]:mb-8 [&_h2]:border-b [&_h2]:pb-4 [&_h2]:border-gray-100 dark:[&_h2]:border-slate-800 [&_h2]:text-slate-900 dark:[&_h2]:text-white
-                                [&_h3]:text-2xl [&_h3]:font-black [&_h3]:mt-12 [&_h3]:mb-6 [&_h3]:text-slate-800 dark:[&_h3]:text-slate-100
+                                [&_p]:leading-relaxed [&_p]:text-slate-600 dark:[&_p]:!text-slate-300 [&_p]:mb-8
+                                [&_h2]:text-4xl [&_h2]:font-black [&_h2]:tracking-tight [&_h2]:mt-16 [&_h2]:mb-8 [&_h2]:border-b [&_h2]:pb-4 [&_h2]:border-gray-100 dark:[&_h2]:border-slate-800 [&_h2]:text-slate-900 dark:[&_h2]:!text-white
+                                [&_h3]:text-2xl [&_h3]:font-black [&_h3]:mt-12 [&_h3]:mb-6 [&_h3]:text-slate-800 dark:[&_h3]:!text-slate-100
+                                [&_span]:inherit dark:[&_span]:!text-inherit
                                 [&_ul]:my-8 [&_ul]:list-none [&_ul_li]:relative [&_ul_li]:pl-8 [&_ul_li]:mb-4 
                                 [&_ul_li::before]:content-[''] [&_ul_li::before]:absolute [&_ul_li::before]:left-0 [&_ul_li::before]:top-[0.6em] [&_ul_li::before]:w-2.5 [&_ul_li::before]:h-2.5 [&_ul_li::before]:bg-blue-600 [&_ul_li::before]:rounded-full
                                 [&_ol]:my-8 [&_ol]:ml-8 [&_ol_li]:mb-4 [&_ol_li]:pl-2 [&_ol_li]:marker:text-blue-600 [&_ol_li]:marker:font-black
-                                [&_blockquote]:border-l-[10px] [&_blockquote]:border-blue-500/20 [&_blockquote]:bg-blue-50/20 dark:[&_blockquote]:bg-blue-900/10 [&_blockquote]:p-10 [&_blockquote]:rounded-r-[2rem] [&_blockquote]:italic [&_blockquote]:text-2xl [&_blockquote]:my-12 [&_blockquote]:font-serif [&_blockquote]:text-slate-700 dark:[&_blockquote]:text-slate-300
-                                [&_code]:bg-slate-100 dark:[&_code]:bg-slate-800 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:text-sm [&_code]:font-bold [&_code]:text-indigo-600 dark:[&_code]:text-indigo-400 before:[&_code]:content-none after:[&_code]:content-none
+                                [&_blockquote]:border-l-[10px] [&_blockquote]:border-blue-500/20 [&_blockquote]:bg-blue-50/20 dark:[&_blockquote]:bg-blue-900/10 [&_blockquote]:p-10 [&_blockquote]:rounded-r-[2rem] [&_blockquote]:italic [&_blockquote]:text-2xl [&_blockquote]:my-12 [&_blockquote]:font-serif [&_blockquote]:text-slate-700 dark:[&_blockquote]:!text-slate-300
+                                [&_code]:bg-slate-100 dark:[&_code]:bg-slate-800 [&_code]:px-2 [&_code]:py-1 [&_code]:rounded-lg [&_code]:text-sm [&_code]:font-bold [&_code]:text-indigo-600 dark:[&_code]:!text-indigo-400 before:[&_code]:content-none after:[&_code]:content-none
                                 [&_pre]:p-8 [&_pre]:rounded-3xl [&_pre]:bg-slate-950 [&_pre]:shadow-2xl [&_pre]:border [&_pre]:border-white/5
                                 [&_img]:rounded-[2rem] [&_img]:shadow-2xl [&_img]:border [&_img]:border-gray-100 dark:[&_img]:border-slate-800 [&_img]:my-16
                                 [&_a]:text-blue-600 [&_a]:underline-offset-8 [&_a]:decoration-2 hover:[&_a]:text-blue-700 hover:[&_a]:decoration-blue-700 transition-all font-bold
@@ -599,7 +600,7 @@ export default function ArticleView({ publicView = false }) {
                                         {!publicView && hasPermission(PERMISSIONS.KNOWLEDGE_BASE_UPDATE) && (
                                             <Button
                                                 variant="outline"
-                                                className="rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95 transition-all text-slate-600 dark:text-slate-400"
+                                                className="rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95 transition-all text-slate-600 dark:text-slate-300"
                                                 onClick={() => navigate(`/${username}/dashboard/kb/${id}/edit`)}
                                             >
                                                 <Edit className="w-3.5 h-3.5 mr-2" />
@@ -608,7 +609,7 @@ export default function ArticleView({ publicView = false }) {
                                         )}
                                         <Button
                                             variant="outline"
-                                            className={`rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-slate-600 dark:text-slate-400 ${publicView ? 'col-span-2' : ''}`}
+                                            className={`rounded-xl border-gray-100 dark:border-slate-800 h-11 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-slate-600 dark:text-slate-300 ${publicView ? 'col-span-2' : ''}`}
                                             onClick={() => window.print()}
                                         >
                                             <Share2 className="w-3.5 h-3.5 mr-2" />
@@ -630,8 +631,8 @@ export default function ArticleView({ publicView = false }) {
                         </Card>
 
                         {/* Metadata Details */}
-                        <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Reading Metadata</h4>
+                        <div className="p-8 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 shadow-inner">
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-8">Reading Metadata</h4>
                             <div className="space-y-6 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                 <div className="flex items-center justify-between">
                                     <span>Pace</span>
@@ -643,7 +644,7 @@ export default function ArticleView({ publicView = false }) {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span>Scope</span>
-                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border-none px-3 py-1 text-[9px]">{article.visibility || 'All'}</Badge>
+                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border-none px-3 py-1 text-[9px] font-black">{article.visibility || 'All'}</Badge>
                                 </div>
                             </div>
                         </div>
@@ -678,12 +679,12 @@ export default function ArticleView({ publicView = false }) {
                                                         Revision Layer {version.version_number}
                                                         {idx === 0 && <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-black text-[10px] uppercase tracking-widest px-3 py-1">Active Snapshot</Badge>}
                                                     </h3>
-                                                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                                        <span className="flex items-center gap-2"><User className="w-4 h-4 text-blue-500" /> {version.editor_name || version.changed_by}</span>
-                                                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500" /> {formatDate(version.created_at)}</span>
+                                                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                                                        <span className="flex items-center gap-2"><User className="w-4 h-4 text-blue-500/80" /> {version.editor_name || version.changed_by}</span>
+                                                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-indigo-500/80" /> {formatDate(version.created_at)}</span>
                                                     </div>
                                                 </div>
-                                                <Button variant="outline" className="rounded-xl border-gray-100 dark:border-slate-800 h-10 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm active:scale-95 transition-all text-slate-600 dark:text-slate-400">
+                                                <Button variant="outline" className="rounded-xl border-gray-100 dark:border-slate-800 h-10 font-black text-[10px] uppercase tracking-widest px-6 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm active:scale-95 transition-all text-slate-600 dark:text-slate-300">
                                                     <RotateCcw className="w-3.5 h-3.5 mr-2" />
                                                     Restore
                                                 </Button>

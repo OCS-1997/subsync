@@ -227,6 +227,9 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
         // Deprecated but kept for backward compatibility
         items_table_html: invoiceHtml,
         renewal_link: `${process.env.APP_BASE_URL || 'http://localhost'}/subscriptions/${subscription.sub_id}/renew`,
+        current_year: new Date().getFullYear(),
+        company_name: process.env.COMPANY_NAME || 'Subsync Solutions',
+        support_email: process.env.SUPPORT_EMAIL || 'support@subsync.example.com',
         subscription: subscription,
         customer: customer,
     };

@@ -32,7 +32,7 @@ export const updateCustomer = createAsyncThunk(
   'customers/updateCustomer',
   async ({ id, payload }, { rejectWithValue }) => {
     try {
-      console.log("Updating customer with ID:", id, "and payload:", payload);
+     // console.log("Updating customer with ID:", id, "and payload:", payload);
       const res = await api.put(`/update-customer/${id}`, payload);
       return res.data;
     } catch (err) {

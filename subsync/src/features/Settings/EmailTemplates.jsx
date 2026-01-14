@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
@@ -10,7 +10,7 @@ import { PERMISSIONS } from "@/constants/permissions.js";
 import { cn } from "@/lib/utils";
 import {
   Loader2, Mail, Plus, Trash2, Save, X, Eye, Search,
-  AlertCircle, FileCode, Type, Code, MousePointerClick
+  AlertCircle, FileCode, Type, Code, MousePointerClick, Copy, GripVertical
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
@@ -40,6 +40,71 @@ const EmailTemplates = () => {
   const canCreate = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_CREATE);
   const canUpdate = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_UPDATE);
   const canDelete = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_DELETE);
+
+  const textareaRef = useRef(null);
+
+  // Available template variables with descriptions
+  const AVAILABLE_VARIABLES = [
+    { key: 'customer_name', description: 'Customer full name' },
+    { key: 'subscription_id', description: 'Subscription ID (e.g., SUB123456)' },
+    { key: 'domain_name', description: 'Domain/service name' },
+    { key: 'days_left', description: 'Days until expiry (or negative if expired)' },
+    { key: 'start_date', description: 'Subscription start date' },
+    { key: 'end_date', description: 'Subscription end/expiry date' },
+    { key: 'total', description: 'Total subscription amount' },
+    { key: 'currency', description: 'Currency symbol (₹, $, etc.)' },
+    { key: 'items_table_html', description: 'HTML table of subscription services/items' },
+    { key: 'renewal_link', description: 'Link for customer to renew subscription' },
+    { key: 'current_year', description: 'Current year (for copyright)' },
+    { key: 'company_name', description: 'Your company name' },
+    { key: 'support_email', description: 'Support email address' },
+  ];
+
+  // Insert variable at cursor position in textarea
+  const insertVariable = (varKey) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      // Fallback: append to end
+      setTemplateForm(prev => ({
+        ...prev,
+        body_html: prev.body_html + `{{${varKey}}}`
+      }));
+      toast.success(`Inserted {{${varKey}}}`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = templateForm.body_html;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    const newText = before + `{{${varKey}}}` + after;
+
+    setTemplateForm(prev => ({ ...prev, body_html: newText }));
+    toast.success(`Inserted {{${varKey}}}`);
+
+    // Restore cursor position after the inserted variable
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + varKey.length + 4; // {{ + varKey + }}
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  // Copy all variables formatted for AI prompt
+  const copyAllVariables = () => {
+    const formatted = AVAILABLE_VARIABLES.map(v =>
+      `{{${v.key}}} - ${v.description}`
+    ).join('\n');
+
+    const fullText = `Available Email Template Variables:\n\n${formatted}\n\nNote: Use {{variable_name}} syntax in Handlebars templates. For conditionals use {{#if variable_name}}...{{/if}}. For HTML output use triple braces: {{{items_table_html}}}`;
+
+    navigator.clipboard.writeText(fullText).then(() => {
+      toast.success('All variables copied! Paste into AI for template generation.');
+    }).catch(() => {
+      toast.error('Failed to copy');
+    });
+  };
 
   useEffect(() => {
     fetchData();
@@ -413,6 +478,7 @@ const EmailTemplates = () => {
 
                     <div className="relative">
                       <Textarea
+                        ref={textareaRef}
                         value={templateForm.body_html}
                         onChange={(e) => setTemplateForm({ ...templateForm, body_html: e.target.value })}
                         className="min-h-[500px] font-mono text-sm bg-slate-900 text-slate-300 dark:bg-slate-950/50 dark:text-slate-300 rounded-3xl p-6 border-none focus:ring-0 leading-relaxed resize-y"
@@ -427,17 +493,42 @@ const EmailTemplates = () => {
                     </div>
 
                     <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2">
-                        <MousePointerClick className="w-3 h-3" />
-                        Available Variables
-                      </h4>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                          <MousePointerClick className="w-3 h-3" />
+                          Click to Insert Variables
+                        </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={copyAllVariables}
+                          className="h-8 px-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider"
+                        >
+                          <Copy className="w-3 h-3 mr-1.5" />
+                          Copy All for AI
+                        </Button>
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {['customer_name', 'subscription_id', 'domain_name', 'days_left', 'end_date', 'total', 'items_table_html', 'renewal_link'].map(v => (
-                          <code key={v} className="bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-800 px-2 py-1 rounded-md text-[10px] text-slate-500 dark:text-slate-400 font-bold font-mono">
-                            {`{{${v}}}`}
-                          </code>
+                        {AVAILABLE_VARIABLES.map(v => (
+                          <button
+                            key={v.key}
+                            type="button"
+                            draggable="true"
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("text/plain", `{{${v.key}}}`);
+                            }}
+                            onClick={() => insertVariable(v.key)}
+                            title={v.description}
+                            className="group flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-800 px-2.5 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-400 font-bold font-mono hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300 transition-all cursor-grab active:cursor-grabbing active:scale-95"
+                          >
+                            <GripVertical className="w-2.5 h-2.5 opacity-30 group-hover:opacity-60" />
+                            {`{{${v.key}}}`}
+                          </button>
                         ))}
                       </div>
+                      <p className="mt-3 text-[10px] text-slate-400 italic">
+                        Click any variable to insert at cursor position. Use "Copy All for AI" to get a formatted list for AI template generation.
+                      </p>
                     </div>
                   </div>
                 </section>
@@ -491,25 +582,59 @@ const EmailTemplates = () => {
 
       {/* Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-5xl h-[85vh] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-950 flex flex-col">
-          <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-            <div className="space-y-1">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Email Preview</h3>
-              {previewData && <p className="text-sm text-slate-500 font-medium">Subject: <span className="text-slate-900 dark:text-slate-300 font-bold">{previewData.subject}</span></p>}
+        <DialogContent className="max-w-5xl h-[85vh] rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-950 flex flex-col [&>button]:hidden">
+          {/* Email Client Header */}
+          <div className="p-6 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <Mail className="w-5 h-5 text-blue-500" />
+                Email Preview
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowPreviewDialog(false)} className="h-8 w-8 rounded-full p-0 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-4 h-4 text-slate-400" />
+              </Button>
             </div>
-            <Button variant="ghost" className="h-10 w-10 rounded-full p-0" onClick={() => setShowPreviewDialog(false)}>
-              <X className="w-5 h-5 text-slate-400" />
-            </Button>
+
+            {/* Email Header Fields */}
+            {previewData && (
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm">
+                <div className="flex">
+                  <span className="w-20 text-slate-400 font-medium shrink-0">From:</span>
+                  <span className="text-slate-900 dark:text-white font-medium">Your Company &lt;noreply@company.com&gt;</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 text-slate-400 font-medium shrink-0">To:</span>
+                  <span className="text-slate-900 dark:text-white font-medium">&#123;&#123;customer_name&#125;&#125; &lt;customer@example.com&gt;</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 text-slate-400 font-medium shrink-0">Subject:</span>
+                  <span className="text-slate-900 dark:text-white font-bold">{previewData.subject}</span>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-900/50 p-8 shadow-inner">
+
+          {/* Email Body Preview */}
+          <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-900/50 p-6">
             {previewLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Loader2 className="w-8 h-8 animate-spin mb-3" />
                 <p className="text-xs font-black uppercase tracking-widest">Rendering Preview...</p>
               </div>
             ) : previewData ? (
-              <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden min-h-[500px]">
-                <div dangerouslySetInnerHTML={{ __html: previewData.html }} className="p-0" />
+              <div className="max-w-3xl mx-auto">
+                {/* Email Container */}
+                <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+                  {/* The actual email content */}
+                  <div
+                    dangerouslySetInnerHTML={{ __html: previewData.html }}
+                    className="email-preview-content"
+                    style={{ all: 'initial', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+                  />
+                </div>
+                <p className="text-center text-[10px] text-slate-400 mt-4 uppercase tracking-widest">
+                  This is a preview. Actual emails may vary slightly depending on the email client.
+                </p>
               </div>
             ) : null}
           </div>

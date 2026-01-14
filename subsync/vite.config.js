@@ -16,7 +16,6 @@ export default defineConfig(({ mode }) => {
           type: 'module'
         },
         workbox: {
-          debug: false,
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,

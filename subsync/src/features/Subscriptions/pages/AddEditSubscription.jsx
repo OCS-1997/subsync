@@ -11,6 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components
 import ReactSelect from "react-select";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 
 function toTimestamp(dateStr) {
   if (!dateStr) return null;
@@ -823,47 +824,59 @@ export default function AddEditSubscription({ onBack, editId }) {
                         }}
                       />
                       {errors.repeat_every_value && <div className="text-xs text-red-600">{errors.repeat_every_value}</div>}
-                      <select
-                        className="border border-gray-300 dark:border-slate-700 rounded-md h-9 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      <Select
                         value={form.repeat_every_unit}
-                        onChange={e => setForm({ ...form, repeat_every_unit: e.target.value })}
+                        onValueChange={val => setForm({ ...form, repeat_every_unit: val })}
                       >
-                        <option value="days">Days</option>
-                        <option value="weeks">Weeks</option>
-                        <option value="months">Months</option>
-                        <option value="years">Years</option>
-                      </select>
+                        <SelectTrigger className="w-[120px] h-9 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-slate-950 dark:border-slate-800">
+                          <SelectItem value="days">Days</SelectItem>
+                          <SelectItem value="weeks">Weeks</SelectItem>
+                          <SelectItem value="months">Months</SelectItem>
+                          <SelectItem value="years">Years</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="mt-6">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Billing Cycle Type</Label>
-                    <select
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    <Select
                       value={form.billing_cycle_type || "contract"}
-                      onChange={e => setForm({ ...form, billing_cycle_type: e.target.value })}
+                      onValueChange={val => setForm({ ...form, billing_cycle_type: val })}
                     >
-                      <option value="contract" className="bg-white dark:bg-slate-900">Contract-Based (default)</option>
-                      <option value="financial_year" className="bg-white dark:bg-slate-900">Financial Year (Apr–Mar)</option>
-                      <option value="calendar_year" className="bg-white dark:bg-slate-900">Calendar Year (Jan–Dec)</option>
-                    </select>
+                      <SelectTrigger className="w-full border border-gray-300 dark:border-slate-700 h-10 bg-white dark:bg-slate-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-slate-950 dark:border-slate-800">
+                        <SelectItem value="contract">Contract-Based (default)</SelectItem>
+                        <SelectItem value="financial_year">Financial Year (Apr–Mar)</SelectItem>
+                        <SelectItem value="calendar_year">Calendar Year (Jan–Dec)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                       Select how billing periods should be calculated for this subscription.
                     </p>
                   </div>
                   <div className="mt-6">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Reminder Policy</Label>
-                    <select
-                      className="w-full border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={form.reminder_policy_id || ""}
-                      onChange={e => setForm({ ...form, reminder_policy_id: e.target.value ? parseInt(e.target.value, 10) : null })}
+                    <Select
+                      value={form.reminder_policy_id ? String(form.reminder_policy_id) : "default"}
+                      onValueChange={val => setForm({ ...form, reminder_policy_id: val === "default" ? null : parseInt(val, 10) })}
                     >
-                      <option value="" className="bg-white dark:bg-slate-900">Default Policy (Auto)</option>
-                      {reminderPolicies.map(policy => (
-                        <option key={policy.id} value={policy.id} className="bg-white dark:bg-slate-900">
-                          {policy.name} {policy.is_default ? "(Default)" : ""}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full border border-gray-300 dark:border-slate-700 h-10 bg-white dark:bg-slate-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-slate-950 dark:border-slate-800">
+                        <SelectItem value="default">Default Policy (Auto)</SelectItem>
+                        {reminderPolicies.map(policy => (
+                          <SelectItem key={policy.id} value={String(policy.id)}>
+                            {policy.name} {policy.is_default ? "(Default)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                       Select a reminder policy to schedule renewal notifications. Leave as "Default" to use the system default policy.
                     </p>
@@ -954,14 +967,18 @@ export default function AddEditSubscription({ onBack, editId }) {
                       <div>
                         <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Discount</Label>
                         <div className="flex gap-2">
-                          <select
-                            className="border border-gray-300 dark:border-slate-700 rounded-md h-10 px-3 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-white w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          <Select
                             value={form.discount_type}
-                            onChange={e => setForm({ ...form, discount_type: e.target.value })}
+                            onValueChange={val => setForm({ ...form, discount_type: val })}
                           >
-                            <option value="amount" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">₹</option>
-                            <option value="percent" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">%</option>
-                          </select>
+                            <SelectTrigger className="border border-gray-300 dark:border-slate-700 h-10 bg-white dark:bg-slate-900 w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="dark:bg-slate-950 dark:border-slate-800">
+                              <SelectItem value="amount">₹</SelectItem>
+                              <SelectItem value="percent">%</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <Input
                             type="number"
                             value={form.discount_value}

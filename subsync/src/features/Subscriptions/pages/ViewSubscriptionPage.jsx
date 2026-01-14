@@ -103,89 +103,113 @@ export default function ViewSubscriptionPage() {
   const canDelete = hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE);
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleEdit}
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
-          {canDelete && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={openDeleteDialog}
+    <div className="w-full h-full bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+      {/* Header / Navigation */}
+      <header className="px-10 py-8 border-b border-gray-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl sticky top-0 z-20">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 hover:text-blue-700 mb-2 transition-colors"
             >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Delete
+              <ArrowLeft className="w-3 h-3" />
+              Back to Subscriptions
+            </button>
+            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              Subscription Details
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleEdit}
+              className="rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] border-gray-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
+            >
+              <Edit className="w-4 h-4 mr-3" />
+              Edit
             </Button>
-          )}
+            {canDelete && (
+              <Button
+                size="lg"
+                variant="destructive"
+                onClick={openDeleteDialog}
+                className="rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-red-500/20 active:scale-95 transition-all"
+              >
+                <Trash2 className="w-4 h-4 mr-3" />
+                Delete
+              </Button>
+            )}
+          </div>
         </div>
+      </header>
+
+      <div className="max-w-[1600px] mx-auto p-10">
+        <ViewSubscription
+          subscription={subscription}
+          onEdit={handleEdit}
+          onDelete={canDelete ? openDeleteDialog : undefined}
+          showActions={false}
+        />
       </div>
 
-      <h1 className="text-2xl font-bold mb-2">Subscription Details</h1>
-
-      <ViewSubscription
-        subscription={subscription}
-        onEdit={handleEdit}
-        onDelete={canDelete ? openDeleteDialog : undefined}
-        showActions={false}
-      />
-
-      {/* Delete confirmation dialog */}
+      {/* Delete confirmation dialog - Premium Styled */}
       <Dialog
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           if (!open) closeDeleteDialog();
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Subscription</DialogTitle>
-            <DialogDescription>
-              Type the subscription domain name{" "}
-              <strong>{domainName || "subscription"}</strong> to confirm
-              deletion. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <Label htmlFor="delete-confirm-input-details">
-              Subscription Name
-            </Label>
-            <Input
-              id="delete-confirm-input-details"
-              value={deleteConfirmValue}
-              onChange={(e) => setDeleteConfirmValue(e.target.value)}
-              placeholder="Enter subscription name"
-            />
+        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden dark:bg-slate-900">
+          <div className="p-10 bg-red-600">
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mb-6 text-white">
+              <Trash2 className="w-10 h-10" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-white mb-2 tracking-tight">Delete Subscription</DialogTitle>
+              <DialogDescription className="text-red-100 text-sm font-medium leading-relaxed opacity-90">
+                Type the subscription domain name{" "}
+                <span className="font-black text-white underline decoration-2 underline-offset-4 mx-1">"{domainName || "subscription"}"</span>
+                to confirm deletion. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
           </div>
-          <DialogFooter className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={closeDeleteDialog}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={
-                !domainName ||
-                deleteConfirmValue.trim().toLowerCase() !==
-                domainName.trim().toLowerCase()
-              }
-            >
-              Delete
-            </Button>
-          </DialogFooter>
+          <div className="p-10 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm-input-details" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Subscription Name
+              </Label>
+              <Input
+                id="delete-confirm-input-details"
+                value={deleteConfirmValue}
+                onChange={(e) => setDeleteConfirmValue(e.target.value)}
+                placeholder="Enter subscription name"
+                className="h-14 rounded-2xl border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold"
+              />
+            </div>
+            <div className="flex gap-4">
+              <Button
+                variant="ghost"
+                onClick={closeDeleteDialog}
+                className="rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={
+                  !domainName ||
+                  deleteConfirmValue.trim().toLowerCase() !==
+                  domainName.trim().toLowerCase()
+                }
+                className="bg-red-600 hover:bg-red-700 text-white rounded-2xl h-14 flex-1 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-red-500/30 active:scale-95 transition-all"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

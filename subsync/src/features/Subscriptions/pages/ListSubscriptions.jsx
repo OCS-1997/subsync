@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive } from "lucide-react";
+import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive, Eye } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
 import ViewSubscription from "./ViewSubscription.jsx";
 import { Input } from "@/components/ui/input.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 
 const sortMap = {
   domain_name: 's.domain_name',
@@ -244,9 +245,9 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
           <DropdownMenuItem onClick={async () => {
             try {
               await api.post(`/subscription/${row.sub_id}/reminder`);
-              toast.success('Reminder queued');
+              toast.success('Reminder sent successfully');
             } catch (e) {
-              toast.error(e.normalizedMessage || 'Failed to queue reminder');
+              toast.error(e.normalizedMessage || 'Failed to send reminder');
             }
           }} className="rounded-lg p-2 text-sm gap-2">
             <Mail className="h-4 w-4" /> Send Reminder
@@ -258,7 +259,18 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
             <History className="h-4 w-4" /> View History
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openDetailsDialog(row.sub_id)} className="rounded-lg p-2 text-sm gap-2">
-            <Archive className="h-4 w-4" /> View Details
+            <Eye className="h-4 w-4" /> View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={async () => {
+            try {
+              await api.post(`/subscriptions/${row.sub_id}/archive`);
+              toast.success('Subscription archived successfully');
+              fetchData();
+            } catch (e) {
+              toast.error(e.normalizedMessage || 'Failed to archive subscription');
+            }
+          }} className="rounded-lg p-2 text-sm gap-2">
+            <Archive className="h-4 w-4" /> Archive
           </DropdownMenuItem>
           {hasPermission(PERMISSIONS.SUBSCRIPTIONS_DELETE) && (
             <>
@@ -308,16 +320,20 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
         <div className="flex items-center gap-3">
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 h-14 flex items-center shadow-sm">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-4">Status</span>
-            <select
-              className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase tracking-widest dark:text-white cursor-pointer"
-              value={statusFilter}
-              onChange={e => { setPage(1); setStatusFilter(e.target.value); }}
+            <Select
+              value={statusFilter || "all"}
+              onValueChange={val => { setPage(1); setStatusFilter(val === "all" ? "" : val); }}
             >
-              <option value="">All</option>
-              <option value="active">Active</option>
-              <option value="soon">Soon Expiring</option>
-              <option value="expired">Expired</option>
-            </select>
+              <SelectTrigger className="bg-transparent border-none focus:ring-0 text-xs font-black uppercase tracking-widest dark:text-white cursor-pointer h-auto p-0 w-[120px]">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent className="dark:bg-slate-950 dark:border-slate-800 rounded-xl">
+                <SelectItem value="all" className="text-xs font-black uppercase tracking-widest">All</SelectItem>
+                <SelectItem value="active" className="text-xs font-black uppercase tracking-widest">Active</SelectItem>
+                <SelectItem value="soon" className="text-xs font-black uppercase tracking-widest">Soon Expiring</SelectItem>
+                <SelectItem value="expired" className="text-xs font-black uppercase tracking-widest">Expired</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button

@@ -1,5 +1,6 @@
 export const PERMISSIONS = Object.freeze({
     DASHBOARD_VIEW: 'dashboard.view',
+    DASHBOARD_CONFIGURE: 'dashboard.configure',
     CUSTOMERS_VIEW: 'customers.view',
     CUSTOMERS_CREATE: 'customers.create',
     CUSTOMERS_UPDATE: 'customers.update',
@@ -82,6 +83,7 @@ export const PERMISSIONS = Object.freeze({
 
 export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'view', description: 'Access dashboard widgets' },
+    { key: PERMISSIONS.DASHBOARD_CONFIGURE, resource: 'dashboard', action: 'configure', description: 'Configure dashboard tabs and widgets visibility' },
     { key: PERMISSIONS.CUSTOMERS_VIEW, resource: 'customers', action: 'view', description: 'View customers' },
     { key: PERMISSIONS.CUSTOMERS_CREATE, resource: 'customers', action: 'create', description: 'Create customers' },
     { key: PERMISSIONS.CUSTOMERS_UPDATE, resource: 'customers', action: 'update', description: 'Update customers' },

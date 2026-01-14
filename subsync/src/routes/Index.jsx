@@ -37,7 +37,7 @@ import ReminderPolicies from '@/features/Settings/ReminderPolicies.jsx';
 import EmailTemplates from '@/features/Settings/EmailTemplates.jsx';
 import NotificationLogs from '@/features/Settings/NotificationLogs.jsx';
 import QuickToolsAdmin from '@/features/QuickTools/pages/QuickToolsAdmin.jsx';
-import AdminWidgetPermissions from '@/features/Dashboard/pages/AdminWidgetPermissions.jsx';
+import DashboardSettings from '@/features/Settings/DashboardSettings.jsx';
 import HelpPage from '@/features/Help/HelpPage.jsx';
 import DCRList from '@/features/DCR/pages/DCRList.jsx';
 import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
@@ -166,7 +166,7 @@ const router = createBrowserRouter([
           { path: "email-templates", element: <PermissionGate required={PERMISSIONS.EMAIL_TEMPLATES_VIEW}><EmailTemplates /></PermissionGate> },
           { path: "notification-logs", element: <PermissionGate required={PERMISSIONS.NOTIFICATION_LOGS_VIEW}><NotificationLogs /></PermissionGate> },
           { path: "quick-tools", element: <PermissionGate required={PERMISSIONS.QUICK_TOOLS_MANAGE}><QuickToolsAdmin /></PermissionGate> },
-          { path: "widget-permissions", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><AdminWidgetPermissions /></PermissionGate> },
+          { path: "dashboard-settings", element: <PermissionGate required={PERMISSIONS.DASHBOARD_CONFIGURE}><DashboardSettings /></PermissionGate> },
         ]
       },
 

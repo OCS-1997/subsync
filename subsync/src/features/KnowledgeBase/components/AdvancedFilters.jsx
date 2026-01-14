@@ -45,12 +45,12 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
                 <div className="flex items-center justify-between">
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center gap-2 text-sm font-medium hover:text-blue-600 transition-colors"
+                        className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors uppercase tracking-widest"
                     >
                         <Filter className="w-4 h-4" />
                         <span>Filters</span>
                         {activeFilterCount > 0 && (
-                            <Badge variant="secondary" className="text-xs h-5">
+                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-black">
                                 {activeFilterCount}
                             </Badge>
                         )}
@@ -79,7 +79,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t mt-3">
                         {/* Status Filter */}
                         <div className="space-y-1">
-                            <Label htmlFor="status-filter" className="text-xs text-gray-600">Status</Label>
+                            <Label htmlFor="status-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Status</Label>
                             <Select
                                 value={filters.status || 'all'}
                                 onValueChange={(value) => handleFilterChange('status', value)}
@@ -99,7 +99,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
 
                         {/* Visibility Filter */}
                         <div className="space-y-1">
-                            <Label htmlFor="visibility-filter" className="text-xs text-gray-600">Visibility</Label>
+                            <Label htmlFor="visibility-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Visibility</Label>
                             <Select
                                 value={filters.visibility || 'all'}
                                 onValueChange={(value) => handleFilterChange('visibility', value)}
@@ -118,7 +118,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
 
                         {/* Created By Filter */}
                         <div className="space-y-1">
-                            <Label htmlFor="author-filter" className="text-xs text-gray-600">Author</Label>
+                            <Label htmlFor="author-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Author</Label>
                             <Select
                                 value={filters.createdBy || 'all'}
                                 onValueChange={(value) => handleFilterChange('createdBy', value)}
@@ -139,7 +139,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
 
                         {/* Date From */}
                         <div className="space-y-1">
-                            <Label htmlFor="date-from" className="text-xs text-gray-600">From</Label>
+                            <Label htmlFor="date-from" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">From</Label>
                             <Input
                                 id="date-from"
                                 type="date"
@@ -151,7 +151,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
 
                         {/* Date To */}
                         <div className="space-y-1">
-                            <Label htmlFor="date-to" className="text-xs text-gray-600">To</Label>
+                            <Label htmlFor="date-to" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">To</Label>
                             <Input
                                 id="date-to"
                                 type="date"
@@ -163,7 +163,7 @@ export default function AdvancedFilters({ filters, onFiltersChange, users = [] }
 
                         {/* Has Linked DCR */}
                         <div className="space-y-1">
-                            <Label htmlFor="dcr-filter" className="text-xs text-gray-600">DCR Link</Label>
+                            <Label htmlFor="dcr-filter" className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">DCR Link</Label>
                             <Select
                                 value={filters.hasLinkedDCR || 'all'}
                                 onValueChange={(value) => handleFilterChange('hasLinkedDCR', value)}

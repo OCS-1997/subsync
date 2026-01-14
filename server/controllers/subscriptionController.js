@@ -2,6 +2,7 @@ import { getSubscriptions, addSubscription, getSubscriptionById, updateSubscript
 import { getSubscriptionHistory, getSubscriptionHistoryCount } from "../models/subscriptionHistoryModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import { enqueueReminders, cancelPendingReminderJobs } from "../services/reminderService.js";
+import { sendReminderEmail } from "../services/emailService.js";
 
 // RESTful: POST /subscriptions
 const createSubscription = async (req, res) => {
@@ -132,16 +133,47 @@ const deleteSubscriptionController = async (req, res) => {
   }
 };
 
-// Stub endpoint for sending a reminder (email integration to be added later)
+// Send reminder email instantly for a subscription
 const sendReminderController = async (req, res) => {
   try {
     const { id } = req.params;
-    if (req.user && req.user.username) {
-      await logActivity({ username: req.user.username, action: 'REMINDER_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip });
+    const { templateKey = 'renewal_reminder' } = req.body;
+
+    // Send the email immediately
+    const result = await sendReminderEmail(id, templateKey, new Date(), {
+      isManual: true
+    });
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: result.error || 'Failed to send reminder email',
+        success: false
+      });
     }
-    return res.status(200).json({ message: 'Reminder queued successfully.' });
+
+    // Log the activity
+    if (req.user && req.user.username) {
+      await logActivity({
+        username: req.user.username,
+        action: 'SEND_REMINDER',
+        resourceType: 'Subscription',
+        resourceId: id,
+        ipAddress: req.ip,
+        details: { templateKey, providerId: result.providerId }
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Reminder sent successfully!',
+      success: true,
+      providerId: result.providerId
+    });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to queue reminder.' });
+    console.error('Error sending reminder:', error);
+    return res.status(500).json({
+      error: error.message || 'Failed to send reminder.',
+      success: false
+    });
   }
 };
 

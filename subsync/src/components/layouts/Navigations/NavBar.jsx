@@ -332,6 +332,17 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
+                {hasPermission(PERMISSIONS.DASHBOARD_CONFIGURE) && (
+                  <Link
+                    to="settings/dashboard-settings"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Dashboard Settings
+                  </Link>
+                )}
+
                 {hasPermission(PERMISSIONS.BACKUPS_VIEW) && (
                   <Link
                     to={`/${user?.username}/dashboard/backups`}

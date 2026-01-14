@@ -281,7 +281,7 @@ const AddCustomer = () => {
         notes: customerData.notes || "",
         customerStatus: customerData.customerStatus || "Active"
       };
-      console.log("Submitting payload:", payload);
+      //console.log("Submitting payload:", payload);
 
 
       let actionResult;
@@ -292,14 +292,14 @@ const AddCustomer = () => {
       }
 
       // Debug: Log the action result
-      console.log("Action result:", actionResult);
-      console.log("Request status:", actionResult.meta.requestStatus);
-      console.log("Action payload:", actionResult.payload);
+      //console.log("Action result:", actionResult);
+      //console.log("Request status:", actionResult.meta.requestStatus);
+      //console.log("Action payload:", actionResult.payload);
 
       if (actionResult.meta.requestStatus === "rejected") {
         // Check for duplicate name error
         const backendMsg = actionResult.payload || "Error saving customer details.";
-        console.log("Backend error message:", backendMsg);
+        //console.log("Backend error message:", backendMsg);
 
         // Check for duplicate name (handle both exact message and contains)
         if (backendMsg.toLowerCase().includes("already exists") ||

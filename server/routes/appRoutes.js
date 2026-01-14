@@ -5,7 +5,7 @@ import { validateLogin, logoutUser } from '../controllers/loginController.js';
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
-import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getDcrUsers } from '../controllers/dcrController.js';
+import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers } from '../controllers/dcrController.js';
 import { createContact, getContacts, getContactById, updateContact, deleteContact, createContactFromDcrController, getContactByIdController } from '../controllers/contactController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
@@ -25,7 +25,13 @@ import {
     getDashboardController,
     getRenewalsController,
     getExpiredServicesController,
-    getBirthdaysController
+    getBirthdaysController,
+    getRevenueTrendController,
+    getDashboardConfigController,
+    getAdminTabsController,
+    getAdminWidgetsController,
+    updateRoleTabsController,
+    updateRoleWidgetsController
 } from '../controllers/dashboardController.js';
 import {
     getAllBirthdaysController,
@@ -256,9 +262,17 @@ router.get('/users-with-overrides', isAuthenticated, authorize(PERMISSIONS.ROLES
 
 // Dashboard
 router.get('/dashboard', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getDashboardController);
+router.get('/dashboard/config', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getDashboardConfigController);
 router.get('/dashboard/renewals', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getRenewalsController);
 router.get('/dashboard/expired-services', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getExpiredServicesController);
 router.get('/dashboard/birthdays', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getBirthdaysController);
+router.get('/dashboard/revenue-trend', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getRevenueTrendController);
+
+// Dashboard Admin (RBAC)
+router.get('/dashboard/admin/tabs', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), getAdminTabsController);
+router.get('/dashboard/admin/widgets', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), getAdminWidgetsController);
+router.put('/dashboard/admin/role/:roleId/tabs', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), updateRoleTabsController);
+router.put('/dashboard/admin/role/:roleId/widgets', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), updateRoleWidgetsController);
 
 // Quick Tools
 router.get('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_VIEW), listToolsController);
@@ -284,6 +298,7 @@ router.post('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_CREATE), createDc
 router.get('/dcr', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrList);
 router.get('/dcr/week-meta', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getWeekMeta);
 router.get('/dcr/stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrStats);
+router.get('/dcr/user-stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getUserDcrStats);
 router.get('/dcr/users', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrUsers);
 router.get('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrById);
 router.put('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_UPDATE), updateDcr);

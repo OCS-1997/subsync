@@ -1,5 +1,6 @@
 export const PERMISSIONS = Object.freeze({
   DASHBOARD_VIEW: 'dashboard.view',
+  DASHBOARD_CONFIGURE: 'dashboard.configure',
   CUSTOMERS_VIEW: 'customers.view',
   CUSTOMERS_CREATE: 'customers.create',
   CUSTOMERS_UPDATE: 'customers.update',

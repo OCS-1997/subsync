@@ -121,7 +121,7 @@ export function ReadCounter({ totalReads, uniqueReads }) {
     if (!totalReads) return null;
 
     return (
-        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
             <svg
                 className="w-4 h-4"
                 fill="none"
@@ -143,7 +143,7 @@ export function ReadCounter({ totalReads, uniqueReads }) {
             </svg>
             <span className="font-medium">{displayReads.toLocaleString()}</span>
             {uniqueReads && (
-                <span className="text-xs text-gray-500">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500/80">
                     ({uniqueReads.toLocaleString()} unique)
                 </span>
             )}

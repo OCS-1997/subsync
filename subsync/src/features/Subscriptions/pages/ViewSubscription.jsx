@@ -68,110 +68,113 @@ export default function ViewSubscription({
   const currencyLabel = currency || "INR";
 
   return (
-    <div className="space-y-4">
-      {/* Header card */}
-      <Card className="shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-3">
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-                <Globe2 className="w-5 h-5" />
-              </span>
-              <span className="text-xl font-semibold">
-                {domain_name || "Unnamed Subscription"}
-              </span>
-            </CardTitle>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Subscription ID:{" "}
-              <span className="font-mono font-medium">{sub_id}</span>
-            </p>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Customer: <span className="font-medium">{customer_name}</span>
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <StatusPill status={status} />
-            <div className="text-right text-xs text-gray-500 dark:text-gray-400">
-              <div>Start: {formatDate(start_date)}</div>
-              <div>End: {end_date ? formatDate(end_date) : "Never"}</div>
-            </div>
-            {showActions && (
-              <div className="flex gap-2 mt-2">
-                {onEdit && (
-                  <Button size="sm" variant="outline" onClick={onEdit}>
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                )}
-                {onDelete && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={onDelete}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
-                )}
+    <div className="space-y-8 pb-20">
+      {/* Primary Header Card */}
+      <Card className="rounded-[2.5rem] overflow-hidden border-none shadow-[0_20px_60px_rgba(0,0,0,0.04)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)] bg-white dark:bg-slate-900 transition-all duration-500">
+        <CardContent className="px-12 py-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="w-24 h-24 rounded-[2rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-gray-100 dark:border-slate-700">
+                <Globe2 className="w-10 h-10" />
               </div>
-            )}
+              <div className="text-center md:text-left space-y-2">
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {domain_name || "Unnamed Subscription"}
+                </h2>
+                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-[10px] uppercase font-black tracking-widest text-slate-400">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-100 dark:border-slate-800">
+                    <span className="text-blue-600 font-black">Subscription ID:</span>
+                    <span className="text-slate-900 dark:text-white font-mono">{sub_id}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-100 dark:border-slate-800">
+                    <span className="text-indigo-600 font-black">Customer:</span>
+                    <span className="text-slate-900 dark:text-white">{customer_name}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center md:items-end gap-4">
+              <StatusPill status={status} />
+              {showActions && (
+                <div className="flex items-center gap-3">
+                  {onEdit && (
+                    <Button
+                      variant="outline"
+                      onClick={onEdit}
+                      className="rounded-2xl h-12 px-6 font-black text-[11px] uppercase tracking-widest border-gray-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-slate-600 dark:text-slate-300"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="destructive"
+                      onClick={onDelete}
+                      className="rounded-2xl h-12 px-6 font-black text-[11px] uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </CardHeader>
+        </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Left: services & financials */}
-        <div className="xl:col-span-2 space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Mail className="w-4 h-4" />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Main Content Area */}
+        <div className="xl:col-span-8 space-y-8">
+          {/* Services Section */}
+          <Card className="rounded-[2rem] border-none shadow-sm dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden border border-gray-50 dark:border-slate-800/50">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 px-10 py-6">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                  <Mail className="w-4 h-4" />
+                </div>
                 Services
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {(!items || items.length === 0) ? (
-                <p className="text-sm text-gray-500">No services attached.</p>
+                <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                  No services attached.
+                </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
+                  <table className="w-full">
                     <thead>
-                      <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                        <th className="py-2 pr-4 font-semibold">Service</th>
-                        <th className="py-2 pr-4 font-semibold text-right">
-                          Qty
-                        </th>
-                        <th className="py-2 pr-4 font-semibold text-right">
-                          Rate ({currencyLabel})
-                        </th>
-                        <th className="py-2 pr-4 font-semibold text-right">
-                          Tax %
-                        </th>
-                        <th className="py-2 pr-0 font-semibold text-right">
-                          Amount ({currencyLabel})
-                        </th>
+                      <tr className="bg-slate-50/30 dark:bg-slate-800/20">
+                        <th className="px-10 py-5 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 dark:border-slate-800">Service</th>
+                        <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 dark:border-slate-800">Qty</th>
+                        <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 dark:border-slate-800">Rate</th>
+                        <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 dark:border-slate-800">Tax %</th>
+                        <th className="px-10 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-gray-100 dark:border-slate-800">Amount ({currencyLabel})</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {items.map((item) => (
+                    <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                      {items.map((item, idx) => (
                         <tr
                           key={item.item_id || `${item.service_id}-${item.service_name}`}
-                          className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+                          className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                         >
-                          <td className="py-2 pr-4">
-                            {item.service_name || "Unknown Service"}
+                          <td className="px-10 py-6">
+                            <div className="font-black text-slate-900 dark:text-white text-sm tracking-tight">{item.service_name || "Unknown Service"}</div>
                           </td>
-                          <td className="py-2 pr-4 text-right">
-                            {item.quantity}
+                          <td className="px-6 py-6 text-right">
+                            <span className="font-mono font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-xs">{item.quantity}</span>
                           </td>
-                          <td className="py-2 pr-4 text-right">
-                            {Number(item.rate || 0).toFixed(2)}
+                          <td className="px-6 py-6 text-right">
+                            <span className="font-bold text-slate-900 dark:text-white">{Number(item.rate || 0).toFixed(2)}</span>
                           </td>
-                          <td className="py-2 pr-4 text-right">
-                            {Number(item.tax_percent || 0).toFixed(2)}
+                          <td className="px-6 py-6 text-right">
+                            <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">{Number(item.tax_percent || 0).toFixed(2)}%</span>
                           </td>
-                          <td className="py-2 pr-0 text-right">
-                            {Number(item.amount || 0).toFixed(2)}
+                          <td className="px-10 py-6 text-right">
+                            <span className="font-black text-slate-900 dark:text-white tracking-tight">{Number(item.amount || 0).toFixed(2)}</span>
                           </td>
                         </tr>
                       ))}
@@ -182,60 +185,41 @@ export default function ViewSubscription({
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <IndianRupee className="w-4 h-4" />
+          {/* Financial Summary */}
+          <Card className="rounded-[2rem] border-none shadow-sm dark:bg-slate-900 overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 px-10 py-6">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                  <IndianRupee className="w-4 h-4" />
+                </div>
                 Financial Summary
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Currency</p>
-                  <p className="font-medium">{currencyLabel}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Subtotal</p>
-                  <p className="font-medium">
-                    {currencyLabel}{" "}
-                    {subtotal != null
-                      ? Number(subtotal).toFixed(2)
-                      : "0.00"}
+            <CardContent className="p-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subtotal</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {subtotal != null ? Number(subtotal).toFixed(2) : "0.00"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Tax Total</p>
-                  <p className="font-medium">
-                    {currencyLabel}{" "}
-                    {tax_total != null
-                      ? Number(tax_total).toFixed(2)
-                      : "0.00"}
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tax Total</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {tax_total != null ? Number(tax_total).toFixed(2) : "0.00"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Discount</p>
-                  <p className="font-medium">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Discount</p>
+                  <p className="text-2xl font-black text-emerald-500 tracking-tight">
                     {discount_type === "percent"
                       ? `${Number(discount_value || 0).toFixed(2)}%`
-                      : `${currencyLabel} ${Number(
-                        discount_value || 0
-                      ).toFixed(2)}`}
+                      : `${Number(discount_value || 0).toFixed(2)}`}
                   </p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Rounding</p>
-                  <p className="font-medium">
-                    {currencyLabel}{" "}
-                    {rounding != null
-                      ? Number(rounding).toFixed(2)
-                      : "0.00"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Grand Total</p>
-                  <p className="font-semibold text-lg">
-                    {currencyLabel}{" "}
+                <div className="space-y-1 border-l border-gray-100 dark:border-slate-800 pl-10">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Total ({currencyLabel})</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
                     {total != null ? Number(total).toFixed(2) : "0.00"}
                   </p>
                 </div>
@@ -244,65 +228,76 @@ export default function ViewSubscription({
           </Card>
         </div>
 
-        {/* Right: additional info */}
-        <div className="space-y-4">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="w-4 h-4" />
+        {/* Sidebar Info Area */}
+        <div className="xl:col-span-4 space-y-8">
+          {/* Additional Info */}
+          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 px-8 py-6">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <Calendar className="w-4 h-4 text-blue-500" />
                 Additional Info
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <p className="text-gray-500">Created At</p>
-                <p className="font-medium">
-                  {created_at
-                    ? new Date(created_at).toLocaleString()
-                    : "-"}
-                </p>
+            <CardContent className="p-8 space-y-8">
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Start Date</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">{formatDate(start_date)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">End Date</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">{end_date ? formatDate(end_date) : "Never"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-500">Last Updated</p>
-                <p className="font-medium">
-                  {updated_at
-                    ? new Date(updated_at).toLocaleString()
-                    : "-"}
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <p className="text-gray-500 flex items-center gap-1">
-                  <Info className="w-3 h-3" />
-                  Notes
-                </p>
-                <p className="mt-1 text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
+
+              <div className="p-6 rounded-[1.5rem] bg-slate-50 dark:bg-slate-950/50 border border-gray-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="w-3.5 h-3.5 text-blue-500" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Notes</p>
+                </div>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic whitespace-pre-wrap">
                   {notes || "No notes added."}
                 </p>
+              </div>
+
+              <div className="pt-2">
+                <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                  <span>Created At</span>
+                  <span className="text-slate-900 dark:text-white">{created_at ? new Date(created_at).toLocaleString() : "-"}</span>
+                </div>
+                <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  <span>Last Updated</span>
+                  <span className="text-slate-900 dark:text-white">{updated_at ? new Date(updated_at).toLocaleString() : "-"}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Mail className="w-4 h-4" />
+          {/* Notification Emails */}
+          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
+            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-gray-100 dark:border-slate-800 px-8 py-6">
+              <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <Mail className="w-4 h-4 text-indigo-500" />
                 Notification Emails
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8">
               {email_list && email_list.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {email_list.map((em, idx) => (
-                    <Badge key={idx} variant="outline">
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="rounded-xl border-gray-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-2 px-4 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 transition-colors"
+                    >
                       {em}
                     </Badge>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">
+                <div className="p-6 text-center rounded-[1.5rem] bg-slate-50 dark:bg-slate-800/30 text-[10px] font-black uppercase tracking-widest text-slate-400">
                   No notification emails configured.
-                </p>
+                </div>
               )}
             </CardContent>
           </Card>
