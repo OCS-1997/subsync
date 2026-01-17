@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock, LayoutDashboard } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -338,7 +338,7 @@ function NavBar({ toggleSidebar }) {
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
-                    <Settings className="h-5 w-5" />
+                    <LayoutDashboard className="h-5 w-5" />
                     Dashboard Settings
                   </Link>
                 )}

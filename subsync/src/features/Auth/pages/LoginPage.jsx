@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { loginUser } from "../authSlice";
 import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
 import * as LucideIcons from "lucide-react";
+import SplashScreen from "../components/SplashScreen";
 
 function LoginPage() {
   const [username, setUsername] = useState('');
@@ -24,6 +25,9 @@ function LoginPage() {
       setFestival(activeFestival);
     }
   }, []);
+
+  const [showSplash, setShowSplash] = useState(true);
+
 
   useEffect(() => {
     if (isAuthenticated && !isLoading && !error) {
@@ -57,6 +61,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans">
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
       {/* Left Panel - Branding & Visuals */}
       <div className={`hidden lg:flex lg:w-3/5 relative overflow-hidden items-center justify-center p-16 transition-colors duration-700 ${festival ? festival.colors.bg : 'bg-blue-600 dark:bg-blue-900'}`}>
         {/* Abstract Background Elements */}

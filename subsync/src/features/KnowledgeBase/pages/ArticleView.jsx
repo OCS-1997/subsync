@@ -478,13 +478,13 @@ export default function ArticleView({ publicView = false }) {
                 </header>
 
                 {/* Main Content Area */}
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 px-6 pb-24 main-content">
+                <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 px-6 pb-24 main-content">
                     {/* Left Side: Article Content */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.3, duration: 0.8 }}
-                        className="lg:col-span-8"
+                        className="lg:col-span-9"
                     >
                         <article className="bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none rounded-[2.5rem] p-8 sm:p-16 border border-gray-100 dark:border-slate-800 relative transition-all">
                             {/* Content Header Source Link */}
@@ -554,7 +554,7 @@ export default function ArticleView({ publicView = false }) {
                     </motion.div>
 
                     {/* Right Side: Meta Sidebar */}
-                    <aside className="lg:col-span-4 space-y-8 print:hidden">
+                    <aside className="lg:col-span-3 space-y-8 print:hidden">
                         {/* Action Card */}
                         <Card className="rounded-[2rem] border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900">
                             <CardHeader className="bg-blue-600 py-6">

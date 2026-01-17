@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import {
     Users, Globe, Package, Calendar, TrendingUp, Clock,
     AlertTriangle, ArrowRight, Plus, Phone, Target, RefreshCw,
-    ArrowUpRight, ArrowDownRight
+    ArrowUpRight, ArrowDownRight, Mail, Loader2
 } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
@@ -14,19 +14,21 @@ import BentoCard from '../BentoCard';
 import StatCard from '../widgets/StatCard';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
 function OverviewTab({ visibleWidgets }) {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
-    const [loading, setLoading] = useState(true);
-
-    // Helper to check if widget is visible
-    // Only show all widgets if visibleWidgets is explicitly undefined/null (API failure fallback)
-    const isWidgetVisible = (widgetKey) => {
-        if (visibleWidgets === undefined || visibleWidgets === null) return true;
-        return visibleWidgets.has(widgetKey);
-    };
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [renewalsLoading, setRenewalsLoading] = useState(true);
+    const [revenueLoading, setRevenueLoading] = useState(true);
+    const [activityLoading, setActivityLoading] = useState(true);
 
     const [stats, setStats] = useState({
         totalCustomers: 0,
@@ -45,24 +47,43 @@ function OverviewTab({ visibleWidgets }) {
     });
     const [renewals, setRenewals] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
+    const [sendingReminder, setSendingReminder] = useState(null);
+
+    // Send reminder email for a subscription
+    const sendReminder = async (subId, e) => {
+        e.stopPropagation(); // Prevent navigation
+        try {
+            setSendingReminder(subId);
+            const response = await api.post(`/subscription/${subId}/reminder`);
+            if (response.data.success) {
+                toast.success('Reminder email sent successfully!');
+            } else {
+                toast.error(response.data.error || 'Failed to send reminder');
+            }
+        } catch (error) {
+            console.error('Error sending reminder:', error);
+            toast.error(error.response?.data?.error || 'Failed to send reminder email');
+        } finally {
+            setSendingReminder(null);
+        }
+    };
 
     useEffect(() => {
-        loadOverviewData();
+        loadData();
     }, []);
 
-    const loadOverviewData = async () => {
+    const loadData = () => {
+        fetchStats();
+        fetchRenewals();
+        fetchRevenueTrend();
+    };
+
+    const fetchStats = async () => {
         try {
-            setLoading(true);
-
-            // Fetch dashboard data
-            const [dashboardRes, renewalsRes, trendRes] = await Promise.all([
-                api.get('/dashboard'),
-                api.get('/dashboard/renewals', { params: { filterType: 'today' } }),
-                api.get('/dashboard/revenue-trend')
-            ]);
-
-            const dashData = dashboardRes.data;
-
+            setStatsLoading(true);
+            setActivityLoading(true);
+            const res = await api.get('/dashboard');
+            const dashData = res.data;
             setStats({
                 totalCustomers: dashData.stats?.totalCustomers || 0,
                 activeSubscriptions: dashData.stats?.activeSubscriptions || 0,
@@ -73,18 +94,43 @@ function OverviewTab({ visibleWidgets }) {
                 openOpportunities: dashData.stats?.openOpportunities || 0,
                 kbArticles: dashData.stats?.kbArticles || 0
             });
-
-            setRevenueTrend(trendRes.data || { trend: [], percentChange: 0, isPositive: true });
-            setRenewals(renewalsRes.data?.slice(0, 5) || []);
             setRecentActivity(dashData.recentActivity || []);
-
         } catch (err) {
-            console.error('Error loading overview data:', err);
-            // toast.error('Failed to load dashboard data'); 
-            // Silently fail for some sub-queries to keep the page working
+            console.error('Error fetching dashboard stats:', err);
         } finally {
-            setLoading(false);
+            setStatsLoading(false);
+            setActivityLoading(false);
         }
+    };
+
+    const fetchRenewals = async () => {
+        try {
+            setRenewalsLoading(true);
+            const res = await api.get('/dashboard/renewals', { params: { filterType: 'today' } });
+            setRenewals(res.data?.slice(0, 5) || []);
+        } catch (err) {
+            console.error('Error fetching renewals:', err);
+        } finally {
+            setRenewalsLoading(false);
+        }
+    };
+
+    const fetchRevenueTrend = async () => {
+        try {
+            setRevenueLoading(true);
+            const res = await api.get('/dashboard/revenue-trend');
+            setRevenueTrend(res.data || { trend: [], percentChange: 0, isPositive: true });
+        } catch (err) {
+            console.error('Error fetching revenue trend:', err);
+        } finally {
+            setRevenueLoading(false);
+        }
+    };
+
+    // Helper to check if widget is visible
+    const isWidgetVisible = (widgetKey) => {
+        if (visibleWidgets === undefined || visibleWidgets === null) return true;
+        return visibleWidgets.has(widgetKey);
     };
 
     const formatCurrency = (value) => {
@@ -100,21 +146,11 @@ function OverviewTab({ visibleWidgets }) {
         { label: 'New Opportunity', icon: Target, path: 'opportunities/new', color: 'amber' },
     ];
 
-    if (loading) {
-        return (
-            <BentoGrid columns={4}>
-                {[...Array(8)].map((_, i) => (
-                    <BentoCard key={i} loading size={i === 2 ? "sm" : "sm"} />
-                ))}
-            </BentoGrid>
-        );
-    }
-
     return (
         <BentoGrid columns={4}>
             {/* Key Stats Row */}
             {isWidgetVisible('overview_customers') && (
-                <BentoCard size="sm" icon={Users} title="Customers">
+                <BentoCard size="sm" icon={Users} title="Customers" loading={statsLoading}>
                     <StatCard
                         value={stats.totalCustomers}
                         label="Total Customers"
@@ -124,7 +160,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_subscriptions') && (
-                <BentoCard size="sm" icon={Package} title="Subscriptions">
+                <BentoCard size="sm" icon={Package} title="Subscriptions" loading={statsLoading}>
                     <StatCard
                         value={stats.activeSubscriptions}
                         label="Active Contracts"
@@ -134,7 +170,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_revenue') && (
-                <BentoCard size="sm" icon={TrendingUp} title="Revenue">
+                <BentoCard size="sm" icon={TrendingUp} title="Revenue" loading={revenueLoading}>
                     <div className="flex flex-col h-full">
                         <div className="flex items-start justify-between">
                             <StatCard
@@ -172,7 +208,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_renewals') && (
-                <BentoCard size="sm" icon={Calendar} title="Renewals">
+                <BentoCard size="sm" icon={Calendar} title="Renewals" loading={statsLoading}>
                     <StatCard
                         value={stats.pendingRenewals}
                         label="Due Today"
@@ -187,6 +223,7 @@ function OverviewTab({ visibleWidgets }) {
                     size="md"
                     icon={AlertTriangle}
                     title="Renewal Alerts"
+                    loading={renewalsLoading}
                     action={
                         <Button
                             variant="ghost"
@@ -198,33 +235,130 @@ function OverviewTab({ visibleWidgets }) {
                         </Button>
                     }
                 >
-                    {renewals.length === 0 ? (
-                        <div className="flex items-center justify-center h-24 text-slate-500 text-sm">
-                            No renewals due today
-                        </div>
-                    ) : (
-                        <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
-                            {renewals.map((r, i) => (
-                                <div
-                                    key={r.sub_id || i}
-                                    className="flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-200 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
-                                    onClick={() => navigate(`/${user.username}/dashboard/subscriptions/${r.sub_id}`)}
-                                >
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{r.domain_name}</p>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">{r.customer_name}</p>
-                                    </div>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${r.days_left < 0 ? 'bg-rose-500/20 text-rose-400' :
-                                        r.days_left === 0 ? 'bg-amber-500/20 text-amber-400' :
-                                            'bg-blue-500/20 text-blue-400'
-                                        }`}>
-                                        {r.days_left < 0 ? `${Math.abs(r.days_left)}d ago` :
-                                            r.days_left === 0 ? 'Today' : `${r.days_left}d`}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <TooltipProvider delayDuration={200}>
+                        {renewals.length === 0 ? (
+                            <div className="flex items-center justify-center h-24 text-slate-500 text-sm">
+                                No renewals due today
+                            </div>
+                        ) : (
+                            <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 pr-2">
+                                {renewals.map((sub, i) => (
+                                    <Tooltip key={sub.sub_id || i}>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className="flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800/30 hover:bg-slate-200 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                                onClick={() => navigate(`/${user.username}/dashboard/subscriptions/${sub.sub_id}`)}
+                                            >
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{sub.domain_name}</p>
+                                                    <p className="text-[10px] text-slate-500 uppercase tracking-wide">{sub.customer_name}</p>
+                                                </div>
+                                                <span className={cn(
+                                                    "text-xs font-bold px-2 py-1 rounded-full",
+                                                    sub.days_left < 0 ? "bg-rose-500/20 text-rose-400" :
+                                                    sub.days_left === 0 ? "bg-amber-500/20 text-amber-400" :
+                                                    "bg-blue-500/20 text-blue-400"
+                                                )}>
+                                                    {sub.days_left < 0 ? `${Math.abs(sub.days_left)}d ago` :
+                                                    sub.days_left === 0 ? 'Today' : `${sub.days_left}d`}
+                                                </span>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="left"
+                                            align="center"
+                                            sideOffset={8}
+                                            collisionPadding={20}
+                                            className="max-w-sm bg-slate-900 dark:bg-slate-800 border-slate-700 p-4 rounded-xl z-50"
+                                        >
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <p className="text-sm font-bold text-white">{sub.domain_name}</p>
+                                                    <p className="text-[10px] text-slate-400">{sub.customer_name}</p>
+                                                </div>
+
+                                                {/* Services List */}
+                                                {sub.services && sub.services.length > 0 && (
+                                                    <div>
+                                                        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">Services</p>
+                                                        <div className="space-y-1">
+                                                            {sub.services.slice(0, 4).map((service, idx) => (
+                                                                <div key={idx} className="flex items-center justify-between text-[10px] p-1.5 rounded bg-slate-800/50">
+                                                                    <span className="text-slate-300 truncate max-w-[140px]">{service.service_name || 'Unnamed Service'}</span>
+                                                                    <span className="text-emerald-400 font-bold shrink-0 ml-2">₹{service.amount || service.rate || 0}</span>
+                                                                </div>
+                                                            ))}
+                                                            {sub.services.length > 4 && (
+                                                                <p className="text-[9px] text-slate-500 text-center">+{sub.services.length - 4} more services</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Status & Dates */}
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="p-2 rounded-lg bg-slate-800/50">
+                                                        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Start</p>
+                                                        <p className="text-xs text-slate-300">{sub.start_date ? new Date(sub.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                                                    </div>
+                                                    <div className="p-2 rounded-lg bg-slate-800/50">
+                                                        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">End</p>
+                                                        <p className={cn(
+                                                            "text-xs font-bold",
+                                                            sub.days_left < 0 ? "text-rose-400" : sub.days_left <= 7 ? "text-amber-400" : "text-blue-400"
+                                                        )}>
+                                                            {sub.end_date ? new Date(sub.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Days Info & Total */}
+                                                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/50">
+                                                    <div>
+                                                        <span className="text-[9px] text-slate-500 block">Status</span>
+                                                        <span className={cn(
+                                                            "text-xs font-bold",
+                                                            sub.days_left < 0 ? "text-rose-400" : sub.days_left <= 7 ? "text-amber-400" : "text-blue-400"
+                                                        )}>
+                                                            {sub.days_left < 0 ? `Expired ${Math.abs(sub.days_left)}d ago` :
+                                                                sub.days_left === 0 ? 'Expires Today!' :
+                                                                    `${sub.days_left}d remaining`}
+                                                        </span>
+                                                    </div>
+                                                    {sub.total && (
+                                                        <div className="text-right">
+                                                            <span className="text-[9px] text-slate-500 block">Total</span>
+                                                            <span className="text-sm font-bold text-emerald-400">₹{parseFloat(sub.total).toLocaleString('en-IN')}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Send Reminder Button */}
+                                                <Button
+                                                    size="sm"
+                                                    className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8"
+                                                    onClick={(e) => sendReminder(sub.sub_id, e)}
+                                                    disabled={sendingReminder === sub.sub_id}
+                                                >
+                                                    {sendingReminder === sub.sub_id ? (
+                                                        <>
+                                                            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                                                            Sending...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Mail className="w-3 h-3 mr-2" />
+                                                            Send Reminder Email
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        )}
+                    </TooltipProvider>
                 </BentoCard>
             )}
 
@@ -250,7 +384,7 @@ function OverviewTab({ visibleWidgets }) {
 
             {/* Secondary Stats Row */}
             {isWidgetVisible('overview_expired') && (
-                <BentoCard size="sm" icon={Clock} title="Expired">
+                <BentoCard size="sm" icon={Clock} title="Expired" loading={statsLoading}>
                     <StatCard
                         value={stats.expiredCount}
                         label="Expired Subscriptions"
@@ -260,7 +394,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_dcr') && (
-                <BentoCard size="sm" icon={Phone} title="Today's DCR">
+                <BentoCard size="sm" icon={Phone} title="Today's DCR" loading={statsLoading}>
                     <StatCard
                         value={stats.todayDCRs}
                         label="Logged Today"
@@ -270,7 +404,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_opportunities') && (
-                <BentoCard size="sm" icon={Target} title="Opportunities">
+                <BentoCard size="sm" icon={Target} title="Opportunities" loading={statsLoading}>
                     <StatCard
                         value={stats.openOpportunities}
                         label="Open Pipeline"
@@ -280,7 +414,7 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_kb') && (
-                <BentoCard size="sm" icon={Globe} title="Knowledge Base">
+                <BentoCard size="sm" icon={Globe} title="Knowledge Base" loading={statsLoading}>
                     <StatCard
                         value={stats.kbArticles}
                         label="Total Articles"

@@ -143,7 +143,9 @@ export async function createArticle({ title, content, category_id, author_id, vi
 export async function getArticles({ search, categoryId, tag, isPublished, visibility, limit = 20, offset = 0, authorId }) {
     let query = `
         SELECT 
-            ka.*, 
+            ka.id, ka.title, ka.slug, ka.category_id, ka.author_id, ka.visibility, ka.is_published, 
+            ka.created_at, ka.updated_at, ka.total_reads, ka.unique_reads,
+            LEFT(ka.content, 300) as content_snippet,
             kc.name as category_name,
             u.name as author_name,
             (SELECT JSON_ARRAYAGG(kt.name) 
