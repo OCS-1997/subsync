@@ -235,19 +235,19 @@ export default function ContactsList() {
     const tableData = contacts.map((contact) => ({
         ...contact,
         full_name: (
-            <div className="flex items-center gap-2">
+            <Link to={`/${username}/dashboard/contacts/${contact.contact_id}`} className="flex items-center gap-2 group/name">
                 {contact.is_private === 1 && (
                     <Lock className="w-3 h-3 text-orange-500 flex-shrink-0" title="Private Contact" />
                 )}
                 <div>
-                    <div className="font-medium">
+                    <div className="font-medium group-hover/name:text-blue-600 transition-colors">
                         {contact.salutation} {contact.first_name} {contact.last_name}
                     </div>
                     {contact.designation && (
                         <div className="text-xs text-gray-500">{contact.designation}</div>
                     )}
                 </div>
-            </div>
+            </Link>
         ),
         company_name: contact.company_name || '-',
         email: contact.email || '-',

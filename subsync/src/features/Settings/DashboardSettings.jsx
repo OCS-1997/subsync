@@ -262,7 +262,7 @@ const DashboardSettings = () => {
                      <Select value={String(selectedRoleId || '')} onValueChange={handleRoleChange}>
                         <SelectTrigger className="w-full md:w-[280px] h-10 border-muted-foreground/20 bg-background/50 backdrop-blur-sm shadow-sm">
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <Shield className="w-4 h-4 text-primary shrink-0" />
+                                <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                                 <SelectValue placeholder="Select a role" />
                             </div>
                         </SelectTrigger>
@@ -271,7 +271,7 @@ const DashboardSettings = () => {
                                 <SelectItem key={role.id} value={String(role.id)} className="cursor-pointer">
                                     <span className="font-medium">{role.name}</span>
                                     {role.isSystem && (
-                                        <Badge variant="outline" className="ml-2 py-0 h-5 text-[10px] border-primary/20 text-primary">System</Badge>
+                                        <Badge variant="outline" className="ml-2 py-0 h-5 text-[10px] border-blue-500/20 text-blue-600 dark:text-blue-400">System</Badge>
                                     )}
                                 </SelectItem>
                             ))}
@@ -307,7 +307,7 @@ const DashboardSettings = () => {
                                 <input 
                                     type="text" 
                                     placeholder="Search tabs..."
-                                    className="w-full h-9 pl-9 pr-4 rounded-md border border-input bg-background/50 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="w-full h-9 pl-9 pr-4 rounded-md border border-input bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -332,12 +332,12 @@ const DashboardSettings = () => {
                                                 className={cn(
                                                     "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
                                                     isActive 
-                                                     ? "bg-primary text-primary-foreground shadow-md"
+                                                     ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
                                                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-3 z-10">
-                                                    <Icon className={cn("w-4 h-4", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary")} />
+                                                    <Icon className={cn("w-4 h-4", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
                                                     <span>{tab.name}</span>
                                                 </div>
                                                 
@@ -348,7 +348,7 @@ const DashboardSettings = () => {
                                                     <span className={cn(
                                                         "text-[10px] px-1.5 py-0.5 rounded-full border",
                                                         isActive 
-                                                            ? "border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground/90" 
+                                                            ? "border-white/30 bg-white/10 text-white/90" 
                                                             : "border-border bg-background/50 text-muted-foreground"
                                                     )}>
                                                         {activeWidgets}/{tabWidgets.length}
@@ -359,7 +359,7 @@ const DashboardSettings = () => {
                                                 {isActive && (
                                                     <motion.div
                                                         layoutId="activeTabIndicator"
-                                                        className="absolute inset-0 bg-primary z-0"
+                                                        className="absolute inset-0 bg-blue-600 z-0"
                                                         initial={false}
                                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                                     />
@@ -390,7 +390,7 @@ const DashboardSettings = () => {
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <h2 className="text-xl font-bold">{tabs.find(t => t.tab_key === activeTab)?.name}</h2>
-                                                <Badge variant={tabPermissions[activeTab] !== false ? "default" : "secondary"} className="text-xs">
+                                                <Badge variant={tabPermissions[activeTab] !== false ? "default" : "secondary"} className="text-xs bg-blue-500 hover:bg-blue-600">
                                                     {tabPermissions[activeTab] !== false ? "Visible" : "Hidden"}
                                                 </Badge>
                                             </div>
@@ -410,7 +410,7 @@ const DashboardSettings = () => {
                                                 id="tab-visibility"
                                                 checked={tabPermissions[activeTab] !== false}
                                                 onCheckedChange={(checked) => handleTabToggle(activeTab, checked)}
-                                                className="data-[state=checked]:bg-primary"
+                                                className="data-[state=checked]:bg-blue-600"
                                             />
                                         </div>
                                     </div>
@@ -436,7 +436,7 @@ const DashboardSettings = () => {
                                                 variant="ghost" 
                                                 size="sm" 
                                                 onClick={() => handleToggleAllWidgetsInTab(activeTab, false)}
-                                                className="h-8 text-xs hover:bg-destructive/10 hover:text-destructive"
+                                                className="h-8 text-xs hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 dark:hover:text-blue-400"
                                             >
                                                 Deselect All
                                             </Button>
@@ -454,7 +454,7 @@ const DashboardSettings = () => {
                                                         className={cn(
                                                             "group relative overflow-hidden rounded-xl border p-4 transition-all duration-200",
                                                             isVisible 
-                                                                ? "bg-card border-border shadow-sm ring-1 ring-primary/5 hover:shadow-md hover:ring-primary/20" 
+                                                                ? "bg-card border-border shadow-sm ring-1 ring-blue-500/5 hover:shadow-md hover:ring-blue-500/20" 
                                                                 : "bg-muted/50 border-transparent opacity-70 hover:opacity-100"
                                                         )}
                                                     >
@@ -470,11 +470,11 @@ const DashboardSettings = () => {
                                                             <Switch 
                                                                 checked={isVisible}
                                                                 onCheckedChange={(checked) => handleWidgetToggle(widget.widget_key, checked)}
-                                                                className={cn("mt-1", isVisible ? "data-[state=checked]:bg-emerald-500" : "")}
+                                                                className={cn("mt-1", isVisible ? "data-[state=checked]:bg-blue-500" : "")}
                                                             />
                                                         </div>
                                                         <div className={cn(
-                                                            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent transition-all duration-500",
+                                                            "absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent transition-all duration-500",
                                                             isVisible ? "w-full opacity-100" : "w-0 opacity-0"
                                                         )} />
                                                     </motion.div>
@@ -505,7 +505,7 @@ const DashboardSettings = () => {
                         exit={{ y: 100, opacity: 0 }}
                         className="fixed bottom-8 right-8 z-50 p-2"
                     >
-                        <Card className="border-primary/20 shadow-2xl bg-card/80 backdrop-blur-md overflow-hidden">
+                        <Card className="border-blue-500/20 shadow-2xl bg-card/80 backdrop-blur-md overflow-hidden">
                             <div className="p-2 pl-4 flex items-center gap-4">
                                 <div className="flex flex-col">
                                     <span className="font-bold text-sm">Unsaved Changes</span>
@@ -522,7 +522,7 @@ const DashboardSettings = () => {
                                                 setHasChanges(false);
                                             }
                                         }}
-                                        className="h-8 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                                        className="h-8 hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700"
                                     >
                                         Discard
                                     </Button>
@@ -530,7 +530,7 @@ const DashboardSettings = () => {
                                         onClick={handleSave}
                                         disabled={saving}
                                         size="sm"
-                                        className="h-8 shadow-lg shadow-primary/20"
+                                        className="h-8 shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700"
                                     >
                                         {saving ? (
                                             <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />

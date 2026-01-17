@@ -1,4 +1,5 @@
 import { Mail, Edit, Trash2, Globe2, Calendar, IndianRupee, Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -162,7 +163,12 @@ export default function ViewSubscription({
                           className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                         >
                           <td className="px-10 py-6">
-                            <div className="font-black text-slate-900 dark:text-white text-sm tracking-tight">{item.service_name || "Unknown Service"}</div>
+                            <Link 
+                                to={`/${window.location.pathname.split('/')[1]}/dashboard/services/${item.service_id}`}
+                                className="font-black text-slate-900 dark:text-white text-sm tracking-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            >
+                                {item.service_name || "Unknown Service"}
+                            </Link>
                           </td>
                           <td className="px-6 py-6 text-right">
                             <span className="font-mono font-black text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-xs">{item.quantity}</span>

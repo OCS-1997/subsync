@@ -171,10 +171,20 @@ function Domains() {
               return {
                 ...domain,
                 domain_name: (
-                  <span className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{domain.domain_name}</span>
+                  <Link 
+                    to={`/${username}/dashboard/domains/${domain.domain_id}`}
+                    className="font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight hover:underline transition-all"
+                  >
+                    {domain.domain_name}
+                  </Link>
                 ),
                 customer_name: (
-                  <span className="font-bold text-slate-700 dark:text-slate-300">{domain.customer_name}</span>
+                  <Link 
+                    to={`/${username}/dashboard/customers/${domain.customer_id}`}
+                    className="font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  >
+                    {domain.customer_name}
+                  </Link>
                 ),
                 registered_with: (
                   <span className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 whitespace-normal text-center min-w-[80px] inline-block">

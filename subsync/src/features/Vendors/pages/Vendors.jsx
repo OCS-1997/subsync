@@ -220,7 +220,14 @@ function Vendors() {
                 }
                 return {
                   ...v,
-                  display_name: `${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim(),
+                  display_name: (
+                    <Link 
+                      to={`/${location.pathname.split('/')[1]}/dashboard/vendors/${v.vendor_id}`}
+                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {`${v.salutation || ""} ${v.first_name || ""} ${v.last_name || ""}`.trim()}
+                    </Link>
+                  ),
                   primary_phone_number: phoneDisplay,
                   gst_treatment: v.gst_treatment || "Not specified",
                   actions: renderActions(v),

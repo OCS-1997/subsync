@@ -251,7 +251,15 @@ function OverviewTab({ visibleWidgets }) {
                                             >
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-900 dark:text-white">{sub.domain_name}</p>
-                                                    <p className="text-[10px] text-slate-500 uppercase tracking-wide">{sub.customer_name}</p>
+                                                    <p 
+                                                        className="text-[10px] text-slate-500 uppercase tracking-wide hover:text-blue-500 transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/${user.username}/dashboard/customers/${sub.customer_id}`);
+                                                        }}
+                                                    >
+                                                        {sub.customer_name}
+                                                    </p>
                                                 </div>
                                                 <span className={cn(
                                                     "text-xs font-bold px-2 py-1 rounded-full",
@@ -274,7 +282,12 @@ function OverviewTab({ visibleWidgets }) {
                                             <div className="space-y-3">
                                                 <div>
                                                     <p className="text-sm font-bold text-white">{sub.domain_name}</p>
-                                                    <p className="text-[10px] text-slate-400">{sub.customer_name}</p>
+                                                    <p 
+                                                        className="text-[10px] text-slate-400 hover:text-blue-400 cursor-pointer transition-colors"
+                                                        onClick={() => navigate(`/${user.username}/dashboard/customers/${sub.customer_id}`)}
+                                                    >
+                                                        {sub.customer_name}
+                                                    </p>
                                                 </div>
 
                                                 {/* Services List */}

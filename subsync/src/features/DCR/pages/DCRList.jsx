@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
@@ -479,8 +479,22 @@ export default function DCRList() {
                 return {
                   ...entry,
                   timestamp: formatDateTime(entry.timestamp),
-                  domain_display: entry.domain_name || entry.domain_free_text || entry.company_name || "-",
-                  contact_display: entry.contact_name || "-",
+                  domain_display: entry.domain_id ? (
+                    <Link 
+                      to={`/${username}/dashboard/domains/${entry.domain_id}`}
+                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {entry.domain_name || entry.domain_free_text || entry.company_name || "-"}
+                    </Link>
+                  ) : (entry.domain_name || entry.domain_free_text || entry.company_name || "-"),
+                  contact_display: entry.contact_id ? (
+                    <Link 
+                      to={`/${username}/dashboard/contacts/${entry.contact_id}`}
+                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {entry.contact_name || "-"}
+                    </Link>
+                  ) : (entry.contact_name || "-"),
                   call_type: entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1).replace('-', '-'),
                   notes_preview: (
                     <span title={entry.notes || "-"} className="cursor-help">

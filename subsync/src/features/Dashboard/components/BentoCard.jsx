@@ -15,7 +15,9 @@ function BentoCard({
     draggable = false,
     dragHandleProps = {},
     noPadding = false,
-    loading = false
+    loading = false,
+    titleClassName,
+    iconClassName
 }) {
     const sizeClasses = {
         sm: "col-span-1 row-span-1",
@@ -53,12 +55,18 @@ function BentoCard({
                             </div>
                         )}
                         {Icon && (
-                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-100 dark:from-blue-500/20 to-purple-100 dark:to-purple-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-500/20">
-                                <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            <div className={cn(
+                                "h-10 w-10 rounded-xl bg-gradient-to-br from-blue-100 dark:from-blue-500/20 to-purple-100 dark:to-purple-500/20 flex items-center justify-center border border-blue-200 dark:border-blue-500/20",
+                                iconClassName
+                            )}>
+                                <Icon className={cn("w-5 h-5 text-blue-600 dark:text-blue-400", iconClassName?.includes('text-') && iconClassName.match(/text-[^ ]+/)[0])} />
                             </div>
                         )}
                         {title && (
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                            <h3 className={cn(
+                                "text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400",
+                                titleClassName
+                            )}>
                                 {title}
                             </h3>
                         )}

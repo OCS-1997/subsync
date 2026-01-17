@@ -116,6 +116,26 @@ import {
     deleteStatusController
 } from '../controllers/opportunityController.js';
 import { getPreference, updatePreference } from '../controllers/userPreferencesController.js';
+import {
+    getAssetTypesController,
+    createAssetTypeController,
+    updateAssetTypeController,
+    deleteAssetTypeController,
+    getCategoriesController as getAssetCategoriesController,
+    createCategoryController as createAssetCategoryController,
+    updateCategoryController as updateAssetCategoryController,
+    deleteCategoryController as deleteAssetCategoryController,
+    getAllAssetsController,
+    getAssetByIdController,
+    createAssetController,
+    updateAssetController,
+    deleteAssetController,
+    assignAssetController,
+    unassignAssetController,
+    restoreAssetController,
+    getAssetHistoryController,
+    getAssetStatsController
+} from '../controllers/assetController.js';
 
 const router = express.Router();
 
@@ -145,11 +165,11 @@ router.put('/payment-terms/:id', isAuthenticated, authorize(PERMISSIONS.SETTINGS
 router.delete('/payment-terms/:id', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), deletePaymentTermById);
 router.put('/payment-terms/:id/default', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), setDefaultPaymentTerm)
 
-//Domain
+// Domain
 router.post('/create-domain', isAuthenticated, authorize(PERMISSIONS.DOMAINS_CREATE), createDomain);
 router.put('/update-domain/:did', isAuthenticated, authorize(PERMISSIONS.DOMAINS_UPDATE), updateDomainDetails);
 router.get('/all-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), fetchAllDomains);
-router.get('/all-domain-details', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), domainDetailsByID);
+router.get('/domain/:did', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), domainDetailsByID);
 router.post('/import-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_CREATE), importDomains);
 router.get('/domains/:id/details', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), getDomainDetailsForDcr);
 
@@ -412,5 +432,29 @@ router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSI
 // User Preferences
 router.get('/preferences/:username/:key', isAuthenticated, getPreference);
 router.put('/preferences/:username/:key', isAuthenticated, updatePreference);
+
+// Assets
+router.get('/assets', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAllAssetsController);
+router.get('/assets/stats', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAssetStatsController);
+router.post('/assets', isAuthenticated, authorize(PERMISSIONS.ASSETS_CREATE), createAssetController);
+router.get('/assets/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAssetByIdController);
+router.put('/assets/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_UPDATE), updateAssetController);
+router.delete('/assets/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_DELETE), deleteAssetController);
+router.post('/assets/:id/assign', isAuthenticated, authorize(PERMISSIONS.ASSETS_ASSIGN), assignAssetController);
+router.post('/assets/:id/unassign', isAuthenticated, authorize(PERMISSIONS.ASSETS_ASSIGN), unassignAssetController);
+router.post('/assets/:id/restore', isAuthenticated, authorize(PERMISSIONS.ASSETS_DELETE), restoreAssetController);
+router.get('/assets/:id/history', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAssetHistoryController);
+
+// Asset Types
+router.get('/asset-types', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAssetTypesController);
+router.post('/asset-types', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), createAssetTypeController);
+router.put('/asset-types/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), updateAssetTypeController);
+router.delete('/asset-types/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), deleteAssetTypeController);
+
+// Asset Categories
+router.get('/asset-categories', isAuthenticated, authorize(PERMISSIONS.ASSETS_VIEW), getAssetCategoriesController);
+router.post('/asset-categories', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), createAssetCategoryController);
+router.put('/asset-categories/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), updateAssetCategoryController);
+router.delete('/asset-categories/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), deleteAssetCategoryController);
 
 export default router;

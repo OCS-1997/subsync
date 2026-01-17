@@ -12,6 +12,7 @@ import Customers from '@/features/Customers/pages/Customers.jsx';
 import Dashboard from '@/features/Dashboard/pages/Dashboard.jsx';
 import DefaultTaxPreference from '@/features/Settings/DefaultTaxPreference.jsx';
 import Domains from '@/features/Domains/pages/Domains.jsx';
+import DomainDetails from '@/features/Domains/pages/DomainDetails.jsx';
 import GSTSettings from '@/features/Settings/GSTSettings.jsx';
 import Home from '@/features/Dashboard/components/Home.jsx'
 import DashboardHome from '@/features/Dashboard/pages/DashboardHome.jsx';
@@ -54,6 +55,10 @@ import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
 import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
 import KnowledgeBaseRoutes from '@/features/KnowledgeBase/index.jsx';
 import ArticleView from '@/features/KnowledgeBase/pages/ArticleView.jsx';
+import Assets from '@/features/Assets/pages/Assets.jsx';
+import AddAsset from '@/features/Assets/pages/AddAsset.jsx';
+import AssetDetails from '@/features/Assets/pages/AssetDetails.jsx';
+import AssetSettings from '@/features/Assets/pages/AssetSettings.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -77,7 +82,7 @@ const router = createBrowserRouter([
       { path: "customers/:id/edit", element: <PermissionGate required={PERMISSIONS.CUSTOMERS_UPDATE}><AddCustomer /></PermissionGate> },
 
       { path: "domains", element: <PermissionGate required={PERMISSIONS.DOMAINS_VIEW}><Domains /></PermissionGate> },
-      { path: "domains/:id", element: <PermissionGate required={PERMISSIONS.DOMAINS_VIEW}><CreateDomain /></PermissionGate> },
+      { path: "domains/:id", element: <PermissionGate required={PERMISSIONS.DOMAINS_VIEW}><DomainDetails /></PermissionGate> },
       { path: "domains/edit/:domainId", element: <PermissionGate required={PERMISSIONS.DOMAINS_UPDATE}><CreateDomain /></PermissionGate> },
 
       { path: "services", element: <PermissionGate required={PERMISSIONS.SERVICES_VIEW}><Services /></PermissionGate> },
@@ -120,6 +125,13 @@ const router = createBrowserRouter([
       { path: "backups/history", element: <PermissionGate required={PERMISSIONS.BACKUPS_VIEW}><BackupHistory /></PermissionGate> },
 
       { path: "kb/*", element: <PermissionGate required={PERMISSIONS.KNOWLEDGE_BASE_VIEW}><KnowledgeBaseRoutes /></PermissionGate> },
+
+      // Assets
+      { path: "assets", element: <PermissionGate required={PERMISSIONS.ASSETS_VIEW}><Assets /></PermissionGate> },
+      { path: "assets/add", element: <PermissionGate required={PERMISSIONS.ASSETS_CREATE}><AddAsset /></PermissionGate> },
+      { path: "assets/settings", element: <PermissionGate required={PERMISSIONS.ASSETS_MANAGE_CATEGORIES}><AssetSettings /></PermissionGate> },
+      { path: "assets/:id", element: <PermissionGate required={PERMISSIONS.ASSETS_VIEW}><AssetDetails /></PermissionGate> },
+      { path: "assets/:id/edit", element: <PermissionGate required={PERMISSIONS.ASSETS_UPDATE}><AddAsset /></PermissionGate> },
 
       {
         path: "settings",

@@ -329,14 +329,20 @@ function Services() {
                 return {
                   ...service,
                   service_name: (
-                    <div className="flex flex-col">
-                      <span className="text-sm font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{service.service_name}</span>
-                      <span className="text-[10px] uppercase tracking-widest text-slate-400 mt-0.5">{service.item_group_name || 'General Inventory'}</span>
-                    </div>
+                    <Link to={`${service.service_id}`} className="group/name block">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-black text-slate-900 dark:text-white group-hover/name:text-blue-600 transition-colors hover:underline">{service.service_name}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-400 mt-0.5">{service.item_group_name || 'General Inventory'}</span>
+                      </div>
+                    </Link>
                   ),
                   stock_keepers_unit: <code className="text-[11px] font-black text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{service.stock_keepers_unit}</code>,
                   item_group_name: service.item_group_name || '—',
-                  preferred_vendor_name: service.preferred_vendor_name || '—',
+                  preferred_vendor_name: service.preferred_vendor_id ? (
+                    <Link to={`/${window.location.pathname.split('/')[1]}/dashboard/vendors/${service.preferred_vendor_id}`} className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {service.preferred_vendor_name}
+                    </Link>
+                  ) : (service.preferred_vendor_name || '—'),
                   selling_price: <span className="text-blue-600 dark:text-blue-400 tabular-nums">{formatCurrency(sellingPrice)}</span>,
                   tax_rate: <span className="text-slate-400 tabular-nums">{taxRatePercent.toFixed(1)}%</span>,
                   total_amount: <span className="text-slate-900 dark:text-white tabular-nums">{formatCurrency(totalAmount)}</span>,

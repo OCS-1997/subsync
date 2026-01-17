@@ -79,6 +79,13 @@ export const PERMISSIONS = Object.freeze({
     OPPORTUNITIES_UPDATE: 'opportunities.update',
     OPPORTUNITIES_DELETE: 'opportunities.delete',
     OPPORTUNITIES_MANAGE_STATUSES: 'opportunities.manage_statuses',
+    // Asset Management
+    ASSETS_VIEW: 'assets.view',
+    ASSETS_CREATE: 'assets.create',
+    ASSETS_UPDATE: 'assets.update',
+    ASSETS_DELETE: 'assets.delete',
+    ASSETS_ASSIGN: 'assets.assign',
+    ASSETS_MANAGE_CATEGORIES: 'assets.manage_categories',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -162,6 +169,13 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.OPPORTUNITIES_UPDATE, resource: 'opportunities', action: 'update', description: 'Update opportunities' },
     { key: PERMISSIONS.OPPORTUNITIES_DELETE, resource: 'opportunities', action: 'delete', description: 'Delete opportunities' },
     { key: PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES, resource: 'opportunities', action: 'manage', description: 'Manage opportunity statuses' },
+    // Asset Management
+    { key: PERMISSIONS.ASSETS_VIEW, resource: 'assets', action: 'view', description: 'View assets' },
+    { key: PERMISSIONS.ASSETS_CREATE, resource: 'assets', action: 'create', description: 'Create assets' },
+    { key: PERMISSIONS.ASSETS_UPDATE, resource: 'assets', action: 'update', description: 'Update assets' },
+    { key: PERMISSIONS.ASSETS_DELETE, resource: 'assets', action: 'delete', description: 'Delete assets' },
+    { key: PERMISSIONS.ASSETS_ASSIGN, resource: 'assets', action: 'assign', description: 'Assign/unassign assets to users' },
+    { key: PERMISSIONS.ASSETS_MANAGE_CATEGORIES, resource: 'assets', action: 'manage_categories', description: 'Manage asset categories and types' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -200,6 +214,12 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.OPPORTUNITIES_CREATE,
         PERMISSIONS.OPPORTUNITIES_UPDATE,
         PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES,
+        // Assets
+        PERMISSIONS.ASSETS_VIEW,
+        PERMISSIONS.ASSETS_CREATE,
+        PERMISSIONS.ASSETS_UPDATE,
+        PERMISSIONS.ASSETS_ASSIGN,
+        PERMISSIONS.ASSETS_MANAGE_CATEGORIES,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -234,6 +254,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DCR_CREATE,
         PERMISSIONS.KNOWLEDGE_BASE_VIEW,
         PERMISSIONS.OPPORTUNITIES_VIEW,
+        // Assets
+        PERMISSIONS.ASSETS_VIEW,
+        PERMISSIONS.ASSETS_ASSIGN,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -248,6 +271,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.QUICK_TOOLS_VIEW,
         PERMISSIONS.DCR_VIEW,
         PERMISSIONS.KNOWLEDGE_BASE_VIEW,
+        // Assets
+        PERMISSIONS.ASSETS_VIEW,
     ],
 };
 

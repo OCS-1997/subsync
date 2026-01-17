@@ -221,12 +221,12 @@ function Customers() {
               data={customers.map((c) => ({
                 ...c,
                 customer_name: (
-                  <div className="flex flex-col min-w-[180px]">
-                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+                  <Link to={`${c.customer_id}`} className="flex flex-col min-w-[180px] group/name">
+                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover/name:text-blue-600 transition-colors uppercase tracking-tight">
                       {c.salutation} {c.first_name} {c.last_name}
                     </span>
                     <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-1">ID: {c.customer_id}</span>
-                  </div>
+                  </Link>
                 ),
                 display_name: (
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{c.display_name}</span>

@@ -74,6 +74,13 @@ export const PERMISSIONS = Object.freeze({
   KNOWLEDGE_BASE_UPDATE: 'knowledge_base.update',
   KNOWLEDGE_BASE_DELETE: 'knowledge_base.delete',
   KNOWLEDGE_BASE_MANAGE_CATEGORIES: 'knowledge_base.manage_categories',
+  // Asset Management
+  ASSETS_VIEW: 'assets.view',
+  ASSETS_CREATE: 'assets.create',
+  ASSETS_UPDATE: 'assets.update',
+  ASSETS_DELETE: 'assets.delete',
+  ASSETS_ASSIGN: 'assets.assign',
+  ASSETS_MANAGE_CATEGORIES: 'assets.manage_categories',
 });
 
 export const PAGE_PERMISSIONS = {
@@ -88,5 +95,5 @@ export const PAGE_PERMISSIONS = {
   userManagement: PERMISSIONS.USERS_VIEW,
   activityLogs: PERMISSIONS.ACTIVITY_LOGS_VIEW,
   roles: PERMISSIONS.ROLES_VIEW,
+  assets: PERMISSIONS.ASSETS_VIEW,
 };
-

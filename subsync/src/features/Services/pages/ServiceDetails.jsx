@@ -1,10 +1,19 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Edit, ChevronDown, ChevronRight } from "lucide-react";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useEffect } from "react";
+import { 
+    Package, Tag, Percent, Info, ShoppingCart, TrendingUp, 
+    Calendar, Clock, Building2, FileText, CheckCircle2,
+    Briefcase, Layers, Sparkles, AlertCircle, Edit2
+} from "lucide-react";
+import { motion } from "framer-motion";
 
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
+import { Separator } from "@/components/ui/separator.jsx";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
+import { cn } from "@/lib/utils";
 
 import { fetchServiceById, clearCurrentService } from "@/features/Services/serviceSlice.js";
 
@@ -15,337 +24,337 @@ function ServiceDetails() {
   const location = useLocation();
   const { currentService, loading, error } = useSelector((state) => state.services);
 
-  // Single collapsible for all details
-  const [open, setOpen] = useState(true);
-
   useEffect(() => {
     if (id) {
       dispatch(fetchServiceById(id));
     }
     return () => {
-        dispatch(clearCurrentService()); // Clear current service data when component unmounts
+        dispatch(clearCurrentService());
     };
   }, [id, dispatch]);
 
-  const handleBack = () => {
-    const currentPath = location.pathname;
-    const userSegment = currentPath.split("/")[1];
-    navigate(`/${userSegment}/dashboard/services`);
+  const handleEdit = () => {
+    const userSegment = location.pathname.split("/")[1];
+    navigate(`/${userSegment}/dashboard/services/${id}/edit`, { state: { editableServiceId: id } });
   };
 
-  const handleEdit = () => {
-    const currentPath = location.pathname;
-    const userSegment = currentPath.split("/")[1];
-    // Always go to edit route for this service
-    navigate(`/${userSegment}/dashboard/services/${id}/edit`, { state: { editableServiceId: id } });
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      const d = new Date(dateString);
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (err) {
+      return "-";
+    }
   };
 
   if (loading) return <SkeletonLoader />;
   if (error) return <ErrorMessage message={error} />;
-
-  if (!currentService) return <p>No service data available.</p>;
+  if (!currentService) return <p className="p-12 text-center text-slate-400 font-black uppercase tracking-widest text-[10px]">Service payload not found.</p>;
 
   return (
-    <div className="container mx-auto py-4 px-2 sm:px-2 lg:px-6">
-      <button
-        onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 animate-slideInLeft"
-        disabled={loading}
+    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+      <PageHeader
+        title={currentService.service_name}
+        description={`Inventory ID: ${currentService.service_id}`}
+        breadcrumbItems={[
+          { label: "Services", href: `/${location.pathname.split('/')[1]}/dashboard/services` },
+          { label: currentService.service_name }
+        ]}
+        actions={
+          <Button
+            onClick={handleEdit}
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+          >
+            <Edit2 className="w-4 h-4 mr-3" />
+            Edit Service
+          </Button>
+        }
+      />
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12"
       >
-        <ArrowLeft size={20} className="animate-bounce-x" />
-        <span className="font-medium">Back</span>
-      </button>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Service Details</h1>
-        </div>
-        <Button
-          onClick={handleEdit}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Edit size={16} />
-          Edit Service
-        </Button>
-      </div>
-      <hr className="mb-6 border-blue-500 border-2" />
+        <div className="lg:col-span-2 space-y-8">
+            {/* Identity Segment */}
+            <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-blue-500">
+                <CardHeader className="p-8 pb-0">
+                    <div className="flex items-center justify-between mb-4">
+                        <Badge className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-500 border-none">
+                            {currentService.tax_preference}
+                        </Badge>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                             Updated: {formatDate(currentService.updated_at)}
+                        </span>
+                    </div>
+                    <CardTitle className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        <Package className="h-8 w-8 text-blue-500" />
+                        Service Information
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <DetailItem icon={Tag} label="Service Name" value={currentService.service_name} largeValue />
+                        <DetailItem icon={Layers} label="SKU" value={currentService.stock_keepers_unit} isMono />
+                        <DetailItem icon={Percent} label="Tax Preference" value={currentService.tax_preference} />
+                        <DetailItem icon={Briefcase} label="Item Group" value={currentService.item_group_name} />
+                    </div>
 
-      {/* Single collapsible for all details */}
-      <div className="mb-4 border rounded-lg bg-white dark:bg-gray-900 shadow-sm">
-        <button
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 focus:outline-none hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors"
-          aria-expanded={open}
-        >
-          <span className="text-xl font-semibold text-gray-800 dark:text-white">Service Information</span>
-          {open ? (
-            <ChevronDown className="w-5 h-5 transition-transform" />
-          ) : (
-            <ChevronRight className="w-5 h-5 transition-transform" />
-          )}
-        </button>
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            open ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="px-4 pb-4 pt-1">
-            {/* Service Information */}
-            <ServiceInformation service={currentService} />
-          </div>
+                    {currentService.preferred_vendor_name && currentService.preferred_vendor_name !== "N/A" && (
+                        <>
+                            <Separator className="my-8 opacity-50" />
+                            <div className="flex items-center gap-3 mb-6">
+                                <Building2 className="h-5 w-5 text-blue-500" />
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Vendor Information</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <DetailItem 
+                                    label="Preferred Vendor" 
+                                    value={
+                                        currentService.preferred_vendor_id ? (
+                                            <Link 
+                                                to={`/${location.pathname.split('/')[1]}/dashboard/vendors/${currentService.preferred_vendor_id}`}
+                                                className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
+                                            >
+                                                {currentService.preferred_vendor_name}
+                                            </Link>
+                                        ) : currentService.preferred_vendor_name
+                                    } 
+                                />
+                                <DetailItem label="Vendor ID" value={currentService.preferred_vendor_id} isMono />
+                            </div>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Financial Segments */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Sales Profile */}
+                <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-emerald-500">
+                    <CardHeader className="p-8 pb-0">
+                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                            <TrendingUp className="h-6 w-6 text-emerald-500" />
+                            Sales Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-8 pt-6">
+                        <div className="space-y-6">
+                            <DetailItem 
+                                label="Selling Price" 
+                                value={currentService.sales_info?.price ? `Rs.${parseFloat(currentService.sales_info.price).toLocaleString('en-IN')}` : null} 
+                                largeValue 
+                                valueColor="text-emerald-500"
+                            />
+                            <DetailItem label="Account" value={currentService.sales_info?.account} />
+                            {currentService.sales_info?.description && (
+                                <div className="pt-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Description</p>
+                                    <p className="text-[11px] font-bold text-slate-500 leading-relaxed italic">
+                                        "{currentService.sales_info.description}"
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Purchase Profile */}
+                <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-amber-500">
+                    <CardHeader className="p-8 pb-0">
+                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                            <ShoppingCart className="h-6 w-6 text-amber-500" />
+                            Purchase Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-8 pt-6">
+                        <div className="space-y-6">
+                            <DetailItem 
+                                label="Cost Price" 
+                                value={currentService.purchase_info?.price ? `Rs.${parseFloat(currentService.purchase_info.price).toLocaleString('en-IN')}` : null} 
+                                largeValue 
+                                valueColor="text-amber-500"
+                            />
+                            <DetailItem label="Account" value={currentService.purchase_info?.account} />
+                            {currentService.purchase_info?.description && (
+                                <div className="pt-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Description</p>
+                                    <p className="text-[11px] font-bold text-slate-500 leading-relaxed italic">
+                                        "{currentService.purchase_info.description}"
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Taxation Segment */}
+            <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden">
+                <CardHeader className="p-8 pb-0">
+                    <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        <Percent className="h-6 w-6 text-indigo-500" />
+                        Tax Configuration
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <TaxCard type="intra" title="Intra-State (CGST/SGST)" details={currentService.tax_details?.intra} />
+                        <TaxCard type="inter" title="Inter-State (IGST)" details={currentService.tax_details?.inter} />
+                    </div>
+                </CardContent>
+            </Card>
         </div>
-      </div>
+
+        {/* Sidebar Segment */}
+        <div className="space-y-8">
+            <Card className="rounded-[2.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-xl shadow-blue-500/20 overflow-hidden">
+                <CardContent className="p-8">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+                            <Sparkles className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-blue-100/70">Inventory Hub</p>
+                            <h4 className="text-lg font-black tracking-tight">Quick Controls</h4>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <Button
+                            onClick={handleEdit}
+                            className="w-full justify-between bg-white text-blue-600 hover:bg-blue-50 rounded-2xl h-14 text-[11px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                        >
+                            Modify Service
+                            <Edit2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden">
+                <CardHeader className="p-8 pb-0">
+                    <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Record Information</CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-6 space-y-4">
+                    <MetaRow label="Created At" value={formatDate(currentService.created_at)} />
+                    <MetaRow label="Updated At" value={formatDate(currentService.updated_at)} />
+                    <MetaRow label="Visibility" value="Marketplace Active" />
+                    <MetaRow label="Asset ID" value={currentService.service_id} isMono />
+                </CardContent>
+            </Card>
+        </div>
+      </motion.div>
     </div>
   );
-};
+}
 
-const ServiceInformation = ({ service }) => {
-  const formatValue = (value, type = 'text') => {
-    if (value === null || value === undefined || value === '') return 'Not provided';
-    
-    if (type === 'price' && typeof value === 'number') {
-      return `Rs.${value.toFixed(2)}`;
+function TaxCard({ title, details }) {
+    if (!details || parseFloat(details.tax_rate || details.rate || 0) === 0) {
+        return (
+            <div className="p-6 rounded-[2rem] bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 group hover:border-blue-500/20 transition-all">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">{title}</p>
+                <div className="text-xl font-black text-slate-400">EXEMPT (0%)</div>
+            </div>
+        );
     }
-    
-    if (type === 'date') {
-      try {
-        return new Date(value).toLocaleDateString('en-IN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      } catch {
-        return value;
-      }
-    }
-    
-    return value;
-  };
 
-  const renderField = (label, value, type = 'text') => (
-    <div>
-      <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">{label}</label>
-      <p className="text-lg text-gray-900 dark:text-white">{formatValue(value, type)}</p>
-    </div>
-  );
+    const isGroup = !!details.members;
 
-  const renderVendorInfo = () => {
-    if (!service.preferred_vendor_name || service.preferred_vendor_name === 'N/A') {
-      return renderField('Preferred Vendor', 'No vendor assigned');
-    }
+    return (
+        <div className="p-6 rounded-[2rem] bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 group hover:border-blue-500/30 transition-all">
+            <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</p>
+                <Badge className="rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-500 border-none">
+                    {isGroup ? "Group Tax" : "Simple Tax"}
+                </Badge>
+            </div>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
+                {parseFloat(details.tax_rate || details.rate).toFixed(1)}%
+            </div>
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-4 truncate">
+                {details.tax_name}
+            </p>
+
+            {isGroup && details.members && (
+                <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    {details.members.map((member, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-[10px] font-bold">
+                            <span className="text-slate-400 uppercase">{member.tax_name}</span>
+                            <span className="text-slate-900 dark:text-white">{member.tax_rate}%</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function DetailItem({ icon: Icon, label, value, isMono = false, largeValue = false, fallback = '-', valueColor }) {
+    const displayValue = (value === null || value === undefined || value === '') ? fallback : value;
     
     return (
-      <div>
-        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Preferred Vendor</label>
-        <div>
-          <p className="text-lg font-medium text-gray-900 dark:text-white">{service.preferred_vendor_name}</p>
-          {service.preferred_vendor_id && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">ID: {service.preferred_vendor_id}</p>
-          )}
+        <div className="group">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
+                {Icon && <Icon className="h-3.5 w-3.5 opacity-50" />}
+                {label}
+            </p>
+            <div className="flex items-center gap-2">
+                <span className={cn(
+                    "font-black tracking-tight transition-colors",
+                    largeValue ? "text-xl" : "text-[15px]",
+                    isMono && "font-mono",
+                    valueColor || "text-slate-800 dark:text-slate-200",
+                    displayValue === fallback && "text-slate-400 font-bold"
+                )}>
+                    {displayValue}
+                </span>
+            </div>
         </div>
-      </div>
     );
-  };
+}
 
-  const renderTaxInfo = () => {
-    // Check for tax_details first (enhanced backend data)
-    if (service.tax_details && (service.tax_details.intra || service.tax_details.inter)) {
-      return (
-        <div>
-          <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Tax Information</label>
-          <div className="space-y-2 mt-1">
-            {service.tax_details.intra && (
-              <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Intra-state Tax
-                  </span>
-                  <span className="text-lg font-bold text-green-600 dark:text-green-300">
-                    {service.tax_details.intra.tax_rate || service.tax_details.intra.rate || 0}%
-                  </span>
-                </div>
-                {service.tax_details.intra.tax_name && (
-                  <div className="mt-2">
-                    <p className="text-xs text-green-700 dark:text-green-300 font-medium">
-                      {service.tax_details.intra.tax_name}
-                      {service.tax_details.intra.kind === 'group' && (
-                        <span className="ml-2 text-green-600 dark:text-green-400">(Group)</span>
-                      )}
-                    </p>
-                    {service.tax_details.intra.members && service.tax_details.intra.members.length > 0 && (
-                      <div className="mt-1 space-y-1">
-                        {service.tax_details.intra.members.map((member, index) => (
-                          <div key={index} className="flex justify-between items-center text-xs text-green-600 dark:text-green-400">
-                            <span>{member.tax_name}</span>
-                            <span>{member.tax_rate}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            {service.tax_details.inter && (
-              <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                    Inter-state Tax
-                  </span>
-                  <span className="text-lg font-bold text-purple-600 dark:text-purple-300">
-                    {service.tax_details.inter.tax_rate || service.tax_details.inter.rate || 0}%
-                  </span>
-                </div>
-                {service.tax_details.inter.tax_name && (
-                  <div className="mt-2">
-                    <p className="text-xs text-purple-700 dark:text-purple-300 font-medium">
-                      {service.tax_details.inter.tax_name}
-                      {service.tax_details.inter.kind === 'group' && (
-                        <span className="ml-2 text-purple-600 dark:text-purple-400">(Group)</span>
-                      )}
-                    </p>
-                    {service.tax_details.inter.members && service.tax_details.inter.members.length > 0 && (
-                      <div className="mt-1 space-y-1">
-                        {service.tax_details.inter.members.map((member, index) => (
-                          <div key={index} className="flex justify-between items-center text-xs text-purple-600 dark:text-purple-400">
-                            <span>{member.tax_name}</span>
-                            <span>{member.tax_rate}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+function MetaRow({ label, value, isMono = false }) {
+    return (
+        <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+            <span className={cn("text-[11px] font-bold text-slate-600 dark:text-slate-300", isMono && "font-mono")}>{value}</span>
         </div>
-      );
-    }
+    );
+}
 
-    // Fallback to default_tax_rates if tax_details is not available
-    if (service.default_tax_rates) {
-      const taxRates = service.default_tax_rates;
-      return (
-        <div>
-          <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Tax Information</label>
-          <div className="space-y-2 mt-1">
-            {taxRates.intra && (
-              <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Intra-state Tax (ID: {taxRates.intra.id})
-                  </span>
-                  <span className="text-sm text-green-600 dark:text-green-300">
-                    {taxRates.intra.kind}
-                  </span>
-                </div>
-              </div>
-            )}
-            {taxRates.inter && (
-              <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                    Inter-state Tax (ID: {taxRates.inter.id})
-                  </span>
-                  <span className="text-sm text-purple-600 dark:text-purple-300">
-                    {taxRates.inter.kind}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    return renderField('Tax Information', 'No tax configuration');
-  };
-
+function ErrorMessage({ message }) {
   return (
-    <>
-      {/* Basic Information */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Basic Information</h2>
-          <div className="space-y-4">
-            {renderField('Service Name', service.service_name)}
-            {renderField('SKU', service.stock_keepers_unit)}
-            {renderField('Tax Preference', service.tax_preference)}
-            {renderField('Item Group', service.item_group_name)}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Vendor Information</h2>
-          <div className="space-y-4">
-            {renderVendorInfo()}
-          </div>
-        </div>
+    <div className="container mx-auto py-12 px-4 text-center">
+      <div className="h-16 w-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <AlertCircle className="h-8 w-8 text-rose-500" />
       </div>
-
-      {/* Sales Information */}
-      <div className="mt-8 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Sales Information</h2>
-        {service.sales_info && (
-          <div className="grid md:grid-cols-2 gap-8">
-            {renderField('Selling Price', service.sales_info.price, 'price')}
-            {renderField('Description', service.sales_info.description)}
-            {renderField('Account', service.sales_info.account)}
-          </div>
-        )}
-      </div>
-
-      {/* Purchase Information */}
-      <div className="mt-8 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Purchase Information</h2>
-        {service.purchase_info && (
-          <div className="grid md:grid-cols-2 gap-8">
-            {renderField('Cost Price', service.purchase_info.price, 'price')}
-            {renderField('Description', service.purchase_info.description)}
-            {renderField('Account', service.purchase_info.account)}
-          </div>
-        )}
-      </div>
-
-      {/* Tax Information */}
-      <div className="mt-8 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Tax Configuration</h2>
-        {renderTaxInfo()}
-      </div>
-
-      {/* Timestamps */}
-      <div className="mt-8 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-white border-b pb-2">Record Information</h2>
-        <div className="grid md:grid-cols-2 gap-8">
-          {renderField('Created At', service.created_at, 'date')}
-          {renderField('Updated At', service.updated_at, 'date')}
-        </div>
-      </div>
-    </>
+      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Telemetry Error</h3>
+      <p className="mt-2 text-sm font-bold text-slate-500">{message}</p>
+      <Button 
+        variant="outline" 
+        onClick={() => window.location.reload()}
+        className="mt-8 rounded-xl font-black uppercase tracking-widest text-[10px] h-12"
+      >
+        Retry Registry Scan
+      </Button>
+    </div>
   );
-};
+}
 
 const SkeletonLoader = () => (
-  <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <Skeleton className="h-12 w-3/4 mb-4" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-full mb-2" />
-    <Skeleton className="h-4 w-1/2 mb-4" />
-  </div>
-);
-
-const ErrorMessage = ({ message }) => (
-  <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <p className="text-red-500">Error: {message}</p>
-  </div>
+    <div className="container py-8 max-w mx-auto px-4 md:px-0 space-y-8">
+        <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+        <div className="h-8 w-64 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+                <div className="h-[400px] bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] animate-pulse" />
+                <div className="h-[300px] bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] animate-pulse" />
+            </div>
+            <div className="h-[500px] bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] animate-pulse" />
+        </div>
+    </div>
 );
 
 export default ServiceDetails;

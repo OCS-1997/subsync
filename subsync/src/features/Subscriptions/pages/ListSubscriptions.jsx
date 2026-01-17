@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive, Eye } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
@@ -196,7 +196,12 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
       </ServiceTooltip>
     ),
     customer_name: (
-      <span className="font-bold text-slate-700 dark:text-slate-300">{row.customer_name || '-'}</span>
+      <Link 
+        to={`/${username}/dashboard/customers/${row.customer_id}`}
+        className="font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+      >
+        {row.customer_name || '-'}
+      </Link>
     ),
     start_date: (
       <span className="text-slate-600 dark:text-slate-400 text-sm">{formatDate(row.start_date)}</span>

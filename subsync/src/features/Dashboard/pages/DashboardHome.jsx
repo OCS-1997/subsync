@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { RefreshCw, LayoutGrid, Package, Phone, Target, BookOpen, Loader2 } from 'lucide-react';
+import { RefreshCw, LayoutGrid, Package, Phone, Target, BookOpen, HardDrive, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axiosInstance';
@@ -11,6 +11,7 @@ import SubscriptionsTab from '../components/tabs/SubscriptionsTab';
 import DCRTab from '../components/tabs/DCRTab';
 import OpportunitiesTab from '../components/tabs/OpportunitiesTab';
 import KnowledgeBaseTab from '../components/tabs/KnowledgeBaseTab';
+import AssetsTab from '../components/tabs/AssetsTab';
 
 const TAB_ICONS = {
     overview: LayoutGrid,
@@ -18,6 +19,7 @@ const TAB_ICONS = {
     dcr: Phone,
     opportunities: Target,
     kb: BookOpen,
+    assets: HardDrive,
 };
 
 const TAB_COMPONENTS = {
@@ -26,6 +28,7 @@ const TAB_COMPONENTS = {
     dcr: DCRTab,
     opportunities: OpportunitiesTab,
     kb: KnowledgeBaseTab,
+    assets: AssetsTab,
 };
 
 function DashboardHome() {
@@ -59,6 +62,7 @@ function DashboardHome() {
                     tabs: [
                         { tabKey: 'overview', name: 'Overview', icon: 'LayoutGrid' },
                         { tabKey: 'subscriptions', name: 'Subscriptions', icon: 'Package' },
+                        { tabKey: 'assets', name: 'Assets', icon: 'HardDrive' },
                         { tabKey: 'dcr', name: 'DCR', icon: 'Phone' },
                         { tabKey: 'opportunities', name: 'Opportunities', icon: 'Target' },
                         { tabKey: 'kb', name: 'Knowledge Base', icon: 'BookOpen' },
