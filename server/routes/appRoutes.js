@@ -136,6 +136,18 @@ import {
     getAssetHistoryController,
     getAssetStatsController
 } from '../controllers/assetController.js';
+import {
+    createTeamController,
+    getAllTeamsController,
+    getTeamByIdController,
+    updateTeamController,
+    deleteTeamController,
+    assignUserToTeamController,
+    removeUserFromTeamController,
+    getUserTeamsController,
+    getTeamMembersController,
+    getTeamStatsController
+} from '../controllers/teamsController.js';
 
 const router = express.Router();
 
@@ -253,6 +265,7 @@ router.put('/update-gst-settings', isAuthenticated, authorize(PERMISSIONS.TAXES_
 
 // User Management
 router.get('/users', isAuthenticated, authorize(PERMISSIONS.USERS_VIEW), getallUsers);
+router.get('/all-users', isAuthenticated, authorize(PERMISSIONS.USERS_VIEW), getallUsers); // Alias for compatibility
 // Allow self-view without USERS_VIEW permission (handled in controller)
 router.get('/users/:username', isAuthenticated, getUser);
 router.post('/users', isAuthenticated, authorize([PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_ASSIGN_ROLES]), createUserController);
@@ -456,5 +469,24 @@ router.get('/asset-categories', isAuthenticated, authorize(PERMISSIONS.ASSETS_VI
 router.post('/asset-categories', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), createAssetCategoryController);
 router.put('/asset-categories/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), updateAssetCategoryController);
 router.delete('/asset-categories/:id', isAuthenticated, authorize(PERMISSIONS.ASSETS_MANAGE_CATEGORIES), deleteAssetCategoryController);
+
+// Teams
+router.get('/teams', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getAllTeamsController);
+router.post('/teams', isAuthenticated, authorize(PERMISSIONS.TEAMS_MANAGE), createTeamController);
+router.get('/teams/:id', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamByIdController);
+router.put('/teams/:id', isAuthenticated, authorize(PERMISSIONS.TEAMS_MANAGE), updateTeamController);
+router.delete('/teams/:id', isAuthenticated, authorize(PERMISSIONS.TEAMS_MANAGE), deleteTeamController);
+
+// Team Members
+router.post('/teams/:id/members', isAuthenticated, authorize(PERMISSIONS.TEAMS_MANAGE), assignUserToTeamController);
+router.delete('/teams/:id/members/:userId', isAuthenticated, authorize(PERMISSIONS.TEAMS_MANAGE), removeUserFromTeamController);
+router.get('/teams/:id/members', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamMembersController);
+
+// User Teams
+router.get('/users/:username/teams', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getUserTeamsController);
+
+// Team Stats
+router.get('/teams/:id/stats', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamStatsController);
+
 
 export default router;

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { logActivity } from "../models/activityLogModel.js";
 import { resolveRoleIdentifier } from "../services/rbacService.js";
 import { PERMISSIONS } from "../constants/permissions.js";
+import { assignUserToMultipleTeams, removeUserFromAllTeams, getUserTeams } from "../models/teamsModel.js";
 
 export const getallUsers = async (req, res) => {
     try {
@@ -26,6 +27,11 @@ export const getUser = async (req, res) => {
 
         const user = await getUserByUsername(username);
         if (!user) return res.status(404).json({ message: "User not found" });
+        
+        // Fetch teams for the user
+        const teams = await getUserTeams(username);
+        user.teams = teams.map(t => ({ id: t.id, name: t.team_name, color: t.color }));
+        
         res.json(user);
     } catch (error) {
         console.error("Error fetching user:", error);
@@ -61,6 +67,7 @@ export const createUserController = async (req, res) => {
             is_active,
             date_of_birth
         });
+
         if (req.user && req.user.username) {
             await logActivity({
                 username: req.user.username,
@@ -71,6 +78,12 @@ export const createUserController = async (req, res) => {
                 details: { name, email, role: role.name, is_active }
             });
         }
+
+        // Handle team assignments
+        if (req.body.teams && Array.from(req.body.teams).length > 0) {
+            await assignUserToMultipleTeams(username, req.body.teams, req.user?.username);
+        }
+
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
         console.error("Error creating user:", error);
@@ -158,6 +171,13 @@ export const updateUserController = async (req, res) => {
                 }, { originalUsername: username })
             });
         }
+        if (updateData.teams !== undefined) {
+            await removeUserFromAllTeams(username, req.user?.username);
+            if (updateData.teams.length > 0) {
+                await assignUserToMultipleTeams(updateData.username || username, updateData.teams, req.user.username);
+            }
+        }
+
         res.json({ message: "User updated successfully" });
     } catch (error) {
         console.error("Error updating user:", error);

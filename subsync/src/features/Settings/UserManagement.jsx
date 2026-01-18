@@ -560,6 +560,36 @@ const UserManagement = () => {
               </div>
             </div>
 
+            {/* Teams Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-black uppercase text-muted-foreground/70 tracking-[0.2em] flex items-center gap-2">
+                  <Users className="w-3.5 h-3.5" /> Functional Teams
+                </h4>
+                <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-none px-2 h-5 text-[9px] font-black">
+                  {selectedUser?.teams?.length || 0} ASSIGNED
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {selectedUser?.teams?.map((team) => (
+                  <Badge 
+                    key={team.id} 
+                    variant="outline" 
+                    className="rounded-xl px-3 py-1.5 border-none shadow-sm flex items-center gap-2 hover:scale-105 transition-transform cursor-default"
+                    style={{ backgroundColor: `${team.color}15`, color: team.color }}
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: team.color }} />
+                    <span className="font-bold text-[11px] uppercase tracking-tight">{team.name}</span>
+                  </Badge>
+                ))}
+                {(selectedUser?.teams?.length === 0 || !selectedUser?.teams) && (
+                  <div className="w-full py-4 text-center border-2 border-dashed border-border/50 rounded-2xl bg-muted/20">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic">No teams assigned</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5 italic">
                 <Clock className="w-3 h-3" /> Last updated: {selectedUser?.updated_at ? new Date(selectedUser.updated_at).toLocaleDateString() : 'N/A'}

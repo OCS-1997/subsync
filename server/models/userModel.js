@@ -36,7 +36,23 @@ const getAllUsers = async () => {
          LEFT JOIN roles r ON r.id = u.role_id
          ORDER BY u.created_at DESC`
     );
-    return rows.map(mapUserRow);
+    const users = rows.map(mapUserRow);
+
+    // Fetch team assignments for all users
+    const [teamRows] = await appDB.query(
+        `SELECT ut.user_id as username, t.id, t.team_name as name, t.color
+         FROM user_teams ut
+         JOIN teams t ON ut.team_id = t.id`
+    );
+
+    // Map teams to users
+    users.forEach(user => {
+        user.teams = teamRows
+            .filter(tr => tr.username === user.username)
+            .map(tr => ({ id: tr.id, name: tr.name, color: tr.color }));
+    });
+
+    return users;
 };
 
 const getUserByUsername = async (username) => {

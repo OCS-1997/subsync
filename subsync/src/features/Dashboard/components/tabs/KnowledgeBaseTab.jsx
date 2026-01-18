@@ -48,12 +48,15 @@ function KnowledgeBaseTab({ visibleWidgets }) {
                 api.get('/kb/categories')
             ]);
 
-            const articles = articlesRes.data.articles || [];
+            const articles = (articlesRes.data.articles || []).map(a => ({
+                ...a,
+                status: a.is_published ? 'published' : 'draft'
+            }));
             const cats = categoriesRes.data.categories || [];
 
             const published = articles.filter(a => a.status === 'published');
             const drafts = articles.filter(a => a.status === 'draft');
-            const totalViews = articles.reduce((sum, a) => sum + (a.view_count || 0), 0);
+            const totalViews = articles.reduce((sum, a) => sum + (a.total_reads || 0), 0);
 
             setStats({
                 totalArticles: articles.length,
@@ -71,7 +74,7 @@ function KnowledgeBaseTab({ visibleWidgets }) {
 
             // Popular articles by views
             const popular = [...articles]
-                .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+                .sort((a, b) => (b.total_reads || 0) - (a.total_reads || 0))
                 .slice(0, 5);
             setPopularArticles(popular);
 
@@ -205,7 +208,7 @@ function KnowledgeBaseTab({ visibleWidgets }) {
                                 </div>
                                 <div className="flex items-center gap-1 ml-2 text-slate-400">
                                     <Eye className="w-3 h-3" />
-                                    <span className="text-xs font-bold">{article.view_count || 0}</span>
+                                    <span className="text-xs font-bold">{article.total_reads || 0}</span>
                                 </div>
                             </div>
                         ))}

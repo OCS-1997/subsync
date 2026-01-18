@@ -14,7 +14,9 @@ import {
   Calendar,
   Shield,
   Activity,
-  ChevronLeft
+  ChevronLeft,
+  Users as UsersIcon,
+  UserCheck
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button.jsx";
@@ -22,6 +24,7 @@ import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
 import {
   Select,
   SelectContent,
@@ -41,6 +44,7 @@ const AddUser = () => {
   const editing = !!editUsername;
   const [loading, setLoading] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
+  const [teamOptions, setTeamOptions] = useState([]);
   const [form, setForm] = useState({
     username: "",
     name: "",
@@ -49,6 +53,7 @@ const AddUser = () => {
     date_of_birth: "",
     roleKey: "",
     is_active: true,
+    teams: [], // Array of team IDs
   });
 
   // Reset form when switching between add/edit modes
@@ -62,27 +67,34 @@ const AddUser = () => {
         date_of_birth: "",
         roleKey: "",
         is_active: true,
+        teams: [],
       });
       setLoading(false);
     }
   }, [editing]);
 
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchRolesAndTeams = async () => {
       try {
-        const { data } = await api.get("/rbac/roles");
-        setRoleOptions(data);
+        const [{ data: roles }, { data: teamsRes }] = await Promise.all([
+          api.get("/rbac/roles"),
+          api.get("/teams")
+        ]);
+        
+        setRoleOptions(roles);
+        setTeamOptions(teamsRes.teams || []);
+
         if (!editing) {
           setForm((prev) => ({
             ...prev,
-            roleKey: data.find((role) => role.roleKey === 'viewer')?.roleKey || data[0]?.roleKey || ""
+            roleKey: roles.find((role) => role.roleKey === 'viewer')?.roleKey || roles[0]?.roleKey || ""
           }));
         }
       } catch (error) {
-        toast.error("Failed to load roles");
+        toast.error("Failed to load roles or teams");
       }
     };
-    fetchRoles();
+    fetchRolesAndTeams();
   }, [editing]);
 
   useEffect(() => {
@@ -97,6 +109,7 @@ const AddUser = () => {
         date_of_birth: user.date_of_birth || "",
         roleKey: user.roleKey || "",
         is_active: !!user.is_active,
+        teams: (user.teams || []).map(t => typeof t === 'object' ? t.id : t),
       });
     } else if (editUsername) {
       setLoading(true);
@@ -110,6 +123,7 @@ const AddUser = () => {
             date_of_birth: res.data.date_of_birth || "",
             roleKey: res.data.roleKey || res.data.role?.toLowerCase() || "",
             is_active: !!res.data.is_active,
+            teams: (res.data.teams || []).map(t => typeof t === 'object' ? t.id : t),
           });
         })
         .catch(() => toast.error("Failed to load user"))
@@ -128,6 +142,16 @@ const AddUser = () => {
 
   const handleSwitchChange = (checked) => {
     setForm(f => ({ ...f, is_active: checked }));
+  };
+
+  const toggleTeam = (teamId) => {
+    setForm(f => {
+      const isSelected = f.teams.includes(teamId);
+      const newTeams = isSelected 
+        ? f.teams.filter(id => id !== teamId)
+        : [...f.teams, teamId];
+      return { ...f, teams: newTeams };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -350,6 +374,63 @@ const AddUser = () => {
                           />
                         </div>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-lg bg-card/50 backdrop-blur-xl">
+                  <CardHeader className="border-b border-border/50 px-8 py-6">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <UsersIcon className="w-5 h-5 text-blue-600" /> Team Assignments
+                    </CardTitle>
+                    <CardDescription>Assign this user to one or more functional teams.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {teamOptions.map((team) => {
+                        const isSelected = form.teams.includes(team.id);
+                        return (
+                          <div
+                            key={team.id}
+                            onClick={() => toggleTeam(team.id)}
+                            className={`flex flex-col p-4 rounded-2xl border-2 transition-all cursor-pointer group ${
+                              isSelected 
+                                ? "border-blue-500 bg-blue-50/30 dark:bg-blue-900/10" 
+                                : "border-border/50 bg-background/50 hover:border-blue-200 dark:hover:border-blue-900/50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <div 
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs"
+                                style={{ backgroundColor: team.color }}
+                              >
+                                {team.team_name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className={`font-bold text-sm ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-foreground'}`}>
+                                {team.team_name}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground line-clamp-1 italic">
+                              {team.description || "No description..."}
+                            </p>
+                            <div className="mt-3 flex items-center justify-between">
+                              <Badge variant="outline" className="text-[9px] h-4 font-bold border-muted-foreground/30">
+                                {team.member_count} Members
+                              </Badge>
+                              {isSelected && (
+                                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                  <UserCheck className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {teamOptions.length === 0 && (
+                        <div className="col-span-full py-8 text-center bg-muted/20 rounded-2xl border-2 border-dashed border-border/50">
+                          <p className="text-sm text-muted-foreground font-medium">No teams available to assign.</p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

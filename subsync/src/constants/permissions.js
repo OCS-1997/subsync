@@ -74,6 +74,19 @@ export const PERMISSIONS = Object.freeze({
   KNOWLEDGE_BASE_UPDATE: 'knowledge_base.update',
   KNOWLEDGE_BASE_DELETE: 'knowledge_base.delete',
   KNOWLEDGE_BASE_MANAGE_CATEGORIES: 'knowledge_base.manage_categories',
+  // Opportunities
+  OPPORTUNITIES_VIEW: 'opportunities.view',
+  OPPORTUNITIES_CREATE: 'opportunities.create',
+  OPPORTUNITIES_UPDATE: 'opportunities.update',
+  OPPORTUNITIES_DELETE: 'opportunities.delete',
+  // Teams
+  TEAMS_VIEW: 'teams.view',
+  TEAMS_MANAGE: 'teams.manage',
+  // Time Tracking
+  TIME_TRACKING_VIEW: 'time-tracking.view',
+  TIME_TRACKING_USE: 'time-tracking.use',
+  TIME_TRACKING_VIEW_TEAM: 'time-tracking.view-team',
+  TIME_TRACKING_MANAGE: 'time-tracking.manage',
   // Asset Management
   ASSETS_VIEW: 'assets.view',
   ASSETS_CREATE: 'assets.create',

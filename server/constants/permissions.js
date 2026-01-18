@@ -86,6 +86,14 @@ export const PERMISSIONS = Object.freeze({
     ASSETS_DELETE: 'assets.delete',
     ASSETS_ASSIGN: 'assets.assign',
     ASSETS_MANAGE_CATEGORIES: 'assets.manage_categories',
+    // Teams
+    TEAMS_VIEW: 'teams.view',
+    TEAMS_MANAGE: 'teams.manage',
+    // Time Tracking
+    TIME_TRACKING_VIEW: 'time-tracking.view',
+    TIME_TRACKING_USE: 'time-tracking.use',
+    TIME_TRACKING_VIEW_TEAM: 'time-tracking.view-team',
+    TIME_TRACKING_MANAGE: 'time-tracking.manage',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -176,6 +184,14 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.ASSETS_DELETE, resource: 'assets', action: 'delete', description: 'Delete assets' },
     { key: PERMISSIONS.ASSETS_ASSIGN, resource: 'assets', action: 'assign', description: 'Assign/unassign assets to users' },
     { key: PERMISSIONS.ASSETS_MANAGE_CATEGORIES, resource: 'assets', action: 'manage_categories', description: 'Manage asset categories and types' },
+    // Teams
+    { key: PERMISSIONS.TEAMS_VIEW, resource: 'teams', action: 'view', description: 'View teams' },
+    { key: PERMISSIONS.TEAMS_MANAGE, resource: 'teams', action: 'manage', description: 'Manage teams (create, update, delete, assign users)' },
+    // Time Tracking
+    { key: PERMISSIONS.TIME_TRACKING_VIEW, resource: 'time-tracking', action: 'view', description: 'View own time tracking entries' },
+    { key: PERMISSIONS.TIME_TRACKING_USE, resource: 'time-tracking', action: 'use', description: 'Create and manage own time entries and timers' },
+    { key: PERMISSIONS.TIME_TRACKING_VIEW_TEAM, resource: 'time-tracking', action: 'view-team', description: 'View team time tracking data' },
+    { key: PERMISSIONS.TIME_TRACKING_MANAGE, resource: 'time-tracking', action: 'manage', description: 'Manage time tracking settings and activity types (admin)' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {

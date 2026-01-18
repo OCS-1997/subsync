@@ -45,6 +45,9 @@ import {
     Database,
     Sun,
     Moon,
+    Monitor,
+    Users2,
+    Layers
 } from "lucide-react";
 
 // Command palette items configuration
@@ -197,6 +200,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             keywords: ["database", "restore", "recovery", "export"],
             permission: PERMISSIONS.BACKUPS_VIEW,
         },
+        {
+            id: "assets",
+            category: "Navigation",
+            icon: Monitor,
+            title: "Assets",
+            subtitle: "Manage company assets",
+            path: `${baseUrl}/assets`,
+            keywords: ["hardware", "software", "inventory", "it", "devices"],
+            permission: PERMISSIONS.ASSETS_VIEW,
+        },
 
         // Quick Actions - Add New
         {
@@ -309,6 +322,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             keywords: ["categories", "organize", "kb", "knowledge"],
             permission: PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES,
         },
+        {
+            id: "add-asset",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "Create Asset",
+            subtitle: "Register a new company asset",
+            path: `${baseUrl}/assets/add`,
+            keywords: ["new", "create", "inventory", "device"],
+            permission: PERMISSIONS.ASSETS_CREATE,
+        },
 
         // Settings
         {
@@ -350,6 +373,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             path: `${baseUrl}/settings/roles`,
             keywords: ["access", "permission", "security"],
             permission: PERMISSIONS.ROLES_VIEW,
+        },
+        {
+            id: "settings-teams",
+            category: "Settings",
+            icon: Users2,
+            title: "Teams Management",
+            subtitle: "Manage functional teams",
+            path: `${baseUrl}/settings/teams`,
+            keywords: ["groups", "members", "collaboration", "organization"],
+            permission: PERMISSIONS.TEAMS_MANAGE,
         },
         {
             id: "settings-reminders",

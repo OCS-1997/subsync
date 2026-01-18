@@ -59,6 +59,8 @@ import Assets from '@/features/Assets/pages/Assets.jsx';
 import AddAsset from '@/features/Assets/pages/AddAsset.jsx';
 import AssetDetails from '@/features/Assets/pages/AssetDetails.jsx';
 import AssetSettings from '@/features/Assets/pages/AssetSettings.jsx';
+import TeamsSettings from '@/features/Settings/TeamsSettings.jsx';
+import SettingsIndex from '@/features/Settings/SettingsIndex.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -150,6 +152,7 @@ const router = createBrowserRouter([
           </PermissionGate>
         ),
         children: [
+          { index: true, element: <SettingsIndex /> },
           { path: "profile", element: <Profile /> },
           {
             path: "taxes",
@@ -179,6 +182,7 @@ const router = createBrowserRouter([
           { path: "notification-logs", element: <PermissionGate required={PERMISSIONS.NOTIFICATION_LOGS_VIEW}><NotificationLogs /></PermissionGate> },
           { path: "quick-tools", element: <PermissionGate required={PERMISSIONS.QUICK_TOOLS_MANAGE}><QuickToolsAdmin /></PermissionGate> },
           { path: "dashboard-settings", element: <PermissionGate required={PERMISSIONS.DASHBOARD_CONFIGURE}><DashboardSettings /></PermissionGate> },
+          { path: "teams", element: <PermissionGate required={PERMISSIONS.TEAMS_MANAGE}><TeamsSettings /></PermissionGate> },
         ]
       },
 
