@@ -114,13 +114,13 @@ async function updateDomain(domainId, updatedData) {
  */
 const validSortColumns = ["customer_name", "domain_name", "registration_date", "expiry_date", "registered_with", "name_server", "description", "created_at", "updated_at"];
 
-const getAllDomains = async ({ search = "", sort = "updated_at", order = "desc", page = 1, limit = 10 }) => {
+const getAllDomains = async ({ search = "", sort = "created_at", order = "desc", page = 1, limit = 10 }) => {
     const offset = (page - 1) * limit;
     const searchQuery = `%${search}%`;
 
     // Ensure `sort` is a valid column, otherwise fallback to "domain_name"
     const hasValidSort = sort && validSortColumns.includes(sort);
-    const normalizedSort = hasValidSort ? sort : "updated_at";
+    const normalizedSort = hasValidSort ? sort : "created_at";
     let normalizedOrder = "DESC";
     if (hasValidSort && typeof order === "string") {
         const lower = order.toLowerCase();
@@ -201,6 +201,30 @@ const getDomainById = async (domainId) => {
 };
 
 /**
+ * Delete a domain and its associated name servers
+ * @param {string} domainId - The ID of the domain to delete
+ * @returns {Promise<boolean>}
+ */
+const deleteDomain = async (domainId) => {
+    try {
+        // Delete name servers first (foreign key constraint)
+        await appDB.query("DELETE FROM domain_name_servers WHERE domain_id = ?", [domainId]);
+        
+        // Delete the domain
+        const [result] = await appDB.query("DELETE FROM domains WHERE domain_id = ?", [domainId]);
+        
+        if (result.affectedRows === 0) {
+            throw new Error("Domain not found");
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error deleting domain:", error);
+        throw error;
+    }
+};
+
+/**
  * Import multiple domains in bulk
  * @param {Array} domains - Array of domain objects to be inserted
  */
@@ -224,4 +248,4 @@ const importDomainData = async (domains) => {
     await appDB.query(query, [values]);
 };
 
-export { addDomain, updateDomain, getAllDomains, getDomainById, importDomainData };
+export { addDomain, updateDomain, getAllDomains, getDomainById, deleteDomain, importDomainData };

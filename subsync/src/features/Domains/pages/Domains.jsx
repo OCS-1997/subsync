@@ -1,4 +1,4 @@
-import { Pencil, Plus, FileUp, Globe, Users, Database, RotateCcw } from "lucide-react";
+import { Pencil, Plus, FileUp, Globe, Users, Database, RotateCcw, Trash2 } from "lucide-react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,6 +8,16 @@ import { saveAs } from "file-saver";
 import "jspdf-autotable";
 import { toast } from "react-toastify";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.jsx";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button.jsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
 import { PageHeader } from "@/components/ui/breadcrumb.jsx";
@@ -16,7 +26,7 @@ import GenericTable from "@/components/layouts/GenericTable.jsx";
 import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 
-import { fetchDomains } from "../domainSlice";
+import { fetchDomains, deleteDomain } from "../domainSlice";
 
 function Domains() {
   const [search, setSearch] = useState("");
@@ -29,6 +39,9 @@ function Domains() {
   const location = useLocation();
   const dispatch = useDispatch();
   const { list: domains, loading, error, totalPages, totalRecords } = useSelector((state) => state.domains);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [domainToDelete, setDomainToDelete] = useState(null);
 
   const headers = [
     { key: "domain_name", label: "Domain Name" },
@@ -85,6 +98,29 @@ function Domains() {
     } else {
       setSortBy(key);
       setSortOrder("asc");
+    }
+  };
+
+  const handleDelete = async (domainId, domainName) => {
+    setDomainToDelete({ id: domainId, name: domainName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!domainToDelete) return;
+
+    try {
+      await dispatch(deleteDomain(domainToDelete.id)).unwrap();
+      toast.success(`Domain "${domainToDelete.name}" deleted successfully!`);
+      // Optionally refetch or adjust page if needed
+      if (list.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    } catch (error) {
+      toast.error(error || "Failed to delete domain");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDomainToDelete(null);
     }
   };
 
@@ -212,14 +248,24 @@ function Domains() {
                 ),
                 _rowClassName: isExpired ? 'bg-rose-500/5 hover:bg-rose-500/10' : '',
                 actions: (
-                  <Link
-                    to={`/${username}/dashboard/domains/edit/${domain.domain_id}`}
-                    state={{ domain }}
-                  >
-                    <Button size="icon" variant="ghost" className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500">
-                      <Pencil size={14} className="opacity-60" />
+                  <div className="flex items-center gap-1">
+                    <Link
+                      to={`/${username}/dashboard/domains/edit/${domain.domain_id}`}
+                      state={{ domain }}
+                    >
+                      <Button size="icon" variant="ghost" className="rounded-xl hover:bg-blue-500/10 hover:text-blue-500">
+                        <Pencil size={14} className="opacity-60" />
+                      </Button>
+                    </Link>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="rounded-xl hover:bg-red-500/10 hover:text-red-500"
+                      onClick={() => handleDelete(domain.domain_id, domain.domain_name)}
+                    >
+                      <Trash2 size={14} className="opacity-60" />
                     </Button>
-                  </Link>
+                  </div>
                 )
               };
             })}
@@ -253,6 +299,32 @@ function Domains() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-gray-900 dark:text-white">
+              Delete Domain
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600 dark:text-slate-400">
+              Are you sure you want to delete the domain <span className="font-bold text-gray-900 dark:text-white">"{domainToDelete?.name}"</span>? 
+              This action cannot be undone and will permanently remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl font-bold text-xs uppercase tracking-widest">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-500/20"
+            >
+              Delete Domain
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

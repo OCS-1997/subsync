@@ -1,4 +1,4 @@
-import { addDomain, updateDomain, getAllDomains, getDomainById, importDomainData } from "../models/domainModel.js";
+import { addDomain, updateDomain, getAllDomains, getDomainById, deleteDomain, importDomainData } from "../models/domainModel.js";
 import { getCustomerById } from "../models/customerModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import appDB from "../db/subsyncDB.js";
@@ -101,6 +101,32 @@ const importDomains = async (req, res) => {
     }
 };
 
+/**
+ * Controller function for deleting a domain
+ */
+const deleteDomainById = async (req, res) => {
+    try {
+        const { did } = req.params;
+        await deleteDomain(did);
+        
+        // Log activity
+        if (req.user && req.user.username) {
+            await logActivity({ 
+                username: req.user.username, 
+                action: 'DELETE_DOMAIN', 
+                resourceType: 'Domain', 
+                resourceId: did, 
+                ipAddress: req.ip
+            });
+        }
+        
+        res.status(200).json({ message: "Domain deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting domain:", error);
+        res.status(500).json({ error: error.message || "Failed to delete domain." });
+    }
+};
+
 // No changes needed for ENUM, as backend just forwards values.
 
 /**
@@ -179,4 +205,4 @@ const getDomainDetailsForDcr = async (req, res) => {
     }
 };
 
-export { createDomain, updateDomainDetails, fetchAllDomains, fetchAllDomainDetails, domainDetailsByID, importDomains, getDomainDetailsForDcr };
+export { createDomain, updateDomainDetails, fetchAllDomains, fetchAllDomainDetails, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr };

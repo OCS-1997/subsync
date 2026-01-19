@@ -1,6 +1,5 @@
-import { Plus, Trash2, ArrowLeft, Settings } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Settings, Check, ChevronsUpDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Select from "react-select";
 import { toast, Bounce } from "react-toastify";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,6 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function AddDomain() {
   const navigate = useNavigate();
@@ -36,9 +38,7 @@ function AddDomain() {
   });
 
   const [allCustomers, setAllCustomers] = useState([]);
-  const [filteredCustomers, setFilteredCustomers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [domainId, setDomainId] = useState(null);
 
@@ -65,29 +65,7 @@ function AddDomain() {
     { value: "Others", label: "Others" },
   ];
 
-  const selectStyles = {
-    control: (base) => ({
-      ...base,
-      backgroundColor: "hsl(var(--background))",
-      borderColor: "hsl(var(--input))",
-      minHeight: "2.75rem",
-      borderRadius: "0.75rem",
-      fontSize: "0.875rem",
-      padding: "0px 8px",
-      boxShadow: "none",
-      "&:hover": { borderColor: "hsl(var(--ring))" },
-    }),
-    singleValue: (base) => ({ ...base, color: "hsl(var(--foreground))", fontWeight: "600" }),
-    input: (base) => ({ ...base, color: "hsl(var(--foreground))" }),
-    menu: (base) => ({ ...base, backgroundColor: "hsl(var(--popover))", borderRadius: "0.75rem", border: "1px solid hsl(var(--border))" }),
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused ? "hsl(var(--accent))" : state.isSelected ? "hsl(var(--primary))" : "transparent",
-      color: state.isFocused ? "hsl(var(--accent-foreground))" : state.isSelected ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
-      "&:active": { backgroundColor: "hsl(var(--accent))" }
-    }),
-  };
+
 
   // Robust date parser: handles ISO dates and ensures yyyy-MM-dd format
   const parseToISODate = (dateString) => {
@@ -110,12 +88,7 @@ function AddDomain() {
     async function fetchAllCustomers() {
       try {
         const res = await api.get("/all-customer-details");
-        const options = res.data.customers?.map(c => ({
-          value: c.customer_id,
-          label: c.company_name || c.display_name || `${c.first_name || ""} ${c.last_name || ""}`.trim(),
-        })) || [];
-        setAllCustomers(options);
-        setFilteredCustomers(options);
+        setAllCustomers(res.data.customers || []);
       } catch (err) {
         toast.error("Failed to fetch customers.");
       }
@@ -123,12 +96,7 @@ function AddDomain() {
     fetchAllCustomers();
   }, []);
 
-  useEffect(() => {
-    if (searchTerm.trim() === "") return setFilteredCustomers(allCustomers);
-    setFilteredCustomers(allCustomers.filter(c =>
-      c.label.toLowerCase().includes(searchTerm.toLowerCase())
-    ));
-  }, [searchTerm, allCustomers]);
+
 
   useEffect(() => {
     // If editing, fetch domain by id from state or URL
@@ -151,7 +119,6 @@ function AddDomain() {
         mailServicesOther: d.other_mail_service_details || "",
         domainStatus: d.domain_status || "Active"
       });
-      setSelectedCustomer({ value: d.customer_id, label: d.customer_name });
     } else if (domainId) {
       dispatch(fetchDomainById(domainId));
     }
@@ -173,7 +140,6 @@ function AddDomain() {
         mailServicesOther: currentDomain.other_mail_service_details || "",
         domainStatus: currentDomain.domain_status || "Active"
       });
-      setSelectedCustomer({ value: currentDomain.customer_id, label: currentDomain.customer_name });
     }
   }, [currentDomain, isEditing]);
 
@@ -182,9 +148,14 @@ function AddDomain() {
     if (!formData.customerId || !formData.domainName || !formData.registrationDate || !formData.registeredWith) {
       return toast.error("Please fill all required fields.");
     }
+    
+    // Get customer name
+    const customer = allCustomers.find(c => c.customer_id === formData.customerId);
+    const customerName = customer ? (customer.display_name || customer.company_name) : "";
+    
     const payload = {
       customer_id: formData.customerId,
-      customer_name: selectedCustomer?.label,
+      customer_name: customerName,
       domain_name: formData.domainName,
       registration_date: formData.registrationDate,
       registered_with: formData.registeredWith,
@@ -330,28 +301,62 @@ function AddDomain() {
 
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Customer Name <span className="text-red-500 font-bold ml-1">*</span></Label>
-                <Select
-                  options={filteredCustomers}
-                  inputValue={searchTerm}
-                  onInputChange={(val, { action }) => {
-                    if (action === "input-change") setSearchTerm(val);
-                    if (action === "menu-close") setSearchTerm("");
-                  }}
-                  onChange={(s) => {
-                    setFormData({ ...formData, customerId: s?.value || "" });
-                    setSelectedCustomer(s || null);
-                    setSearchTerm("");
-                  }}
-                  value={selectedCustomer}
-                  placeholder="Identify the domain owner..."
-                  isClearable
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                />
-                {selectedCustomer && (
-                  <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-2">ID: {selectedCustomer.value}</p>
-                )}
+                <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={customerPopoverOpen}
+                      className="h-11 w-full justify-between px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+                    >
+                      {formData.customerId
+                        ? (() => {
+                          const customer = allCustomers.find((c) => c.customer_id === formData.customerId);
+                          return customer
+                            ? `${customer.display_name}${customer.company_name ? ` (${customer.company_name})` : ''}`
+                            : "Select customer";
+                        })()
+                        : "Search by company name..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                    <Command className="dark:bg-slate-900">
+                      <CommandInput placeholder="Search customers..." className="font-bold border-none focus:ring-0" />
+                      <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No customer found.</CommandEmpty>
+                      <CommandGroup className="max-h-64 overflow-auto p-2">
+                        {(allCustomers || []).map((c) => (
+                          <CommandItem
+                            key={c.customer_id}
+                            value={`${c.display_name} ${c.company_name || ''} ${c.customer_id}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, customerId: c.customer_id });
+                              setCustomerPopoverOpen(false);
+                            }}
+                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400"
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${formData.customerId === c.customer_id ? "opacity-100" : "opacity-0"
+                                }`}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm">{c.display_name}</span>
+                              {c.company_name && (
+                                <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest">{c.company_name}</span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {formData.customerId && (() => {
+                  const customer = allCustomers.find(c => c.customer_id === formData.customerId);
+                  return customer && (
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-2">ID: {customer.customer_id}</p>
+                  );
+                })()}
               </div>
             </div>
           </CardContent>
@@ -388,21 +393,26 @@ function AddDomain() {
               <div className="flex flex-col">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Registered With <span className="text-red-500 font-bold ml-1">*</span></Label>
                 <Select
-                  options={registeredWithOptions}
-                  value={registeredWithOptions.find(opt => opt.value === formData.registeredWith)}
-                  onChange={(s) =>
+                  value={formData.registeredWith}
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      registeredWith: s?.value || "",
-                      otherProvider: s?.value === "Others" ? formData.otherProvider : ""
+                      registeredWith: value,
+                      otherProvider: value === "Others" ? formData.otherProvider : ""
                     })
                   }
-                  isClearable
-                  placeholder="Select registrar..."
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                />
+                >
+                  <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white shadow-sm">
+                    <SelectValue placeholder="Select registrar..." />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                    {registeredWithOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs font-bold">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {formData.registeredWith === "Others" && (
                 <div>
@@ -469,15 +479,20 @@ function AddDomain() {
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Mail Services <span className="text-red-500 font-bold ml-1">*</span></Label>
                 <Select
-                  options={mailServicesOptions}
-                  value={mailServicesOptions.find(opt => opt.value === formData.mailServices)}
-                  onChange={(s) => setFormData({ ...formData, mailServices: s?.value || "" })}
-                  isClearable
-                  placeholder="Select mail service..."
-                  styles={selectStyles}
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                />
+                  value={formData.mailServices}
+                  onValueChange={(value) => setFormData({ ...formData, mailServices: value })}
+                >
+                  <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white shadow-sm">
+                    <SelectValue placeholder="Select mail service..." />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                    {mailServicesOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-xs font-bold">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {formData.mailServices === "Others" && (
                 <div>

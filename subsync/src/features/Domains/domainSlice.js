@@ -55,6 +55,18 @@ export const updateDomain = createAsyncThunk(
   }
 );
 
+export const deleteDomain = createAsyncThunk(
+  'domains/deleteDomain',
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.delete(`/domain/${id}`);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to delete domain');
+    }
+  }
+);
+
 // Slice
 const domainSlice = createSlice({
   name: 'domains',
@@ -130,6 +142,20 @@ const domainSlice = createSlice({
       }
     })
       .addCase(updateDomain.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteDomain.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteDomain.fulfilled, (state, action) => {
+        state.loading = false;
+        // Remove the deleted domain from the list
+        state.list = state.list.filter(domain => domain.domain_id !== action.payload);
+        state.totalRecords = state.totalRecords > 0 ? state.totalRecords - 1 : 0;
+      })
+      .addCase(deleteDomain.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
