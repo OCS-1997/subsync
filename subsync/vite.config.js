@@ -26,9 +26,11 @@ export default defineConfig(({ mode }) => {
           name: 'RMS',
           short_name: 'RMS',
           description: 'Subscription management made easy',
-          theme_color: '#ffffff',
+          theme_color: '#2563eb',
           background_color: '#ffffff',
           display: 'standalone',
+          display_override: ['window-controls-overlay', 'standalone'],
+          orientation: 'any',
           scope: '/',
           start_url: '/',
           icons: [

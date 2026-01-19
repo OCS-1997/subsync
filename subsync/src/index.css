@@ -1,14 +1,14 @@
 /* subsync/subsync/src/index.css */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Jost:ital@0;1&family=Manrope:wght@200..800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Jost:ital@0;1&family=Manrope:wght@200..800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 500;
 }
 
@@ -46,7 +46,7 @@ body {
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -81,7 +81,7 @@ body {
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -123,7 +123,9 @@ input[type="number"] {
   display: flex;
   align-items: center;
   background: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .dark .phone-input-custom-style {
@@ -229,4 +231,43 @@ input[type="number"] {
 
 .dark .custom-scrollbar {
   scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+/* PWA Window Controls Overlay */
+@media (display-mode: window-controls-overlay) {
+  body {
+    /* Add padding to avoid content overlapping with window controls */
+    padding-top: env(titlebar-area-height, 33px);
+  }
+
+  /* Make a draggable area at the top of your app */
+  .app-header,
+  .pwa-titlebar {
+    -webkit-app-region: drag;
+    app-region: drag;
+    /* Account for the titlebar area */
+    padding-top: env(titlebar-area-y, 0);
+    padding-left: env(titlebar-area-x, 0);
+    padding-right: calc(100vw - env(titlebar-area-width, 100vw));
+  }
+
+  /* Make buttons/interactive elements clickable again */
+  .app-header button,
+  .app-header a,
+  .app-header input,
+  .app-header select,
+  .pwa-titlebar button,
+  .pwa-titlebar a,
+  .pwa-titlebar input,
+  .pwa-titlebar select {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+}
+
+/* Enhanced mobile PWA styles */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: max(env(safe-area-inset-top), env(titlebar-area-height, 0px));
+  }
 }

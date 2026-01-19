@@ -315,7 +315,7 @@ function TeamsSettings() {
                     { label: "Teams" }
                 ]}
                 actions={
-                    <Button onClick={() => openTeamDialog('add')} className="rounded-xl gap-2 shadow-sm bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={() => openTeamDialog('add')} className="#bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
                         <Plus className="w-4 h-4" />
                         Create New Team
                     </Button>
