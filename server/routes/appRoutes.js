@@ -4,7 +4,7 @@ import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
-import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
+import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
 import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers } from '../controllers/dcrController.js';
 import { createContact, getContacts, getContactById, updateContact, deleteContact, createContactFromDcrController, getContactByIdController } from '../controllers/contactController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
@@ -148,6 +148,37 @@ import {
     getTeamMembersController,
     getTeamStatsController
 } from '../controllers/teamsController.js';
+import {
+    createTimeEntryController,
+    updateTimeEntryController,
+    deleteTimeEntryController,
+    getTimeEntriesController,
+    getTimeEntryByIdController,
+    startTimerController,
+    stopTimerController,
+    getActiveTimerController,
+    getTimeReportsController
+} from '../controllers/timeTrackingController.js';
+import {
+    createProjectController,
+    updateProjectController,
+    deleteProjectController,
+    getAllProjectsController,
+    getProjectByIdController,
+    getProjectStatsController
+} from '../controllers/projectsController.js';
+import {
+    createCategoryController as createTimeTrackingCategoryController,
+    updateCategoryController as updateTimeTrackingCategoryController,
+    deleteCategoryController as deleteTimeTrackingCategoryController,
+    getAllCategoriesController,
+    getCategoryByIdController as getTimeTrackingCategoryByIdController,
+    getCategoryStatsController
+} from '../controllers/categoriesController.js';
+import {
+    getDetailedReportsController,
+    exportEntriesController
+} from '../controllers/reportsController.js';
 
 const router = express.Router();
 
@@ -184,6 +215,7 @@ router.get('/all-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW),
 router.get('/domain/:did', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), domainDetailsByID);
 router.post('/import-domains', isAuthenticated, authorize(PERMISSIONS.DOMAINS_CREATE), importDomains);
 router.get('/domains/:id/details', isAuthenticated, authorize(PERMISSIONS.DOMAINS_VIEW), getDomainDetailsForDcr);
+router.delete('/domain/:did', isAuthenticated, authorize(PERMISSIONS.DOMAINS_DELETE), deleteDomainById);
 
 // Services
 router.get('/all-services', isAuthenticated, authorize(PERMISSIONS.SERVICES_VIEW), getAllServicesController);
@@ -487,6 +519,40 @@ router.get('/users/:username/teams', isAuthenticated, authorize(PERMISSIONS.TEAM
 
 // Team Stats
 router.get('/teams/:id/stats', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamStatsController);
+
+// Time Tracking - Time Entries
+router.get('/time-tracking/entries', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeEntriesController);
+router.post('/time-tracking/entries', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), createTimeEntryController);
+router.get('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeEntryByIdController);
+router.put('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), updateTimeEntryController);
+router.delete('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), deleteTimeEntryController);
+
+// Time Tracking - Timer
+router.post('/time-tracking/timer/start', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), startTimerController);
+router.post('/time-tracking/timer/stop/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), stopTimerController);
+router.get('/time-tracking/timer/active', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), getActiveTimerController);
+
+// Time Tracking - Projects
+router.get('/time-tracking/projects', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getAllProjectsController);
+router.post('/time-tracking/projects', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), createProjectController);
+router.get('/time-tracking/projects/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getProjectByIdController);
+router.put('/time-tracking/projects/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), updateProjectController);
+router.delete('/time-tracking/projects/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), deleteProjectController);
+router.get('/time-tracking/projects/:id/stats', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getProjectStatsController);
+
+// Time Tracking - Categories/Activity Types
+router.get('/time-tracking/categories', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getAllCategoriesController);
+router.post('/time-tracking/categories', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), createTimeTrackingCategoryController);
+router.get('/time-tracking/categories/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeTrackingCategoryByIdController);
+router.put('/time-tracking/categories/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), updateTimeTrackingCategoryController);
+router.delete('/time-tracking/categories/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_MANAGE), deleteTimeTrackingCategoryController);
+router.get('/time-tracking/categories/:id/stats', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getCategoryStatsController);
+
+// Time Tracking - Reports
+router.get('/time-tracking/reports', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeReportsController);
+router.get('/time-tracking/reports/detailed', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getDetailedReportsController);
+router.get('/time-tracking/reports/export', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), exportEntriesController);
+
 
 
 export default router;

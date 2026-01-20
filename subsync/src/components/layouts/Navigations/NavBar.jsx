@@ -12,6 +12,7 @@ import { PERMISSIONS } from "@/constants/permissions.js";
 import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.jsx";
 import BirthdayNavWidget from "@/features/Dashboard/components/BirthdayNavWidget.jsx";
 import CommandPalette from "@/components/CommandPalette/CommandPalette.jsx";
+import QuickTimerButton from "@/components/QuickTimer/QuickTimerButton.jsx";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -126,6 +127,10 @@ function NavBar({ toggleSidebar }) {
 
           {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && (
             <BirthdayNavWidget />
+          )}
+
+          {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && (
+            <QuickTimerButton />
           )}
 
           <Button
