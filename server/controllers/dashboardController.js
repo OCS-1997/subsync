@@ -260,14 +260,14 @@ export const getTimeTrackingStatsController = async (req, res) => {
 
         let stats;
         if (isAdmin) {
-            console.log('Fetching system time stats for period:', period);
+            //console.log('Fetching system time stats for period:', period);
             stats = await getSystemTimeStats(period);
         } else {
             if (!user?.username) {
                 console.error('Time tracking stats error: User not authenticated');
                 return res.status(401).json({ error: 'User not authenticated' });
             }
-            console.log(`Fetching user time stats for ${user.username}, period: ${period}`);
+            //console.log(`Fetching user time stats for ${user.username}, period: ${period}`);
             stats = await getUserTimeStats(user.username, period);
         }
 

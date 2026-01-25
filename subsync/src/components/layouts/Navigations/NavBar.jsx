@@ -263,6 +263,8 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
+                
+
                 {hasPermission(PERMISSIONS.USERS_VIEW) && (
                   <Link
                     to="settings/user-management"
@@ -274,16 +276,18 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                {hasPermission(PERMISSIONS.ACTIVITY_LOGS_VIEW) && (
+                {hasPermission(PERMISSIONS.TEAMS_MANAGE) && (
                   <Link
-                    to="settings/activity-logs"
+                    to="settings/teams"
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
-                    <FileText className="h-5 w-5" />
-                    Activity Logs
+                    <UsersIcon className="h-5 w-5" />
+                    Teams Management
                   </Link>
                 )}
+
+                
 
                 {hasPermission(PERMISSIONS.ROLES_VIEW) && (
                   <Link
@@ -293,6 +297,17 @@ function NavBar({ toggleSidebar }) {
                   >
                     <Shield className="h-5 w-5" />
                     Roles & Permissions
+                  </Link>
+                )}
+
+                {hasPermission(PERMISSIONS.DASHBOARD_CONFIGURE) && (
+                  <Link
+                    to="settings/dashboard-settings"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <LayoutDashboard className="h-5 w-5" />
+                    Dashboard Settings
                   </Link>
                 )}
 
@@ -318,6 +333,17 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
+                {hasPermission(PERMISSIONS.ACTIVITY_LOGS_VIEW) && (
+                  <Link
+                    to="settings/activity-logs"
+                    onClick={() => setSettingsOpen(false)}
+                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                  >
+                    <FileText className="h-5 w-5" />
+                    Activity Logs
+                  </Link>
+                )}
+
                 {hasPermission(PERMISSIONS.NOTIFICATION_LOGS_VIEW) && (
                   <Link
                     to="settings/notification-logs"
@@ -340,16 +366,7 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                {hasPermission(PERMISSIONS.DASHBOARD_CONFIGURE) && (
-                  <Link
-                    to="settings/dashboard-settings"
-                    onClick={() => setSettingsOpen(false)}
-                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-                  >
-                    <LayoutDashboard className="h-5 w-5" />
-                    Dashboard Settings
-                  </Link>
-                )}
+                
 
                 {hasPermission(PERMISSIONS.BACKUPS_VIEW) && (
                   <Link
@@ -362,16 +379,7 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                {hasPermission(PERMISSIONS.TEAMS_MANAGE) && (
-                  <Link
-                    to="settings/teams"
-                    onClick={() => setSettingsOpen(false)}
-                    className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
-                  >
-                    <UsersIcon className="h-5 w-5" />
-                    Teams Management
-                  </Link>
-                )}
+                
               </ul>
             </motion.div>
           </motion.div>
