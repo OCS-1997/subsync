@@ -236,3 +236,99 @@ export const updateRoleWidgetsController = async (req, res) => {
         res.status(500).json({ error: error.message || 'Failed to update widget permissions' });
     }
 };
+
+/**
+ * ============================================
+ * TIME TRACKING ANALYTICS CONTROLLERS
+ * ============================================
+ */
+
+/**
+ * GET /api/dashboard/time-tracking/stats
+ * Get time tracking statistics (role-aware: individual or system-wide)
+ */
+export const getTimeTrackingStatsController = async (req, res) => {
+    try {
+        const user = req.user;
+        const { period = 'today' } = req.query;
+
+        // Import functions
+        const { getUserTimeStats, getSystemTimeStats } = await import('../models/dashboardModel.js');
+
+        // Check if user is admin (you may need to adjust this based on your auth system)
+        const isAdmin = user?.roleKey === 'admin' || user?.isAdmin;
+
+        let stats;
+        if (isAdmin) {
+            console.log('Fetching system time stats for period:', period);
+            stats = await getSystemTimeStats(period);
+        } else {
+            if (!user?.username) {
+                console.error('Time tracking stats error: User not authenticated');
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+            console.log(`Fetching user time stats for ${user.username}, period: ${period}`);
+            stats = await getUserTimeStats(user.username, period);
+        }
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Error fetching time tracking stats:', error);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({ error: error.message || 'Failed to fetch time tracking stats' });
+    }
+};
+
+/**
+ * GET /api/dashboard/time-tracking/productivity-trend
+ * Get productivity trend data for charts
+ */
+export const getProductivityTrendController = async (req, res) => {
+    try {
+        const user = req.user;
+        const { days = 7 } = req.query;
+
+        const { getProductivityTrend } = await import('../models/dashboardModel.js');
+
+        const isAdmin = user?.roleKey === 'admin' || user?.isAdmin;
+        const userId = isAdmin ? null : user?.username;
+
+        if (!isAdmin && !userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        const trend = await getProductivityTrend(userId, parseInt(days));
+        res.json(trend);
+    } catch (error) {
+        console.error('Error fetching productivity trend:', error);
+        res.status(500).json({ error: error.message || 'Failed to fetch productivity trend' });
+    }
+};
+
+/**
+ * GET /api/dashboard/time-tracking/user-stats/:userId
+ * Get specific user's time tracking stats (admin only)
+ */
+export const getUserTimeStatsController = async (req, res) => {
+    try {
+        const user = req.user;
+        const { userId } = req.params;
+        const { period = 'today' } = req.query;
+
+        // Only admins can view other users' stats
+        const isAdmin = user?.roleKey === 'admin' || user?.isAdmin;
+        
+        if (!isAdmin && user?.username !== userId) {
+            return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
+        }
+
+        const { getUserTimeStats } = await import('../models/dashboardModel.js');
+        const stats = await getUserTimeStats(userId, period);
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Error fetching user time stats:', error);
+        res.status(500).json({ error: error.message || 'Failed to fetch user time stats' });
+    }
+};
+

@@ -14,6 +14,13 @@ const TimerWidget = ({ onTimerUpdate }) => {
     // Fetch active timer on mount
     useEffect(() => {
         fetchActiveTimer();
+
+        const handleCustomUpdate = () => {
+            fetchActiveTimer();
+        };
+
+        window.addEventListener('timeTrackingUpdated', handleCustomUpdate);
+        return () => window.removeEventListener('timeTrackingUpdated', handleCustomUpdate);
     }, []);
 
     // Update elapsed time every second
@@ -59,6 +66,7 @@ const TimerWidget = ({ onTimerUpdate }) => {
             setActiveTimer(null);
             setElapsedTime(0);
             if (onTimerUpdate) onTimerUpdate();
+            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
         } catch (error) {
             console.error('Error stopping timer:', error);
             toast.error('Failed to stop timer');

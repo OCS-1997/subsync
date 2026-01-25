@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { RefreshCw, LayoutGrid, Package, Phone, Target, BookOpen, HardDrive, Loader2 } from 'lucide-react';
+import { RefreshCw, LayoutGrid, Package, Phone, Target, BookOpen, HardDrive, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axiosInstance';
@@ -12,6 +12,7 @@ import DCRTab from '../components/tabs/DCRTab';
 import OpportunitiesTab from '../components/tabs/OpportunitiesTab';
 import KnowledgeBaseTab from '../components/tabs/KnowledgeBaseTab';
 import AssetsTab from '../components/tabs/AssetsTab';
+import TimeTrackingTab from '../components/tabs/TimeTrackingTab';
 
 const TAB_ICONS = {
     overview: LayoutGrid,
@@ -20,6 +21,7 @@ const TAB_ICONS = {
     opportunities: Target,
     kb: BookOpen,
     assets: HardDrive,
+    time_tracking: Clock,
 };
 
 const TAB_COMPONENTS = {
@@ -29,6 +31,7 @@ const TAB_COMPONENTS = {
     opportunities: OpportunitiesTab,
     kb: KnowledgeBaseTab,
     assets: AssetsTab,
+    time_tracking: TimeTrackingTab,
 };
 
 function DashboardHome() {
@@ -63,6 +66,7 @@ function DashboardHome() {
                         { tabKey: 'overview', name: 'Overview', icon: 'LayoutGrid' },
                         { tabKey: 'subscriptions', name: 'Subscriptions', icon: 'Package' },
                         { tabKey: 'assets', name: 'Assets', icon: 'HardDrive' },
+                        { tabKey: 'time_tracking', name: 'Time Tracking', icon: 'Clock' },
                         { tabKey: 'dcr', name: 'DCR', icon: 'Phone' },
                         { tabKey: 'opportunities', name: 'Opportunities', icon: 'Target' },
                         { tabKey: 'kb', name: 'Knowledge Base', icon: 'BookOpen' },

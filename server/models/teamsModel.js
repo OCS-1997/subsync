@@ -294,19 +294,39 @@ async function removeUserFromTeam(userId, teamId, removedBy = null) {
 async function getUserTeams(userId) {
     try {
         const [teams] = await appDB.query(
-            `SELECT 
+            `SELECT DISTINCT
                 t.*,
-                ut.assigned_at,
                 u.name as team_lead_name
-             FROM user_teams ut
-             JOIN teams t ON ut.team_id = t.id
+             FROM teams t
+             LEFT JOIN user_teams ut ON t.id = ut.team_id
              LEFT JOIN users u ON t.team_lead_username = u.username
-             WHERE ut.user_id = ? AND t.is_active = 1
+             WHERE (ut.user_id = ? OR t.team_lead_username = ?)
              ORDER BY t.team_name ASC`,
-            [userId]
+            [userId, userId]
         );
 
-        return teams;
+        if (teams.length === 0) return [];
+
+        // Fetch members for these specific teams
+        const teamIds = teams.map(t => t.id);
+        const [allMembers] = await appDB.query(
+            `SELECT 
+                ut.team_id,
+                ut.user_id as username,
+                u.name as user_name,
+                u.email
+             FROM user_teams ut
+             JOIN users u ON ut.user_id = u.username
+             WHERE ut.team_id IN (?)
+             ORDER BY u.name ASC`,
+            [teamIds]
+        );
+
+        // Map members to teams
+        return teams.map(team => ({
+            ...team,
+            members: allMembers.filter(m => m.team_id === team.id)
+        }));
     } catch (error) {
         console.error('Error fetching user teams:', error);
         throw error;

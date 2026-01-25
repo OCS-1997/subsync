@@ -435,3 +435,440 @@ export async function setWidgetPermissionsForRole(roleId, widgetPermissions) {
         conn.release();
     }
 }
+
+/**
+ * ============================================
+ * TIME TRACKING ANALYTICS FUNCTIONS
+ * ============================================
+ */
+
+/**
+ * Get user's time tracking statistics
+ * @param {string} userId - Username of the user
+ * @param {string} period - 'today' | 'week' | 'month'
+ */
+export async function getUserTimeStats(userId, period = 'today') {
+    const now = new Date();
+    let startDate, endDate;
+
+    switch (period) {
+        case 'today':
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'week':
+            // Start of current week (Monday)
+            const dayOfWeek = now.getDay();
+            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() + diff);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            break;
+        default:
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+    }
+
+    try {
+        // Get total time tracked
+        const [totalStats] = await appDB.query(`
+            SELECT 
+                COALESCE(SUM(duration_minutes), 0) as total_minutes,
+                COUNT(*) as entry_count,
+                SUM(CASE WHEN is_billable = 1 THEN duration_minutes ELSE 0 END) as billable_minutes
+            FROM time_entries
+            WHERE user_id = ?
+            AND deleted_at IS NULL
+            AND start_time >= ?
+            AND start_time <= ?
+            AND end_time IS NOT NULL
+        `, [userId, startDate, endDate]);
+
+        // Get active timer if any
+        const [activeTimer] = await appDB.query(`
+            SELECT 
+                id, entry_id, title, start_time, activity_type_id,
+                TIMESTAMPDIFF(MINUTE, start_time, NOW()) as elapsed_minutes
+            FROM time_entries
+            WHERE user_id = ?
+            AND is_timer_running = 1
+            AND deleted_at IS NULL
+            LIMIT 1
+        `, [userId]);
+
+        // Get activity breakdown
+        const [activityBreakdown] = await appDB.query(`
+            SELECT 
+                tat.type_name,
+                tat.color,
+                tat.icon,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(te.id) as entry_count
+            FROM time_activity_types tat
+            LEFT JOIN time_entries te ON tat.id = te.activity_type_id 
+                AND te.user_id = ?
+                AND te.deleted_at IS NULL
+                AND te.start_time >= ?
+                AND te.start_time <= ?
+                AND te.end_time IS NOT NULL
+            WHERE tat.is_active = 1
+            GROUP BY tat.id, tat.type_name, tat.color, tat.icon
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [userId, startDate, endDate]);
+
+        // Get project breakdown
+        const [projectBreakdown] = await appDB.query(`
+            SELECT 
+                p.project_name,
+                p.color,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes
+            FROM time_projects p
+            JOIN time_entries te ON p.id = te.project_id
+            WHERE te.user_id = ?
+            AND te.deleted_at IS NULL
+            AND te.start_time >= ?
+            AND te.start_time <= ?
+            AND te.end_time IS NOT NULL
+            GROUP BY p.id, p.project_name, p.color
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [userId, startDate, endDate]);
+
+        // Get customer breakdown
+        const [customerBreakdown] = await appDB.query(`
+            SELECT 
+                c.display_name as customer_name,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes
+            FROM customers c
+            JOIN time_entries te ON c.customer_id = te.customer_id
+            WHERE te.user_id = ?
+            AND te.deleted_at IS NULL
+            AND te.start_time >= ?
+            AND te.start_time <= ?
+            AND te.end_time IS NOT NULL
+            GROUP BY c.customer_id, c.display_name
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [userId, startDate, endDate]);
+
+        return {
+            period,
+            startDate,
+            endDate,
+            totalMinutes: parseInt(totalStats[0]?.total_minutes) || 0,
+            totalHours: parseFloat((totalStats[0]?.total_minutes / 60).toFixed(2)) || 0,
+            entryCount: parseInt(totalStats[0]?.entry_count) || 0,
+            billableMinutes: parseInt(totalStats[0]?.billable_minutes) || 0,
+            billableHours: parseFloat((totalStats[0]?.billable_minutes / 60).toFixed(2)) || 0,
+            activeTimer: activeTimer.length > 0 ? {
+                ...activeTimer[0],
+                elapsedMinutes: parseInt(activeTimer[0].elapsed_minutes)
+            } : null,
+            activityBreakdown: activityBreakdown.map(a => ({
+                typeName: a.type_name,
+                color: a.color,
+                icon: a.icon,
+                totalMinutes: parseInt(a.total_minutes),
+                totalHours: parseFloat((a.total_minutes / 60).toFixed(2)),
+                entryCount: parseInt(a.entry_count),
+                percentage: totalStats[0]?.total_minutes > 0 
+                    ? parseFloat(((a.total_minutes / totalStats[0].total_minutes) * 100).toFixed(1))
+                    : 0
+            })),
+            projectBreakdown: projectBreakdown.map(p => ({
+                projectName: p.project_name,
+                color: p.color,
+                totalMinutes: parseInt(p.total_minutes),
+                totalHours: parseFloat((p.total_minutes / 60).toFixed(2))
+            })),
+            customerBreakdown: customerBreakdown.map(c => ({
+                customerName: c.customer_name,
+                totalMinutes: parseInt(c.total_minutes),
+                totalHours: parseFloat((c.total_minutes / 60).toFixed(2))
+            }))
+        };
+    } catch (error) {
+        console.error('Error fetching user time stats:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get system-wide time tracking statistics (Admin only)
+ * @param {string} period - 'today' | 'week' | 'month'
+ */
+export async function getSystemTimeStats(period = 'today') {
+    const now = new Date();
+    let startDate, endDate;
+
+    switch (period) {
+        case 'today':
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'week':
+            const dayOfWeek = now.getDay();
+            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() + diff);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            break;
+        default:
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+    }
+
+    try {
+        // Get overall system stats
+        const [overallStats] = await appDB.query(`
+            SELECT 
+                COALESCE(SUM(duration_minutes), 0) as total_minutes,
+                COUNT(*) as entry_count,
+                COUNT(DISTINCT user_id) as active_users,
+                AVG(duration_minutes) as avg_entry_minutes,
+                SUM(CASE WHEN is_billable = 1 THEN duration_minutes ELSE 0 END) as billable_minutes
+            FROM time_entries
+            WHERE deleted_at IS NULL
+            AND start_time >= ?
+            AND start_time <= ?
+            AND end_time IS NOT NULL
+        `, [startDate, endDate]);
+
+        // Get activity type breakdown
+        const [activityBreakdown] = await appDB.query(`
+            SELECT 
+                tat.type_name,
+                tat.color,
+                tat.icon,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(te.id) as entry_count,
+                COUNT(DISTINCT te.user_id) as user_count
+            FROM time_activity_types tat
+            LEFT JOIN time_entries te ON tat.id = te.activity_type_id 
+                AND te.deleted_at IS NULL
+                AND te.start_time >= ?
+                AND te.start_time <= ?
+                AND te.end_time IS NOT NULL
+            WHERE tat.is_active = 1
+            GROUP BY tat.id, tat.type_name, tat.color, tat.icon
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [startDate, endDate]);
+
+        // Get project breakdown (System)
+        const [projectBreakdown] = await appDB.query(`
+            SELECT 
+                p.project_name,
+                p.color,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(DISTINCT te.user_id) as user_count
+            FROM time_projects p
+            JOIN time_entries te ON p.id = te.project_id
+            WHERE te.deleted_at IS NULL
+            AND te.start_time >= ?
+            AND te.start_time <= ?
+            AND te.end_time IS NOT NULL
+            GROUP BY p.id, p.project_name, p.color
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [startDate, endDate]);
+
+        // Get customer breakdown (System)
+        const [customerBreakdown] = await appDB.query(`
+            SELECT 
+                c.display_name as customer_name,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(DISTINCT te.user_id) as user_count
+            FROM customers c
+            JOIN time_entries te ON c.customer_id = te.customer_id
+            WHERE te.deleted_at IS NULL
+            AND te.start_time >= ?
+            AND te.start_time <= ?
+            AND te.end_time IS NOT NULL
+            GROUP BY c.customer_id, c.display_name
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [startDate, endDate]);
+
+        // Get top performers
+        const [topPerformers] = await appDB.query(`
+            SELECT 
+                te.user_id,
+                u.name as full_name,
+                u.email,
+                SUM(te.duration_minutes) as total_minutes,
+                COUNT(te.id) as entry_count,
+                AVG(te.duration_minutes) as avg_entry_minutes
+            FROM time_entries te
+            JOIN users u ON te.user_id = u.username
+            WHERE te.deleted_at IS NULL
+            AND te.start_time >= ?
+            AND te.start_time <= ?
+            AND te.end_time IS NOT NULL
+            GROUP BY te.user_id, u.name, u.email
+            ORDER BY total_minutes DESC
+            LIMIT 10
+        `, [startDate, endDate]);
+
+        // Get team breakdown (if teams exist)
+        const [teamBreakdown] = await appDB.query(`
+            SELECT 
+                t.id as team_id,
+                t.team_name as team_name,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(DISTINCT te.user_id) as active_users,
+                COUNT(te.id) as entry_count
+            FROM teams t
+            LEFT JOIN time_entries te ON t.id = te.team_id 
+                AND te.deleted_at IS NULL
+                AND te.start_time >= ?
+                AND te.start_time <= ?
+                AND te.end_time IS NOT NULL
+            GROUP BY t.id, t.team_name
+            HAVING total_minutes > 0
+            ORDER BY total_minutes DESC
+        `, [startDate, endDate]);
+
+        const totalMinutes = parseInt(overallStats[0]?.total_minutes) || 0;
+        const activeUsers = parseInt(overallStats[0]?.active_users) || 1;
+
+        return {
+            period,
+            startDate,
+            endDate,
+            overall: {
+                totalMinutes,
+                totalHours: parseFloat((totalMinutes / 60).toFixed(2)),
+                entryCount: parseInt(overallStats[0]?.entry_count) || 0,
+                activeUsers,
+                avgMinutesPerUser: parseFloat((totalMinutes / activeUsers).toFixed(2)),
+                avgHoursPerUser: parseFloat((totalMinutes / activeUsers / 60).toFixed(2)),
+                avgEntryMinutes: parseFloat(overallStats[0]?.avg_entry_minutes || 0).toFixed(2),
+                billableMinutes: parseInt(overallStats[0]?.billable_minutes) || 0,
+                billableHours: parseFloat((overallStats[0]?.billable_minutes / 60).toFixed(2))
+            },
+            activityBreakdown: activityBreakdown.map(a => ({
+                typeName: a.type_name,
+                color: a.color,
+                icon: a.icon,
+                totalMinutes: parseInt(a.total_minutes),
+                totalHours: parseFloat((a.total_minutes / 60).toFixed(2)),
+                entryCount: parseInt(a.entry_count),
+                userCount: parseInt(a.user_count),
+                percentage: totalMinutes > 0 
+                    ? parseFloat(((a.total_minutes / totalMinutes) * 100).toFixed(1))
+                    : 0
+            })),
+            topPerformers: topPerformers.map(p => ({
+                userId: p.user_id,
+                fullName: p.full_name,
+                email: p.email,
+                totalMinutes: parseInt(p.total_minutes),
+                totalHours: parseFloat((p.total_minutes / 60).toFixed(2)),
+                entryCount: parseInt(p.entry_count),
+                avgEntryMinutes: parseFloat(p.avg_entry_minutes).toFixed(2)
+            })),
+            teamBreakdown: teamBreakdown.map(t => ({
+                teamId: t.team_id,
+                teamName: t.team_name,
+                totalMinutes: parseInt(t.total_minutes),
+                totalHours: parseFloat((t.total_minutes / 60).toFixed(2)),
+                activeUsers: parseInt(t.active_users),
+                entryCount: parseInt(t.entry_count),
+                avgMinutesPerUser: parseFloat((t.total_minutes / t.active_users).toFixed(2))
+            })),
+            projectBreakdown: projectBreakdown.map(p => ({
+                projectName: p.project_name,
+                color: p.color,
+                totalMinutes: parseInt(p.total_minutes),
+                totalHours: parseFloat((p.total_minutes / 60).toFixed(2)),
+                userCount: parseInt(p.user_count)
+            })),
+            customerBreakdown: customerBreakdown.map(c => ({
+                customerName: c.customer_name,
+                totalMinutes: parseInt(c.total_minutes),
+                totalHours: parseFloat((c.total_minutes / 60).toFixed(2)),
+                userCount: parseInt(c.user_count)
+            }))
+        };
+    } catch (error) {
+        console.error('Error fetching system time stats:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get productivity trend data for charts
+ * @param {string} userId - Username (null for system-wide)
+ * @param {number} days - Number of days to fetch (default 7)
+ */
+export async function getProductivityTrend(userId = null, days = 7) {
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - (days - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    try {
+        const whereClause = userId 
+            ? 'WHERE te.user_id = ? AND te.deleted_at IS NULL'
+            : 'WHERE te.deleted_at IS NULL';
+        
+        const params = userId ? [userId] : [];
+
+        const [trendData] = await appDB.query(`
+            WITH RECURSIVE date_range AS (
+                SELECT DATE(?) as date
+                UNION ALL
+                SELECT DATE_ADD(date, INTERVAL 1 DAY)
+                FROM date_range
+                WHERE date < DATE(?)
+            )
+            SELECT 
+                dr.date,
+                COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                COUNT(te.id) as entry_count,
+                ${userId ? '1' : 'COUNT(DISTINCT te.user_id)'} as user_count
+            FROM date_range dr
+            LEFT JOIN time_entries te ON DATE(te.start_time) = dr.date
+                ${whereClause.replace('WHERE', 'AND')}
+                AND te.end_time IS NOT NULL
+                AND te.deleted_at IS NULL
+            GROUP BY dr.date
+            ORDER BY dr.date ASC
+        `, [startDate, endDate, ...params]);
+
+        return trendData.map(d => ({
+            date: d.date,
+            totalMinutes: parseInt(d.total_minutes),
+            totalHours: parseFloat((d.total_minutes / 60).toFixed(2)),
+            entryCount: parseInt(d.entry_count),
+            userCount: parseInt(d.user_count)
+        }));
+    } catch (error) {
+        console.error('Error fetching productivity trend:', error);
+        throw error;
+    }
+}

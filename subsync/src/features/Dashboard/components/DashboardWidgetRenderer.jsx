@@ -7,6 +7,14 @@ import ActivityLogWidget from './ActivityLogWidget.jsx';
 import BirthdayWidget from './BirthdayWidget.jsx';
 import QuickActionsWidget from './QuickActionsWidget.jsx';
 import DCRWidget from './DCRWidget.jsx';
+import {
+    TodayTimeStatsWidget,
+    WeekTimeStatsWidget,
+    ActivityBreakdownWidget,
+    ProductivityTrendWidget,
+    TeamOverviewWidget,
+    TopPerformersWidget
+} from './TimeTrackingWidgets.jsx';
 
 const WIDGET_COMPONENTS = {
     subscription_status: SubscriptionStatusWidget,
@@ -18,6 +26,13 @@ const WIDGET_COMPONENTS = {
     birthdays: BirthdayWidget,
     quick_actions: QuickActionsWidget,
     dcr: DCRWidget,
+    // Time Tracking widgets
+    time_today_stats: TodayTimeStatsWidget,
+    time_week_stats: WeekTimeStatsWidget,
+    time_activity_breakdown: ActivityBreakdownWidget,
+    time_productivity_trend: ProductivityTrendWidget,
+    time_team_overview: TeamOverviewWidget,
+    time_user_rankings: TopPerformersWidget,
 };
 
 function DashboardWidgetRenderer({ widgetKey, data }) {

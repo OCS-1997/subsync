@@ -9,6 +9,7 @@ import {
     getActiveTimer,
     getTimeEntriesSummary
 } from "../models/timeTrackingModel.js";
+import { logActivity } from '../models/activityLogModel.js';
 
 /**
  * Controller to create a new time entry
@@ -29,6 +30,15 @@ async function createTimeEntryController(req, res) {
         }
 
         const entryId = await createTimeEntry(entryData);
+
+        await logActivity({
+            username: req.user.username,
+            action: 'CREATE_TIME_ENTRY',
+            resourceType: 'TimeEntry',
+            resourceId: entryId,
+            ipAddress: req.ip,
+            details: { title: entryData.title, duration: entryData.duration_minutes, project_id: entryData.project_id }
+        });
 
         res.status(201).json({
             message: "Time entry created successfully",
@@ -60,6 +70,15 @@ async function updateTimeEntryController(req, res) {
 
         await updateTimeEntry(id, req.body);
 
+        await logActivity({
+            username: req.user.username,
+            action: 'UPDATE_TIME_ENTRY',
+            resourceType: 'TimeEntry',
+            resourceId: id,
+            ipAddress: req.ip,
+            details: { title: req.body.title || entry.title, duration: req.body.duration_minutes }
+        });
+
         res.status(200).json({
             message: "Time entry updated successfully"
         });
@@ -89,6 +108,15 @@ async function deleteTimeEntryController(req, res) {
 
         await deleteTimeEntry(id);
 
+        await logActivity({
+            username: req.user.username,
+            action: 'DELETE_TIME_ENTRY',
+            resourceType: 'TimeEntry',
+            resourceId: id,
+            ipAddress: req.ip,
+            details: { title: entry.title }
+        });
+
         res.status(200).json({
             message: "Time entry deleted successfully"
         });
@@ -109,6 +137,7 @@ async function getTimeEntriesController(req, res) {
 
         const {
             user_id,
+            team_id,
             start_date,
             end_date,
             customer_id,
@@ -116,14 +145,19 @@ async function getTimeEntriesController(req, res) {
             activity_type_id,
             is_billable,
             page,
-            limit
+            limit,
+            sort_by,
+            sort_order
         } = req.query;
 
         // If user doesn't have team view permission, force userId to their own
         const filterUserId = hasTeamView ? user_id : userId;
+        // If user doesn't have team view permission, ignore team_id filter
+        const filterTeamId = hasTeamView ? team_id : null;
 
         const result = await getTimeEntries({
             userId: filterUserId,
+            teamId: filterTeamId,
             startDate: start_date,
             endDate: end_date,
             customerId: customer_id,
@@ -131,7 +165,9 @@ async function getTimeEntriesController(req, res) {
             activityTypeId: activity_type_id,
             isBillable: is_billable,
             page: parseInt(page) || 1,
-            limit: parseInt(limit) || 50
+            limit: parseInt(limit) || 50,
+            sortBy: sort_by,
+            sortOrder: sort_order
         });
 
         res.status(200).json(result);
@@ -189,6 +225,15 @@ async function startTimerController(req, res) {
 
         const entryId = await startTimer(userId, timerData);
 
+        await logActivity({
+            username: req.user.username,
+            action: 'START_TIMER',
+            resourceType: 'TimeEntry',
+            resourceId: entryId,
+            ipAddress: req.ip,
+            details: { title: timerData.title, project_id: timerData.project_id }
+        });
+
         res.status(201).json({
             message: "Timer started successfully",
             entry_id: entryId
@@ -218,6 +263,15 @@ async function stopTimerController(req, res) {
         }
 
         const result = await stopTimer(id);
+
+        await logActivity({
+            username: req.user.username,
+            action: 'STOP_TIMER',
+            resourceType: 'TimeEntry',
+            resourceId: id,
+            ipAddress: req.ip,
+            details: { title: entry.title, duration: result.duration_minutes }
+        });
 
         res.status(200).json({
             message: "Timer stopped successfully",

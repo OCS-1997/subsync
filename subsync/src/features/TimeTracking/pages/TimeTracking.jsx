@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Timer, LayoutGrid, Tag, PieChart as PieChartIcon, Briefcase } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, Timer, LayoutGrid, Tag, PieChart as PieChartIcon, Briefcase, Plus } from 'lucide-react';
 import TimerWidget from '../components/TimerWidget';
 import TimeEntryForm from '../components/TimeEntryForm';
 import TimeEntriesList from '../components/TimeEntriesList';
@@ -11,13 +12,18 @@ import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
 import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { Card, CardContent } from "@/components/ui/card";
+import { PERMISSIONS } from '@/constants/permissions';
+import PermissionGate from '@/components/auth/PermissionGate';
 
 const TimeTracking = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     const [customers, setCustomers] = useState([]);
     const [projects, setProjects] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [teams, setTeams] = useState([]);
     const [editingEntry, setEditingEntry] = useState(null);
+    const [activeTab, setActiveTab] = useState('track');
 
     useEffect(() => {
         fetchData();
@@ -25,14 +31,18 @@ const TimeTracking = () => {
 
     const fetchData = async () => {
         try {
-            const [customersRes, projectsRes, categoriesRes] = await Promise.all([
-                api.get('/all-customers?limit=1000'), // Request all customers with high limit
+            const [customersRes, projectsRes, categoriesRes, usersRes, teamsRes] = await Promise.all([
+                api.get('/all-customers?limit=1000'),
                 api.get('/time-tracking/projects'),
-                api.get('/time-tracking/categories')
+                api.get('/time-tracking/categories'),
+                api.get('/all-users'),
+                api.get('/teams')
             ]);
             setCustomers(customersRes.data.customers || []);
             setProjects(projectsRes.data.projects || []);
             setCategories(categoriesRes.data.categories || []);
+            setUsers(usersRes.data || []);
+            setTeams(teamsRes.data || []);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -64,9 +74,26 @@ const TimeTracking = () => {
         setRefreshKey(prev => prev + 1);
     };
 
+    useEffect(() => {
+        const handleCustomUpdate = () => {
+            fetchData();
+            setRefreshKey(prev => prev + 1);
+        };
+
+        window.addEventListener('timeTrackingUpdated', handleCustomUpdate);
+        return () => window.removeEventListener('timeTrackingUpdated', handleCustomUpdate);
+    }, []);
+
     const handleEdit = (entry) => {
         setEditingEntry(entry);
         // Scroll to form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleNewEntry = () => {
+        setEditingEntry(null);
+        // Dispatch event to clear form in child if needed, 
+        // but since editingEntry is passed as prop, TimeEntryForm handles it via useEffect
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -90,54 +117,67 @@ const TimeTracking = () => {
                 </p>
             </div>
 
-            <Tabs defaultValue="track" className="space-y-8">
-                <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl w-fit border border-gray-100 dark:border-slate-800 shadow-sm inline-flex">
-                    <TabsList className="bg-transparent border-none gap-1">
-                        <TabsTrigger 
-                            value="track" 
-                            className="rounded-xl px-6 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="bg-white/80 dark:bg-slate-900/50 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)] p-1 rounded-full w-fit border border-slate-200 dark:border-slate-800 backdrop-blur-xl inline-flex">
+                        <TabsList className="bg-transparent border-none h-11 pointer-events-auto gap-1">
+                            <TabsTrigger 
+                                value="track" 
+                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                            >
+                                <Timer className="w-3.5 h-3.5 mr-2.5" />
+                                Track Time
+                            </TabsTrigger>
+                            <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                                <TabsTrigger 
+                                    value="projects" 
+                                    className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                >
+                                    <Briefcase className="w-3.5 h-3.5 mr-2.5" />
+                                    Projects
+                                </TabsTrigger>
+                            </PermissionGate>
+                            <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                                <TabsTrigger 
+                                    value="categories" 
+                                    className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                >
+                                    <Tag className="w-3.5 h-3.5 mr-2.5" />
+                                    Categories
+                                </TabsTrigger>
+                            </PermissionGate>
+                            <TabsTrigger 
+                                value="reports" 
+                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                            >
+                                <PieChartIcon className="w-3.5 h-3.5 mr-2.5" />
+                                Reports
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
+
+                    {activeTab === 'track' && (
+                        <Button 
+                            onClick={handleNewEntry}
+                            className="h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 transition-all group active:scale-95 border-none"
                         >
-                            <Timer className="w-3.5 h-3.5 mr-2" />
-                            Track Time
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="projects" 
-                            className="rounded-xl px-6 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
-                        >
-                            <Briefcase className="w-3.5 h-3.5 mr-2" />
-                            Projects
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="categories" 
-                            className="rounded-xl px-6 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
-                        >
-                            <Tag className="w-3.5 h-3.5 mr-2" />
-                            Categories
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="reports" 
-                            className="rounded-xl px-6 font-bold text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
-                        >
-                            <PieChartIcon className="w-3.5 h-3.5 mr-2" />
-                            Reports
-                        </TabsTrigger>
-                    </TabsList>
+                            <Plus className="w-4 h-4 mr-2 transition-transform group-hover:rotate-90" />
+                            New Log
+                        </Button>
+                    )}
                 </div>
 
 
                 <TabsContent value="track" className="space-y-8 outline-none">
-                    <div className="grid gap-8 lg:grid-cols-12">
-                        <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Top Section: Form and Widgets Side by Side */}
+                    <div className="grid gap-8 lg:grid-cols-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="lg:col-span-8 space-y-8">
                             <TimeEntryForm
                                 onSubmit={handleTimeEntrySubmit}
                                 initialData={editingEntry}
                                 customers={customers}
                                 projects={projects}
                                 categories={categories}
-                            />
-                            <TimeEntriesList
-                                refresh={refreshKey}
-                                onEdit={handleEdit}
                             />
                         </div>
                         <div className="lg:col-span-4 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -156,15 +196,32 @@ const TimeTracking = () => {
                             </Card>
                         </div>
                     </div>
+
+                    {/* Full Width Section: Time Entries List */}
+                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <TimeEntriesList
+                            refresh={refreshKey}
+                            onEdit={handleEdit}
+                            customers={customers}
+                            projects={projects}
+                            categories={categories}
+                            users={users}
+                            teams={teams}
+                        />
+                    </div>
                 </TabsContent>
 
-                <TabsContent value="projects" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                    <ProjectManagement customers={customers} />
-                </TabsContent>
+                <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                    <TabsContent value="projects" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                        <ProjectManagement customers={customers} />
+                    </TabsContent>
+                </PermissionGate>
 
-                <TabsContent value="categories" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                    <CategoryManagement />
-                </TabsContent>
+                <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                    <TabsContent value="categories" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                        <CategoryManagement />
+                    </TabsContent>
+                </PermissionGate>
 
                 <TabsContent value="reports" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
                     <TimeTrackingReports />

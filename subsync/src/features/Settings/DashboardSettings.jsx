@@ -15,7 +15,8 @@ import {
     RefreshCw,
     LayoutDashboard,
     Search,
-    AlertCircle
+    AlertCircle,
+    Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
@@ -42,6 +43,7 @@ const TAB_ICONS = {
     dcr: Phone,
     opportunities: Target,
     kb: BookOpen,
+    time_tracking: Clock,
 };
 
 const DashboardSettings = () => {

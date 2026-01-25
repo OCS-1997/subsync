@@ -27,25 +27,121 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
     const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
     const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
+    const [durationPopoverOpen, setDurationPopoverOpen] = useState(false);
 
-    // Duration options in minutes
-    const durationOptions = [
-        { label: '15 mins', value: 15 },
-        { label: '30 mins', value: 30 },
-        { label: '1 hour', value: 60 },
-        { label: '2 hours', value: 120 },
-        { label: '4 hours', value: 240 },
-        { label: '8 hours', value: 480 },
-    ];
-
-    // Auto-calculate end time when duration changes
+    // Sync form with initialData for editing
     useEffect(() => {
-        if (formData.duration_minutes && formData.start_time) {
-            const start = new Date(formData.start_time);
-            const end = new Date(start.getTime() + formData.duration_minutes * 60000);
-            setFormData(prev => ({ ...prev, end_time: end.toISOString() }));
+        if (initialData) {
+            setFormData({
+                start_time: initialData.start_time || new Date().toISOString(),
+                duration_minutes: initialData.duration_minutes || null,
+                end_time: initialData.end_time || null,
+                customer_id: initialData.customer_id || '',
+                project_id: initialData.project_id || '',
+                activity_type_id: initialData.activity_type_id || '',
+                title: initialData.title || '',
+                description: initialData.description || '',
+                is_billable: initialData.is_billable !== undefined ? initialData.is_billable : false,
+            });
+        } else {
+            // Reset to defaults if initialData is cleared
+            setFormData({
+                start_time: new Date().toISOString(),
+                duration_minutes: null,
+                end_time: null,
+                customer_id: '',
+                project_id: '',
+                activity_type_id: '',
+                title: '',
+                description: '',
+                is_billable: false,
+            });
+        }
+    }, [initialData]);
+
+    // Expanded Duration presets
+    const durationPresets = {
+        short: [
+            { label: '5m', value: 5 },
+            { label: '10m', value: 10 },
+            { label: '15m', value: 15 },
+            { label: '20m', value: 20 },
+            { label: '30m', value: 30 },
+            { label: '45m', value: 45 },
+        ],
+        standard: [
+            { label: '1h', value: 60 },
+            { label: '1.5h', value: 90 },
+            { label: '2h', value: 120 },
+            { label: '2.5h', value: 150 },
+            { label: '3h', value: 180 },
+            { label: '3.5h', value: 210 },
+        ],
+        blocks: [
+            { label: '4h', value: 240 },
+            { label: '5h', value: 300 },
+            { label: '6h', value: 360 },
+            { label: '8h', value: 480 },
+        ]
+    };
+
+    // Helper to calculate end time based on start and duration
+    const updateEndTimeFromDuration = (startTime, durationMins) => {
+        if (!durationMins && durationMins !== 0) return null;
+        const start = new Date(startTime);
+        const end = new Date(start.getTime() + durationMins * 60000);
+        return end.toISOString();
+    };
+
+    // Helper to calculate duration based on start and end
+    const updateDurationFromEndTime = (startTime, endTime) => {
+        if (!endTime) return null;
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const diffMs = end - start;
+        return Math.max(0, Math.floor(diffMs / 60000));
+    };
+
+    // Auto-calculate end time when duration OR start_time changes
+    useEffect(() => {
+        if (formData.duration_minutes !== null) {
+            const newEndTime = updateEndTimeFromDuration(formData.start_time, formData.duration_minutes);
+            if (newEndTime !== formData.end_time) {
+                setFormData(prev => ({ ...prev, end_time: newEndTime }));
+            }
         }
     }, [formData.duration_minutes, formData.start_time]);
+
+    const handleDurationChange = (type, value) => {
+        const val = Math.max(0, parseInt(value) || 0);
+        let totalMinutes = formData.duration_minutes || 0;
+        
+        const currentHours = Math.floor(totalMinutes / 60);
+        const currentMins = totalMinutes % 60;
+
+        if (type === 'hours') {
+            totalMinutes = (val * 60) + currentMins;
+        } else {
+            // Cap minutes at 59 for the input field logic
+            totalMinutes = (currentHours * 60) + Math.min(59, val);
+        }
+
+        setFormData(prev => ({ ...prev, duration_minutes: totalMinutes }));
+    };
+
+    const handleEndTimeChange = (timeString) => {
+        const [hours, minutes] = timeString.split(':');
+        const end = new Date(formData.start_time);
+        end.setHours(parseInt(hours), parseInt(minutes));
+        
+        // If end time is before start time, assume it's the next day
+        if (end < new Date(formData.start_time)) {
+            end.setDate(end.getDate() + 1);
+        }
+
+        const newDuration = updateDurationFromEndTime(formData.start_time, end.toISOString());
+        setFormData(prev => ({ ...prev, end_time: end.toISOString(), duration_minutes: newDuration }));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -59,9 +155,11 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                 end_time: null,
             };
             onSubmit(timerData, true); // true flag indicates it's a timer start
+            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
         } else {
             // Save as completed time entry
             onSubmit(formData);
+            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
         }
     };
 
@@ -73,6 +171,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
             end_time: null,
         };
         onSubmit(timerData, true);
+        window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
     };
 
     const selectedCustomer = customers.find(c => c.customer_id === formData.customer_id);
@@ -81,10 +180,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
     const formContent = (
         <form onSubmit={handleSubmit} className={compact ? "space-y-6" : "space-y-10"}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Start Date/Time */}
-                        <div className="space-y-4">
-                            <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        <div className="md:col-span-1 lg:col-span-2 space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
                                 Start Date & Time
                             </Label>
                             <div className="flex gap-2">
@@ -118,57 +217,155 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                     />
                                 </div>
                             </div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
+                                Started at: {format(new Date(formData.start_time), 'hh:mm a')}
+                            </p>
                         </div>
 
                         {/* Duration */}
-                        <div className="space-y-4">
-                            <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                Duration (minutes)
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
+                                Duration
                             </Label>
-                            <div className="relative">
-                                <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    placeholder="Enter minutes or leave empty to start timer"
-                                    value={formData.duration_minutes || ''}
-                                    onChange={(e) => {
-                                        const value = e.target.value === '' ? null : parseInt(e.target.value);
-                                        setFormData(prev => ({ ...prev, duration_minutes: value }));
-                                    }}
-                                    className="h-11 pl-10 pr-12 rounded-xl font-medium text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800"
-                                />
-                                <Popover>
+                            <div className="flex items-center gap-2">
+                                <div className="flex flex-1 items-center bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl overflow-hidden group focus-within:border-blue-500/50 transition-all">
+                                    <div className="relative flex-1">
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            placeholder="0"
+                                            value={Math.floor((formData.duration_minutes || 0) / 60) || ''}
+                                            onChange={(e) => handleDurationChange('hours', e.target.value)}
+                                            className="h-11 border-none bg-transparent font-bold text-sm text-center focus-visible:ring-0 px-1"
+                                        />
+                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase pointer-events-none">H</span>
+                                    </div>
+                                    <div className="text-slate-300 font-bold opacity-30 px-1">:</div>
+                                    <div className="relative flex-1">
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="59"
+                                            placeholder="00"
+                                            value={((formData.duration_minutes || 0) % 60).toString().padStart(2, '0')}
+                                            onChange={(e) => handleDurationChange('minutes', e.target.value)}
+                                            className="h-11 border-none bg-transparent font-bold text-sm text-center focus-visible:ring-0 px-1"
+                                        />
+                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase pointer-events-none">M</span>
+                                    </div>
+                                </div>
+
+                                <Popover open={durationPopoverOpen} onOpenChange={setDurationPopoverOpen}>
                                     <PopoverTrigger asChild>
                                         <Button
                                             type="button"
-                                            variant="ghost"
+                                            variant="outline"
                                             size="sm"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                                            className="h-11 px-3 rounded-xl border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 hover:bg-blue-50 dark:hover:bg-blue-900/10 group transition-all"
                                         >
-                                            <ChevronsUpDown className="h-4 w-4 text-slate-400" />
+                                            <Timer className="h-4 w-4 text-slate-400 group-hover:text-blue-500" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-48 p-2 dark:bg-slate-900 dark:border-slate-800" align="end">
-                                        <div className="flex flex-col gap-1">
-                                            <p className="text-xs font-medium text-slate-500 px-2 py-1">Quick Select</p>
-                                            {durationOptions.map(option => (
-                                                <Button
-                                                    key={option.value}
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => setFormData(prev => ({ ...prev, duration_minutes: option.value }))}
-                                                    className="justify-start text-sm font-medium"
-                                                >
-                                                    {option.label}
-                                                </Button>
-                                            ))}
+                                    <PopoverContent className="w-72 p-4 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-2xl border-gray-100/50 backdrop-blur-xl" align="end">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Short Bursts</p>
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                    {durationPresets.short.map(preset => (
+                                                        <Button
+                                                            key={preset.value}
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
+                                                                setDurationPopoverOpen(false);
+                                                            }}
+                                                            className="h-9 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all uppercase"
+                                                        >
+                                                            {preset.label}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Standard Tasks</p>
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                    {durationPresets.standard.map(preset => (
+                                                        <Button
+                                                            key={preset.value}
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
+                                                                setDurationPopoverOpen(false);
+                                                            }}
+                                                            className="h-9 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all uppercase"
+                                                        >
+                                                            {preset.label}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Deep Work Blocks</p>
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {durationPresets.blocks.map(preset => (
+                                                        <Button
+                                                            key={preset.value}
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
+                                                                setDurationPopoverOpen(false);
+                                                            }}
+                                                            className="h-10 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-indigo-600 hover:text-white transition-all uppercase"
+                                                        >
+                                                            {preset.label}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setFormData(prev => ({ ...prev, duration_minutes: 0 }));
+                                                    setDurationPopoverOpen(false);
+                                                }}
+                                                className="w-full h-10 text-[9px] font-black text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-all uppercase tracking-widest mt-2"
+                                            >
+                                                Reset Duration
+                                            </Button>
                                         </div>
                                     </PopoverContent>
                                 </Popover>
                             </div>
-                            <p className="text-xs text-slate-500">Leave empty to start a live timer</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
+                                {formData.duration_minutes > 0 ? `Total: ${formData.duration_minutes} mins` : 'Live Timer Mode'}
+                            </p>
+                        </div>
+
+                        {/* End Time */}
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
+                                End Time
+                            </Label>
+                            <div className="flex h-11 items-center px-4 rounded-xl bg-gray-50/50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800">
+                                <Clock className="h-4 w-4 text-slate-400 mr-3" />
+                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tight">
+                                    {formData.end_time ? format(new Date(formData.end_time), 'hh:mm a') : 'N/A'}
+                                </span>
+                            </div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
+                                Calculated automatically
+                            </p>
                         </div>
                     </div>
 
@@ -176,9 +373,9 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         {/* Customer */}
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                                Client Association
+                                Client
                             </Label>
-                            <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen}>
+                            <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen} modal={false}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
@@ -189,7 +386,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <span className="truncate">
                                             {formData.customer_id
                                                 ? customers.find((c) => c.customer_id === formData.customer_id)?.display_name
-                                                : "Select client..."}
+                                                : "Select client"}
                                         </span>
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -198,13 +395,18 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
                                         <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
-                                        <CommandGroup className="max-h-64 overflow-auto p-2">
+                                        <CommandGroup className="max-h-64 overflow-y-auto p-2">
                                             {customers.map((c) => (
                                                 <CommandItem
                                                     key={c.customer_id}
                                                     value={c.display_name}
                                                     onSelect={() => {
-                                                        setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
+                                                        // Allow unselecting by clicking on the same customer
+                                                        if (formData.customer_id === c.customer_id) {
+                                                            setFormData(prev => ({ ...prev, customer_id: '', project_id: '' }));
+                                                        } else {
+                                                            setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
+                                                        }
                                                         setCustomerPopoverOpen(false);
                                                     }}
                                                     className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
@@ -222,9 +424,9 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         {/* Project */}
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                                Workspace/Project
+                                Project
                             </Label>
-                            <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen}>
+                            <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen} modal={false}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
@@ -233,10 +435,16 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-900 transition-all shadow-sm disabled:opacity-50"
                                         disabled={availableProjects.length === 0}
                                     >
-                                        <span className="truncate">
+                                        <span className="truncate flex items-center gap-2">
+                                            {formData.project_id && (
+                                                <div 
+                                                    className="w-2.5 h-2.5 rounded-full shadow-sm" 
+                                                    style={{ backgroundColor: projects.find((p) => p.id === formData.project_id)?.color || '#3b82f6' }} 
+                                                />
+                                            )}
                                             {formData.project_id
                                                 ? projects.find((p) => p.id === formData.project_id)?.project_name
-                                                : "Select project..."}
+                                                : "Select project"}
                                         </span>
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -245,19 +453,30 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
                                         <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
-                                        <CommandGroup className="max-h-64 overflow-auto p-2">
+                                        <CommandGroup className="max-h-64 overflow-y-auto p-2">
                                             {availableProjects.map((p) => (
                                                 <CommandItem
                                                     key={p.id}
                                                     value={p.project_name}
                                                     onSelect={() => {
-                                                        setFormData(prev => ({ ...prev, project_id: p.id }));
+                                                        // Allow unselecting by clicking on the same project
+                                                        if (formData.project_id === p.id) {
+                                                            setFormData(prev => ({ ...prev, project_id: '' }));
+                                                        } else {
+                                                            setFormData(prev => ({ ...prev, project_id: p.id }));
+                                                        }
                                                         setProjectPopoverOpen(false);
                                                     }}
                                                     className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
                                                 >
                                                     <Check className={cn("mr-2 h-4 w-4", formData.project_id === p.id ? "opacity-100" : "opacity-0")} />
-                                                    <span className="font-bold text-sm tracking-tight">{p.project_name}</span>
+                                                    <div className="flex items-center gap-2 flex-1">
+                                                        <div 
+                                                            className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
+                                                            style={{ backgroundColor: p.color || '#3b82f6' }} 
+                                                        />
+                                                        <span className="font-bold text-sm tracking-tight">{p.project_name}</span>
+                                                    </div>
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -269,14 +488,14 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         {/* Activity Category */}
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                                Intelligence Classification *
+                                Activity Type <span className="text-red-500">*</span>
                             </Label>
                             <Select
                                 value={formData.activity_type_id?.toString()}
                                 onValueChange={(value) => setFormData(prev => ({ ...prev, activity_type_id: parseInt(value) }))}
                             >
                                 <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800">
-                                    <SelectValue placeholder="Activity type..." />
+                                    <SelectValue placeholder="Select activity type" />
                                 </SelectTrigger>
                                 <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
                                     {categories.map(category => (
@@ -296,7 +515,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         {/* Title */}
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                                Subject/Objective *
+                                Subject/Objective <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 value={formData.title}
@@ -310,10 +529,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         {/* Billable Toggle */}
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                                Financial Status
+                                Billing
                             </Label>
                             <div className="flex items-center h-11 px-4 rounded-xl bg-gray-50/50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 justify-between">
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Billable Workflow</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Billable</span>
                                 <Switch
                                     id="billable"
                                     checked={formData.is_billable}
@@ -327,22 +546,28 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                     {/* Description */}
                     <div className="space-y-4">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
-                            Operational Narrative
+                            Description {!formData.project_id && <span className="text-red-500">*</span>}
                         </Label>
                         <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Detailed telemetry and notes regarding this execution..."
+                            placeholder="Add details or notes..."
                             rows={3}
+                            required={!formData.project_id}
                             className="rounded-[1.5rem] p-5 font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 shadow-sm transition-all focus:h-32"
                         />
+                        {!formData.project_id && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                ⚠ Details required for non-project work
+                            </p>
+                        )}
                     </div>
 
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-100 dark:border-slate-800/50">
                         <Button type="submit" className="h-14 flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all duration-300">
                             <Save className="mr-3 h-4 w-4" />
-                            {initialData ? 'Update Entry' : 'Save Entry'}
+                            {initialData ? 'Update Entry' : 'Save Entry / Start Logging'}
                         </Button>
                     </div>
                 </form>

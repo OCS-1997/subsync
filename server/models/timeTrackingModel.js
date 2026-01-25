@@ -145,6 +145,7 @@ async function deleteTimeEntry(entryId) {
  */
 async function getTimeEntries({ 
     userId, 
+    teamId,
     startDate, 
     endDate, 
     customerId, 
@@ -152,17 +153,24 @@ async function getTimeEntries({
     activityTypeId,
     isBillable,
     page = 1, 
-    limit = 50 
+    limit = 50,
+    sortBy = 'start_time',
+    sortOrder = 'DESC'
 }) {
     try {
         const offset = (page - 1) * limit;
         
-        let whereConditions = ['deleted_at IS NULL'];
+        let whereConditions = ['te.deleted_at IS NULL'];
         let params = [];
 
         if (userId) {
             whereConditions.push('te.user_id = ?');
             params.push(userId);
+        }
+
+        if (teamId) {
+            whereConditions.push('te.team_id = ?');
+            params.push(teamId);
         }
 
         if (startDate) {
@@ -197,6 +205,11 @@ async function getTimeEntries({
 
         const whereClause = whereConditions.join(' AND ');
 
+        // Safelist for sorting columns to prevent SQL injection
+        const allowedSortColumns = ['start_time', 'duration_minutes', 'title', 'is_billable'];
+        const finalSortBy = allowedSortColumns.includes(sortBy) ? `te.${sortBy}` : 'te.start_time';
+        const finalSortOrder = sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
         const [entries] = await appDB.query(
             `SELECT 
                 te.*,
@@ -211,7 +224,7 @@ async function getTimeEntries({
              LEFT JOIN time_projects p ON te.project_id = p.id
              LEFT JOIN time_activity_types at ON te.activity_type_id = at.id
              WHERE ${whereClause}
-             ORDER BY te.start_time DESC
+             ORDER BY ${finalSortBy} ${finalSortOrder}
              LIMIT ? OFFSET ?`,
             [...params, parseInt(limit), parseInt(offset)]
         );
@@ -223,7 +236,7 @@ async function getTimeEntries({
 
         const totalPages = Math.ceil(total / limit);
 
-        return { entries, totalPages, totalRecords: total };
+        return { entries, totalPages, totalRecords: total, currentPage: parseInt(page), limit: parseInt(limit) };
     } catch (error) {
         console.error("Error fetching time entries:", error);
         throw error;

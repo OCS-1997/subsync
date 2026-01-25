@@ -214,19 +214,19 @@ const RoleManagement = () => {
           name: roleForm.name,
           description: roleForm.description,
         });
-        toast.success("Role synced");
+        toast.success("Role saved");
       } else {
         const { data } = await api.post(`/rbac/roles`, {
           roleKey: roleForm.roleKey,
           name: roleForm.name,
           description: roleForm.description,
         });
-        toast.success("Role initialized");
+        toast.success("Role created");
         setSelectedRoleId(data.roleId);
       }
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Sync failed");
+      toast.error(error.response?.data?.error || "Save failed");
     } finally {
       setSavingRole(false);
     }
@@ -236,7 +236,7 @@ const RoleManagement = () => {
     if (!canDelete || role.isSystem) return;
     try {
       await api.delete(`/rbac/roles/${role.id}`);
-      toast.success("Identity purged");
+      toast.success("Role deleted");
       setSelectedRoleId(null);
       setShowDeleteConfirm(null);
       await fetchData();
@@ -272,12 +272,12 @@ const RoleManagement = () => {
     setSavingPermissions(true);
     try {
       await api.put(`/rbac/roles/${selectedRoleId}/permissions`, { permissions: selectedPermissions });
-      toast.success("Permissions committed");
+      toast.success("Permissions saved");
       setOriginalPermissions(selectedPermissions);
       setHasUnsavedChanges(false);
       await fetchData();
     } catch (error) {
-      toast.error("Commit failed");
+      toast.error("Save failed");
     } finally {
       setSavingPermissions(false);
     }
@@ -301,7 +301,7 @@ const RoleManagement = () => {
     try {
       const response = await api.get(`/users/${user.username}/permission-overrides`);
       setUserOverrides(response.data || []);
-    } catch (err) { toast.error("Fail to load map"); }
+    } catch (err) { toast.error("Failed to load permissions"); }
     finally {
       setLoadingOverrides(false);
       setExpandedOverrideCategories({});
@@ -317,10 +317,10 @@ const RoleManagement = () => {
         .filter(o => o.override !== 'inherit')
         .map(o => ({ permissionKey: o.permissionKey, isGranted: o.override === 'grant' }));
       await api.post(`/users/${selectedUser.username}/permission-overrides`, { overrides: overridesToSave });
-      toast.success("Override map synced");
+      toast.success("User permissions saved");
       setUserOverridesDialogOpen(false);
       fetchRoleUsers(selectedRoleId);
-    } catch (err) { toast.error("Sync failed"); }
+    } catch (err) { toast.error("Save failed"); }
     finally { setSavingOverrides(false); }
   };
 
@@ -353,11 +353,11 @@ const RoleManagement = () => {
     try {
       await api.delete(`/users/${selectedUser.username}/permission-overrides`);
       setUserOverrides([]);
-      toast.success("All overrides purged");
+      toast.success("All personal permissions reset");
       setUserOverridesDialogOpen(false);
       fetchRoleUsers(selectedRoleId);
     } catch (err) {
-      toast.error("Purge failed");
+      toast.error("Reset failed");
     } finally {
       setSavingOverrides(false);
       setShowClearOverridesConfirm(false);
@@ -369,7 +369,7 @@ const RoleManagement = () => {
   if (loading) return (
     <div className="h-full w-full flex flex-col items-center justify-center p-10 gap-2">
       <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">Syncing mesh...</p>
+      <p className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">Loading roles...</p>
     </div>
   );
 
@@ -379,7 +379,7 @@ const RoleManagement = () => {
       <aside className="w-72 border-r border-border bg-muted/20 flex flex-col">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black tracking-widest uppercase opacity-40">Identities</h2>
+            <h2 className="text-xs font-black tracking-widest uppercase opacity-40">User Roles</h2>
             {canCreate && (
               <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md hover:bg-blue-600 hover:text-white transition-colors" onClick={resetForm}>
                 <Plus className="w-4 h-4" />
@@ -414,7 +414,11 @@ const RoleManagement = () => {
                   <span>{role.userCount || 0} USERS</span>
                 </div>
               </div>
-              {role.isSystem && <Lock className={`w-3 h-3 ${selectedRoleId === role.id ? 'text-white/60' : 'text-amber-500/60'}`} />}
+              {role.isSystem ? (
+                <Lock className={`w-3 h-3 ${selectedRoleId === role.id ? 'text-white/60' : 'text-amber-500/60'}`} />
+              ) : (
+                <Shield className={`w-3 h-3 ${selectedRoleId === role.id ? 'text-white/60' : 'text-blue-500/60'}`} />
+              )}
             </button>
           ))}
         </nav>
@@ -433,12 +437,20 @@ const RoleManagement = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h1 className="text-base font-black tracking-tight truncate">
-                      {roleForm.id ? roleForm.name : "Draft Initialization"}
+                      {roleForm.id ? roleForm.name : "Create New Role"}
                     </h1>
-                    {selectedRole?.isSystem && <Badge className="rounded-md bg-amber-500/10 text-amber-600 border-none text-[8px] font-black uppercase tracking-widest px-1.5 py-0 h-4">MESH LOCKED</Badge>}
+                    {selectedRole?.isSystem ? (
+                       <Badge className="rounded-md bg-amber-500/10 text-amber-600 border-none text-[8px] font-black uppercase tracking-widest px-1.5 py-0 h-4 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> SYSTEM PROTECTED
+                       </Badge>
+                    ) : roleForm.id && (
+                       <Badge className="rounded-md bg-blue-500/10 text-blue-600 border-none text-[8px] font-black uppercase tracking-widest px-1.5 py-0 h-4 flex items-center gap-1">
+                        <Fingerprint className="w-2.5 h-2.5" /> CUSTOM ROLE
+                       </Badge>
+                    )}
                   </div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate max-w-xl">
-                    {roleForm.id ? (roleForm.description || "Active identity tier without specific documentation.") : "Awaiting initial configuration and identity key assignment."}
+                    {roleForm.id ? (roleForm.description || "No description provided for this role.") : "Describe what this role is for and choose a unique key."}
                   </p>
                 </div>
               </div>
@@ -452,7 +464,7 @@ const RoleManagement = () => {
                 {roleForm.id && !selectedRole?.isSystem && canDelete && (
                   <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(selectedRole)} className="h-9 px-3 rounded-lg text-red-600 hover:bg-red-50 font-bold text-xs">
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Purge
+                    Delete Role
                   </Button>
                 )}
                 <Button
@@ -462,21 +474,25 @@ const RoleManagement = () => {
                   className="h-9 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/10"
                 >
                   {(savingRole || savingPermissions) ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Save className="w-3.5 h-3.5 mr-2" />}
-                  {hasUnsavedChanges ? "Commit Changes" : "Sync Tier"}
+                  {hasUnsavedChanges ? "Save Permissions" : "Save Role"}
                 </Button>
               </div>
             </header>
 
             <Tabs defaultValue="permissions" className="flex-1 flex flex-col min-h-0">
-              <div className="px-4 border-b bg-muted/10">
-                <TabsList className="bg-transparent h-10 p-0 gap-6">
-                  {['permissions', 'personnel', 'profile'].map(tab => (
+              <div className="px-6 border-b bg-muted/10">
+                <TabsList className="bg-transparent h-12 p-0 gap-12">
+                  {[
+                    { id: 'permissions', label: 'What they can do' },
+                    { id: 'personnel', label: 'Assigned Users' },
+                    { id: 'profile', label: 'About this Role' }
+                  ].map(tab => (
                     <TabsTrigger
-                      key={tab}
-                      value={tab}
+                      key={tab.id}
+                      value={tab.id}
                       className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] transition-all bg-transparent shadow-none px-0"
                     >
-                      {tab}
+                      {tab.label}
                     </TabsTrigger>
                   ))}
                 </TabsList>
@@ -533,7 +549,7 @@ const RoleManagement = () => {
                                   {selectionState === 'all' && <Check className="w-3 h-3" />}
                                   {selectionState === 'some' && <div className="w-1.5 h-0.5 bg-current" />}
                                 </button>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">{resource} RESOURCE</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">{resource} AREAS</span>
                                 <span className="text-[9px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{perms.filter(p => selectedPermissions.includes(p.permissionKey)).length} / {perms.length}</span>
                               </div>
                               <ChevronDown className={`w-4 h-4 text-muted-foreground/50 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -584,7 +600,7 @@ const RoleManagement = () => {
                       ) : roleUsers.length === 0 ? (
                         <div className="col-span-full py-20 flex flex-col items-center text-muted-foreground opacity-30 select-none">
                           <Users className="w-12 h-12 mb-4" />
-                          <p className="text-xs font-black uppercase tracking-widest">No mesh connectivity identified</p>
+                          <p className="text-xs font-black uppercase tracking-widest">No users assigned to this role</p>
                         </div>
                       ) : (
                         roleUsers.map((user, idx) => (
@@ -611,44 +627,49 @@ const RoleManagement = () => {
                     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                       <div className="grid grid-cols-2 gap-x-6 gap-y-6">
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">identity key</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Unique identifier (Key)</Label>
                           <Input
                             name="roleKey"
                             value={roleForm.roleKey}
                             onChange={handleRoleInputChange}
                             disabled={selectedRole?.isSystem}
-                            placeholder="KEY_IDENTIFIER"
+                            placeholder="ADMIN_USER"
                             className="h-10 text-xs font-black uppercase bg-background border-none ring-1 ring-border focus-visible:ring-blue-500/50"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">label</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Display Name</Label>
                           <Input
                             name="name"
                             value={roleForm.name}
                             onChange={handleRoleInputChange}
                             disabled={selectedRole?.isSystem}
-                            placeholder="Identity Tier Name"
+                            placeholder="e.g. Sales Manager"
                             className="h-10 text-xs font-bold bg-background border-none ring-1 ring-border focus-visible:ring-blue-500/50"
                           />
                         </div>
                         <div className="col-span-2 space-y-1.5">
-                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">documentation</Label>
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">About this role</Label>
                           <textarea
                             name="description"
                             value={roleForm.description}
                             onChange={handleRoleInputChange}
                             disabled={selectedRole?.isSystem}
                             className="w-full h-32 p-4 text-xs font-medium rounded-xl bg-background ring-1 ring-border border-none resize-none focus:outline-none focus:ring-blue-500/50 transition-all"
-                            placeholder="Tier responsibilities and protocol mapping..."
+                            placeholder="Explain what this role does..."
                           />
                         </div>
                       </div>
 
-                      {selectedRole?.isSystem && (
+                      {selectedRole?.isSystem ? (
                         <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 flex gap-3">
                           <Lock className="w-4 h-4 text-amber-500 mt-0.5" />
-                          <p className="text-[10px] font-bold text-amber-700/80 uppercase tracking-widest leading-relaxed">System-critical identity tier. Structure is locked by Mesh Protocol to prevent core integrity failure.</p>
+                          <p className="text-[10px] font-bold text-amber-700/80 uppercase tracking-widest leading-relaxed">System Role: This role is essential for the application to work and cannot be changed.</p>
+                        </div>
+                      ) : roleForm.id && (
+                        <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 flex gap-3">
+                          <Fingerprint className="w-4 h-4 text-blue-500 mt-0.5" />
+                          <p className="text-[10px] font-bold text-blue-700/80 uppercase tracking-widest leading-relaxed">Custom Role: You have full control over this role's description and permission configuration.</p>
                         </div>
                       )}
                     </div>
@@ -663,8 +684,8 @@ const RoleManagement = () => {
               <Shield className="w-12 h-12" />
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-black uppercase tracking-tighter">Identity Console</h3>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] mt-2">Initialize or select tier to begin mesh config</p>
+              <h3 className="text-xl font-black uppercase tracking-tighter">Role Settings</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mt-2">Create a new role or select one from the list to manage it</p>
             </div>
           </div>
         )}
@@ -677,14 +698,14 @@ const RoleManagement = () => {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-xl font-black shadow-inner">{selectedUser?.name?.charAt(0) || 'U'}</div>
               <div>
-                <h3 className="text-lg font-black uppercase tracking-tight">Override Map</h3>
-                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{selectedUser?.username} • {selectedRole?.name}</p>
+                <h3 className="text-lg font-black uppercase tracking-tight">Personal Permissions</h3>
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">{selectedUser?.username} • Base Role: {selectedRole?.name}</p>
               </div>
             </div>
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50" />
               <Input
-                placeholder="Find specific permission protocol..."
+                placeholder="Find specific permission..."
                 autoComplete="off"
                 value={overrideSearchTerm}
                 onChange={e => setOverrideSearchTerm(e.target.value)}
@@ -697,7 +718,7 @@ const RoleManagement = () => {
             {loadingOverrides ? (
               <div className="py-20 flex flex-col items-center gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Scanning user mesh...</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Loading permissions...</p>
               </div>
             ) : (
               Object.entries(groupedPermissions).map(([resource, perms]) => {
@@ -720,7 +741,7 @@ const RoleManagement = () => {
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full transition-colors ${isExpanded ? 'bg-blue-600' : 'bg-muted-foreground/30'}`} />
                         <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground/80">{resource}</h4>
-                        <Badge variant="outline" className="text-[8px] font-black border-muted/50 text-muted-foreground/70">{filteredPerms.length} NODES</Badge>
+                        <Badge variant="outline" className="text-[8px] font-black border-muted/50 text-muted-foreground/70">{filteredPerms.length} PERMISSIONS</Badge>
                       </div>
                       <ChevronRight className={`w-4 h-4 text-muted-foreground/40 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
                     </div>
@@ -740,7 +761,7 @@ const RoleManagement = () => {
                                 <div key={perm.permissionKey} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-200 ${mode === 'grant' ? 'bg-emerald-500/5 border-emerald-500/10' : mode === 'deny' ? 'bg-red-500/5 border-red-500/10' : 'bg-background border-border/50 shadow-sm'}`}>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-[11px] font-black uppercase tracking-tight truncate mb-0.5">{perm.action}</p>
-                                    <p className="text-[9px] font-medium text-muted-foreground truncate opacity-70">Inherit from {selectedRole?.name}</p>
+                                    <p className="text-[9px] font-medium text-muted-foreground truncate opacity-70">Normally: {selectedRole?.name} setting</p>
                                   </div>
                                   <Select value={mode} onValueChange={v => handleOverrideChange(perm.permissionKey, v)}>
                                     <SelectTrigger className={`w-28 h-8 text-[10px] font-black uppercase border-none ring-1 transition-all ${mode === 'grant' ? 'bg-emerald-600 text-white ring-emerald-600' : mode === 'deny' ? 'bg-red-600 text-white ring-red-600' : 'bg-background ring-border focus:ring-blue-500/40'}`}>
@@ -766,10 +787,10 @@ const RoleManagement = () => {
           </div>
 
           <DialogFooter className="p-4 border-t bg-muted/20 flex items-center justify-between gap-4 flex-shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => setShowClearOverridesConfirm(true)} disabled={savingOverrides || userOverrides.length === 0} className="text-red-600 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl">Purge Map</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowClearOverridesConfirm(true)} disabled={savingOverrides || userOverrides.length === 0} className="text-red-600 hover:bg-red-50 font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl">Clear personal settings</Button>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setUserOverridesDialogOpen(false)} disabled={savingOverrides} className="text-[10px] font-black uppercase tracking-widest px-6 h-10 rounded-xl">Abort</Button>
-              <Button size="sm" onClick={handleSaveUserOverrides} disabled={savingOverrides} className="bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest px-8 h-10 rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all">Sync Identity</Button>
+              <Button variant="ghost" size="sm" onClick={() => setUserOverridesDialogOpen(false)} disabled={savingOverrides} className="text-[10px] font-black uppercase tracking-widest px-6 h-10 rounded-xl">Cancel</Button>
+              <Button size="sm" onClick={handleSaveUserOverrides} disabled={savingOverrides} className="bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest px-8 h-10 rounded-xl shadow-lg shadow-blue-600/20 active:scale-95 transition-all">Save Permissions</Button>
             </div>
           </DialogFooter>
         </DialogContent>
@@ -779,14 +800,14 @@ const RoleManagement = () => {
         <DialogContent className="max-w-sm rounded-2xl border-none p-0 overflow-hidden shadow-2xl">
           <div className="p-8 bg-red-600 text-white text-center">
             <ShieldAlert className="w-12 h-12 mx-auto mb-4" />
-            <h3 className="text-xl font-black uppercase tracking-tight">Purge Identity?</h3>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-2">permanently destroying "{showDeleteConfirm?.name}" tier</p>
+            <h3 className="text-xl font-black uppercase tracking-tight">Delete Role?</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-2">permanently removing "{showDeleteConfirm?.name}"</p>
           </div>
           <div className="p-6 space-y-6">
-            <p className="text-xs font-bold text-muted-foreground uppercase text-center leading-relaxed">Alert: All protocol mappings and personnel assignments for this tier will be severed immediately.</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase text-center leading-relaxed">This will remove this role from all assigned users and delete it forever.</p>
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1 font-bold text-xs" onClick={() => setShowDeleteConfirm(null)}>Abort</Button>
-              <Button className="flex-1 bg-red-600 text-white font-black text-xs h-11" onClick={() => handleDeleteRole(showDeleteConfirm)}>Confirm Purge</Button>
+              <Button variant="ghost" className="flex-1 font-bold text-xs" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
+              <Button className="flex-1 bg-red-600 text-white font-black text-xs h-11" onClick={() => handleDeleteRole(showDeleteConfirm)}>Confirm Delete</Button>
             </div>
           </div>
         </DialogContent>
@@ -796,14 +817,14 @@ const RoleManagement = () => {
         <DialogContent className="max-w-sm rounded-2xl border-none p-0 overflow-hidden shadow-2xl">
           <div className="p-8 bg-amber-500 text-white text-center">
             <ShieldAlert className="w-12 h-12 mx-auto mb-4" />
-            <h3 className="text-xl font-black uppercase tracking-tight">Purge Overrides?</h3>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-2">reverting all permissions for {selectedUser?.username} to role defaults</p>
+            <h3 className="text-xl font-black uppercase tracking-tight">Reset Permissions?</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-2">removing custom settings for {selectedUser?.username} and going back to the default role settings</p>
           </div>
           <div className="p-6 space-y-6">
             <p className="text-xs font-bold text-muted-foreground uppercase text-center leading-relaxed">This will permanently remove all custom permission grants and denials for this user.</p>
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1 font-bold text-xs" onClick={() => setShowClearOverridesConfirm(false)}>Abort</Button>
-              <Button className="flex-1 bg-amber-500 text-white font-black text-xs h-11" onClick={handleClearAllOverrides}>Purge All</Button>
+              <Button variant="ghost" className="flex-1 font-bold text-xs" onClick={() => setShowClearOverridesConfirm(false)}>Cancel</Button>
+              <Button className="flex-1 bg-amber-500 text-white font-black text-xs h-11" onClick={handleClearAllOverrides}>Reset All</Button>
             </div>
           </div>
         </DialogContent>

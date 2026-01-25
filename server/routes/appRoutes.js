@@ -31,7 +31,10 @@ import {
     getAdminTabsController,
     getAdminWidgetsController,
     updateRoleTabsController,
-    updateRoleWidgetsController
+    updateRoleWidgetsController,
+    getTimeTrackingStatsController,
+    getProductivityTrendController,
+    getUserTimeStatsController
 } from '../controllers/dashboardController.js';
 import {
     getAllBirthdaysController,
@@ -339,6 +342,11 @@ router.get('/dashboard/admin/widgets', isAuthenticated, authorize(PERMISSIONS.DA
 router.put('/dashboard/admin/role/:roleId/tabs', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), updateRoleTabsController);
 router.put('/dashboard/admin/role/:roleId/widgets', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), updateRoleWidgetsController);
 
+// Dashboard Time Tracking Analytics
+router.get('/dashboard/time-tracking/stats', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getTimeTrackingStatsController);
+router.get('/dashboard/time-tracking/productivity-trend', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getProductivityTrendController);
+router.get('/dashboard/time-tracking/user-stats/:userId', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getUserTimeStatsController);
+
 // Quick Tools
 router.get('/quick-tools', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_VIEW), listToolsController);
 router.get('/quick-tools/all', isAuthenticated, authorize(PERMISSIONS.QUICK_TOOLS_MANAGE), listAllToolsController);
@@ -515,7 +523,7 @@ router.delete('/teams/:id/members/:userId', isAuthenticated, authorize(PERMISSIO
 router.get('/teams/:id/members', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamMembersController);
 
 // User Teams
-router.get('/users/:username/teams', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getUserTeamsController);
+router.get('/users/:username/teams', isAuthenticated, getUserTeamsController);
 
 // Team Stats
 router.get('/teams/:id/stats', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamStatsController);
