@@ -205,8 +205,6 @@ const TimeTracking = () => {
                             customers={customers}
                             projects={projects}
                             categories={categories}
-                            users={users}
-                            teams={teams}
                         />
                     </div>
                 </TabsContent>

@@ -10,7 +10,7 @@ import {
     SelectTrigger, 
     SelectValue 
 } from '@/components/ui/select';
-import { Pencil, Trash2, Search, Download, Clock, Briefcase, User, Users, Filter, RotateCcw, X, Calendar, Eye } from 'lucide-react';
+import { Pencil, Trash2, Search, Download, Clock, Briefcase, User, Filter, RotateCcw, X, Calendar, Eye } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -214,10 +214,7 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
     );
 };
 
-const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [], users = [], teams = [] }) => {
-    const { user } = useSelector((state) => state.auth);
-    const isAdmin = user?.roleKey === 'admin' || user?.roleKey === 'manager';
-
+const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [] }) => {
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
@@ -238,8 +235,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
     const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
-    const [userPopoverOpen, setUserPopoverOpen] = useState(false);
-    const [teamPopoverOpen, setTeamPopoverOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -247,7 +242,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
 
     useEffect(() => {
         fetchEntries();
-    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.user_id, filters.team_id]);
+    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable]);
 
     // Debounced search effect
     useEffect(() => {
@@ -393,7 +388,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     // Prepare table headers
     const tableHeaders = [
         { key: 'timestamp', label: 'Timestamp', align: 'left' },
-        ...(isAdmin ? [{ key: 'user', label: 'Member', align: 'left' }] : []),
         { key: 'title', label: 'Objective', align: 'left' },
         { key: 'dimensions', label: 'Dimensions', align: 'left' },
         { key: 'classification', label: 'Classification', align: 'left' },
@@ -412,16 +406,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                 </span>
                 <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
                     {format(new Date(entry.start_time), 'HH:mm')}
-                </span>
-            </div>
-        ),
-        user: isAdmin && (
-            <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
-                    {entry.username || entry.user_id}
-                </span>
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    {entry.user_id}
                 </span>
             </div>
         ),
@@ -547,7 +531,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     }));
 
     const availableProjects = projects.filter(p => !filters.customer_id || p.customer_id === filters.customer_id);
-    const hasActiveFilters = filters.search || filters.customer_id || filters.project_id || filters.activity_type_id || filters.is_billable || filters.user_id || filters.team_id;
+    const hasActiveFilters = filters.search || filters.customer_id || filters.project_id || filters.activity_type_id || filters.is_billable;
 
     return (
         <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm transition-all duration-300">
@@ -592,127 +576,10 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                     </div>
                 </div>
 
+                {/* Advanced Filters */}
                 {showAdvancedFilters && (
                     <div className="mt-6 space-y-4 p-6 bg-white dark:bg-slate-950 rounded-2xl border border-gray-100 dark:border-slate-800">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {/* User Filter (Admin Only) */}
-                            {isAdmin && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Team Member</label>
-                                    <Popover open={userPopoverOpen} onOpenChange={setUserPopoverOpen} modal={false}>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800"
-                                            >
-                                                <span className="truncate">
-                                                    {filters.user_id
-                                                        ? users.find((u) => u.username === filters.user_id)?.name || filters.user_id
-                                                        : "All members..."}
-                                                </span>
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
-                                            <Command className="dark:bg-slate-900">
-                                                <CommandInput placeholder="Search members..." className="font-bold border-none focus:ring-0" />
-                                                <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No member found.</CommandEmpty>
-                                                <CommandGroup className="max-h-64 overflow-y-auto p-2">
-                                                    <CommandItem
-                                                        value="all-users"
-                                                        onSelect={() => {
-                                                            setFilters(prev => ({ ...prev, user_id: '', page: 1 }));
-                                                            setUserPopoverOpen(false);
-                                                        }}
-                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                    >
-                                                        <Check className={cn("mr-2 h-4 w-4", !filters.user_id ? "opacity-100" : "opacity-0")} />
-                                                        <span className="font-bold text-sm tracking-tight">All Members</span>
-                                                    </CommandItem>
-                                                    {users.map((u) => (
-                                                        <CommandItem
-                                                            key={u.username}
-                                                            value={u.name}
-                                                            onSelect={() => {
-                                                                setFilters(prev => ({ ...prev, user_id: u.username, page: 1 }));
-                                                                setUserPopoverOpen(false);
-                                                            }}
-                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                        >
-                                                            <Check className={cn("mr-2 h-4 w-4", filters.user_id === u.username ? "opacity-100" : "opacity-0")} />
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-sm tracking-tight">{u.name}</span>
-                                                                <span className="text-[9px] opacity-70 uppercase font-black">{u.username}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
-                            )}
-
-                            {/* Team Filter (Admin Only) */}
-                            {isAdmin && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Team</label>
-                                    <Popover open={teamPopoverOpen} onOpenChange={setTeamPopoverOpen} modal={false}>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800"
-                                            >
-                                                <span className="truncate">
-                                                    {filters.team_id
-                                                        ? teams.find((t) => t.id === filters.team_id)?.team_name
-                                                        : "All teams..."}
-                                                </span>
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
-                                            <Command className="dark:bg-slate-900">
-                                                <CommandInput placeholder="Search teams..." className="font-bold border-none focus:ring-0" />
-                                                <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No team found.</CommandEmpty>
-                                                <CommandGroup className="max-h-64 overflow-y-auto p-2">
-                                                    <CommandItem
-                                                        value="all-teams"
-                                                        onSelect={() => {
-                                                            setFilters(prev => ({ ...prev, team_id: '', page: 1 }));
-                                                            setTeamPopoverOpen(false);
-                                                        }}
-                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                    >
-                                                        <Check className={cn("mr-2 h-4 w-4", !filters.team_id ? "opacity-100" : "opacity-0")} />
-                                                        <span className="font-bold text-sm tracking-tight">All Teams</span>
-                                                    </CommandItem>
-                                                    {teams.map((t) => (
-                                                        <CommandItem
-                                                            key={t.id}
-                                                            value={t.team_name}
-                                                            onSelect={() => {
-                                                                setFilters(prev => ({ ...prev, team_id: t.id, page: 1 }));
-                                                                setTeamPopoverOpen(false);
-                                                            }}
-                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                        >
-                                                            <Check className={cn("mr-2 h-4 w-4", filters.team_id === t.id ? "opacity-100" : "opacity-0")} />
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color || '#3b82f6' }} />
-                                                                <span className="font-bold text-sm tracking-tight">{t.team_name}</span>
-                                                            </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
-                            )}
-
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Search */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Search</label>
@@ -721,7 +588,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                     <Input
                                         placeholder="Title or description..."
                                         value={filters.search}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                                         className="h-11 pl-10 rounded-xl bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800 font-bold text-sm transition-all"
                                     />
                                 </div>
