@@ -1,601 +1,454 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, Palette, Zap, Calculator, Moon, Sun, Shield, Calendar, Cake, AtSign, LogOut } from "lucide-react";
+import { 
+    User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, 
+    Palette, Zap, Calculator, Moon, Sun, Shield, 
+    Calendar, AtSign, LogOut, Camera, 
+    Settings2, Bell, Users, ChevronRight, CheckCircle2,
+    Lock, Info
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { logoutUser } from "@/features/Auth/authSlice";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx";
-import { Badge } from "@/components/ui/badge.jsx";
 import { Switch } from "@/components/ui/switch.jsx";
-import { PageHeader } from "@/components/ui/breadcrumb.jsx";
+import { Badge } from "@/components/ui/badge.jsx";
 import { useTheme } from "@/context/ThemeContext.jsx";
+import { Card, CardContent } from "@/components/ui/card.jsx";
 
 export default function Profile() {
-  const currentUser = useSelector((state) => state.auth.user);
-  const dispatch = useDispatch();
-  const { theme, toggleTheme } = useTheme();
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [form, setForm] = useState({
-    username: "",
-    name: "",
-    email: "",
-    date_of_birth: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [userData, setUserData] = useState(null);
-
-  // User Preferences State
-  const [preferences, setPreferences] = useState({
-    showQuickTools: true,
-    showCalculator: true,
-  });
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!currentUser?.username) return;
-      try {
-        setFetching(true);
-        const response = await api.get(`/users/${currentUser.username}`);
-        setUserData(response.data);
-        setForm({
-          username: response.data.username || "",
-          name: response.data.name || "",
-          email: response.data.email || "",
-          date_of_birth: response.data.date_of_birth || "",
-          password: "",
-          confirmPassword: "",
-        });
-      } catch (error) {
-        toast.error("Failed to load profile data");
-        console.error("Error fetching profile:", error);
-      } finally {
-        setFetching(false);
-      }
-    };
-
-    fetchProfile();
-  }, [currentUser?.username]);
-
-  // Load preferences from localStorage
-  useEffect(() => {
-    const savedShowQuickTools = localStorage.getItem("showQuickTools") !== "false";
-    const savedShowCalculator = localStorage.getItem("showCalculator") !== "false";
-
-    setPreferences({
-      showQuickTools: savedShowQuickTools,
-      showCalculator: savedShowCalculator,
-    });
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-    // toast.success(`Theme changed to ${theme === "light" ? "dark" : "light"} mode`);
-  };
-
-  const handlePreferenceChange = (key, value) => {
-    setPreferences((prev) => ({ ...prev, [key]: value }));
-    localStorage.setItem(key, value.toString());
-    toast.success("Preference updated successfully");
-  };
-
-  const validateForm = () => {
-    if (!form.name.trim()) {
-      toast.error("Name is required");
-      return false;
-    }
-    if (!form.email.trim()) {
-      toast.error("Email is required");
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      toast.error("Please enter a valid email address");
-      return false;
-    }
-    if (form.password && form.password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      return false;
-    }
-    if (form.password && form.password !== form.confirmPassword) {
-      toast.error("Passwords do not match");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setLoading(true);
-    try {
-      const payload = {
-        name: form.name.trim(),
-        email: form.email.trim(),
-      };
-
-      // Include date_of_birth if provided
-      if (form.date_of_birth) {
-        payload.date_of_birth = form.date_of_birth;
-      }
-
-      // Only include password if it's been entered
-      if (form.password) {
-        payload.password = form.password;
-      }
-
-      await api.put(`/users/${currentUser.username}`, payload);
-
-      if (form.password) {
-        // Professional security notification with logout action
-        const LogoutAction = ({ closeToast }) => (
-          <div className="flex flex-col gap-3 p-1">
-            <p className="text-sm font-medium leading-relaxed">
-              Security update complete. Your password has been successfully updated.
-              We recommend re-authenticating to ensure all active sessions are refreshed.
-            </p>
-            <div className="flex justify-end pr-2">
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-8 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-bold"
-                onClick={() => {
-                  closeToast();
-                  dispatch(logoutUser());
-                }}
-              >
-                <LogOut className="w-3 h-3 mr-2" />
-                Logout Now
-              </Button>
-            </div>
-          </div>
-        );
-
-        toast.info(<LogoutAction />, {
-          position: "top-center",
-          autoClose: 10000,
-          hideProgressBar: false,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: true,
-          className: "rounded-2xl border-none shadow-2xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 max-w-md",
-        });
-      } else {
-        toast.success("Profile updated successfully!");
-      }
-
-      // Update local state
-      setForm((prev) => ({
-        ...prev,
+    const currentUser = useSelector((state) => state.auth.user);
+    const dispatch = useDispatch();
+    const { theme, toggleTheme } = useTheme();
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [activeTab, setActiveTab] = useState("account");
+    
+    const [form, setForm] = useState({
+        username: "",
+        name: "",
+        email: "",
+        date_of_birth: "",
         password: "",
         confirmPassword: "",
-      }));
+    });
+    const [userData, setUserData] = useState(null);
+    const [userTeams, setUserTeams] = useState([]);
 
-      // Refresh user data
-      const response = await api.get(`/users/${currentUser.username}`);
-      setUserData(response.data);
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update profile"
-      );
-    } finally {
-      setLoading(false);
+    // App Settings State
+    const [preferences, setPreferences] = useState({
+        showQuickTools: true,
+        showCalculator: true,
+    });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!currentUser?.username) return;
+            try {
+                setFetching(true);
+                const [userRes, teamsRes] = await Promise.all([
+                    api.get(`/users/${currentUser.username}`),
+                    api.get(`/users/${currentUser.username}/teams`)
+                ]);
+                
+                setUserData(userRes.data);
+                setForm({
+                    username: userRes.data.username || "",
+                    name: userRes.data.name || "",
+                    email: userRes.data.email || "",
+                    date_of_birth: userRes.data.date_of_birth || "",
+                    password: "",
+                    confirmPassword: "",
+                });
+
+                setUserTeams(teamsRes.data.teams || []);
+
+            } catch (error) {
+                toast.error("Error loading profile data");
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchData();
+    }, [currentUser?.username]);
+
+    useEffect(() => {
+        const savedShowQuickTools = localStorage.getItem("showQuickTools") !== "false";
+        const savedShowCalculator = localStorage.getItem("showCalculator") !== "false";
+        setPreferences({
+            showQuickTools: savedShowQuickTools,
+            showCalculator: savedShowCalculator,
+        });
+    }, []);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handlePreferenceChange = (key, value) => {
+        setPreferences((prev) => ({ ...prev, [key]: value }));
+        localStorage.setItem(key, value.toString());
+        toast.success("Setting updated");
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.name.trim() || !form.email.trim()) {
+            return toast.error("Name and Email are required");
+        }
+        if (form.password && form.password.length < 6) {
+            return toast.error("Password must be at least 6 characters");
+        }
+        if (form.password && form.password !== form.confirmPassword) {
+            return toast.error("Passwords do not match");
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                name: form.name.trim(),
+                email: form.email.trim(),
+                date_of_birth: form.date_of_birth || null
+            };
+            if (form.password) payload.password = form.password;
+
+            await api.put(`/users/${currentUser.username}`, payload);
+
+            if (form.password) {
+                toast.success("Password updated. Please log in again.");
+                setTimeout(() => dispatch(logoutUser()), 2000);
+            } else {
+                toast.success("Profile updated successfully");
+            }
+
+            setForm(prev => ({ ...prev, password: "", confirmPassword: "" }));
+            const response = await api.get(`/users/${currentUser.username}`);
+            setUserData(response.data);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Update failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (fetching) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-slate-950">
+                <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                <p className="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading your profile...</p>
+            </div>
+        );
     }
-  };
 
-  if (fetching) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-          <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <PageHeader
-          title="Profile Settings"
-          description="Manage your account and preferences"
-          breadcrumbItems={[
-            { label: "Settings", href: "settings" },
-            { label: "Profile" }
-          ]}
-          actions={
-            <Badge variant="outline" className="text-sm capitalize">
-              <Shield className="w-3 h-3 mr-1" />
-              {userData?.role || "User"}
-            </Badge>
-          }
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Card */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Profile Overview */}
-            <Card className="border-blue-200 dark:border-blue-800">
-              <CardContent className="p-6">
-                <div className="text-center space-y-4">
-                  {/* Avatar */}
-                  <div className="relative inline-block">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                      <User className="w-12 h-12 text-white" />
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full"></div>
-                  </div>
-
-                  {/* Name & Username */}
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                      {userData?.name || "User"}
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      @{userData?.username || "-"}
-                    </p>
-                  </div>
-
-                  {/* Info Grid */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Email
-                      </span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate ml-2">
-                        {userData?.email || "-"}
-                      </span>
-                    </div>
-                    {userData?.date_of_birth && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                          <Cake className="w-4 h-4" />
-                          Birthday
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {new Date(userData.date_of_birth).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    {userData?.created_at && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          Joined
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          {new Date(userData.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Preferences Card */}
-            <Card className="border-blue-200 dark:border-blue-800">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Palette className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Preferences
-                </CardTitle>
-                <CardDescription>Customize your experience</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Theme Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center gap-3">
-                    {theme === "dark" ? (
-                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                        <Moon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                    ) : (
-                      <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                        <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Theme preference
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={theme === "dark"}
-                    onCheckedChange={handleThemeToggle}
-                  />
-                </div>
-
-                {/* Quick Tools */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                      <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Quick Tools
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Show in header
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={preferences.showQuickTools}
-                    onCheckedChange={(checked) =>
-                      handlePreferenceChange("showQuickTools", checked)
-                    }
-                  />
-                </div>
-
-                {/* Calculator */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                      <Calculator className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Calculator
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Floating widget
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={preferences.showCalculator}
-                    onCheckedChange={(checked) =>
-                      handlePreferenceChange("showCalculator", checked)
-                    }
-                  />
-                </div>
-
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-                    💡 Changes are saved automatically
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Edit Form */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Account Information
-                </CardTitle>
-                <CardDescription>
-                  Update your personal details and security settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Personal Information Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                      Personal Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Username */}
-                      <div className="space-y-2">
-                        <Label htmlFor="username" className="text-sm font-medium">
-                          Username
-                        </Label>
-                        <div className="relative">
-                          <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="username"
-                            type="text"
-                            name="username"
-                            value={form.username}
-                            readOnly
-                            disabled
-                            className="pl-10 bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-70"
-                          />
+        <div className="min-h-screen  dark:bg-slate-950/50 pb-20 overflow-x-hidden">
+            {/* Simple Top Banner */}
+            <div className="h-48 w-full bg-slate-900 relative">
+                <div className="absolute w inset-0 bg-blue-600/10" />
+                <div className="max-w-6xl mx-auto h-full px-6 flex items-end pb-6">
+                    <div className="flex flex-col md:flex-row items-center md:items-end gap-6 w-full">
+                        <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 p-1 shadow-lg -mb-10 z-30">
+                            <div className="w-full h-full rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+                                <User className="w-12 h-12 text-slate-400" />
+                            </div>
                         </div>
-                      </div>
-                      {/* Name */}
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-medium">
-                          Full Name <span className="text-red-500">*</span>
-                        </Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="name"
-                            type="text"
-                            name="name"
-                            value={form.name}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter your full name"
-                            className="pl-10"
-                          />
+                        <div className="flex-1 text-center md:text-left z-30 text-white">
+                            <h1 className="text-2xl font-bold">{userData?.name || "User"}</h1>
+                            <p className="text-sm text-slate-400 font-medium">@{userData?.username}</p>
                         </div>
-                      </div>
-
-                      {/* Email */}
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-medium">
-                          Email Address <span className="text-red-500">*</span>
-                        </Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter your email"
-                            className="pl-10"
-                          />
+                        <div className="z-30 pb-1">
+                             <Badge className="bg-blue-600 text-white border-none py-1 px-3 text-[10px] font-bold uppercase tracking-widest">
+                                {userData?.role || "User"}
+                             </Badge>
                         </div>
-                      </div>
-
-                      {/* Date of Birth */}
-                      <div className="space-y-2">
-                        <Label htmlFor="date_of_birth" className="text-sm font-medium">
-                          Date of Birth
-                        </Label>
-                        <div className="relative">
-                          <Cake className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="date_of_birth"
-                            type="date"
-                            name="date_of_birth"
-                            value={form.date_of_birth}
-                            onChange={handleChange}
-                            placeholder="Select your birthday"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
                     </div>
-                  </div>
+                </div>
+            </div>
 
-                  {/* Security Section */}
-                  <div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                        Security Settings
-                      </h3>
-                      <Badge variant="outline" className="text-xs">
-                        <KeyRound className="w-3 h-3 mr-1" />
-                        Optional
-                      </Badge>
+            <div className="max-w-6xl mx-auto px-6 mt-16">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    
+                    {/* Navigation Sidebar */}
+                    <div className="lg:col-span-1">
+                        <Card className="rounded-2xl border-slate-200 dark:border-slate-800 p-2 shadow-sm bg-white dark:bg-slate-900">
+                            <nav className="flex flex-col gap-1">
+                                {[
+                                    { id: 'account', icon: User, label: 'Account Details' },
+                                    { id: 'teams', icon: Users, label: 'My Teams' },
+                                    { id: 'settings', icon: Settings2, label: 'App Settings' },
+                                    { id: 'security', icon: Lock, label: 'Security' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-xl transition-all font-medium text-xs uppercase tracking-wide ${
+                                            activeTab === tab.id 
+                                            ? 'bg-blue-600 text-white shadow-md' 
+                                            : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <tab.icon className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                                <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
+                                <button 
+                                    onClick={() => dispatch(logoutUser())}
+                                    className="flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all font-medium text-xs uppercase tracking-wide"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Sign Out
+                                </button>
+                            </nav>
+                        </Card>
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Leave password fields blank if you don't want to change your password
-                    </p>
+                    {/* Content Panel */}
+                    <div className="lg:col-span-3">
+                        <AnimatePresence mode="wait">
+                            {activeTab === 'account' && (
+                                <motion.div
+                                    key="account"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                >
+                                    <Card className="rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm">
+                                        <div className="mb-8">
+                                            <h2 className="text-xl font-bold">Personal Information</h2>
+                                            <p className="text-xs text-slate-500 mt-1 uppercase font-bold tracking-wider">Update your basic profile details.</p>
+                                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* New Password */}
-                      <div className="space-y-2">
-                        <Label htmlFor="password" className="text-sm font-medium">
-                          New Password
-                        </Label>
-                        <div className="relative">
-                          <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            name="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            placeholder="Enter new password"
-                            className="pl-10 pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                          >
-                            {showPassword ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
+                                        <form onSubmit={handleSubmit} className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Username</Label>
+                                                    <div className="relative">
+                                                        <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <Input value={form.username} disabled className="pl-10 bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Full Name</Label>
+                                                    <div className="relative">
+                                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <Input name="name" value={form.name} onChange={handleChange} placeholder="Your Display Name" className="pl-10 border-slate-200 dark:border-slate-800" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Email Address</Label>
+                                                    <div className="relative">
+                                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <Input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="pl-10 border-slate-200 dark:border-slate-800" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Birthday</Label>
+                                                    <div className="relative">
+                                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <Input name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} className="pl-10 border-slate-200 dark:border-slate-800" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-end pt-4">
+                                                <Button disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 rounded-xl h-11">
+                                                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                                    Save Profile
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </Card>
+                                </motion.div>
                             )}
-                          </button>
-                        </div>
-                      </div>
 
-                      {/* Confirm Password */}
-                      {form.password && (
-                        <div className="space-y-2">
-                          <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                            Confirm Password
-                          </Label>
-                          <div className="relative">
-                            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                              id="confirmPassword"
-                              type={showConfirmPassword ? "text" : "password"}
-                              name="confirmPassword"
-                              value={form.confirmPassword}
-                              onChange={handleChange}
-                              placeholder="Confirm new password"
-                              className="pl-10 pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="w-4 h-4" />
-                              ) : (
-                                <Eye className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                            {activeTab === 'teams' && (
+                                <motion.div
+                                    key="teams"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {userTeams.length > 0 ? userTeams.map((team) => (
+                                            <Card key={team.id} className="rounded-2xl border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 bg-white dark:bg-slate-900 shadow-sm relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 h-1 w-full" style={{ backgroundColor: team.color }} />
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-sm" style={{ backgroundColor: team.color }}>
+                                                        {team.team_name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors uppercase tracking-tight">{team.team_name}</h3>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mt-1">
+                                                            {team.members?.length || 0} Members
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {team.description && (
+                                                    <p className="text-xs text-slate-500 font-medium line-clamp-2">
+                                                        {team.description}
+                                                    </p>
+                                                )}
+                                                <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                                    <div className="flex -space-x-2">
+                                                        {team.members?.slice(0, 3).map((m, i) => (
+                                                            <div key={i} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] font-bold">
+                                                                {m.user_name?.charAt(0)}
+                                                            </div>
+                                                        ))}
+                                                        {team.members?.length > 3 && (
+                                                            <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] font-bold">
+                                                                +{team.members.length - 3}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {team.team_lead_username === currentUser.username && (
+                                                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none text-[8px] font-black uppercase px-2">Team Lead</Badge>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                        )) : (
+                                            <Card className="md:col-span-2 rounded-2xl border-slate-200 dark:border-slate-800 p-12 text-center bg-white dark:bg-slate-900 shadow-sm opacity-60">
+                                                <Users className="w-12 h-12 mx-auto text-slate-300 mb-4" />
+                                                <h3 className="text-lg font-bold">No Teams Found</h3>
+                                                <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mt-1">You aren't associated with any teams yet.</p>
+                                            </Card>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'settings' && (
+                                <motion.div
+                                    key="settings"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="space-y-6"
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <Card className="rounded-2xl border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900 shadow-sm">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <Palette className="w-5 h-5 text-blue-600" />
+                                                <h3 className="font-bold uppercase text-sm tracking-wide">Theme Preference</h3>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <button 
+                                                    onClick={toggleTheme}
+                                                    className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:border-blue-500 transition-all group"
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2 rounded-lg bg-blue-600 text-white shadow-md">
+                                                            {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-xs font-bold uppercase tracking-wide">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
+                                                            <p className="text-[10px] text-slate-500 font-bold uppercase">Click to Switch</p>
+                                                        </div>
+                                                    </div>
+                                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-all" />
+                                                </button>
+                                            </div>
+                                        </Card>
+
+                                        <Card className="rounded-2xl border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900 shadow-sm">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <Zap className="w-5 h-5 text-indigo-600" />
+                                                <h3 className="font-bold uppercase text-sm tracking-wide">Interface Tools</h3>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                                    <div>
+                                                        <p className="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wide">Quick Tools</p>
+                                                        <p className="text-[9px] text-slate-500 font-medium">Show icons in navigation bar</p>
+                                                    </div>
+                                                    <Switch checked={preferences.showQuickTools} onCheckedChange={(v) => handlePreferenceChange("showQuickTools", v)} />
+                                                </div>
+                                                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                                    <div>
+                                                        <p className="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wide">Calculator Widget</p>
+                                                        <p className="text-[9px] text-slate-500 font-medium">Access calculator anytime</p>
+                                                    </div>
+                                                    <Switch checked={preferences.showCalculator} onCheckedChange={(v) => handlePreferenceChange("showCalculator", v)} />
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'security' && (
+                                <motion.div
+                                    key="security"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                >
+                                    <Card className="rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-900 p-6 md:p-8 shadow-sm">
+                                        <div className="mb-10 text-white">
+                                            <h2 className="text-xl font-bold">Password & Security</h2>
+                                            <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-wider">Secure your account with a strong password.</p>
+                                        </div>
+
+                                        <form onSubmit={handleSubmit} className="space-y-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">New Password</Label>
+                                                    <div className="relative">
+                                                        <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                                        <Input 
+                                                            type={showPassword ? "text" : "password"}
+                                                            name="password"
+                                                            value={form.password}
+                                                            onChange={handleChange}
+                                                            placeholder="Leave blank to keep current"
+                                                            className="h-14 pl-12 pr-12 rounded-xl bg-white/5 border-white/10 text-white font-bold transition-all focus:ring-blue-500 block w-full outline-none" 
+                                                        />
+                                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Confirm Password</Label>
+                                                    <div className="relative">
+                                                        <CheckCircle2 className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${form.confirmPassword && form.password === form.confirmPassword ? 'text-blue-500' : 'text-slate-500'}`} />
+                                                        <Input 
+                                                            type={showConfirmPassword ? "text" : "password"}
+                                                            name="confirmPassword"
+                                                            value={form.confirmPassword}
+                                                            onChange={handleChange}
+                                                            placeholder="Repeat new password"
+                                                            className="h-14 pl-12 pr-12 rounded-xl bg-white/5 border-white/10 text-white font-bold transition-all focus:ring-blue-500 block w-full outline-none" 
+                                                        />
+                                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                                                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-white/5">
+                                                <div className="flex items-center gap-3 text-slate-500">
+                                                    <Info className="w-4 h-4" />
+                                                    <p className="text-[9px] font-bold uppercase tracking-widest leading-relaxed">Changing your password will log you out from all devices for security.</p>
+                                                </div>
+                                                <Button disabled={loading || !form.password} className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl h-14 px-10 shadow-lg shadow-blue-600/20 uppercase tracking-widest text-[10px]">
+                                                    Update Security
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </Card>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

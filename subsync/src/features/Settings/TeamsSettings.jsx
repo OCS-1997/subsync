@@ -290,19 +290,23 @@ function TeamsSettings() {
 
     const filteredFormMembers = useMemo(() => {
         return allUsers.filter(u => 
-            u.name.toLowerCase().includes(formMemberSearch.toLowerCase()) ||
-            u.username.toLowerCase().includes(formMemberSearch.toLowerCase())
+            (u.name.toLowerCase().includes(formMemberSearch.toLowerCase()) ||
+            u.username.toLowerCase().includes(formMemberSearch.toLowerCase())) &&
+            u.username !== teamForm.team_lead_username
         );
-    }, [allUsers, formMemberSearch]);
+    }, [allUsers, formMemberSearch, teamForm.team_lead_username]);
 
     const filteredMembers = useMemo(() => {
-        if (!membersDialog.open) return [];
+        if (!membersDialog.open || !membersDialog.teamId) return [];
+        const currentTeam = teams.find(t => t.id === membersDialog.teamId);
+        
         return allUsers.filter(u => 
-            u.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+            (u.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
             u.username.toLowerCase().includes(memberSearch.toLowerCase()) ||
-            u.role.toLowerCase().includes(memberSearch.toLowerCase())
+            u.role.toLowerCase().includes(memberSearch.toLowerCase())) &&
+            u.username !== currentTeam?.team_lead_username
         );
-    }, [allUsers, memberSearch, membersDialog.open]);
+    }, [allUsers, memberSearch, membersDialog.open, membersDialog.teamId, teams]);
 
     return (
         <div className="container py-8 max-w-7xl mx-auto px-4">
@@ -592,7 +596,14 @@ function TeamsSettings() {
                                         <select
                                             id="team_lead"
                                             value={teamForm.team_lead_username}
-                                            onChange={(e) => setTeamForm({ ...teamForm, team_lead_username: e.target.value })}
+                                            onChange={(e) => {
+                                                const leadUsername = e.target.value;
+                                                setTeamForm(prev => ({ 
+                                                    ...prev, 
+                                                    team_lead_username: leadUsername,
+                                                    members: prev.members.filter(m => m !== leadUsername)
+                                                }));
+                                            }}
                                             className="w-full h-12 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 font-bold px-4 focus:ring-2 focus:ring-blue-500 outline-none shadow-none appearance-none"
                                         >
                                             <option value="">No Lead (Optional)</option>

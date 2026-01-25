@@ -12,6 +12,7 @@ import {
     getTeamStats
 } from '../models/teamsModel.js';
 import { logActivity } from '../models/activityLogModel.js';
+import { PERMISSIONS } from '../constants/permissions.js';
 
 /**
  * Teams Controller
@@ -316,9 +317,15 @@ export const removeUserFromTeamController = async (req, res) => {
  */
 export const getUserTeamsController = async (req, res) => {
     try {
-        const userId = req.params.username;
-        const teams = await getUserTeams(userId);
+        const username = req.params.username;
+        const isSelfView = req.user.username === username;
 
+        // Allow users to view their own teams, or users with TEAMS_VIEW permission to view any user's teams
+        if (!isSelfView && !req.user.permissions?.includes(PERMISSIONS.TEAMS_VIEW) && req.user.roleKey !== 'admin') {
+            return res.status(403).json({ error: 'Insufficient permission to view other users\' teams' });
+        }
+
+        const teams = await getUserTeams(username);
         return res.status(200).json({ teams });
     } catch (error) {
         console.error('Error in getUserTeamsController:', error);

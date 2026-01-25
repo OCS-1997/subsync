@@ -515,7 +515,7 @@ router.delete('/teams/:id/members/:userId', isAuthenticated, authorize(PERMISSIO
 router.get('/teams/:id/members', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamMembersController);
 
 // User Teams
-router.get('/users/:username/teams', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getUserTeamsController);
+router.get('/users/:username/teams', isAuthenticated, getUserTeamsController);
 
 // Team Stats
 router.get('/teams/:id/stats', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamStatsController);
