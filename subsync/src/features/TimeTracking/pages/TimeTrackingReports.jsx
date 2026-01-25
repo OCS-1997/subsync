@@ -148,7 +148,7 @@ const TimeTrackingReports = () => {
         return (
             <div className="flex flex-col items-center justify-center h-96 gap-4">
                 <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Synthesizing Analytics...</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Loading Reports...</span>
             </div>
         );
     }
@@ -164,14 +164,14 @@ const TimeTrackingReports = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Control Matrix */}
+            {/* Report Controls */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Calendar className="text-white w-6 h-6" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Intelligence Hub</h2>
+                        <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Time Reports</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                             {format(startDate, 'MMM d, yyyy')} <span className="mx-2 text-blue-500 opacity-50">/</span> {format(endDate, 'MMM d, yyyy')}
                         </p>
@@ -199,18 +199,18 @@ const TimeTrackingReports = () => {
                         className="h-11 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95"
                     >
                         <Download className="mr-2 h-4 w-4" />
-                        Export Telemetry
+                        Export Report
                     </Button>
                 </div>
             </div>
 
-            {/* Performance Indicators */}
+            {/* Quick Stats */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {[
-                    { label: 'Cumulative Velocity', value: formatHours(summary?.total_minutes || 0), sub: `${summary?.total_entries || 0} log cycles`, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                    { label: 'Revenue Generation', value: formatHours(summary?.billable_minutes || 0), sub: `${(summary?.total_minutes || 0) > 0 ? ((summary.billable_minutes / summary.total_minutes) * 100).toFixed(0) : 0}% billable weight`, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                    { label: 'Operational Nodes', value: summary?.unique_projects || 0, sub: 'Active workstreams', icon: FolderKanban, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-                    { label: 'External Sponsors', value: summary?.unique_customers || 0, sub: 'Strategic partnerships', icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                    { label: 'Total Time', value: formatHours(summary?.total_minutes || 0), sub: `${summary?.total_entries || 0} entries`, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                    { label: 'Billable Time', value: formatHours(summary?.billable_minutes || 0), sub: `${(summary?.total_minutes || 0) > 0 ? ((summary.billable_minutes / summary.total_minutes) * 100).toFixed(0) : 0}% billable`, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'Projects', value: summary?.unique_projects || 0, sub: 'Active projects', icon: FolderKanban, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                    { label: 'Customers', value: summary?.unique_customers || 0, sub: 'Active customers', icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
                 ].map((stat, i) => (
                     <Card key={i} className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm group hover:scale-[1.02] transition-all duration-300">
                         <CardContent className="p-8">
@@ -230,7 +230,7 @@ const TimeTrackingReports = () => {
                 ))}
             </div>
 
-            {/* Core Analytics Matrix */}
+            {/* Activity Analysis */}
             <div className="grid gap-8 lg:grid-cols-12">
                 {/* Daily Trend Area Chart */}
                 <Card className="lg:col-span-8 dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
@@ -239,11 +239,11 @@ const TimeTrackingReports = () => {
                             <div className="space-y-1">
                                 <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
                                     <TrendingUp className="w-4 h-4" />
-                                    Chronological Velocity
+                                    Daily Hours Trend
                                 </CardTitle>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Daily aggregate performance</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Daily time tracking</p>
                             </div>
-                            <Badge variant="outline" className="rounded-lg border-gray-100 text-[9px] font-black uppercase tracking-widest px-3">Live Feed</Badge>
+                            <Badge variant="outline" className="rounded-lg border-gray-100 text-[9px] font-black uppercase tracking-widest px-3">Live Data</Badge>
                         </div>
                     </CardHeader>
                     <CardContent className="p-8">
@@ -287,18 +287,18 @@ const TimeTrackingReports = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-[350px] gap-4 text-slate-300">
                                 <Activity size={48} strokeWidth={1} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Insufficient data points</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Activity Distribution Pie */}
+                {/* Activity Breakdown Pie */}
                 <Card className="lg:col-span-4 dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                     <CardHeader className="p-8 pb-0">
                         <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
                             <Shapes className="w-4 h-4" />
-                            Macro Allocation
+                            Activity Type
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-8">
@@ -341,21 +341,21 @@ const TimeTrackingReports = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-[300px] gap-4 text-slate-300">
                                 <Shapes size={48} strokeWidth={1} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Allocation Void</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
                             </div>
                         )}
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Bottom Strategic Insights Grid */}
+            {/* Summary Details */}
             <div className="grid gap-8 lg:grid-cols-2">
                 {/* Project Breakdown */}
                 <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                     <CardHeader className="p-8 border-b border-gray-50 dark:border-slate-800 flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Workstream Hierarchy</CardTitle>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Resource allocation by project node</p>
+                            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Project Stats</CardTitle>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Time spent by project</p>
                         </div>
                         <Filter className="w-4 h-4 text-slate-300" />
                     </CardHeader>
@@ -371,14 +371,14 @@ const TimeTrackingReports = () => {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{project.project_name}</h4>
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">{project.customer_name || 'Internal Node'}</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">{project.customer_name || 'Internal'}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-sm font-black text-slate-900 dark:text-white">{(project.total_minutes / 60).toFixed(1)}h</span>
                                                 <div className="flex items-center gap-1 mt-1 justify-end">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">{(project.billable_minutes / 60).toFixed(1)}h Rev</span>
+                                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">{(project.billable_minutes / 60).toFixed(1)}h Billable</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -394,17 +394,17 @@ const TimeTrackingReports = () => {
                                     </div>
                                 ))
                             ) : (
-                                <div className="p-12 text-center text-slate-300 uppercase font-black text-[10px] tracking-widest">No active workstreams</div>
+                                <div className="p-12 text-center text-slate-300 uppercase font-black text-[10px] tracking-widest">No projects found</div>
                             )}
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Top Contributors / Team Matrix */}
+                {/* Team Ranking */}
                 <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                     <CardHeader className="p-8 border-b border-gray-50 dark:border-slate-800">
-                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Strategic Contributors</CardTitle>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Global performance benchmarks</p>
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Top Team Members</CardTitle>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Efficiency rankings</p>
                     </CardHeader>
                     <CardContent className="p-0">
                         <div className="divide-y divide-gray-50 dark:divide-slate-800">
@@ -418,22 +418,22 @@ const TimeTrackingReports = () => {
                                             <div>
                                                 <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{user.first_name} {user.last_name}</h4>
                                                 <div className="flex gap-2 mt-1">
-                                                    <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-950 text-[8px] font-black uppercase tracking-widest px-2">{user.entry_count} cycles</Badge>
-                                                    <Badge className="bg-blue-600/10 text-blue-600 dark:text-blue-400 border-none text-[8px] font-black uppercase tracking-widest px-2">Top Tier</Badge>
+                                                    <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-950 text-[8px] font-black uppercase tracking-widest px-2">{user.entry_count} entries</Badge>
+                                                    <Badge className="bg-blue-600/10 text-blue-600 dark:text-blue-400 border-none text-[8px] font-black uppercase tracking-widest px-2">Active</Badge>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="text-right">
                                                 <div className="text-sm font-black text-slate-900 dark:text-white">{(user.total_minutes / 60).toFixed(1)}h</div>
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Execution</span>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Hours</span>
                                             </div>
                                             <ChevronRight className="w-4 h-4 text-slate-200" />
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="p-12 text-center text-slate-300 uppercase font-black text-[10px] tracking-widest">No contributor telemetry</div>
+                                <div className="p-12 text-center text-slate-300 uppercase font-black text-[10px] tracking-widest">No members found</div>
                             )}
                         </div>
                     </CardContent>

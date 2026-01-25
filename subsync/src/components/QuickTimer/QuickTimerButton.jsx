@@ -27,7 +27,15 @@ const QuickTimerButton = () => {
             }
         }, 30000);
 
-        return () => clearInterval(refreshInterval);
+        const handleCustomUpdate = () => {
+            checkActiveTimer();
+        };
+
+        window.addEventListener('timeTrackingUpdated', handleCustomUpdate);
+        return () => {
+            clearInterval(refreshInterval);
+            window.removeEventListener('timeTrackingUpdated', handleCustomUpdate);
+        };
     }, []);
 
     useEffect(() => {
@@ -122,6 +130,7 @@ const QuickTimerButton = () => {
             setActiveTimer(null);
             setElapsedTime(0);
             checkActiveTimer(); // Refresh
+            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
         } catch (error) {
             console.error('Error stopping timer:', error);
             toast.error('Failed to stop timer');
@@ -195,7 +204,7 @@ const QuickTimerButton = () => {
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto dark:bg-slate-900">
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-slate-900">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
                             <Clock className="h-5 w-5 text-blue-500" />

@@ -121,17 +121,20 @@ function NavBar({ toggleSidebar }) {
             </motion.div>
           )}
 
+          {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && (
+            <QuickTimerButton />
+          )}
+
           {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (
             <QuickToolsWidget />
           )}
 
+          
           {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && (
             <BirthdayNavWidget />
           )}
 
-          {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && (
-            <QuickTimerButton />
-          )}
+          
 
           <Button
             variant="ghost"

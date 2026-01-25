@@ -159,7 +159,7 @@ const ProjectManagement = ({ customers = [] }) => {
                             <form onSubmit={handleSubmit} className="space-y-6 pt-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Project Name *</Label>
+                                        <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Project Name <span className="text-red-500">*</span></Label>
                                         <Input
                                             value={formData.project_name}
                                             onChange={(e) => setFormData(prev => ({ ...prev, project_name: e.target.value }))}
