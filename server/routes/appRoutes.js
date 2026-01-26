@@ -5,7 +5,7 @@ import { validateLogin, logoutUser } from '../controllers/loginController.js';
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
-import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers } from '../controllers/dcrController.js';
+import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers, getDcrDetailedReport } from '../controllers/dcrController.js';
 import { createContact, getContacts, getContactById, updateContact, deleteContact, createContactFromDcrController, getContactByIdController } from '../controllers/contactController.js';
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
@@ -116,7 +116,8 @@ import {
     getOpportunityStatusesController,
     createStatusController,
     updateStatusController,
-    deleteStatusController
+    deleteStatusController,
+    getOpportunityDetailedReport
 } from '../controllers/opportunityController.js';
 import { getPreference, updatePreference } from '../controllers/userPreferencesController.js';
 import {
@@ -182,6 +183,7 @@ import {
     getDetailedReportsController,
     exportEntriesController
 } from '../controllers/reportsController.js';
+// Reports 360 removed
 
 const router = express.Router();
 
@@ -373,6 +375,7 @@ router.get('/dcr/week-meta', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), g
 router.get('/dcr/stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrStats);
 router.get('/dcr/user-stats', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getUserDcrStats);
 router.get('/dcr/users', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrUsers);
+router.get('/dcr/detailed', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrDetailedReport);
 router.get('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_VIEW), getDcrById);
 router.put('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_UPDATE), updateDcr);
 router.delete('/dcr/:id', isAuthenticated, authorize(PERMISSIONS.DCR_DELETE), deleteDcr);
@@ -481,6 +484,7 @@ router.put('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUN
 router.delete('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_DELETE), deleteOpportunityController);
 router.put('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), updateStatusController);
 router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), deleteStatusController);
+router.get('/opportunities/detailed', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityDetailedReport);
 
 // User Preferences
 router.get('/preferences/:username/:key', isAuthenticated, getPreference);
@@ -560,6 +564,8 @@ router.get('/time-tracking/categories/:id/stats', isAuthenticated, authorize(PER
 router.get('/time-tracking/reports', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeReportsController);
 router.get('/time-tracking/reports/detailed', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getDetailedReportsController);
 router.get('/time-tracking/reports/export', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), exportEntriesController);
+
+// Reports 360 routes removed
 
 
 

@@ -566,7 +566,87 @@ export {
     getWeekMeta,
     getDcrStats,
     getUserDcrStats,
-    getDcrUsers
+    getDcrUsers,
+    getDcrDetailedReport
 };
+
+/**
+ * Get detailed DCR report stats
+ */
+async function getDcrDetailedReport(req, res) {
+    try {
+        const { startDate, endDate, userId } = req.query;
+        const isAdmin = req.user.roleKey === 'admin';
+        const canViewAll = req.user.permissions?.includes('performance_reports.view_all') || req.user.permissions?.includes('dcr.view_all');
+        
+        let targetUserId = userId;
+        if (!isAdmin && !canViewAll) {
+            targetUserId = req.user.username;
+        }
+
+        const appDB = (await import("../db/subsyncDB.js")).default;
+        
+        let whereConditions = ["1=1"];
+        let params = [];
+
+        if (targetUserId && targetUserId !== 'all') {
+            whereConditions.push('de.user_id = ?');
+            params.push(targetUserId);
+        }
+
+        if (startDate && endDate) {
+            whereConditions.push('de.timestamp >= ? AND de.timestamp <= ?');
+            params.push(startDate, endDate);
+        }
+
+        const whereClause = whereConditions.join(' AND ');
+
+        // Daily trend
+        const [dailyTrend] = await appDB.query(`
+            SELECT DATE(de.timestamp) as date, COUNT(*) as count, SUM(de.time_spent_minutes) as minutes
+            FROM dcr_entries de
+            WHERE ${whereClause}
+            GROUP BY DATE(de.timestamp)
+            ORDER BY date ASC
+        `, params);
+
+        // Call type distribution
+        const [callTypes] = await appDB.query(`
+            SELECT de.call_type as name, COUNT(*) as value
+            FROM dcr_entries de
+            WHERE ${whereClause}
+            GROUP BY de.call_type
+        `, params);
+
+        // User breakdown
+        const [userBreakdown] = await appDB.query(`
+            SELECT u.name, COUNT(*) as calls, SUM(de.time_spent_minutes) as minutes
+            FROM dcr_entries de
+            JOIN users u ON de.user_id = u.username
+            WHERE ${whereClause}
+            GROUP BY u.username, u.name
+            ORDER BY calls DESC
+        `, params);
+
+        // Summary
+        const [[summary]] = await appDB.query(`
+            SELECT 
+                COUNT(*) as total_calls, 
+                SUM(de.time_spent_minutes) as total_minutes, 
+                COUNT(DISTINCT de.user_id) as active_users,
+                COUNT(DISTINCT de.contact_name) as unique_contacts
+            FROM dcr_entries de
+            WHERE ${whereClause}
+        `, params);
+
+        res.status(200).json({ 
+            success: true, 
+            data: { dailyTrend, callTypes, userBreakdown, summary } 
+        });
+    } catch (error) {
+        console.error("Error in getDcrDetailedReport:", error);
+        res.status(500).json({ success: false, error: "Failed to fetch DCR report" });
+    }
+}
 
 

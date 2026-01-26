@@ -338,6 +338,13 @@ export default function DCRList() {
               <FileDown className="w-5 h-5 mr-1" /> Export
             </Button>
             <Button
+              variant="outline"
+              className="rounded-xl h-14 px-6 font-black uppercase tracking-widest text-[10px] text-blue-600 border-blue-100 hover:bg-blue-50 transition-all gap-2"
+              onClick={() => navigate(`/${username}/dashboard/dcr/detailed`)}
+            >
+              <Eye className="w-5 h-5 mr-1" /> Detailed Analytics
+            </Button>
+            <Button
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
               onClick={() => navigate(`/${username}/dashboard/dcr/new`)}
             >

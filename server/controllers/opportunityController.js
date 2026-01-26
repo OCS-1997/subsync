@@ -173,3 +173,85 @@ export const deleteStatusController = async (req, res) => {
         res.status(400).json({ success: false, message: error.message || "Failed to delete status" });
     }
 };
+
+/**
+ * Get detailed Opportunity report
+ */
+export const getOpportunityDetailedReport = async (req, res) => {
+    try {
+        const { startDate, endDate, userId } = req.query;
+        const isAdmin = req.user.roleKey === 'admin';
+        const canViewAll = req.user.permissions?.includes('performance_reports.view_all') || req.user.permissions?.includes('opportunities.view_all');
+        
+        let targetUserId = userId;
+        if (!isAdmin && !canViewAll) {
+            targetUserId = req.user.username;
+        }
+
+        const appDB = (await import("../db/subsyncDB.js")).default;
+        
+        let whereConditions = ["o.is_deleted = 0"];
+        let params = [];
+
+        if (targetUserId && targetUserId !== 'all') {
+            whereConditions.push('o.owner = ?');
+            params.push(targetUserId);
+        }
+
+        if (startDate && endDate) {
+            whereConditions.push('o.opportunity_date >= ? AND o.opportunity_date <= ?');
+            params.push(startDate, endDate);
+        }
+
+        const whereClause = whereConditions.join(' AND ');
+
+        // Stage distribution
+        const [stageDistribution] = await appDB.query(`
+            SELECT s.status_name as name, COUNT(*) as count, SUM(o.opportunity_value) as value, s.status_color as color
+            FROM opportunities o
+            JOIN opportunity_statuses s ON o.status_id = s.id
+            WHERE ${whereClause}
+            GROUP BY s.id, s.status_name, s.status_color
+            ORDER BY s.sort_order ASC
+        `, params);
+
+        // Monthly trend
+        const [monthlyTrend] = await appDB.query(`
+            SELECT DATE_FORMAT(o.opportunity_date, '%Y-%m') as month, COUNT(*) as count, SUM(o.opportunity_value) as value
+            FROM opportunities o
+            WHERE ${whereClause}
+            GROUP BY month
+            ORDER BY month ASC
+        `, params);
+
+        // User breakdown
+        const [userBreakdown] = await appDB.query(`
+            SELECT u.name, COUNT(*) as count, SUM(o.opportunity_value) as value
+            FROM opportunities o
+            JOIN users u ON o.owner = u.username
+            WHERE ${whereClause}
+            GROUP BY u.username, u.name
+            ORDER BY value DESC
+        `, params);
+
+        // Summary
+        const [[summary]] = await appDB.query(`
+            SELECT 
+                COUNT(*) as total_count, 
+                SUM(o.opportunity_value) as total_value,
+                SUM(CASE WHEN LOWER(s.status_name) LIKE '%won%' OR LOWER(s.status_name) LIKE '%close%' THEN 1 ELSE 0 END) as won_count,
+                SUM(CASE WHEN LOWER(s.status_name) LIKE '%won%' OR LOWER(s.status_name) LIKE '%close%' THEN o.opportunity_value ELSE 0 END) as won_value
+            FROM opportunities o
+            JOIN opportunity_statuses s ON o.status_id = s.id
+            WHERE ${whereClause}
+        `, params);
+
+        res.status(200).json({ 
+            success: true, 
+            data: { stageDistribution, monthlyTrend, userBreakdown, summary } 
+        });
+    } catch (error) {
+        console.error("Error in getOpportunityDetailedReport:", error);
+        res.status(500).json({ success: false, error: "Failed to fetch Opportunity report" });
+    }
+};

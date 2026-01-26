@@ -110,8 +110,8 @@ export const TodayTimeStatsWidget = () => {
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-blue-600" />
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                         Today's Time
                     </CardTitle>
                     {stats.hasActiveTimer && (
@@ -128,7 +128,7 @@ export const TodayTimeStatsWidget = () => {
             <CardContent>
                 <div className="space-y-4">
                     <div>
-                        <div className="text-4xl font-bold text-blue-600 mb-1">
+                        <div className="text-3xl sm:text-4xl font-bold text-blue-600 mb-1">
                             {formatHours(stats.totalHours)}
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -187,8 +187,8 @@ export const WeekTimeStatsWidget = () => {
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-purple-600" />
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                     This Week
                 </CardTitle>
                 <CardDescription className="text-xs">Weekly summary</CardDescription>
@@ -196,7 +196,7 @@ export const WeekTimeStatsWidget = () => {
             <CardContent>
                 <div className="space-y-4">
                     <div>
-                        <div className="text-4xl font-bold text-purple-600 mb-1">
+                        <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-1">
                             {formatHours(stats.totalHours)}
                         </div>
                         <p className="text-xs text-muted-foreground">

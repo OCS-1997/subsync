@@ -43,12 +43,14 @@ import HelpPage from '@/features/Help/HelpPage.jsx';
 import DCRList from '@/features/DCR/pages/DCRList.jsx';
 import DCRForm from '@/features/DCR/pages/DCRForm.jsx';
 import ViewDCR from '@/features/DCR/pages/ViewDCR.jsx';
+import DcrDetailedReport from '@/features/DCR/pages/DcrDetailedReport.jsx';
 import ContactsList from '@/features/Contacts/pages/ContactsList.jsx';
 import ContactForm from '@/features/Contacts/pages/ContactForm.jsx';
 import ContactDetails from '@/features/Contacts/pages/ContactDetails.jsx';
 import OpportunitiesPage from '@/features/Opportunities/pages/OpportunitiesPage.jsx';
 import OpportunityForm from '@/features/Opportunities/components/OpportunityForm.jsx';
 import OpportunityView from '@/features/Opportunities/components/OpportunityView.jsx';
+import OpportunityDetailedReport from '@/features/Opportunities/pages/OpportunityDetailedReport.jsx';
 import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
 import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.jsx';
 import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
@@ -66,6 +68,7 @@ import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
+// Reports 360 removed
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
@@ -109,6 +112,7 @@ const router = createBrowserRouter([
       { path: "dcr/new", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
       { path: "dcr/:id", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><ViewDCR /></PermissionGate> },
       { path: "dcr/:id/edit", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/detailed", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DcrDetailedReport /></PermissionGate> },
 
       { path: "contacts", element: <PermissionGate required={PERMISSIONS.CONTACTS_VIEW}><ContactsList /></PermissionGate> },
       { path: "contacts/new", element: <PermissionGate required={PERMISSIONS.CONTACTS_CREATE}><ContactForm /></PermissionGate> },
@@ -119,6 +123,7 @@ const router = createBrowserRouter([
       { path: "opportunities/new", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_CREATE}><OpportunityForm /></PermissionGate> },
       { path: "opportunities/view/:id", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_VIEW}><OpportunityView /></PermissionGate> },
       { path: "opportunities/edit/:id", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_UPDATE}><OpportunityForm /></PermissionGate> },
+      { path: "opportunities/detailed", element: <PermissionGate required={PERMISSIONS.OPPORTUNITIES_VIEW}><OpportunityDetailedReport /></PermissionGate> },
 
       { path: "birthdays", element: <PermissionGate required={PERMISSIONS.BIRTHDAYS_VIEW}><BirthdaysPage /></PermissionGate> },
 
@@ -139,6 +144,9 @@ const router = createBrowserRouter([
 
       // Time Tracking
       { path: "time-tracking", element: <PermissionGate required={PERMISSIONS.TIME_TRACKING_VIEW}><TimeTracking /></PermissionGate> },
+
+      // Reports 360
+      // Reports 360 routes removed
 
       {
         path: "settings",

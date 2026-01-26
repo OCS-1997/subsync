@@ -90,14 +90,14 @@ function NavBar({ toggleSidebar }) {
   };
 
   return (
-    <nav className="bg-background dark:bg-background shadow-md rounded-b-l border-b-2 border-border">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex  justify-between items-center h-16">
-        <div className="flex w-full items-start p-2 m-1">
-          <Button variant="ghost" size="icon" className="mr-2 lg:hidden" onClick={toggleSidebar}>
-            <span className="material-symbols-outlined">menu</span>
+    <nav className="bg-background dark:bg-background shadow-md rounded-b-l border-b-2 border-border sticky top-0 z-50">
+      <div className="max-w-full mx-auto px-2 sm:px-6 lg:px-8 flex  justify-between items-center h-16">
+        <div className="flex flex-1 items-center p-1">
+          <Button variant="ghost" size="icon" className="mr-1 lg:hidden h-10 w-10" onClick={toggleSidebar}>
+            <span className="material-symbols-outlined text-2xl">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex justify-end p-1 rounded">
-            <img src="/logo.png" alt="Logo" className="h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100" />
+          <div className="flex-shrink-0 flex items-center p-1 rounded">
+            <img src="/logo.png" alt="Logo" className="h-8 sm:h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100 transition-all" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -139,21 +139,21 @@ function NavBar({ toggleSidebar }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
             onClick={handleCalculatorToggle}
             title="Calculator (Ctrl+Shift+C)"
           >
-            <Calculator className="h-5 w-5" />
+            <Calculator className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full hover:bg-accent transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-accent transition-colors shrink-0"
             onClick={() => setSettingsOpen(prev => !prev)}
             title="Settings (Ctrl+Shift+P)"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
           </Button>
 
           <Popover open={open} onOpenChange={setOpen}>
@@ -161,10 +161,10 @@ function NavBar({ toggleSidebar }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full border border-border hover:bg-accent transition-colors"
+                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
                 title="User Menu"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64" align="end">

@@ -10,11 +10,16 @@
 body {
   font-family: "Manrope", sans-serif;
   font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
 }
 
 @layer base {
   :root {
+    --mobile-padding: 1rem;
+    --desktop-padding: 2rem;
     --background: 0 0% 100%;
+
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -101,9 +106,28 @@ input[type="number"] {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1 { @apply text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight; }
+  h2 { @apply text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight; }
+  h3 { @apply text-lg sm:text-xl lg:text-2xl font-semibold; }
+}
+
+@layer utilities {
+  .mobile-px {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
 
 @layer base {
   * {

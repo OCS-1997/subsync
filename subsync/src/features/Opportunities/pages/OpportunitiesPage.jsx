@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Briefcase, Settings, LayoutGrid } from "lucide-react";
+import { Briefcase, Settings, LayoutGrid, BarChart3 } from "lucide-react";
 import OpportunityList from "../components/OpportunityList.jsx";
 import StatusManagement from "../components/StatusManagement.jsx";
+import OpportunityDetailedReport from "./OpportunityDetailedReport.jsx";
 import { cn } from "@/lib/utils";
 
 const OpportunitiesPage = () => {
@@ -36,14 +37,30 @@ const OpportunitiesPage = () => {
                         <Settings className="h-4 w-4" />
                         Stage Definitions
                     </button>
+                    <button
+                        onClick={() => setActiveTab("reports")}
+                        className={cn(
+                            "flex items-center gap-2 px-8 py-3 rounded-[1.2rem] text-xs font-black uppercase tracking-widest transition-all duration-300",
+                            activeTab === "reports"
+                                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
+                                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        )}
+                    >
+                        <BarChart3 className="h-4 w-4" />
+                        Pipeline Analytics
+                    </button>
                 </div>
 
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === "all" ? (
                         <OpportunityList />
-                    ) : (
+                    ) : activeTab === "statuses" ? (
                         <div className="pt-4">
                             <StatusManagement />
+                        </div>
+                    ) : (
+                        <div className="pt-4">
+                            <OpportunityDetailedReport />
                         </div>
                     )}
                 </div>

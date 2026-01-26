@@ -94,6 +94,10 @@ export const PERMISSIONS = Object.freeze({
   ASSETS_DELETE: 'assets.delete',
   ASSETS_ASSIGN: 'assets.assign',
   ASSETS_MANAGE_CATEGORIES: 'assets.manage_categories',
+  // Performance Reports
+  PERFORMANCE_REPORTS_VIEW: 'performance_reports.view',
+  PERFORMANCE_REPORTS_VIEW_TEAM: 'performance_reports.view_team',
+  PERFORMANCE_REPORTS_VIEW_ALL: 'performance_reports.view_all',
 });
 
 export const PAGE_PERMISSIONS = {
@@ -109,4 +113,5 @@ export const PAGE_PERMISSIONS = {
   activityLogs: PERMISSIONS.ACTIVITY_LOGS_VIEW,
   roles: PERMISSIONS.ROLES_VIEW,
   assets: PERMISSIONS.ASSETS_VIEW,
+  performanceReports: PERMISSIONS.PERFORMANCE_REPORTS_VIEW,
 };

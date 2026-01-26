@@ -10,17 +10,22 @@ import {
     SelectTrigger, 
     SelectValue 
 } from '@/components/ui/select';
-import { Pencil, Trash2, Search, Download, Clock, Briefcase, User, Filter, RotateCcw, X, Calendar, Eye } from 'lucide-react';
+import { 
+    Pencil, Trash2, Search, Download, Clock, Briefcase, User, Filter, 
+    RotateCcw, X, Calendar as CalendarIcon, Eye, List, CalendarDays, 
+    ChevronLeft, ChevronRight as ChevronRightIcon, Check, ChevronsUpDown 
+} from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
-import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
+import { 
+    format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
+    eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday 
+} from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import GenericTable from '@/components/layouts/GenericTable';
 import Pagination from '@/components/layouts/Pagination';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -63,11 +68,10 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                 </DialogHeader>
 
                 <div className="p-10 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                    {/* Time Information Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-3 mb-4">
-                                <Calendar className="h-4 w-4 text-blue-500" />
+                                <CalendarIcon className="h-4 w-4 text-blue-500" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Time</span>
                             </div>
                             <p className="text-lg font-black tracking-tight uppercase">
@@ -81,7 +85,7 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         {entry.end_time && (
                             <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Calendar className="h-4 w-4 text-slate-400" />
+                                    <CalendarIcon className="h-4 w-4 text-slate-400" />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">End Time</span>
                                 </div>
                                 <p className="text-lg font-black tracking-tight uppercase">
@@ -104,7 +108,6 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Project Information */}
                     {(entry.customer_name || entry.project_name) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {entry.customer_name && (
@@ -129,7 +132,6 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Activity Classification */}
                     {entry.activity_type_name && (
                         <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-3 mb-4">
@@ -146,7 +148,6 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Billable Status */}
                     <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                         <div className="flex items-center justify-between">
                             <div>
@@ -169,7 +170,6 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Description/Narrative */}
                     {entry.description && (
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 ml-1">
@@ -183,7 +183,6 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* Metadata */}
                     <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                             <div>
@@ -214,6 +213,98 @@ const TimeEntryDetailModal = ({ entry, isOpen, onClose }) => {
     );
 };
 
+const CalendarGrid = ({ currentMonth, entries, onDateSelect, selectedDate }) => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+
+    const days = eachDayOfInterval({
+        start: calendarStart,
+        end: calendarEnd
+    });
+
+    const entriesByDate = entries.reduce((acc, entry) => {
+        const dateKey = format(new Date(entry.start_time), 'yyyy-MM-dd');
+        if (!acc[dateKey]) acc[dateKey] = [];
+        acc[dateKey].push(entry);
+        return acc;
+    }, {});
+
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    return (
+        <div className="p-8 pb-32">
+            <div className="grid grid-cols-7 mb-4 min-w-[700px]">
+                {weekDays.map(day => (
+                    <div key={day} className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 py-4">
+                        {day}
+                    </div>
+                ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-slate-100/50 dark:bg-slate-800/50 min-w-[700px]">
+                {days.map((day, i) => {
+                    const dateKey = format(day, 'yyyy-MM-dd');
+                    const dayEntries = entriesByDate[dateKey] || [];
+                    const isSelected = isSameDay(day, selectedDate);
+                    const isInMonth = isSameMonth(day, monthStart);
+                    const isTodayCircle = isToday(day);
+
+                    return (
+                        <div 
+                            key={i}
+                            onClick={() => onDateSelect(day)}
+                            className={cn(
+                                "min-h-[100px] p-3 transition-all cursor-pointer relative group bg-white dark:bg-slate-900 border border-transparent",
+                                !isInMonth && "opacity-30",
+                                isSelected && "ring-2 ring-blue-500 z-10 shadow-2xl",
+                                !isSelected && "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            )}
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <span className={cn(
+                                    "text-xs font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all",
+                                    isTodayCircle ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                                )}>
+                                    {format(day, 'd')}
+                                </span>
+                                {dayEntries.length > 0 && (
+                                    <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none text-[9px] font-black px-1.5 h-5 rounded-md">
+                                        {dayEntries.length}
+                                    </Badge>
+                                )}
+                            </div>
+                            
+                            <div className="space-y-1.5 max-h-[80px] overflow-hidden">
+                                {dayEntries.slice(0, 3).map((entry, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className="text-[9px] font-bold truncate px-2 py-1 rounded-md border border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-600 dark:text-slate-400 flex items-center gap-1.5"
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: entry.activity_color || '#3b82f6' }} />
+                                        {entry.title}
+                                    </div>
+                                ))}
+                                {dayEntries.length > 3 && (
+                                    <div className="text-[8px] font-black text-slate-300 uppercase tracking-widest pl-2 pt-0.5">
+                                        + {dayEntries.length - 3} More
+                                    </div>
+                                )}
+                            </div>
+
+                            {isSelected && (
+                                <div className="absolute bottom-2 right-2">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-ping" />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [] }) => {
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -228,8 +319,13 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         page: 1,
         limit: 20,
         sort_by: '',
-        sort_order: ''
+        sort_order: '',
+        startDate: '',
+        endDate: ''
     });
+    const [viewType, setViewType] = useState('calendar'); // 'table' or 'calendar'
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -241,24 +337,14 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const [entryToDelete, setEntryToDelete] = useState(null);
 
     useEffect(() => {
-        fetchEntries();
-    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable]);
-
-    // Debounced search effect
-    useEffect(() => {
-        if (filters.search === '') {
-            // If search is cleared, fetch immediately
-            fetchEntries();
-            return;
+        if (viewType === 'calendar') {
+            const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+            setFilters(prev => ({ ...prev, startDate: start, endDate: end, limit: 1000 }));
+        } else {
+            setFilters(prev => ({ ...prev, startDate: '', endDate: '', limit: 20 }));
         }
-
-        // Debounce search to avoid too many API calls
-        const debounceTimer = setTimeout(() => {
-            fetchEntries();
-        }, 500); // Wait 500ms after user stops typing
-
-        return () => clearTimeout(debounceTimer);
-    }, [filters.search]);
+    }, [viewType, currentMonth]);
 
     const fetchEntries = async () => {
         setLoading(true);
@@ -281,6 +367,22 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchEntries();
+    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.startDate, filters.endDate]);
+
+    // Debounced search effect
+    useEffect(() => {
+        if (filters.search === '') {
+            fetchEntries();
+            return;
+        }
+        const debounceTimer = setTimeout(() => {
+            fetchEntries();
+        }, 500);
+        return () => clearTimeout(debounceTimer);
+    }, [filters.search]);
 
     const handleDelete = async (entryId) => {
         try {
@@ -337,55 +439,30 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
             page: 1,
             limit: 20,
             sort_by: '',
-            sort_order: ''
+            sort_order: '',
+            startDate: '',
+            endDate: ''
         });
-        setTimeout(() => fetchEntries(), 100);
     };
 
     const applyFilters = () => {
         setFilters(prev => ({ ...prev, page: 1 }));
-        // fetchEntries will be called automatically by useEffect
     };
 
     const handleSort = (columnKey) => {
         setFilters(prev => {
-            // Three-state cycle: None -> Asc -> Desc -> None
             if (prev.sort_by !== columnKey) {
-                // If sorting a different column, start with Asc
-                return {
-                    ...prev,
-                    sort_by: columnKey,
-                    sort_order: 'asc',
-                    page: 1
-                };
+                return { ...prev, sort_by: columnKey, sort_order: 'asc', page: 1 };
             } else if (prev.sort_order === 'asc') {
-                // If current is Asc, switch to Desc
-                return {
-                    ...prev,
-                    sort_order: 'desc',
-                    page: 1
-                };
+                return { ...prev, sort_order: 'desc', page: 1 };
             } else if (prev.sort_order === 'desc') {
-                // If current is Desc, clear sorting (None)
-                return {
-                    ...prev,
-                    sort_by: '',
-                    sort_order: '',
-                    page: 1
-                };
+                return { ...prev, sort_by: '', sort_order: '', page: 1 };
             } else {
-                // If no sort, start with Asc
-                return {
-                    ...prev,
-                    sort_by: columnKey,
-                    sort_order: 'asc',
-                    page: 1
-                };
+                return { ...prev, sort_by: columnKey, sort_order: 'asc', page: 1 };
             }
         });
     };
 
-    // Prepare table headers
     const tableHeaders = [
         { key: 'timestamp', label: 'Timestamp', align: 'left' },
         { key: 'title', label: 'Objective', align: 'left' },
@@ -395,7 +472,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         { key: 'actions', label: 'Actions', align: 'center' }
     ];
 
-    // Prepare table data
     const tableData = entries.map(entry => ({
         id: entry.entry_id,
         _rowClassName: '',
@@ -534,8 +610,8 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const hasActiveFilters = filters.search || filters.customer_id || filters.project_id || filters.activity_type_id || filters.is_billable;
 
     return (
-        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm transition-all duration-300">
-            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 p-8">
+        <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] border-gray-100 shadow-sm transition-all duration-300 mb-12">
+            <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 p-8 rounded-t-[2rem]">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
@@ -546,41 +622,90 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                             </Badge>
                         )}
                     </CardTitle>
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                            className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
-                        >
-                            <Filter className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                            {showAdvancedFilters ? 'Hide' : 'Show'} Filters
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleExportCSV}
-                            className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
-                        >
-                            <Download className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                            Export
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={resetFilters}
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-white dark:hover:bg-slate-950 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
-                        >
-                            <RotateCcw className="h-4 w-4 text-slate-400" />
-                        </Button>
+                    <div className="flex items-center gap-6">
+                        <div className="bg-white dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center shadow-inner">
+                            <button
+                                onClick={() => setViewType('table')}
+                                className={cn(
+                                    "flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    viewType === 'table' 
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                )}
+                            >
+                                <List size={14} />
+                                Table
+                            </button>
+                            <button
+                                onClick={() => setViewType('calendar')}
+                                className={cn(
+                                    "flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    viewType === 'calendar' 
+                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                )}
+                            >
+                                <CalendarDays size={14} />
+                                Calendar
+                            </button>
+                        </div>
+
+                        {viewType === 'calendar' && (
+                            <div className="flex items-center gap-4 bg-white dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-inner">
+                                <button 
+                                    onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                                    className="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all"
+                                >
+                                    <ChevronLeft size={16} className="text-slate-400" />
+                                </button>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] w-32 text-center">
+                                    {format(currentMonth, 'MMMM yyyy')}
+                                </span>
+                                <button 
+                                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                                    className="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all"
+                                >
+                                    <ChevronRightIcon size={16} className="text-slate-400" />
+                                </button>
+                            </div>
+                        )}
+                        
+                        <div className="h-8 w-[1px] bg-gray-200 dark:bg-slate-800 mx-1" />
+
+                        <div className="flex items-center gap-3">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
+                            >
+                                <Filter className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                                {showAdvancedFilters ? 'Hide' : 'Show'} Filters
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleExportCSV}
+                                className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
+                            >
+                                <Download className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                                Export
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={resetFilters}
+                                className="h-10 w-10 p-0 rounded-xl hover:bg-white dark:hover:bg-slate-950 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
+                            >
+                                <RotateCcw className="h-4 w-4 text-slate-400" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Advanced Filters */}
                 {showAdvancedFilters && (
                     <div className="mt-6 space-y-4 p-6 bg-white dark:bg-slate-950 rounded-2xl border border-gray-100 dark:border-slate-800">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Search */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Search</label>
                                 <div className="relative group">
@@ -594,7 +719,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </div>
                             </div>
 
-                            {/* Customer Filter */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Client</label>
                                 <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen} modal={false}>
@@ -648,7 +772,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </Popover>
                             </div>
 
-                            {/* Project Filter */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Project</label>
                                 <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen} modal={false}>
@@ -703,7 +826,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </Popover>
                             </div>
 
-                            {/* Activity Type Filter */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Activity</label>
                                 <Select
@@ -727,7 +849,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </Select>
                             </div>
 
-                            {/* Billable Filter */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Billable</label>
                                 <Select
@@ -745,7 +866,6 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </Select>
                             </div>
 
-                            {/* Page Size - Performance Optimization */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Records per Page</label>
                                 <Select
@@ -792,7 +912,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                         <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-4">Syncing Ledger...</span>
                     </div>
-                ) : (
+                ) : viewType === 'table' ? (
                     <>
                         <GenericTable
                             headers={tableHeaders}
@@ -813,6 +933,91 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                             />
                         )}
                     </>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-[800px]">
+                        <div className="lg:col-span-8 border-r border-slate-100 dark:border-slate-800 overflow-x-auto rounded-bl-[2rem]">
+                            <CalendarGrid 
+                                currentMonth={currentMonth} 
+                                entries={entries} 
+                                selectedDate={selectedDate}
+                                onDateSelect={setSelectedDate}
+                            />
+                        </div>
+                        <div className="lg:col-span-4 bg-gray-50/30 dark:bg-slate-900/10 rounded-br-[2rem] min-h-[800px]">
+                            <div className="p-8 sticky top-0">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">
+                                            {format(selectedDate, 'EEEE')}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                            {format(selectedDate, 'MMM dd, yyyy')}
+                                        </p>
+                                    </div>
+                                    <div className="h-10 w-10 rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/20 flex items-center justify-center">
+                                        <Clock className="text-white h-5 w-5" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 max-h-[calc(100vh-350px)] overflow-y-auto custom-scrollbar pr-2">
+                                    {entries.filter(e => isSameDay(new Date(e.start_time), selectedDate)).length > 0 ? (
+                                        entries.filter(e => isSameDay(new Date(e.start_time), selectedDate)).map((entry, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className="group p-5 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900 transition-all shadow-sm flex flex-col gap-3"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-black tracking-widest text-blue-500 uppercase">
+                                                        {format(new Date(entry.start_time), 'HH:mm')}
+                                                    </span>
+                                                    <Badge className="bg-slate-50 dark:bg-slate-950 text-slate-400 border-none text-[8px] font-black uppercase tracking-widest">
+                                                        {formatDuration(entry.duration_minutes)}
+                                                    </Badge>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{entry.title}</h4>
+                                                    {entry.customer_name && (
+                                                        <div className="flex items-center gap-1.5 mt-2">
+                                                            <User className="h-3 w-3 text-slate-300" />
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase truncate">{entry.customer_name}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 pt-2 mt-auto border-t border-slate-50 dark:border-slate-800">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => {
+                                                            setSelectedEntry(entry);
+                                                            setShowDetailModal(true);
+                                                        }}
+                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                    >
+                                                        <Eye size={14} className="text-blue-500" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        onClick={() => onEdit(entry)}
+                                                        className="h-8 w-8 p-0 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                    >
+                                                        <Pencil size={14} className="text-slate-400" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-20 text-center space-y-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mx-auto">
+                                                <CalendarIcon className="text-slate-200 h-6 w-6" />
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Nothing logged for this day</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </CardContent>
 

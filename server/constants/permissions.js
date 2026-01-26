@@ -94,6 +94,10 @@ export const PERMISSIONS = Object.freeze({
     TIME_TRACKING_USE: 'time-tracking.use',
     TIME_TRACKING_VIEW_TEAM: 'time-tracking.view-team',
     TIME_TRACKING_MANAGE: 'time-tracking.manage',
+    // Performance Reports
+    PERFORMANCE_REPORTS_VIEW: 'performance_reports.view',
+    PERFORMANCE_REPORTS_VIEW_TEAM: 'performance_reports.view_team',
+    PERFORMANCE_REPORTS_VIEW_ALL: 'performance_reports.view_all',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -192,6 +196,10 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.TIME_TRACKING_USE, resource: 'time-tracking', action: 'use', description: 'Create and manage own time entries and timers' },
     { key: PERMISSIONS.TIME_TRACKING_VIEW_TEAM, resource: 'time-tracking', action: 'view-team', description: 'View team time tracking data' },
     { key: PERMISSIONS.TIME_TRACKING_MANAGE, resource: 'time-tracking', action: 'manage', description: 'Manage time tracking settings and activity types (admin)' },
+    // Performance Reports
+    { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW, resource: 'performance_reports', action: 'view', description: 'View own performance report' },
+    { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW_TEAM, resource: 'performance_reports', action: 'view_team', description: 'View team performance reports' },
+    { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW_ALL, resource: 'performance_reports', action: 'view_all', description: 'View all user performance reports' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
