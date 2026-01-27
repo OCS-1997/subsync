@@ -17,12 +17,12 @@ async function createProject(project) {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 project.project_name,
-                project.project_code || null,
-                project.customer_id || null,
-                project.team_id || null,
-                project.description || null,
+                (project.project_code === '' || project.project_code === undefined) ? null : project.project_code,
+                (project.customer_id === '' || project.customer_id === undefined) ? null : project.customer_id,
+                (project.team_id === '' || project.team_id === undefined) ? null : project.team_id,
+                (project.description === '' || project.description === undefined) ? null : project.description,
                 project.color || '#3b82f6',
-                project.estimated_hours || null,
+                (project.estimated_hours === '' || project.estimated_hours === undefined) ? null : project.estimated_hours,
                 project.is_active !== undefined ? project.is_active : true,
                 project.created_by,
                 currentTime,
@@ -51,27 +51,37 @@ async function updateProject(projectId, data) {
     try {
         const currentTime = getCurrentTime();
 
+        // Sanitize data: convert empty strings to null for optional fields
+        const projectName = data.project_name || null;
+        const projectCode = (data.project_code === '' || data.project_code === undefined) ? null : data.project_code;
+        const customerId = (data.customer_id === '' || data.customer_id === undefined) ? null : data.customer_id;
+        const teamId = (data.team_id === '' || data.team_id === undefined) ? null : data.team_id;
+        const description = (data.description === '' || data.description === undefined) ? null : data.description;
+        const color = data.color || null;
+        const estimatedHours = (data.estimated_hours === '' || data.estimated_hours === undefined) ? null : data.estimated_hours;
+        const isActive = data.is_active !== undefined ? data.is_active : null;
+
         const [result] = await appDB.query(
             `UPDATE time_projects SET
                 project_name = COALESCE(?, project_name),
-                project_code = COALESCE(?, project_code),
-                customer_id = COALESCE(?, customer_id),
-                team_id = COALESCE(?, team_id),
-                description = COALESCE(?, description),
+                project_code = ?,
+                customer_id = ?,
+                team_id = ?,
+                description = ?,
                 color = COALESCE(?, color),
-                estimated_hours = COALESCE(?, estimated_hours),
+                estimated_hours = ?,
                 is_active = COALESCE(?, is_active),
                 updated_at = ?
             WHERE id = ?`,
             [
-                data.project_name,
-                data.project_code,
-                data.customer_id,
-                data.team_id,
-                data.description,
-                data.color,
-                data.estimated_hours,
-                data.is_active,
+                projectName,
+                projectCode,
+                customerId,
+                teamId,
+                description,
+                color,
+                estimatedHours,
+                isActive,
                 currentTime,
                 projectId
             ]

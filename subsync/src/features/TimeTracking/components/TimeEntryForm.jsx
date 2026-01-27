@@ -66,24 +66,61 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
             { label: '10m', value: 10 },
             { label: '15m', value: 15 },
             { label: '20m', value: 20 },
+            { label: '25m', value: 25 },
             { label: '30m', value: 30 },
+            { label: '40m', value: 40 },
             { label: '45m', value: 45 },
+            { label: '50m', value: 50 },
         ],
         standard: [
             { label: '1h', value: 60 },
+            { label: '1.25h', value: 75 },
             { label: '1.5h', value: 90 },
+            { label: '1.75h', value: 105 },
             { label: '2h', value: 120 },
+            { label: '2.25h', value: 135 },
             { label: '2.5h', value: 150 },
+            { label: '2.75h', value: 165 },
             { label: '3h', value: 180 },
+            { label: '3.25h', value: 195 },
             { label: '3.5h', value: 210 },
+            { label: '3.75h', value: 225 },
         ],
         blocks: [
             { label: '4h', value: 240 },
             { label: '5h', value: 300 },
             { label: '6h', value: 360 },
+            { label: '7h', value: 420 },
             { label: '8h', value: 480 },
+            { label: '10h', value: 600 },
+            { label: '12h', value: 720 },
         ]
     };
+
+    const [showAllPresets, setShowAllPresets] = useState(false);
+
+    // Context-aware: Get recommendation based on time of day
+    const getRecommendation = () => {
+        const hour = new Date().getHours();
+        if (hour >= 8 && hour < 11) return 120; // Deep work morning (2h)
+        if (hour >= 11 && hour < 14) return 30; // Quick sync/admin (30m)
+        if (hour >= 14 && hour < 17) return 60; // Afternoon focus (1h)
+        if (hour >= 17 && hour < 20) return 45; // Day wrap-up (45m)
+        return 15; // Late night / Early morning catchup
+    };
+
+    const recommendedValue = getRecommendation();
+
+    const mainPresets = [
+        { label: '15m', value: 15 },
+        { label: '30m', value: 30 },
+        { label: '1h', value: 60 },
+        { label: '2h', value: 120 },
+        { label: '4h', value: 240 },
+        { label: '8h', value: 480 },
+    ];
+
+    const recommendedPreset = mainPresets.find(p => p.value === recommendedValue) || mainPresets[1];
 
     // Helper to calculate end time based on start and duration
     const updateEndTimeFromDuration = (startTime, durationMins) => {
@@ -255,7 +292,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                     </div>
                                 </div>
 
-                                <Popover open={durationPopoverOpen} onOpenChange={setDurationPopoverOpen}>
+                                <Popover open={durationPopoverOpen} onOpenChange={(open) => {
+                                    setDurationPopoverOpen(open);
+                                    if (!open) setShowAllPresets(false);
+                                }}>
                                     <PopoverTrigger asChild>
                                         <Button
                                             type="button"
@@ -266,12 +306,19 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                             <Timer className="h-4 w-4 text-slate-400 group-hover:text-blue-500" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-72 p-4 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-2xl border-gray-100/50 backdrop-blur-xl" align="end">
-                                        <div className="space-y-4">
+                                    <PopoverContent className="w-80 p-5 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-2xl border-gray-100/50 backdrop-blur-xl" align="end">
+                                        <div className="space-y-6">
+                                            {/* Common Presets (Progressive Disclosure) */}
                                             <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Short Bursts</p>
-                                                <div className="grid grid-cols-3 gap-1.5">
-                                                    {durationPresets.short.map(preset => (
+                                                <div className="flex items-center justify-between mb-3 px-1">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Flash Presets</p>
+                                                    <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                                                        <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
+                                                        <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">Smarter Selection</span>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {mainPresets.map(preset => (
                                                         <Button
                                                             key={preset.value}
                                                             type="button"
@@ -281,74 +328,110 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                                                 setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
                                                                 setDurationPopoverOpen(false);
                                                             }}
-                                                            className="h-9 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all uppercase"
+                                                            className={cn(
+                                                                "h-10 text-[10px] font-black rounded-xl transition-all uppercase relative overflow-hidden",
+                                                                preset.value === recommendedValue 
+                                                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700" 
+                                                                    : "bg-gray-100/50 dark:bg-slate-800/50 hover:bg-blue-50 dark:hover:bg-blue-950/30 text-slate-600 dark:text-slate-300"
+                                                            )}
                                                         >
                                                             {preset.label}
+                                                            {preset.value === recommendedValue && (
+                                                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border border-white"></span>
+                                                                </span>
+                                                            )}
                                                         </Button>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Standard Tasks</p>
-                                                <div className="grid grid-cols-3 gap-1.5">
-                                                    {durationPresets.standard.map(preset => (
-                                                        <Button
-                                                            key={preset.value}
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
-                                                                setDurationPopoverOpen(false);
-                                                            }}
-                                                            className="h-9 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all uppercase"
-                                                        >
-                                                            {preset.label}
-                                                        </Button>
-                                                    ))}
+                                            {/* Expandable Power Options */}
+                                            {!showAllPresets ? (
+                                                <div className="flex items-center gap-2 pt-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        onClick={() => setShowAllPresets(true)}
+                                                        className="flex-1 h-11 text-[10px] font-black text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/10 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30"
+                                                    >
+                                                        Show Advanced Grid
+                                                    </Button>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                    <div>
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Short Bursts</p>
+                                                        <div className="grid grid-cols-4 gap-1.5">
+                                                            {durationPresets.short.map(preset => (
+                                                                <Button
+                                                                    key={preset.value}
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    onClick={() => {
+                                                                        setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
+                                                                        setDurationPopoverOpen(false);
+                                                                    }}
+                                                                    className="h-8 text-[9px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-blue-600 hover:text-white transition-all uppercase"
+                                                                >
+                                                                    {preset.label}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
 
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Deep Work Blocks</p>
-                                                <div className="grid grid-cols-2 gap-1.5">
-                                                    {durationPresets.blocks.map(preset => (
-                                                        <Button
-                                                            key={preset.value}
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
-                                                                setDurationPopoverOpen(false);
-                                                            }}
-                                                            className="h-10 text-[10px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-indigo-600 hover:text-white transition-all uppercase"
-                                                        >
-                                                            {preset.label}
-                                                        </Button>
-                                                    ))}
+                                                    <div>
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Deep Work Grid</p>
+                                                        <div className="grid grid-cols-4 gap-1.5">
+                                                            {[...durationPresets.standard, ...durationPresets.blocks].map(preset => (
+                                                                <Button
+                                                                    key={preset.value}
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    onClick={() => {
+                                                                        setFormData(prev => ({ ...prev, duration_minutes: preset.value }));
+                                                                        setDurationPopoverOpen(false);
+                                                                    }}
+                                                                    className="h-8 text-[9px] font-black rounded-lg bg-gray-50/50 dark:bg-slate-800/50 hover:bg-indigo-600 hover:text-white transition-all uppercase"
+                                                                >
+                                                                    {preset.label}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setShowAllPresets(false)}
+                                                        className="w-full text-[9px] font-black text-slate-400 hover:text-blue-500 uppercase tracking-widest"
+                                                    >
+                                                        Collapse to essentials
+                                                    </Button>
                                                 </div>
-                                            </div>
+                                            )}
 
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setFormData(prev => ({ ...prev, duration_minutes: 0 }));
-                                                    setDurationPopoverOpen(false);
-                                                }}
-                                                className="w-full h-10 text-[9px] font-black text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-all uppercase tracking-widest mt-2"
-                                            >
-                                                Reset Duration
-                                            </Button>
+                                            <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setFormData(prev => ({ ...prev, duration_minutes: 0 }));
+                                                        setDurationPopoverOpen(false);
+                                                    }}
+                                                    className="flex-1 h-10 text-[9px] font-black text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-all uppercase tracking-widest"
+                                                >
+                                                    Clear Duration
+                                                </Button>
+                                            </div>
                                         </div>
                                     </PopoverContent>
                                 </Popover>
                             </div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
-                                {formData.duration_minutes > 0 ? `Total: ${formData.duration_minutes} mins` : 'Live Timer Mode'}
+                                {formData.duration_minutes > 0 ? `Total Allocation: ${formData.duration_minutes} mins` : 'Live Tracking Mode'}
                             </p>
                         </div>
 
