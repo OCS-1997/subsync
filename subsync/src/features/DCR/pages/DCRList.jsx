@@ -27,6 +27,8 @@ import { fetchAllUsers } from "../services/dcrAPI";
 import { usePermissions } from "@/context/PermissionsContext";
 import { PERMISSIONS } from "@/constants/permissions";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
+import { parseISO, format } from "date-fns";
 
 export default function DCRList() {
   const navigate = useNavigate();
@@ -397,18 +399,16 @@ export default function DCRList() {
                 {/* Date Range */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">Start Date</label>
-                  <Input
-                    type="date"
-                    value={filterStartDate}
-                    onChange={(e) => setFilterStartDate(e.target.value)}
+                  <DatePicker
+                    date={filterStartDate ? parseISO(filterStartDate) : null}
+                    setDate={(date) => setFilterStartDate(date ? format(date, 'yyyy-MM-dd') : "")}
                   />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">End Date</label>
-                  <Input
-                    type="date"
-                    value={filterEndDate}
-                    onChange={(e) => setFilterEndDate(e.target.value)}
+                  <DatePicker
+                    date={filterEndDate ? parseISO(filterEndDate) : null}
+                    setDate={(date) => setFilterEndDate(date ? format(date, 'yyyy-MM-dd') : "")}
                   />
                 </div>
 
@@ -630,18 +630,16 @@ export default function DCRList() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-600 mb-1 block">Start Date</label>
-                    <Input
-                      type="date"
-                      value={exportStartDate}
-                      onChange={(e) => setExportStartDate(e.target.value)}
+                    <DatePicker
+                        date={exportStartDate ? parseISO(exportStartDate) : null}
+                        setDate={(date) => setExportStartDate(date ? format(date, 'yyyy-MM-dd') : "")}
                     />
                   </div>
                   <div>
                     <label className="text-xs text-gray-600 mb-1 block">End Date</label>
-                    <Input
-                      type="date"
-                      value={exportEndDate}
-                      onChange={(e) => setExportEndDate(e.target.value)}
+                    <DatePicker
+                        date={exportEndDate ? parseISO(exportEndDate) : null}
+                        setDate={(date) => setExportEndDate(date ? format(date, 'yyyy-MM-dd') : "")}
                     />
                   </div>
                 </div>

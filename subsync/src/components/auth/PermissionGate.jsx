@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
+import { getStorageItem } from "@/utils/storage";
 
 export const PermissionGate = ({ children, required, any, redirectTo = "/" }) => {
   const location = useLocation();
@@ -8,10 +9,10 @@ export const PermissionGate = ({ children, required, any, redirectTo = "/" }) =>
   const reduxUser = useSelector((state) => state.auth.user);
   const { permissions, hasPermission, hasAnyPermission } = usePermissions();
 
-  // Fallback to sessionStorage so guards keep working even if Redux state is lost
+  // Fallback to storage so guards keep working even if Redux state is lost
   let sessionUser = null;
   try {
-    const raw = sessionStorage.getItem("subsync_user");
+    const raw = getStorageItem("subsync_user");
     sessionUser = raw ? JSON.parse(raw) : null;
   } catch {
     sessionUser = null;

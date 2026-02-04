@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { CountrySelect } from '@/components/ui/country-select';
 import { PageHeader } from '@/components/ui/breadcrumb';
+import { DatePicker } from "@/components/ui/date-picker";
 import Hamster from '@/components/animations/Hamster.jsx';
 import { createContact, updateContact, fetchContactById, clearCurrentContact, clearError } from '../contactsSlice';
 
@@ -272,14 +273,12 @@ export default function ContactForm() {
                         {/* Date of Birth */}
                         <div>
                             <Label htmlFor="date_of_birth" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Date of Birth</Label>
-                            <Input
-                                id="date_of_birth"
-                                type="date"
-                                value={formData.date_of_birth}
-                                onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                                className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white mt-1"
-                                max={new Date().toISOString().split('T')[0]}
-                            />
+                            <div className="mt-1">
+                                <DatePicker 
+                                    date={formData.date_of_birth} 
+                                    setDate={(newDate) => setFormData(prev => ({ ...prev, date_of_birth: newDate }))} 
+                                />
+                            </div>
                             <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-2 px-1">Used for birthday reminders</p>
                         </div>
 

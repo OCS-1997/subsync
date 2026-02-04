@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo } from "react";
 import { useSelector } from "react-redux";
+import { getStorageItem } from "../utils/storage";
 
 const PermissionsContext = createContext({
   hasPermission: () => false,
@@ -14,9 +15,9 @@ export const PermissionsProvider = ({ children }) => {
     if (Array.isArray(statePermissions) && statePermissions.length > 0) {
       return statePermissions;
     }
-    // Fallback to sessionStorage so permissions survive reloads even if Redux is empty
+    // Fallback to storage so permissions survive reloads even if Redux is empty
     try {
-      const raw = sessionStorage.getItem("subsync_user");
+      const raw = getStorageItem("subsync_user");
       const parsed = raw ? JSON.parse(raw) : null;
       if (parsed && Array.isArray(parsed.permissions)) {
         return parsed.permissions;

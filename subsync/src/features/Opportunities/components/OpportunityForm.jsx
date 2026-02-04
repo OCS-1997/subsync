@@ -18,6 +18,8 @@ import { PageHeader } from "@/components/ui/breadcrumb";
 import { fetchStatuses, fetchOpportunityById, clearCurrentOpportunity } from "../opportunitySlice.js";
 import opportunityService from "../services/opportunityService.js";
 import api from "@/lib/axiosInstance.js";
+import { parseISO, format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const Mandatory = () => <span className="text-red-500 font-bold ml-1">*</span>;
 
@@ -238,9 +240,9 @@ const OpportunityForm = () => {
                     description={isEdit ? `Modifying opportunity ${id}` : "Register a new sales opportunity in the pipeline"}
                     breadcrumbItems={breadcrumbItems}
                 />
-                <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
+                {/* <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
                     {isEdit ? "Edit Opportunity" : "New Opportunity"}
-                </h1>
+                </h1> */}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -446,12 +448,9 @@ const OpportunityForm = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Opportunity Date <Mandatory /></Label>
-                                <Input
-                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
-                                    type="date"
-                                    required
-                                    value={formData.opportunity_date}
-                                    onChange={(e) => setFormData({ ...formData, opportunity_date: e.target.value })}
+                                <DatePicker
+                                    date={formData.opportunity_date ? parseISO(formData.opportunity_date) : null}
+                                    setDate={(date) => setFormData({ ...formData, opportunity_date: date ? format(date, 'yyyy-MM-dd') : '' })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -552,11 +551,9 @@ const OpportunityForm = () => {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Last Interaction Date</Label>
-                                <Input
-                                    className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
-                                    type="date"
-                                    value={formData.last_contacted_at}
-                                    onChange={(e) => setFormData({ ...formData, last_contacted_at: e.target.value })}
+                                <DatePicker
+                                    date={formData.last_contacted_at ? parseISO(formData.last_contacted_at) : null}
+                                    setDate={(date) => setFormData({ ...formData, last_contacted_at: date ? format(date, 'yyyy-MM-dd') : '' })}
                                 />
                             </div>
                         </div>

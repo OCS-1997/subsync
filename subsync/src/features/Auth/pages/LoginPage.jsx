@@ -7,11 +7,13 @@ import { loginUser } from "../authSlice";
 import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
 import * as LucideIcons from "lucide-react";
 import SplashScreen from "../components/SplashScreen";
+import { isPWA, getRememberMe } from "../../../utils/storage";
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(getRememberMe() || isPWA());
   const [festival, setFestival] = useState(null);
 
   const dispatch = useDispatch();
@@ -31,7 +33,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && !isLoading && !error) {
-      const loggedInUsername = (typeof window !== "undefined" && JSON.parse(sessionStorage.getItem('subsync_user'))?.username)
+      const loggedInUsername = (typeof window !== "undefined" && JSON.parse(sessionStorage.getItem('subsync_user') || localStorage.getItem('subsync_user'))?.username)
         || '';
 
       toast.success("Login successful!", {
@@ -50,7 +52,7 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await dispatch(loginUser({ username, password }));
+    await dispatch(loginUser({ username, password, rememberMe }));
   };
 
   const handleKeyDown = (e) => {
@@ -252,6 +254,26 @@ function LoginPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                />
+                <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+                  Keep me logged in
+                  {isPWA() && (
+                    <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                      (Recommended for mobile)
+                    </span>
+                  )}
+                </span>
+              </label>
             </div>
 
             <button

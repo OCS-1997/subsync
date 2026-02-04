@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects = [], categories = [], compact = false }) => {
     const [formData, setFormData] = useState({
@@ -223,37 +224,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
                                 Start Date & Time
                             </Label>
-                            <div className="flex gap-2">
-                                <div className="relative flex-1 group">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                    <Input
-                                        type="date"
-                                        value={format(new Date(formData.start_time), 'yyyy-MM-dd')}
-                                        onChange={(e) => {
-                                            const date = new Date(e.target.value);
-                                            const time = format(new Date(formData.start_time), 'HH:mm');
-                                            const [hours, minutes] = time.split(':');
-                                            date.setHours(parseInt(hours), parseInt(minutes));
-                                            setFormData(prev => ({ ...prev, start_time: date.toISOString() }));
-                                        }}
-                                        className="h-11 pl-10 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 focus:ring-blue-500/20"
-                                    />
-                                </div>
-                                <div className="relative w-32 group">
-                                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                    <Input
-                                        type="time"
-                                        value={format(new Date(formData.start_time), 'HH:mm')}
-                                        onChange={(e) => {
-                                            const [hours, minutes] = e.target.value.split(':');
-                                            const newDate = new Date(formData.start_time);
-                                            newDate.setHours(parseInt(hours), parseInt(minutes));
-                                            setFormData(prev => ({ ...prev, start_time: newDate.toISOString() }));
-                                        }}
-                                        className="h-11 pl-10 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800"
-                                    />
-                                </div>
-                            </div>
+                            <DateTimePicker 
+                                date={formData.start_time} 
+                                setDate={(newDate) => setFormData(prev => ({ ...prev, start_time: newDate }))}
+                            />
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
                                 Started at: {format(new Date(formData.start_time), 'hh:mm a')}
                             </p>

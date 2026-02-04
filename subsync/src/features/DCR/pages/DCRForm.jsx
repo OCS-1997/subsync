@@ -17,6 +17,8 @@ import Hamster from "@/components/animations/Hamster.jsx";
 import { addDcrEntry, editDcrEntry, getDcrById, clearDcrState } from "../dcrSlice";
 import { getDomainDetails, fetchAllDomains, createContactFromDcr } from "../services/dcrAPI";
 import { timeToMinutes, minutesToTime } from "../utils/timeUtils";
+import { parseISO, format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function DCRForm() {
   const navigate = useNavigate();
@@ -345,14 +347,12 @@ export default function DCRForm() {
               <Label htmlFor="date" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">
                 Entry Date <span className="text-red-500 font-bold ml-1">*</span>
               </Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                required
-                className="max-w-[200px] h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
-              />
+              <div className="w-full max-w-[240px]">
+                <DatePicker
+                  date={formData.date ? parseISO(formData.date) : null}
+                  setDate={(date) => setFormData(prev => ({ ...prev, date: date ? format(date, 'yyyy-MM-dd') : '' }))}
+                />
+              </div>
               <p className="text-[10px] font-medium text-gray-400 dark:text-slate-500 ml-1">Default: Today</p>
             </div>
 

@@ -2,8 +2,9 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../lib/axiosInstance';
 
 import { apiLoginUser } from './services/authAPI';
+import { getStorageItem, setStorageItem, clearAuth } from '../../utils/storage';
 
-const storedUser = sessionStorage.getItem('subsync_user');
+const storedUser = getStorageItem('subsync_user');
 
 const parsedUser = storedUser ? JSON.parse(storedUser) : null;
 
@@ -19,14 +20,14 @@ const initialState = {
 
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ username, password }, thunkAPI) => {
+  async ({ username, password, rememberMe }, thunkAPI) => {
     try {
-      const userData = await apiLoginUser(username, password);
+      const userData = await apiLoginUser(username, password, rememberMe);
 
       if (userData.token){
-        sessionStorage.setItem('subsync_token', userData.token);
+        setStorageItem('subsync_token', userData.token);
       }
-      sessionStorage.setItem('subsync_user', JSON.stringify(userData));
+      setStorageItem('subsync_user', JSON.stringify(userData));
       return userData;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message || 'Login failed.');
@@ -60,8 +61,7 @@ const authSlice = createSlice({
       state.role = null;
       state.roleKey = null;
       state.permissions = [];
-      sessionStorage.removeItem('subsync_user');
-      sessionStorage.removeItem('subsync_token');
+      clearAuth();
     },
   },
   extraReducers: (builder) => {
@@ -93,8 +93,7 @@ const authSlice = createSlice({
         state.role = null;
         state.roleKey = null;
         state.permissions = [];
-        sessionStorage.removeItem('subsync_user');
-        sessionStorage.removeItem('subsync_token');
+        clearAuth();
       });
   },
 });

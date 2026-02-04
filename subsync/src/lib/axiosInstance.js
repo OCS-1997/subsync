@@ -1,11 +1,12 @@
 import axios from 'axios';
+import { getStorageItem } from '../utils/storage';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/',
 });
 
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('subsync_token');
+  const token = getStorageItem('subsync_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

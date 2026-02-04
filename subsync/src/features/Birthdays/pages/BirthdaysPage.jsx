@@ -51,7 +51,8 @@ import {
 } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
-import { format, isToday as isDateToday, isTomorrow as isDateTomorrow, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addMonths } from 'date-fns';
+import { format, isToday as isDateToday, isTomorrow as isDateTomorrow, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addMonths, parseISO } from 'date-fns';
+import { DatePicker } from "@/components/ui/date-picker";
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -514,14 +515,12 @@ function BirthdaysPage() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="dob" className="text-right">Birthday</Label>
-                            <Input
-                                id="dob"
-                                type="date"
-                                value={formData.date_of_birth}
-                                onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                                className="col-span-3"
-                                required
-                            />
+                            <div className="col-span-3">
+                                <DatePicker
+                                    date={formData.date_of_birth ? parseISO(formData.date_of_birth) : null}
+                                    setDate={(date) => setFormData({ ...formData, date_of_birth: date ? format(date, 'yyyy-MM-dd') : '' })}
+                                />
+                            </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="type" className="text-right">Type</Label>

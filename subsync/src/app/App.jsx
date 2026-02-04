@@ -10,8 +10,11 @@ import { PermissionsProvider } from '@/context/PermissionsContext.jsx'
 import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
 import InstallPrompt from '@/components/PWA/InstallPrompt'
+import { useTokenRefresh } from '@/hooks/useTokenRefresh'
 
 function App() {
+  // Enable auto-refresh token
+  useTokenRefresh();
   useEffect(() => {
     const handleOffline = () => {
       toast.error('You are offline. Please check your internet connection.', {
