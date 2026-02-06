@@ -263,7 +263,9 @@ function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 accent-blue-600 
+                           hover:border-blue-500 dark:hover:border-blue-400 focus:ring-2 focus:ring-blue-500/20 
+                           transition-all cursor-pointer shadow-sm"
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
                   Keep me logged in

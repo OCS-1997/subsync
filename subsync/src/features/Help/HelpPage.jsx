@@ -58,7 +58,8 @@ import {
     Monitor,
     Share,
     MoreVertical,
-    Download
+    Download,
+    Clock
 } from "lucide-react";
 import { usePreferenceOrder } from "@/hooks/usePreferenceOrder.js";
 
@@ -307,6 +308,24 @@ export default function HelpPage() {
             description: "Automated daily backups with manual trigger support. Restore specific versions to maintain data integrity.",
             color: "red"
         },
+        {
+            title: "Time Tracking",
+            icon: <Clock className="w-6 h-6" />,
+            description: "Track billable hours, manage timers, and generate detailed time reports for projects and clients.",
+            color: "emerald"
+        },
+        {
+            title: "Asset Management",
+            icon: <Monitor className="w-6 h-6" />,
+            description: "Maintain inventory of hardware and software assets with warranty tracking and assignment history.",
+            color: "purple"
+        },
+        {
+            title: "Settings & Configuration",
+            icon: <Settings className="w-6 h-6" />,
+            description: "Customize system preferences, manage users, roles, teams, and configure appearance settings.",
+            color: "slate"
+        },
     ];
 
     const { orderedItems: modules, reorderItems: setModules, isLoading } = usePreferenceOrder('help_modules_order', defaultModules, 'title');
@@ -357,6 +376,18 @@ export default function HelpPage() {
         {
             question: "How do I reorder the sidebar menu?",
             answer: "The sidebar navigation is fully customizable! Simply click and hold any sidebar icon, then drag it to your preferred position. Your custom order is saved automatically to your profile and will persist across sessions."
+        },
+        {
+            question: "How does time tracking work?",
+            answer: "You can track time using the built-in timer or manually create time entries. Start a timer from the Time Tracking module or use Ctrl+K to quickly 'Start Timer'. All entries can be marked as billable or non-billable and can be associated with customers and projects for detailed reporting."
+        },
+        {
+            question: "Can I customize the appearance of the application?",
+            answer: "Yes! Navigate to Settings > Appearance to customize your experience. You can choose from multiple color themes (Blue, Purple, Green, etc.) and select different font families (Inter, Roboto, Poppins, etc.). Changes apply instantly without requiring a page reload."
+        },
+        {
+            question: "How do I manage company assets?",
+            answer: "The Asset Management module allows you to track hardware and software assets. You can record purchase dates, warranty information, assign assets to users, and maintain a complete history of assignments. Use the search and filter features to quickly find specific assets."
         }
     ];
 
@@ -398,7 +429,7 @@ export default function HelpPage() {
 
                     {isLoading && modules.length === 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {[...Array(8)].map((_, i) => (
+                            {[...Array(11)].map((_, i) => (
                                 <div key={i} className="h-40 bg-white dark:bg-slate-900 rounded-3xl animate-pulse border border-slate-200 dark:border-slate-800" />
                             ))}
                         </div>
@@ -625,7 +656,7 @@ export default function HelpPage() {
                                 }}
                                 className="cursor-pointer relative"
                             >
-                                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">Stable Build 1.9.4</Badge>
+                                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">Stable Build 2.0.1</Badge>
                                 {showConfetti && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 0 }}

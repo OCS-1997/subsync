@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Tag, LayoutGrid, Clock, DollarSign, ListOrdered } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, LayoutGrid, Clock, DollarSign, ListOrdered, Eye, ShieldCheck, History } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
 import { cn } from "@/lib/utils";
@@ -28,6 +28,9 @@ const CategoryManagement = () => {
         is_active: true,
         display_order: 0
     });
+    
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
+    const [viewingCategory, setViewingCategory] = useState(null);
     
     // Predefined vibrant colors for categories
     const colorPresets = [
@@ -98,6 +101,11 @@ const CategoryManagement = () => {
             display_order: category.display_order || 0
         });
         setDialogOpen(true);
+    };
+
+    const handleView = (category) => {
+        setViewingCategory(category);
+        setViewDialogOpen(true);
     };
 
     const resetForm = () => {
@@ -288,6 +296,130 @@ const CategoryManagement = () => {
                             </form>
                         </DialogContent>
                     </Dialog>
+
+                    {/* View Category Detail Dialog */}
+                    <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+                        <DialogContent className="max-w-xl p-0 dark:bg-slate-900 dark:border-slate-800 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+                            {viewingCategory && (
+                                <>
+                                    <div 
+                                        className="h-32 w-full relative"
+                                        style={{ backgroundColor: viewingCategory.color }}
+                                    >
+                                        <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />
+                                        <div className="absolute -bottom-10 left-10 h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 p-1 shadow-xl">
+                                            <div 
+                                                className="w-full h-full rounded-[1.25rem] flex items-center justify-center"
+                                                style={{ backgroundColor: `${viewingCategory.color}20` }}
+                                            >
+                                                <Tag className="w-8 h-8" style={{ color: viewingCategory.color }} />
+                                            </div>
+                                        </div>
+                                        
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm"
+                                            onClick={() => setViewDialogOpen(false)}
+                                            className="absolute top-6 right-6 h-8 w-8 p-0 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-md"
+                                        >
+                                            <Plus className="rotate-45 h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="p-10 pt-16 space-y-8">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                                                    {viewingCategory.type_name}
+                                                </h2>
+                                                <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none font-mono text-[10px] h-6">
+                                                    {viewingCategory.type_code}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                {viewingCategory.is_active ? (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                                                        <ShieldCheck className="w-3 h-3" /> Active Category
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                        Inactive
+                                                    </span>
+                                                )}
+                                                <span className="text-slate-300">|</span>
+                                                <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                    Order: {viewingCategory.display_order}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-5 rounded-3xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 space-y-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Usage</p>
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="w-4 h-4 text-blue-500" />
+                                                    <p className="text-xl font-black text-slate-900 dark:text-white">
+                                                        {viewingCategory.total_minutes ? 
+                                                            `${Math.floor(viewingCategory.total_minutes / 60)}h ${viewingCategory.total_minutes % 60}m` : 
+                                                            '0h 00m'
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="p-5 rounded-3xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 space-y-1">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Billing Policy</p>
+                                                <div className="flex items-center gap-2">
+                                                    <DollarSign className={cn("w-4 h-4", viewingCategory.is_billable_default ? "text-emerald-500" : "text-slate-400")} />
+                                                    <p className="text-xl font-black text-slate-900 dark:text-white">
+                                                        {viewingCategory.is_billable_default ? 'Billable' : 'Non-Billable'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                                <ListOrdered className="w-3 h-3 text-blue-500" />
+                                                Description & Guidelines
+                                            </Label>
+                                            <div className="p-6 rounded-[2rem] bg-gray-50/50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800">
+                                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                    {viewingCategory.description || 'No description provided for this category.'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                                <History className="w-3.5 h-3.5" />
+                                                Created {viewingCategory.created_at ? new Date(viewingCategory.created_at).toLocaleDateString() : 'N/A'}
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setViewDialogOpen(false);
+                                                        handleEdit(viewingCategory);
+                                                    }}
+                                                    className="rounded-xl font-black text-[9px] uppercase tracking-widest h-10 px-6 border-slate-200"
+                                                >
+                                                    Modify
+                                                </Button>
+                                                <Button 
+                                                    size="sm"
+                                                    onClick={() => setViewDialogOpen(false)}
+                                                    className="rounded-xl font-black text-[9px] uppercase tracking-widest h-10 px-6 bg-slate-900 text-white"
+                                                >
+                                                    Close
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </CardHeader>
             <CardContent className="p-8">
@@ -377,6 +509,14 @@ const CategoryManagement = () => {
                                         </TableCell>
                                         <TableCell className="py-5 text-right px-6">
                                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleView(category)}
+                                                    className="h-9 w-9 p-0 rounded-xl hover:bg-white dark:hover:bg-slate-950 border-gray-100 dark:border-slate-800 shadow-sm"
+                                                >
+                                                    <Eye className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                                                </Button>
                                                 <Button 
                                                     variant="outline" 
                                                     size="sm" 

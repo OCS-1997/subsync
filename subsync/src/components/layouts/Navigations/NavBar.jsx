@@ -1,4 +1,4 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock, LayoutDashboard, Users as UsersIcon } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock, LayoutDashboard, Users as UsersIcon, Palette } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,8 @@ import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.
 import BirthdayNavWidget from "@/features/Dashboard/components/BirthdayNavWidget.jsx";
 import CommandPalette from "@/components/CommandPalette/CommandPalette.jsx";
 import QuickTimerButton from "@/components/QuickTimer/QuickTimerButton.jsx";
+import { useTheme } from "@/context/ThemeContext";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -37,6 +39,7 @@ function NavBar({ toggleSidebar }) {
   const loginIp = user?.ip;
   const loginTime = user?.loginTime;
   const { hasPermission } = usePermissions();
+  const { theme, setTheme, themes } = useTheme();
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -177,7 +180,7 @@ function NavBar({ toggleSidebar }) {
 
               {/* Profile Link */}
               <Link
-                to="settings/profile"
+                to={`/${user?.username}/dashboard/settings/profile`}
                 className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
                 onClick={() => setOpen(false)}
               >
@@ -202,7 +205,7 @@ function NavBar({ toggleSidebar }) {
                 ) : (
                   <Link
                     key={item.key}
-                    to={item.path}
+                    to={`/${user?.username}/dashboard/${item.path}`}
                     className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
                     onClick={() => setOpen(false)}
                   >
@@ -254,7 +257,7 @@ function NavBar({ toggleSidebar }) {
               <ul className="flex flex-col space-y-4 text-sm font-medium">
                 {hasPermission(PERMISSIONS.TAXES_VIEW) && (
                   <Link
-                    to="settings/taxes/tax-rates"
+                    to={`/${user?.username}/dashboard/settings/taxes/tax-rates`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -263,11 +266,9 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                
-
                 {hasPermission(PERMISSIONS.USERS_VIEW) && (
                   <Link
-                    to="settings/user-management"
+                    to={`/${user?.username}/dashboard/settings/user-management`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -278,7 +279,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.TEAMS_MANAGE) && (
                   <Link
-                    to="settings/teams"
+                    to={`/${user?.username}/dashboard/settings/teams`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -287,11 +288,9 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                
-
                 {hasPermission(PERMISSIONS.ROLES_VIEW) && (
                   <Link
-                    to="settings/roles"
+                    to={`/${user?.username}/dashboard/settings/roles`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -302,7 +301,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.DASHBOARD_CONFIGURE) && (
                   <Link
-                    to="settings/dashboard-settings"
+                    to={`/${user?.username}/dashboard/settings/dashboard-settings`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -313,7 +312,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.REMINDER_POLICIES_VIEW) && (
                   <Link
-                    to="settings/reminder-policies"
+                    to={`/${user?.username}/dashboard/settings/reminder-policies`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -324,7 +323,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.EMAIL_TEMPLATES_VIEW) && (
                   <Link
-                    to="settings/email-templates"
+                    to={`/${user?.username}/dashboard/settings/email-templates`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -335,7 +334,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.ACTIVITY_LOGS_VIEW) && (
                   <Link
-                    to="settings/activity-logs"
+                    to={`/${user?.username}/dashboard/settings/activity-logs`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -346,7 +345,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.NOTIFICATION_LOGS_VIEW) && (
                   <Link
-                    to="settings/notification-logs"
+                    to={`/${user?.username}/dashboard/settings/notification-logs`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -357,7 +356,7 @@ function NavBar({ toggleSidebar }) {
 
                 {hasPermission(PERMISSIONS.QUICK_TOOLS_MANAGE) && (
                   <Link
-                    to="settings/quick-tools"
+                    to={`/${user?.username}/dashboard/settings/quick-tools`}
                     onClick={() => setSettingsOpen(false)}
                     className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
                   >
@@ -379,7 +378,52 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
-                
+                {/* Quick Appearance Section */}
+                <div className="pt-6 mt-6 border-t border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Quick Themes</label>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 rounded-full"
+                      onClick={() => {
+                        const eligible = themes.filter(t => t.id !== 'system' && t.id !== 'custom');
+                        const random = eligible[Math.floor(Math.random() * eligible.length)];
+                        setTheme(random.id);
+                      }}
+                      title="Random Theme"
+                    >
+                      <Palette className="h-3.5 w-3.5 text-purple-500" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                    {themes.filter(t => ["light", "dark", "champagne", "midnight-gold", "soft-lavender"].includes(t.id)).map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        className={cn(
+                          "h-8 rounded-lg border-2 transition-all hover:scale-110",
+                          theme === t.id ? "border-blue-500 shadow-lg" : "border-border hover:border-muted-foreground"
+                        )}
+                        style={{ backgroundColor: t.id === 'system' ? 'transparent' : `hsl(${t.tokens["--background"]})` }}
+                        title={t.name}
+                      >
+                        <div 
+                          className="h-2 w-4 mx-auto mt-2 rounded-full" 
+                          style={{ backgroundColor: t.id === 'system' ? 'gray' : `hsl(${t.tokens["--primary"]})` }} 
+                        />
+                      </button>
+                    ))}
+                    <Link 
+                      to={`/${user?.username}/dashboard/settings/appearance`}
+                      onClick={() => setSettingsOpen(false)}
+                      className="h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:bg-accent transition-all hover:border-solid"
+                      title="More Appearance Settings"
+                    >
+                      <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Link>
+                  </div>
+                </div>
               </ul>
             </motion.div>
           </motion.div>

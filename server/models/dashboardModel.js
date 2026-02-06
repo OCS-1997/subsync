@@ -757,17 +757,18 @@ export async function getSystemTimeStats(period = 'today') {
             period,
             startDate,
             endDate,
-            overall: {
-                totalMinutes,
-                totalHours: parseFloat((totalMinutes / 60).toFixed(2)),
-                entryCount: parseInt(overallStats[0]?.entry_count) || 0,
-                activeUsers,
-                avgMinutesPerUser: parseFloat((totalMinutes / activeUsers).toFixed(2)),
-                avgHoursPerUser: parseFloat((totalMinutes / activeUsers / 60).toFixed(2)),
-                avgEntryMinutes: parseFloat(overallStats[0]?.avg_entry_minutes || 0).toFixed(2),
-                billableMinutes: parseInt(overallStats[0]?.billable_minutes) || 0,
-                billableHours: parseFloat((overallStats[0]?.billable_minutes / 60).toFixed(2))
-            },
+            // Flatten stats to match user stats structure
+            totalMinutes,
+            totalHours: parseFloat((totalMinutes / 60).toFixed(2)),
+            entryCount: parseInt(overallStats[0]?.entry_count) || 0,
+            billableMinutes: parseInt(overallStats[0]?.billable_minutes) || 0,
+            billableHours: parseFloat(((overallStats[0]?.billable_minutes || 0) / 60).toFixed(2)),
+            activeTimer: null, // System-wide stats don't have active timer
+            // Additional system-wide fields
+            activeUsers,
+            avgMinutesPerUser: parseFloat((totalMinutes / activeUsers).toFixed(2)),
+            avgHoursPerUser: parseFloat((totalMinutes / activeUsers / 60).toFixed(2)),
+            avgEntryMinutes: parseFloat(overallStats[0]?.avg_entry_minutes || 0).toFixed(2),
             activityBreakdown: activityBreakdown.map(a => ({
                 typeName: a.type_name,
                 color: a.color,

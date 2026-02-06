@@ -150,8 +150,20 @@ async function getTimeEntriesController(req, res) {
             sort_order
         } = req.query;
 
-        // If user doesn't have team view permission, force userId to their own
-        const filterUserId = hasTeamView ? user_id : userId;
+        // If user doesn't have team view permission, ALWAYS enforce their own userId
+        // Admins with team view can optionally filter by user_id or see all entries
+        let filterUserId;
+        if (hasTeamView) {
+            // Admin can filter by specific user or see all (undefined)
+            filterUserId = user_id;
+        } else {
+            // Regular users MUST only see their own entries
+            if (!userId) {
+                return res.status(400).json({ error: "User ID not found in session" });
+            }
+            filterUserId = userId;
+        }
+        
         // If user doesn't have team view permission, ignore team_id filter
         const filterTeamId = hasTeamView ? team_id : null;
 

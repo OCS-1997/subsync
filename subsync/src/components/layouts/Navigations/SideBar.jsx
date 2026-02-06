@@ -76,8 +76,8 @@ function SortableItem({ item, active, isOpen, username, toggleSidebar }) {
             }}
             className={`flex items-center gap-3 py-1.5 px-3 rounded-xl transition-all duration-300 relative
             ${active
-                ? 'bg-white/20 shadow-lg text-white font-bold'
-                : 'text-blue-100 hover:text-white hover:bg-white/10'}
+                ? 'bg-sidebar-accent shadow-lg text-sidebar-accent-foreground font-bold'
+                : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'}
             ${active || !isOpen ? '' : 'hover:translate-x-1'}
             active:scale-[0.98]`}
           >
@@ -86,7 +86,7 @@ function SortableItem({ item, active, isOpen, username, toggleSidebar }) {
               {...listeners}
               className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg transition-all duration-300
               ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
-              ${active ? 'text-white' : 'group-hover:bg-white/10'}`}
+              ${active ? 'text-sidebar-accent-foreground' : 'group-hover:bg-sidebar-accent/30'}`}
             >
               {item.icon_type === 'material' ? (
                 <span className={`material-symbols-outlined text-[22px] ${active ? 'fill-1' : 'opacity-80'}`}>
@@ -107,7 +107,7 @@ function SortableItem({ item, active, isOpen, username, toggleSidebar }) {
             {active && isOpen && (
               <motion.div
                 layoutId="activeSideIndicator"
-                className="absolute right-0 top-2 bottom-2 w-1 bg-white rounded-l-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                className="absolute right-0 top-2 bottom-2 w-1 bg-sidebar-accent-foreground rounded-l-full shadow-lg"
                 initial={{ opacity: 0, x: 5 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
@@ -193,18 +193,18 @@ function SideBar({ isOpen, toggleSidebar }) {
 
       <aside
         ref={sidebarRef}
-        className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-gradient-to-b from-blue-600 via-blue-700 to-indigo-950 text-white dark:text-slate-100 
+        className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-sidebar text-sidebar-foreground
           transition-all duration-300 ease-in-out
           ${isOpen ? 'w-64' : 'w-20'}
           lg:relative lg:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          overflow-y-auto overflow-x-hidden flex flex-col shadow-2xl shadow-blue-500/20`}
+          overflow-y-auto overflow-x-hidden flex flex-col shadow-2xl border-r border-sidebar-border`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-white/10 dark:border-white/5 h-20">
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-20">
           {isOpen ? (
             <div className="flex items-center justify-between w-full">
               <div
-                className="flex items-center gap-3 px-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
+                className="flex items-center gap-3 px-1 cursor-pointer hover:bg-sidebar-accent/30 rounded-xl transition-all duration-200 group/header"
                 onClick={toggleSidebar}
                 role="button"
                 tabIndex={0}
@@ -215,7 +215,7 @@ function SideBar({ isOpen, toggleSidebar }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black tracking-tighter leading-none">OCS</span>
-                  <span className="text-[10px] text-blue-200 mt-1 uppercase tracking-widest font-black opacity-80">CRM Platform</span>
+                  <span className="text-[10px] text-sidebar-foreground/60 mt-1 uppercase tracking-widest font-black">CRM Platform</span>
                 </div>
               </div>
 
@@ -223,20 +223,20 @@ function SideBar({ isOpen, toggleSidebar }) {
                 variant="ghost"
                 size="icon"
                 onClick={toggleSidebar}
-                className="lg:hidden text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+                className="lg:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-full"
               >
                 <X className="h-5 w-5" />
               </Button>
             </div>
           ) : (
             <div
-              className="w-full flex justify-center py-1 cursor-pointer hover:bg-white/5 rounded-xl transition-all duration-200 group/header"
+              className="w-full flex justify-center py-1 cursor-pointer hover:bg-sidebar-accent/30 rounded-xl transition-all duration-200 group/header"
               onClick={toggleSidebar}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
             >
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
+              <div className="w-12 h-12 bg-sidebar-accent/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-sidebar-border p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
                 <img src="/pwa-192x192.png" alt="S" className="w-full h-full object-contain" />
               </div>
             </div>
@@ -249,7 +249,7 @@ function SideBar({ isOpen, toggleSidebar }) {
               {isLoading && orderedItems.length === 0 ? (
                 <div className="space-y-2">
                   {[...Array(10)].map((_, i) => (
-                    <div key={i} className="h-10 bg-white/5 rounded-xl animate-pulse mx-2" />
+                    <div key={i} className="h-10 bg-sidebar-accent/20 rounded-xl animate-pulse mx-2" />
                   ))}
                 </div>
               ) : (
@@ -279,16 +279,16 @@ function SideBar({ isOpen, toggleSidebar }) {
           </ul>
         </nav>
 
-        <div className="mt-auto border-t border-white/10 dark:border-white/5 p-4 bg-black/5 backdrop-blur-sm">
+        <div className="mt-auto border-t border-sidebar-border p-4 bg-sidebar-accent/10 backdrop-blur-sm">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-blue-100 hover:text-white hover:bg-white/10 transition-all duration-300 group`}
+                  className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-300 group`}
                   onClick={handleOpenCommandPalette}
                 >
-                  <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl group-hover:bg-white/5 transition-colors">
+                  <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl group-hover:bg-sidebar-accent/30 transition-colors">
                     <Command className={`h-5 w-5 ${isOpen ? '' : 'animate-pulse'}`} />
                   </div>
                   {isOpen && <span className="font-bold text-[10px] uppercase tracking-wider">Command Palette</span>}

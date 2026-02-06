@@ -10,6 +10,7 @@ import {
     SelectTrigger, 
     SelectValue 
 } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
 import { 
     Pencil, Trash2, Search, Download, Clock, Briefcase, User, Filter, 
     RotateCcw, X, Calendar as CalendarIcon, Eye, List, CalendarDays, 
@@ -335,14 +336,24 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [entryToDelete, setEntryToDelete] = useState(null);
+    const [fromDatePopoverOpen, setFromDatePopoverOpen] = useState(false);
+    const [toDatePopoverOpen, setToDatePopoverOpen] = useState(false);
+    const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
     useEffect(() => {
         if (viewType === 'calendar') {
-            const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-            const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
-            setFilters(prev => ({ ...prev, startDate: start, endDate: end, limit: 1000 }));
+            // Only auto-set dates if no custom date range is set
+            if (!filters.startDate && !filters.endDate) {
+                const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+                const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+                setFilters(prev => ({ ...prev, startDate: start, endDate: end, limit: 1000 }));
+            } else {
+                setFilters(prev => ({ ...prev, limit: 1000 }));
+            }
         } else {
-            setFilters(prev => ({ ...prev, startDate: '', endDate: '', limit: 20 }));
+            if (!filters.startDate && !filters.endDate) {
+                setFilters(prev => ({ ...prev, limit: 20 }));
+            }
         }
     }, [viewType, currentMonth]);
 
@@ -607,7 +618,16 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     }));
 
     const availableProjects = projects.filter(p => !filters.customer_id || p.customer_id === filters.customer_id);
-    const hasActiveFilters = filters.search || filters.customer_id || filters.project_id || filters.activity_type_id || filters.is_billable;
+    
+    // Check if there are active filters (including date range)
+    const hasCustomDateRange = viewType === 'table' 
+        ? (filters.startDate || filters.endDate)
+        : (filters.startDate && filters.endDate && 
+           (filters.startDate !== format(startOfMonth(currentMonth), 'yyyy-MM-dd') || 
+            filters.endDate !== format(endOfMonth(currentMonth), 'yyyy-MM-dd')));
+    
+    const hasActiveFilters = filters.search || filters.customer_id || filters.project_id || 
+                              filters.activity_type_id || filters.is_billable || hasCustomDateRange;
 
     return (
         <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] border-gray-100 shadow-sm transition-all duration-300 mb-12">
@@ -658,9 +678,27 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 >
                                     <ChevronLeft size={16} className="text-slate-400" />
                                 </button>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] w-32 text-center">
-                                    {format(currentMonth, 'MMMM yyyy')}
-                                </span>
+                                <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
+                                    <PopoverTrigger asChild>
+                                        <button className="text-[10px] font-black uppercase tracking-[0.2em] w-32 text-center hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg p-2 transition-all">
+                                            {format(currentMonth, 'MMMM yyyy')}
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="center">
+                                        <Calendar
+                                            mode="single"
+                                            selected={currentMonth}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setCurrentMonth(date);
+                                                    setMonthPickerOpen(false);
+                                                }
+                                            }}
+                                            initialFocus
+                                            className="rounded-xl"
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                                 <button 
                                     onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                                     className="p-2 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl transition-all"
@@ -705,7 +743,12 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
 
                 {showAdvancedFilters && (
                     <div className="mt-6 space-y-4 p-6 bg-white dark:bg-slate-950 rounded-2xl border border-gray-100 dark:border-slate-800">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className={cn(
+                            "grid gap-4",
+                            viewType === 'table' 
+                                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                        )}>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Search</label>
                                 <div className="relative group">
@@ -866,22 +909,125 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                 </Select>
                             </div>
 
+                            {viewType === 'table' && (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Records per Page</label>
+                                    <Select
+                                        value={filters.limit.toString()}
+                                        onValueChange={(value) => setFilters(prev => ({ ...prev, limit: parseInt(value), page: 1 }))}
+                                    >
+                                        <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800">
+                                            <SelectValue placeholder="Page size" />
+                                        </SelectTrigger>
+                                        <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
+                                            <SelectItem value="10" className="text-xs font-bold">10 Records</SelectItem>
+                                            <SelectItem value="20" className="text-xs font-bold">20 Records</SelectItem>
+                                            <SelectItem value="50" className="text-xs font-bold">50 Records</SelectItem>
+                                            <SelectItem value="100" className="text-xs font-bold">100 Records</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Records per Page</label>
-                                <Select
-                                    value={filters.limit.toString()}
-                                    onValueChange={(value) => setFilters(prev => ({ ...prev, limit: parseInt(value), page: 1 }))}
-                                >
-                                    <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800">
-                                        <SelectValue placeholder="Page size" />
-                                    </SelectTrigger>
-                                    <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
-                                        <SelectItem value="10" className="text-xs font-bold">10 Records</SelectItem>
-                                        <SelectItem value="20" className="text-xs font-bold">20 Records</SelectItem>
-                                        <SelectItem value="50" className="text-xs font-bold">50 Records</SelectItem>
-                                        <SelectItem value="100" className="text-xs font-bold">100 Records</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">From Date</label>
+                                <Popover open={fromDatePopoverOpen} onOpenChange={setFromDatePopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800"
+                                        >
+                                            <span className={cn("truncate", !filters.startDate && "text-slate-400")}>
+                                                {filters.startDate ? format(new Date(filters.startDate), 'MMM dd, yyyy') : 'Select start date...'}
+                                            </span>
+                                            <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={filters.startDate ? new Date(filters.startDate) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setFilters(prev => ({ ...prev, startDate: format(date, 'yyyy-MM-dd'), page: 1 }));
+                                                    setFromDatePopoverOpen(false);
+                                                }
+                                            }}
+                                            initialFocus
+                                            className="rounded-xl"
+                                        />
+                                        {filters.startDate && (
+                                            <div className="p-3 border-t border-slate-100 dark:border-slate-800">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setFilters(prev => ({ ...prev, startDate: '', page: 1 }));
+                                                        setFromDatePopoverOpen(false);
+                                                    }}
+                                                    className="w-full h-9 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                                >
+                                                    <X className="mr-2 h-3 w-3" />
+                                                    Clear Date
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">To Date</label>
+                                <Popover open={toDatePopoverOpen} onOpenChange={setToDatePopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800"
+                                        >
+                                            <span className={cn("truncate", !filters.endDate && "text-slate-400")}>
+                                                {filters.endDate ? format(new Date(filters.endDate), 'MMM dd, yyyy') : 'Select end date...'}
+                                            </span>
+                                            <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={filters.endDate ? new Date(filters.endDate) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setFilters(prev => ({ ...prev, endDate: format(date, 'yyyy-MM-dd'), page: 1 }));
+                                                    setToDatePopoverOpen(false);
+                                                }
+                                            }}
+                                            disabled={(date) => {
+                                                // Disable dates before the start date if start date is set
+                                                if (filters.startDate) {
+                                                    return date < new Date(filters.startDate);
+                                                }
+                                                return false;
+                                            }}
+                                            initialFocus
+                                            className="rounded-xl"
+                                        />
+                                        {filters.endDate && (
+                                            <div className="p-3 border-t border-slate-100 dark:border-slate-800">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setFilters(prev => ({ ...prev, endDate: '', page: 1 }));
+                                                        setToDatePopoverOpen(false);
+                                                    }}
+                                                    className="w-full h-9 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                                >
+                                                    <X className="mr-2 h-3 w-3" />
+                                                    Clear Date
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
 

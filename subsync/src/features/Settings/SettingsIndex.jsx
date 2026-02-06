@@ -19,7 +19,8 @@ import {
     Clock,
     X,
     LayoutGrid,
-    Navigation
+    Navigation,
+    Palette
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,15 @@ const SettingsIndex = () => {
                     icon: User,
                     path: "profile",
                     color: "text-blue-500",
+                    permission: null
+                },
+                {
+                    id: 'appearance',
+                    title: "Appearance & Themes",
+                    description: "Personalize your UI",
+                    icon: Palette,
+                    path: "appearance",
+                    color: "text-purple-500",
                     permission: null
                 }
             ]

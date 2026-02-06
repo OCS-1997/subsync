@@ -66,7 +66,9 @@ function Taxes() {
             <div className="flex-grow flex flex-col bg-white dark:bg-slate-950/20 overflow-hidden">
                 <main className="flex-grow p-4 lg:p-10">
                     <div className="max-w-6xl mx-auto">
-                        <Outlet />
+                        <div key={location.key}>
+                            <Outlet />
+                        </div>
                     </div>
                 </main>
             </div>

@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Clock, Play, Save, Check, ChevronsUpDown, Calendar, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 
@@ -214,6 +214,18 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
     const selectedCustomer = customers.find(c => c.customer_id === formData.customer_id);
     const availableProjects = projects.filter(p => !formData.customer_id || p.customer_id === formData.customer_id);
+    
+    // Sort for predictable search results
+    const sortedCustomers = React.useMemo(() => 
+        [...customers].sort((a, b) => (a.display_name || '').localeCompare(b.display_name || '')),
+        [customers]
+    );
+
+    const sortedProjects = React.useMemo(() => 
+        [...availableProjects].sort((a, b) => (a.project_name || '').localeCompare(b.project_name || '')),
+        [availableProjects]
+    );
+
     const selectedProject = projects.find(p => p.id === formData.project_id);
 
     const formContent = (
@@ -451,28 +463,30 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
-                                        <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
-                                        <CommandGroup className="max-h-64 overflow-y-auto p-2">
-                                            {customers.map((c) => (
-                                                <CommandItem
-                                                    key={c.customer_id}
-                                                    value={c.display_name}
-                                                    onSelect={() => {
-                                                        // Allow unselecting by clicking on the same customer
-                                                        if (formData.customer_id === c.customer_id) {
-                                                            setFormData(prev => ({ ...prev, customer_id: '', project_id: '' }));
-                                                        } else {
-                                                            setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
-                                                        }
-                                                        setCustomerPopoverOpen(false);
-                                                    }}
-                                                    className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0")} />
-                                                    <span className="font-bold text-sm tracking-tight">{c.display_name}</span>
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
+                                        <CommandList className="max-h-64 overflow-y-auto custom-scrollbar">
+                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
+                                            <CommandGroup className="p-2">
+                                                {sortedCustomers.map((c) => (
+                                                    <CommandItem
+                                                        key={c.customer_id}
+                                                        value={c.display_name}
+                                                        onSelect={() => {
+                                                            // Allow unselecting by clicking on the same customer
+                                                            if (formData.customer_id === c.customer_id) {
+                                                                setFormData(prev => ({ ...prev, customer_id: '', project_id: '' }));
+                                                            } else {
+                                                                setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
+                                                            }
+                                                            setCustomerPopoverOpen(false);
+                                                        }}
+                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0")} />
+                                                        <span className="font-bold text-sm tracking-tight">{c.display_name}</span>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
                                     </Command>
                                 </PopoverContent>
                             </Popover>
@@ -509,34 +523,36 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
-                                        <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
-                                        <CommandGroup className="max-h-64 overflow-y-auto p-2">
-                                            {availableProjects.map((p) => (
-                                                <CommandItem
-                                                    key={p.id}
-                                                    value={p.project_name}
-                                                    onSelect={() => {
-                                                        // Allow unselecting by clicking on the same project
-                                                        if (formData.project_id === p.id) {
-                                                            setFormData(prev => ({ ...prev, project_id: '' }));
-                                                        } else {
-                                                            setFormData(prev => ({ ...prev, project_id: p.id }));
-                                                        }
-                                                        setProjectPopoverOpen(false);
-                                                    }}
-                                                    className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", formData.project_id === p.id ? "opacity-100" : "opacity-0")} />
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <div 
-                                                            className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
-                                                            style={{ backgroundColor: p.color || '#3b82f6' }} 
-                                                        />
-                                                        <span className="font-bold text-sm tracking-tight">{p.project_name}</span>
-                                                    </div>
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
+                                        <CommandList className="max-h-64 overflow-y-auto custom-scrollbar">
+                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
+                                            <CommandGroup className="p-2">
+                                                {sortedProjects.map((p) => (
+                                                    <CommandItem
+                                                        key={p.id}
+                                                        value={p.project_name}
+                                                        onSelect={() => {
+                                                            // Allow unselecting by clicking on the same project
+                                                            if (formData.project_id === p.id) {
+                                                                setFormData(prev => ({ ...prev, project_id: '' }));
+                                                            } else {
+                                                                setFormData(prev => ({ ...prev, project_id: p.id }));
+                                                            }
+                                                            setProjectPopoverOpen(false);
+                                                        }}
+                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", formData.project_id === p.id ? "opacity-100" : "opacity-0")} />
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                            <div 
+                                                                className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
+                                                                style={{ backgroundColor: p.color || '#3b82f6' }} 
+                                                            />
+                                                            <span className="font-bold text-sm tracking-tight">{p.project_name}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
                                     </Command>
                                 </PopoverContent>
                             </Popover>
@@ -548,23 +564,48 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                 Activity Type <span className="text-red-500">*</span>
                             </Label>
                             <Select
-                                value={formData.activity_type_id?.toString()}
+                                value={formData.activity_type_id ? String(formData.activity_type_id) : ""}
                                 onValueChange={(value) => setFormData(prev => ({ ...prev, activity_type_id: parseInt(value) }))}
                             >
                                 <SelectTrigger className="h-11 rounded-xl px-4 text-sm font-bold bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800">
                                     <SelectValue placeholder="Select activity type" />
                                 </SelectTrigger>
                                 <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
-                                    {categories.map(category => (
-                                        <SelectItem key={category.id} value={category.id.toString()} className="text-xs font-bold">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]" style={{ backgroundColor: category.color }}></div>
-                                                {category.type_name}
-                                            </div>
-                                        </SelectItem>
-                                    ))}
+                                    {Array.isArray(categories) && categories.length > 0 ? (
+                                        categories.map(category => (
+                                            <SelectItem key={category.id} value={String(category.id)} className="text-xs font-bold py-3">
+                                                <div className="flex items-start gap-3 w-full">
+                                                    <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)] shrink-0 mt-1" style={{ backgroundColor: category.color || '#6b7280' }}></div>
+                                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                                        <span className="font-bold text-sm leading-tight text-slate-900 dark:text-white">{category.type_name}</span>
+                                                        <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-normal normal-case break-words">
+                                                            {category.description || 'No specific guidelines provided for this activity.'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <div className="p-4 text-center text-xs text-slate-400 font-bold uppercase tracking-widest">
+                                            No categories available
+                                        </div>
+                                    )}
                                 </SelectContent>
                             </Select>
+                            {(() => {
+                                if (!Array.isArray(categories)) return null;
+                                const selectedCat = categories.find(c => String(c.id) === String(formData.activity_type_id));
+                                if (selectedCat) {
+                                    return (
+                                        <div className="mt-2 p-3 rounded-xl bg-blue-50/10 dark:bg-blue-900/10 border border-blue-500/10 dark:border-blue-500/20 animate-in fade-in slide-in-from-top-1 duration-500">
+                                            <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400 leading-relaxed italic">
+                                                &ldquo;{selectedCat.description || 'Log your time against this activity to track work patterns.'}&rdquo;
+                                            </p>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
                     </div>
 

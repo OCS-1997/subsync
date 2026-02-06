@@ -128,7 +128,7 @@ const TimeTracking = () => {
                                 <Timer className="w-3.5 h-3.5 mr-2.5" />
                                 Track Time
                             </TabsTrigger>
-                            <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                            <PermissionGate required={PERMISSIONS.TIME_TRACKING_MANAGE}>
                                 <TabsTrigger 
                                     value="projects" 
                                     className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
@@ -137,7 +137,7 @@ const TimeTracking = () => {
                                     Projects
                                 </TabsTrigger>
                             </PermissionGate>
-                            <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
+                            <PermissionGate required={PERMISSIONS.TIME_TRACKING_MANAGE}>
                                 <TabsTrigger 
                                     value="categories" 
                                     className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"

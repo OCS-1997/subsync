@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 
 import NavBar from '@/components/layouts/Navigations/NavBar.jsx'
@@ -6,6 +6,7 @@ import SideBar from '@/components/layouts/Navigations/SideBar.jsx'
 
 function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const location = useLocation()
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
@@ -17,7 +18,9 @@ function Dashboard() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <NavBar toggleSidebar={toggleSidebar} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-2">
-          <Outlet />
+          <div key={location.key}>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

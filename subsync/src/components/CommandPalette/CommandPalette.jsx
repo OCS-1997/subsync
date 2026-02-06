@@ -47,7 +47,10 @@ import {
     Moon,
     Monitor,
     Users2,
-    Layers
+    Layers,
+    Clock,
+    Play,
+    Palette
 } from "lucide-react";
 
 // Command palette items configuration
@@ -210,6 +213,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             keywords: ["hardware", "software", "inventory", "it", "devices"],
             permission: PERMISSIONS.ASSETS_VIEW,
         },
+        {
+            id: "time-tracking",
+            category: "Navigation",
+            icon: Clock,
+            title: "Time Tracking",
+            subtitle: "Track time and manage entries",
+            path: `${baseUrl}/time-tracking`,
+            keywords: ["timer", "hours", "timesheet", "billing", "work"],
+            permission: PERMISSIONS.TIME_TRACKING_VIEW,
+        },
 
         // Quick Actions - Add New
         {
@@ -332,6 +345,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             keywords: ["new", "create", "inventory", "device"],
             permission: PERMISSIONS.ASSETS_CREATE,
         },
+        {
+            id: "start-timer",
+            category: "Quick Actions",
+            icon: Play,
+            title: "Start Timer",
+            subtitle: "Begin tracking time",
+            path: `${baseUrl}/time-tracking?action=start`,
+            keywords: ["new", "track", "start", "begin"],
+            permission: PERMISSIONS.TIME_TRACKING_USE,
+        },
 
         // Settings
         {
@@ -433,6 +456,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             path: `${baseUrl}/settings/quick-tools`,
             keywords: ["dns", "ssl", "whois"],
             permission: PERMISSIONS.QUICK_TOOLS_MANAGE,
+        },
+        {
+            id: "settings-appearance",
+            category: "Settings",
+            icon: Palette,
+            title: "Appearance Settings",
+            subtitle: "Customize themes and fonts",
+            path: `${baseUrl}/settings/appearance`,
+            keywords: ["theme", "colors", "fonts", "design", "ui"],
+            permission: null,
         },
         {
             id: "help",
