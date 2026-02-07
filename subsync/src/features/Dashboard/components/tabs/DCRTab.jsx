@@ -66,6 +66,7 @@ function DCRTab({ visibleWidgets }) {
             setIsAdmin(userStatsResponse.data.isAdmin || false);
 
             // Calculate today's stats (limited to prevent resource issues)
+            const today = new Date();
             const entriesResponse = await api.get('/dcr', {
                 params: {
                     startDate: new Date(today.setHours(0, 0, 0, 0)).toISOString(),

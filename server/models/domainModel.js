@@ -3,6 +3,28 @@ import { getCurrentTime } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
 
 /**
+ * Helper function to format date for MySQL
+ * Converts ISO 8601 date string to MySQL DATE format (YYYY-MM-DD)
+ * @param {string} dateString - ISO 8601 date string or any valid date string
+ * @returns {string} - Formatted date string (YYYY-MM-DD)
+ */
+function formatDateForMySQL(dateString) {
+    if (!dateString) return null;
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        throw new Error(`Invalid date: ${dateString}`);
+    }
+    
+    // Format as YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+/**
  * Function to add a domain into the database
  * @param   {Object} domain The object with domain details
  * @returns {Promise<number>}
@@ -17,12 +39,15 @@ async function addDomain(domain) {
         const currentTime = getCurrentTime();
         const did = generateID("DID");
         
+        // Format the registration date for MySQL
+        const formattedRegDate = formatDateForMySQL(domain.registration_date);
+        
         // Execute SQL query
         const [result] = await appDB.query(
             "INSERT INTO domains (domain_id,customer_id, customer_name, domain_name, registration_date, registered_with, other_provider, description, mail_service_provider, other_mail_service_details, domain_status, created_at, updated_at) " +
             "VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             [
-                did, domain.customer_id, domain.customer_name, domain.domain_name, domain.registration_date,
+                did, domain.customer_id, domain.customer_name, domain.domain_name, formattedRegDate,
                 domain.registered_with, domain.other_provider || "", domain.description || "", 
                 domain.mail_service_provider || "", domain.other_mail_service_details || "", domain.domain_status || "Active", currentTime, currentTime
             ]
@@ -67,6 +92,9 @@ async function updateDomain(domainId, updatedData) {
 
     try {
         const currentTime = getCurrentTime();
+        
+        // Format the registration date for MySQL
+        const formattedRegDate = formatDateForMySQL(registration_date);
 
         const [result] = await appDB.query(
             `UPDATE domains 
@@ -74,7 +102,7 @@ async function updateDomain(domainId, updatedData) {
                  other_provider = ?, description = ?, mail_service_provider = ?, other_mail_service_details = ?, domain_status = ?, updated_at = ? 
              WHERE domain_id = ?;`,
             [
-               customer_id,customer_name, domain_name, registration_date, registered_with, 
+               customer_id,customer_name, domain_name, formattedRegDate, registered_with, 
                 other_provider || "", description || "", 
                 mail_service_provider || "", other_mail_service_details || "", domain_status || "Active", currentTime, domainId
             ]
@@ -238,7 +266,7 @@ const importDomainData = async (domains) => {
         domain.customer_id,
         domain.customer_name || "",
         domain.domain_name,
-        domain.registration_date,
+        formatDateForMySQL(domain.registration_date),
         domain.registered_with,
         domain.other_provider || "",
         domain.name_server || "",
