@@ -80,6 +80,7 @@ import {
     updateArticleController,
     deleteArticleController,
     getArticleVersionsController,
+    getAllTagsController,
     // New controllers for security & SEO
     getPublicArticleBySlugController,
     recordArticleReadController,
@@ -421,6 +422,9 @@ router.get('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_
 router.put('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_UPDATE), updateArticleController);
 router.delete('/kb/articles/:id', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_DELETE), deleteArticleController);
 router.get('/kb/articles/:id/versions', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleVersionsController);
+
+// Knowledge Base - Tags (optimized endpoint)
+router.get('/kb/tags', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getAllTagsController);
 
 // Knowledge Base - Analytics (Authenticated)
 router.get('/kb/articles/:id/analytics', isAuthenticated, authorize(PERMISSIONS.KNOWLEDGE_BASE_VIEW), getArticleAnalyticsController);

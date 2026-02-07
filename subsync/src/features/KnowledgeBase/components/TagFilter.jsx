@@ -17,25 +17,14 @@ export default function TagFilter({ selectedTags = [], onTagsChange, className }
 
     const fetchTags = async () => {
         try {
-            // Get all unique tags from articles
-            const res = await api.get('/kb/articles?limit=1000');
-            const articles = res.data.articles || [];
-            const tagsSet = new Set();
-
-            articles.forEach(article => {
-                try {
-                    const tags = typeof article.tags === 'string'
-                        ? JSON.parse(article.tags)
-                        : article.tags || [];
-                    tags.forEach(tag => tagsSet.add(tag));
-                } catch (e) {
-                    // Skip invalid tags
-                }
-            });
-
-            setAllTags(Array.from(tagsSet).sort());
+            // Use the optimized tags endpoint instead of fetching articles
+            const res = await api.get('/kb/tags?limit=100');
+            const tags = (res.data.tags || []).map(tag => tag.name);
+            setAllTags(tags.sort());
         } catch (error) {
             console.error('Failed to fetch tags:', error);
+            // Fallback: set empty array instead of crashing
+            setAllTags([]);
         }
     };
 

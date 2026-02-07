@@ -11,6 +11,7 @@ import {
     updateArticle,
     deleteArticle,
     getArticleVersions,
+    getAllTags,
     // New imports for security & SEO
     recordArticleRead,
     getArticleAnalytics,
@@ -245,6 +246,10 @@ export const getArticlesController = async (req, res) => {
             limit = 20
         } = req.query;
 
+        // Enforce maximum limit to prevent abuse (server-side validation)
+        const safeLimit = Math.min(parseInt(limit) || 20, 100);
+        const safePage = Math.max(parseInt(page) || 1, 1);
+
         // Use category_id if provided, otherwise fall back to categoryId
         const finalCategoryId = category_id || categoryId;
 
@@ -258,8 +263,8 @@ export const getArticlesController = async (req, res) => {
         //     isPublished,
         //     visibility,
         //     author,
-        //     page,
-        //     limit
+        //     page: safePage,
+        //     limit: safeLimit
         // });
 
         const { articles, total } = await getArticles({
@@ -269,16 +274,17 @@ export const getArticlesController = async (req, res) => {
             isPublished,
             visibility,
             authorId: author,
-            limit: parseInt(limit),
-            offset: (parseInt(page) - 1) * parseInt(limit),
+            limit: safeLimit,
+            offset: (safePage - 1) * safeLimit,
         });
 
         res.status(200).json({
             articles,
             total,
             totalRecords: total,  // Add totalRecords for frontend compatibility
-            totalPages: Math.ceil(total / limit),
-            currentPage: parseInt(page)
+            totalPages: Math.ceil(total / safeLimit),
+            currentPage: safePage,
+            limit: safeLimit  // Return the actual limit used
         });
     } catch (error) {
         console.error("Get articles error:", error);
@@ -384,6 +390,22 @@ export const getArticleVersionsController = async (req, res) => {
     } catch (error) {
         console.error("Get versions error:", error);
         res.status(500).json({ error: "Failed to fetch versions" });
+    }
+};
+
+// --- TAGS ---
+
+/**
+ * Get all tags with usage count (optimized endpoint)
+ */
+export const getAllTagsController = async (req, res) => {
+    try {
+        const { limit = 100 } = req.query;
+        const tags = await getAllTags(limit);
+        res.status(200).json({ tags, total: tags.length });
+    } catch (error) {
+        console.error("Get tags error:", error);
+        res.status(500).json({ error: "Failed to fetch tags" });
     }
 };
 

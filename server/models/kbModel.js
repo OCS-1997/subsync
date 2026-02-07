@@ -84,6 +84,31 @@ async function updateArticleTags(articleId, tags = []) {
     }
 }
 
+/**
+ * Get all unique tags with usage count (optimized for TagFilter component)
+ * This is much more efficient than fetching all articles
+ */
+export async function getAllTags(limit = 100) {
+    const [rows] = await appDB.query(`
+        SELECT 
+            kt.id,
+            kt.name,
+            COUNT(kat.article_id) as usage_count
+        FROM knowledge_tags kt
+        LEFT JOIN knowledge_article_tags kat ON kt.id = kat.tag_id
+        LEFT JOIN knowledge_articles ka ON kat.article_id = ka.id AND ka.is_published = 1
+        GROUP BY kt.id, kt.name
+        HAVING usage_count > 0
+        ORDER BY usage_count DESC, kt.name ASC
+        LIMIT ?
+    `, [Math.min(parseInt(limit) || 100, 500)]);
+    
+    return rows.map(row => ({
+        name: row.name,
+        count: row.usage_count
+    }));
+}
+
 // --- ARTICLES ---
 
 /**
@@ -141,6 +166,10 @@ export async function createArticle({ title, content, category_id, author_id, vi
 }
 
 export async function getArticles({ search, categoryId, tag, isPublished, visibility, limit = 20, offset = 0, authorId }) {
+    // Enforce maximum limit to prevent resource exhaustion (security measure)
+    const safeLimit = Math.min(parseInt(limit) || 20, 100);
+    const safeOffset = Math.max(parseInt(offset) || 0, 0);
+    
     let query = `
         SELECT 
             ka.id, ka.title, ka.slug, ka.category_id, ka.author_id, ka.visibility, ka.is_published, 
@@ -151,7 +180,8 @@ export async function getArticles({ search, categoryId, tag, isPublished, visibi
             (SELECT JSON_ARRAYAGG(kt.name) 
              FROM knowledge_article_tags kat 
              JOIN knowledge_tags kt ON kat.tag_id = kt.id 
-             WHERE kat.article_id = ka.id) as tags
+             WHERE kat.article_id = ka.id
+             GROUP BY kat.article_id) as tags
         FROM knowledge_articles ka
         LEFT JOIN knowledge_categories kc ON ka.category_id = kc.id
         LEFT JOIN users u ON ka.author_id = u.username
@@ -207,17 +237,18 @@ export async function getArticles({ search, categoryId, tag, isPublished, visibi
         finalQuery += ` WHERE ${where.join(' AND ')}`;
     }
 
+    // Use index on created_at for better performance
     finalQuery += ` ORDER BY ka.created_at DESC LIMIT ? OFFSET ?`;
 
-    // Create params for the final query
-    const queryParams = [...params, limit, offset];
+    // Create params for the final query with enforced limits
+    const queryParams = [...params, safeLimit, safeOffset];
 
     //console.log('getArticles DEBUG - Executing SQL:', finalQuery);
    // console.log('getArticles DEBUG - With Params:', queryParams);
 
     const [rows] = await appDB.query(finalQuery, queryParams);
 
-    // Get total count
+    // Get total count with optimized query (no joins needed)
     let countQuery = `SELECT COUNT(*) as total FROM knowledge_articles ka`;
     if (where.length > 0) {
         countQuery += ` WHERE ${where.join(' AND ')}`;
@@ -226,7 +257,9 @@ export async function getArticles({ search, categoryId, tag, isPublished, visibi
 
     return {
         articles: rows,
-        total: countRows[0].total
+        total: countRows[0].total,
+        limit: safeLimit,
+        offset: safeOffset
     };
 }
 

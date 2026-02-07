@@ -65,13 +65,12 @@ function DCRTab({ visibleWidgets }) {
             setUserStats(userStatsResponse.data.userStats || []);
             setIsAdmin(userStatsResponse.data.isAdmin || false);
 
-            // Calculate today's stats
-            const today = new Date();
+            // Calculate today's stats (limited to prevent resource issues)
             const entriesResponse = await api.get('/dcr', {
                 params: {
                     startDate: new Date(today.setHours(0, 0, 0, 0)).toISOString(),
                     endDate: new Date(today.setHours(23, 59, 59, 999)).toISOString(),
-                    limit: 1000
+                    limit: 100  // Reduced from 1000 to prevent ERR_INSUFFICIENT_RESOURCES
                 }
             });
 
@@ -97,7 +96,7 @@ function DCRTab({ visibleWidgets }) {
                 params: {
                     startDate: weekStart.toISOString(),
                     endDate: new Date().toISOString(),
-                    limit: 1000
+                    limit: 100  // Reduced from 1000 to prevent ERR_INSUFFICIENT_RESOURCES
                 }
             });
 
