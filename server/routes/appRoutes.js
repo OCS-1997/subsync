@@ -543,6 +543,9 @@ router.get('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.
 router.put('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), updateTimeEntryController);
 router.delete('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), deleteTimeEntryController);
 
+// Time Tracking - Customers (for time entry form)
+router.get('/time-tracking/customers', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), fetchAllCustomers);
+
 // Time Tracking - Timer
 router.post('/time-tracking/timer/start', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), startTimerController);
 router.post('/time-tracking/timer/stop/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), stopTimerController);

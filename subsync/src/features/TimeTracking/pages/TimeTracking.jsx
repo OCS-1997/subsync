@@ -30,21 +30,55 @@ const TimeTracking = () => {
     }, []);
 
     const fetchData = async () => {
+        // Fetch customers (using time-tracking specific endpoint)
         try {
-            const [customersRes, projectsRes, categoriesRes, usersRes, teamsRes] = await Promise.all([
-                api.get('/all-customers?limit=1000'),
-                api.get('/time-tracking/projects'),
-                api.get('/time-tracking/categories'),
-                api.get('/all-users'),
-                api.get('/teams')
-            ]);
+            const customersRes = await api.get('/time-tracking/customers?limit=1000');
             setCustomers(customersRes.data.customers || []);
+        } catch (error) {
+            console.error('Error fetching customers:', error);
+            setCustomers([]);
+        }
+
+        // Fetch projects (should always work for time tracking users)
+        try {
+            const projectsRes = await api.get('/time-tracking/projects');
             setProjects(projectsRes.data.projects || []);
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+        }
+
+        // Fetch categories (should always work for time tracking users)
+        try {
+            const categoriesRes = await api.get('/time-tracking/categories');
             setCategories(categoriesRes.data.categories || []);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+
+        // Fetch users (may require USERS_VIEW permission)
+        try {
+            const usersRes = await api.get('/all-users');
             setUsers(usersRes.data || []);
+        } catch (error) {
+            if (error.response?.status === 403) {
+                console.warn('No permission to view users');
+                setUsers([]);
+            } else {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        // Fetch teams (may require TEAMS_VIEW permission)
+        try {
+            const teamsRes = await api.get('/teams');
             setTeams(teamsRes.data || []);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            if (error.response?.status === 403) {
+                console.warn('No permission to view teams');
+                setTeams([]);
+            } else {
+                console.error('Error fetching teams:', error);
+            }
         }
     };
 
