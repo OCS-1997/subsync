@@ -41,6 +41,9 @@ jobs:
             rm -rf /var/www/rms-staging/dist
             mv dist /var/www/rms-staging/
 
+            echo "Restarting and Reloading Nginx🔄️"
+            nginx -t
+
             echo "Restart staging PM2..."
             pm2 restart ocs-staging-server
 
