@@ -1,0 +1,52 @@
+name: Deploy RMS Staging
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Staging Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+
+          script: |
+            set -e
+
+            echo "🚀 Deploying RMS staging..."
+
+            ROOT="/var/www/rms-staging/subsync"
+
+            echo "📌 Go to repo root"
+            cd $ROOT
+
+            echo "📥 Pull latest code"
+            git pull origin main
+
+            echo "📦 Backend install"
+            cd server
+            npm install
+
+            echo "🛠 Run migrations_new (if any)"
+            node runMigrationsNew.js
+
+            echo "🎨 Frontend build"
+            cd ../subsync
+            npm install
+            npm run build
+
+            echo "📂 Deploy frontend dist safely"
+            rm -rf /var/www/rms-staging/dist/*
+            cp -r dist/* /var/www/rms-staging/dist/
+
+            echo "♻ Restart PM2 backend"
+            pm2 restart ocs-staging-server
+
+            echo "✅ Deployment finished successfully"
