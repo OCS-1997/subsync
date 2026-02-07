@@ -18,33 +18,35 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
 
           script: |
-            echo "Deploying RMS staging..."
+            set -e
 
-            cd /var/www/rms-staging/subsync
+            echo "🚀 Deploying RMS staging..."
 
-            echo "Pulling latest code..."
+            ROOT="/var/www/rms-staging/subsync"
+
+            echo "📌 Go to repo root"
+            cd $ROOT
+
+            echo "📥 Pull latest code"
             git pull origin main
 
-            echo "Backend install..."
-            cd backend
+            echo "📦 Backend install"
+            cd server
             npm install
 
-            echo "Running ONLY migrations_new..."
-            node ../server/runMigrationsNew.js
+            echo "🛠 Run migrations_new (if any)"
+            node runMigrationsNew.js
 
-            echo "Frontend build..."
+            echo "🎨 Frontend build"
             cd ../subsync
             npm install
             npm run build
 
-            echo "Deploy frontend dist..."
-            rm -rf /var/www/rms-staging/dist
-            mv dist /var/www/rms-staging/
+            echo "📂 Deploy frontend dist safely"
+            rm -rf /var/www/rms-staging/dist/*
+            cp -r dist/* /var/www/rms-staging/dist/
 
-            echo "Restarting and Reloading Nginx🔄️"
-            nginx -t
-
-            echo "Restart staging PM2..."
+            echo "♻ Restart PM2 backend"
             pm2 restart ocs-staging-server
 
-            echo "Deployment finished successfully.✅"
+            echo "✅ Deployment finished successfully"
