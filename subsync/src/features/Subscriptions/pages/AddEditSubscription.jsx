@@ -12,7 +12,6 @@ import ReactSelect from "react-select";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
-import { DatePicker } from "@/components/ui/date-picker";
 
 function toTimestamp(dateStr) {
   if (!dateStr) return null;
@@ -750,9 +749,11 @@ export default function AddEditSubscription({ onBack, editId }) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">Start Date</Label>
-                      <DatePicker
-                        date={form.startDate}
-                        setDate={(newStartDate) => {
+                      <Input
+                        type="date"
+                        value={form.startDate || ""}
+                        onChange={(e) => {
+                          const newStartDate = e.target.value;
                           // Auto-update end date to 1 year later if never_expires is false
                           if (!form.never_expires && newStartDate) {
                             const startDate = new Date(newStartDate);
@@ -767,15 +768,18 @@ export default function AddEditSubscription({ onBack, editId }) {
                             setForm({ ...form, startDate: newStartDate });
                           }
                         }}
+                        className="h-10 px-3 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                       />
                       {errors.startDate && <div className="text-xs text-red-600 mt-1">{errors.startDate}</div>}
                     </div>
                     <div>
                       <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-3 block">End Date</Label>
-                      <DatePicker
-                        date={form.endDate}
-                        setDate={(newEndDate) => setForm({ ...form, endDate: newEndDate })}
+                      <Input
+                        type="date"
+                        value={form.endDate || ""}
+                        onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                         disabled={form.never_expires}
+                        className="h-10 px-3 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white disabled:opacity-50"
                       />
                       {!form.never_expires && errors.endDate && <div className="text-xs text-red-600 mt-1">{errors.endDate}</div>}
                     </div>

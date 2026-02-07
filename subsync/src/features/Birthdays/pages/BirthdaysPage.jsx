@@ -52,7 +52,6 @@ import {
 import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
 import { format, isToday as isDateToday, isTomorrow as isDateTomorrow, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addMonths, parseISO } from 'date-fns';
-import { DatePicker } from "@/components/ui/date-picker";
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 
@@ -516,9 +515,12 @@ function BirthdaysPage() {
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="dob" className="text-right">Birthday</Label>
                             <div className="col-span-3">
-                                <DatePicker
-                                    date={formData.date_of_birth ? parseISO(formData.date_of_birth) : null}
-                                    setDate={(date) => setFormData({ ...formData, date_of_birth: date ? format(date, 'yyyy-MM-dd') : '' })}
+                                <Input
+                                    type="date"
+                                    id="date_of_birth"
+                                    value={formData.date_of_birth || ""}
+                                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                                    className="h-10 px-3 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                                 />
                             </div>
                         </div>

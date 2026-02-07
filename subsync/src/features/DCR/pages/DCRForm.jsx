@@ -18,7 +18,6 @@ import { addDcrEntry, editDcrEntry, getDcrById, clearDcrState } from "../dcrSlic
 import { getDomainDetails, fetchAllDomains, createContactFromDcr } from "../services/dcrAPI";
 import { timeToMinutes, minutesToTime } from "../utils/timeUtils";
 import { parseISO, format } from "date-fns";
-import { DatePicker } from "@/components/ui/date-picker";
 
 export default function DCRForm() {
   const navigate = useNavigate();
@@ -348,9 +347,12 @@ export default function DCRForm() {
                 Entry Date <span className="text-red-500 font-bold ml-1">*</span>
               </Label>
               <div className="w-full max-w-[240px]">
-                <DatePicker
-                  date={formData.date ? parseISO(formData.date) : null}
-                  setDate={(date) => setFormData(prev => ({ ...prev, date: date ? format(date, 'yyyy-MM-dd') : '' }))}
+                <Input
+                  type="date"
+                  id="date"
+                  value={formData.date || ""}
+                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                 />
               </div>
               <p className="text-[10px] font-medium text-gray-400 dark:text-slate-500 ml-1">Default: Today</p>

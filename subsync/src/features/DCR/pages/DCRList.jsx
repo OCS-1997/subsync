@@ -27,7 +27,6 @@ import { fetchAllUsers } from "../services/dcrAPI";
 import { usePermissions } from "@/context/PermissionsContext";
 import { PERMISSIONS } from "@/constants/permissions";
 import { cn } from "@/lib/utils";
-import { DatePicker } from "@/components/ui/date-picker";
 import { parseISO, format } from "date-fns";
 
 export default function DCRList() {
@@ -399,16 +398,20 @@ export default function DCRList() {
                 {/* Date Range */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">Start Date</label>
-                  <DatePicker
-                    date={filterStartDate ? parseISO(filterStartDate) : null}
-                    setDate={(date) => setFilterStartDate(date ? format(date, 'yyyy-MM-dd') : "")}
+                  <Input
+                    type="date"
+                    value={filterStartDate || ""}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-4"
                   />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">End Date</label>
-                  <DatePicker
-                    date={filterEndDate ? parseISO(filterEndDate) : null}
-                    setDate={(date) => setFilterEndDate(date ? format(date, 'yyyy-MM-dd') : "")}
+                  <Input
+                    type="date"
+                    value={filterEndDate || ""}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-4"
                   />
                 </div>
 
@@ -630,16 +633,20 @@ export default function DCRList() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-600 mb-1 block">Start Date</label>
-                    <DatePicker
-                        date={exportStartDate ? parseISO(exportStartDate) : null}
-                        setDate={(date) => setExportStartDate(date ? format(date, 'yyyy-MM-dd') : "")}
+                    <Input
+                       type="date"
+                       value={exportStartDate || ""}
+                       onChange={(e) => setExportStartDate(e.target.value)}
+                       className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-4"
                     />
                   </div>
                   <div>
                     <label className="text-xs text-gray-600 mb-1 block">End Date</label>
-                    <DatePicker
-                        date={exportEndDate ? parseISO(exportEndDate) : null}
-                        setDate={(date) => setExportEndDate(date ? format(date, 'yyyy-MM-dd') : "")}
+                    <Input
+                       type="date"
+                       value={exportEndDate || ""}
+                       onChange={(e) => setExportEndDate(e.target.value)}
+                       className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-4"
                     />
                   </div>
                 </div>

@@ -11,7 +11,6 @@ import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects = [], categories = [], compact = false }) => {
     const [formData, setFormData] = useState({
@@ -236,12 +235,14 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
                                 Start Date & Time
                             </Label>
-                            <DateTimePicker 
-                                date={formData.start_time} 
-                                setDate={(newDate) => setFormData(prev => ({ ...prev, start_time: newDate }))}
+                            <Input
+                                type="datetime-local"
+                                value={formData.start_time ? formData.start_time.split('.')[0].slice(0, 16) : ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, start_time: new Date(e.target.value).toISOString() }))}
+                                className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800"
                             />
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
-                                Started at: {format(new Date(formData.start_time), 'hh:mm a')}
+                                Started at: {formData.start_time ? format(new Date(formData.start_time), 'hh:mm a') : 'N/A'}
                             </p>
                         </div>
 

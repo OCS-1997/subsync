@@ -80,6 +80,20 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Fix native date picker icons in dark mode */
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
 @layer utilities {
   .mobile-px {
     @apply px-4 sm:px-6 lg:px-8;

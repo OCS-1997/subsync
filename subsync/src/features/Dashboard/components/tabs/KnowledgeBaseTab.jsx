@@ -43,46 +43,43 @@ function KnowledgeBaseTab({ visibleWidgets }) {
         try {
             setLoading(true);
 
+            // Fetch only what's needed for the dashboard preview
+            // articlesRes will give us total count and latest articles
             const [articlesRes, categoriesRes] = await Promise.all([
-                api.get('/kb/articles'),
+                api.get('/kb/articles?limit=5'),
                 api.get('/kb/categories')
             ]);
 
-            const articles = (articlesRes.data.articles || []).map(a => ({
-                ...a,
-                status: a.is_published ? 'published' : 'draft'
-            }));
+            const articlesData = articlesRes.data;
+            const articles = articlesData.articles || [];
             const cats = categoriesRes.data.categories || [];
 
-            const published = articles.filter(a => a.status === 'published');
-            const drafts = articles.filter(a => a.status === 'draft');
-            const totalViews = articles.reduce((sum, a) => sum + (a.total_reads || 0), 0);
-
+            // Updated stats calculation using metadata if available
+            // Note: If backend doesn't provide these, they will fallback appropriately
             setStats({
-                totalArticles: articles.length,
+                totalArticles: articlesData.totalRecords || articlesData.total || articles.length,
                 totalCategories: cats.length,
-                publishedArticles: published.length,
-                draftArticles: drafts.length,
-                totalViews
+                publishedArticles: articlesData.publishedCount || articles.filter(a => a.is_published).length,
+                draftArticles: articlesData.draftCount || articles.filter(a => !a.is_published).length,
+                totalViews: articlesData.totalViews || articles.reduce((sum, a) => sum + (a.total_reads || 0), 0)
             });
 
-            // Recent articles
-            const recent = [...articles]
-                .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-                .slice(0, 5);
-            setRecentArticles(recent);
+            // Recent articles (the limit=5 already gives us the most recent if default sort is update)
+            setRecentArticles(articles.slice(0, 5));
 
-            // Popular articles by views
-            const popular = [...articles]
-                .sort((a, b) => (b.total_reads || 0) - (a.total_reads || 0))
-                .slice(0, 5);
-            setPopularArticles(popular);
+            // Popular articles by views - we fetch separately for better accuracy if possible
+            try {
+                const popularRes = await api.get('/kb/articles?limit=5&sort=total_reads&order=desc');
+                setPopularArticles(popularRes.data.articles || []);
+            } catch (err) {
+                console.error('Error loading popular articles:', err);
+                setPopularArticles(articles.slice(0, 5));
+            }
 
             setCategories(cats.slice(0, 6));
 
         } catch (err) {
             console.error('Error loading KB data:', err);
-            // Don't show error toast as KB might not be available
         } finally {
             setLoading(false);
         }

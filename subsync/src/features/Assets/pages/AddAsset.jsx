@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '@/lib/axiosInstance';
-import { parseISO, format } from "date-fns";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -312,9 +310,12 @@ function AddAsset() {
                     <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400" htmlFor="purchase_date">Purchase Date</Label>
-                            <DatePicker
-                                date={formData.purchase_date ? parseISO(formData.purchase_date) : null}
-                                setDate={(date) => handleChange('purchase_date', date ? format(date, 'yyyy-MM-dd') : '')}
+                            <Input
+                                type="date"
+                                id="purchase_date"
+                                value={formData.purchase_date || ""}
+                                onChange={(e) => handleChange('purchase_date', e.target.value)}
+                                className="h-11 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-5"
                             />
                         </div>
                         <div className="space-y-2">
@@ -332,9 +333,12 @@ function AddAsset() {
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400" htmlFor="warranty_expiry">Warranty End Date</Label>
-                            <DatePicker
-                                date={formData.warranty_expiry ? parseISO(formData.warranty_expiry) : null}
-                                setDate={(date) => handleChange('warranty_expiry', date ? format(date, 'yyyy-MM-dd') : '')}
+                            <Input
+                                type="date"
+                                id="warranty_expiry"
+                                value={formData.warranty_expiry || ""}
+                                onChange={(e) => handleChange('warranty_expiry', e.target.value)}
+                                className="h-11 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-transparent focus:border-blue-500/50 transition-all font-bold px-5"
                             />
                         </div>
                         <div className="space-y-2">

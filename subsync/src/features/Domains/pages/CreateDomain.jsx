@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 
 function AddDomain() {
   const navigate = useNavigate();
@@ -383,9 +382,11 @@ function AddDomain() {
               </div>
               <div>
                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Registration Date <span className="text-red-500 font-bold ml-1">*</span></Label>
-                <DatePicker 
-                  date={formData.registrationDate} 
-                  setDate={(newDate) => setFormData({ ...formData, registrationDate: newDate })} 
+                <Input
+                  type="date"
+                  value={formData.registrationDate || ""}
+                  onChange={(e) => setFormData({ ...formData, registrationDate: e.target.value })}
+                  className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
                 />
               </div>
               <div className="flex flex-col">

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.jsx";
-import { DatePicker } from "@/components/ui/date-picker";
-import { parseISO, format } from "date-fns";
 
 const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
   const handleInputChange = (index, field, value) => {
@@ -164,9 +162,11 @@ const ContactPersonsSection = ({ contactPersons, setContactPersons }) => {
                 </td>
                 <td className="px-4 py-3 border-r border-b border-gray-100 dark:border-slate-800/50">
                   <div className="w-[180px]">
-                    <DatePicker
-                      date={person.birthday ? parseISO(person.birthday) : null}
-                      setDate={(date) => handleInputChange(index, "birthday", date ? format(date, 'yyyy-MM-dd') : '')}
+                    <Input
+                      type="date"
+                      value={person.birthday || ""}
+                      onChange={(e) => handleInputChange(index, "birthday", e.target.value)}
+                      className="rounded-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-gray-900 dark:text-white h-9"
                     />
                   </div>
                 </td>
