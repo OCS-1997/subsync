@@ -108,7 +108,17 @@ export const saveBirthdayController = async (req, res) => {
             return res.status(400).json({ error: 'Invalid type. Must be user, customer, or contact_person' });
         }
 
-        const result = await saveBirthday(birthdayData);
+        // Ensure appropriate ID fields are set based on type - for manual entries
+        // If user manually adds a birthday, they won't have user_id/customer_id/contact_person_index
+        // so we need to allow these to be null
+        const dataToSave = {
+            ...birthdayData,
+            user_id: birthdayData.user_id || null,
+            customer_id: birthdayData.customer_id || null,
+            contact_person_index: birthdayData.contact_person_index || null
+        };
+
+        const result = await saveBirthday(dataToSave);
         res.status(201).json({
             success: true,
             message: 'Birthday saved successfully',
