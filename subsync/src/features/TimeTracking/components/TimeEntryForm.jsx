@@ -13,6 +13,27 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 
 const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects = [], categories = [], compact = false }) => {
+    // Helper function to convert ISO string to local datetime-local format
+    const toLocalDateTimeString = (isoString) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        // Format: YYYY-MM-DDTHH:mm
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    // Helper function to convert local datetime-local format to ISO string
+    const fromLocalDateTimeString = (dateTimeString) => {
+        if (!dateTimeString) return new Date().toISOString();
+        // Create date object from local datetime string
+        const date = new Date(dateTimeString);
+        return date.toISOString();
+    };
+
     const [formData, setFormData] = useState({
         start_time: initialData?.start_time || new Date().toISOString(),
         duration_minutes: initialData?.duration_minutes || null,
@@ -237,8 +258,8 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             </Label>
                             <Input
                                 type="datetime-local"
-                                value={formData.start_time ? formData.start_time.split('.')[0].slice(0, 16) : ''}
-                                onChange={(e) => setFormData(prev => ({ ...prev, start_time: new Date(e.target.value).toISOString() }))}
+                                value={toLocalDateTimeString(formData.start_time)}
+                                onChange={(e) => setFormData(prev => ({ ...prev, start_time: fromLocalDateTimeString(e.target.value) }))}
                                 className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800"
                             />
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">
