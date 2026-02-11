@@ -80,6 +80,7 @@ export default function ArticleList() {
 
     // State from URL or defaults
     const [search, setSearch] = useState(searchParams.get('search') || "");
+    const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') || "");
     const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
     const [selectedCategoryId, setSelectedCategoryId] = useState(searchParams.get('category') || null);
     const [selectedTags, setSelectedTags] = useState(searchParams.get('tags')?.split(',').filter(Boolean) || []);
@@ -104,9 +105,45 @@ export default function ArticleList() {
     const [initError, setInitError] = useState(false);
     const [fetchError, setFetchError] = useState(false);
 
+    // Debounce search input
+    const debounceTimeout = useRef();
+    useEffect(() => {
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(debounceTimeout.current);
+    }, [search]);
+
+    // Track previous filter values to detect actual changes and reset page
+    const prevSearchRef = useRef(debouncedSearch);
+    const prevTagsRef = useRef(selectedTags.join(','));
+    const prevCategoryRef = useRef(selectedCategoryId);
+    const prevFiltersRef = useRef(JSON.stringify(advancedFilters));
+
+    useEffect(() => {
+        const currentTagsString = selectedTags.join(',');
+        const currentFiltersString = JSON.stringify(advancedFilters);
+        
+        const searchChanged = prevSearchRef.current !== debouncedSearch;
+        const tagsChanged = prevTagsRef.current !== currentTagsString;
+        const categoryChanged = prevCategoryRef.current !== selectedCategoryId;
+        const filtersChanged = prevFiltersRef.current !== currentFiltersString;
+
+        if (searchChanged || tagsChanged || categoryChanged || filtersChanged) {
+            setPage(1);
+            
+            // Update refs after resetting page
+            prevSearchRef.current = debouncedSearch;
+            prevTagsRef.current = currentTagsString;
+            prevCategoryRef.current = selectedCategoryId;
+            prevFiltersRef.current = currentFiltersString;
+        }
+    }, [debouncedSearch, selectedTags, selectedCategoryId, advancedFilters]);
+
     // Create stable reference for filters to prevent infinite loops
     const filterDeps = useMemo(() => ({
-        search,
+        search: debouncedSearch,
         page,
         selectedCategoryId,
         selectedTagsString: selectedTags.join(','),
@@ -116,12 +153,12 @@ export default function ArticleList() {
         dateFromFilter: advancedFilters.dateFrom,
         dateToFilter: advancedFilters.dateTo,
         hasLinkedDCRFilter: advancedFilters.hasLinkedDCR
-    }), [search, page, selectedCategoryId, selectedTags.join(','), advancedFilters.status, advancedFilters.visibility, advancedFilters.createdBy, advancedFilters.dateFrom, advancedFilters.dateTo, advancedFilters.hasLinkedDCR]);
+    }), [debouncedSearch, page, selectedCategoryId, selectedTags.join(','), advancedFilters.status, advancedFilters.visibility, advancedFilters.createdBy, advancedFilters.dateFrom, advancedFilters.dateTo, advancedFilters.hasLinkedDCR]);
 
     // URL Sync: Only update URL when params actually change (prevents infinite loops)
     useEffect(() => {
         const newParams = new URLSearchParams();
-        if (search) newParams.set('search', search);
+        if (debouncedSearch) newParams.set('search', debouncedSearch);
         if (selectedCategoryId) newParams.set('category', selectedCategoryId);
         if (selectedTags.length > 0) newParams.set('tags', selectedTags.join(','));
         if (page > 1) newParams.set('page', page);
@@ -156,7 +193,7 @@ export default function ArticleList() {
             setFetchError(false);
             const params = new URLSearchParams();
 
-            if (search) params.append('search', search);
+            if (debouncedSearch) params.append('search', debouncedSearch);
             // Ensure category_id is properly stringified
             if (selectedCategoryId) {
                 params.append('category_id', String(selectedCategoryId));
@@ -348,10 +385,7 @@ export default function ArticleList() {
                     <CategorySidebar
                         isCollapsed={isSidebarCollapsed}
                         selectedCategoryId={selectedCategoryId}
-                        onCategorySelect={(id) => {
-                            setSelectedCategoryId(id);
-                            setPage(1);
-                        }}
+                        onCategorySelect={setSelectedCategoryId}
                         className="pb-24"
                     />
                 </div>
@@ -361,10 +395,7 @@ export default function ArticleList() {
             <aside className="md:hidden w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-6">
                 <CategorySidebar
                     selectedCategoryId={selectedCategoryId}
-                    onCategorySelect={(id) => {
-                        setSelectedCategoryId(id);
-                        setPage(1);
-                    }}
+                    onCategorySelect={setSelectedCategoryId}
                 />
             </aside>
 
@@ -406,16 +437,16 @@ export default function ArticleList() {
                             <div className="lg:col-span-4 relative group">
                                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-all" />
                                 <Input
-                                    placeholder="Search architectural documentation..."
+                                    placeholder="Search articles..."
                                     value={search}
-                                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                                    onChange={(e) => setSearch(e.target.value)}
                                     className="pl-14 h-16 bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-bold text-slate-900 dark:text-white shadow-sm placeholder:text-slate-400 placeholder:font-medium"
                                 />
                             </div>
                             <div className="lg:col-span-8">
                                 <TagFilter
                                     selectedTags={selectedTags}
-                                    onTagsChange={(tags) => { setSelectedTags(tags); setPage(1); }}
+                                    onTagsChange={setSelectedTags}
                                 />
                             </div>
                         </div>
@@ -423,7 +454,7 @@ export default function ArticleList() {
                         {/* Advanced Filters - Minimalist expandable */}
                         <AdvancedFilters
                             filters={advancedFilters}
-                            onFiltersChange={(filters) => { setAdvancedFilters(filters); setPage(1); }}
+                            onFiltersChange={setAdvancedFilters}
                             users={users}
                         />
 
