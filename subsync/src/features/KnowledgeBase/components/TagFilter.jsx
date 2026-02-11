@@ -24,6 +24,7 @@ export default function TagFilter({ selectedTags = [], onTagsChange, className }
         } catch (error) {
             console.error('Failed to fetch tags:', error);
             // Fallback: set empty array instead of crashing
+            // Don't show toast for auth errors to prevent spam
             setAllTags([]);
         }
     };
@@ -78,7 +79,10 @@ export default function TagFilter({ selectedTags = [], onTagsChange, className }
 
                     <div className="relative w-40">
                         <input
+                            id="kb-tag-search"
+                            name="kb-tag-search"
                             type="text"
+                            autoComplete="off"
                             placeholder={selectedTags.length > 0 ? "Add..." : "Filter by tags..."}
                             value={searchTerm}
                             onChange={(e) => {

@@ -14,18 +14,26 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
     const [categories, setCategories] = useState([]);
     const [expandedCategories, setExpandedCategories] = useState(new Set());
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(false);
 
     useEffect(() => {
         fetchCategories();
     }, []);
 
     const fetchCategories = async () => {
+        // Don't retry if there was a previous error
+        if (fetchError) {
+            return;
+        }
+
         try {
             setLoading(true);
+            setFetchError(false);
             const res = await api.get('/kb/categories');
-            // console.log('Categories fetched:', res.data); // Debug log
+            // console.log('Categories fetched:', res.data); // Debug  log
             const cats = res.data.categories || [];
             setCategories(cats);
+            setFetchError(false);
 
             // Auto-expand selected category's parents
             if (selectedCategoryId && cats.length > 0) {
@@ -36,7 +44,11 @@ export default function CategorySidebar({ isCollapsed = false, selectedCategoryI
             }
         } catch (error) {
             console.error('Failed to load categories:', error);
-            toast.error('Failed to load categories');
+            setFetchError(true);
+            // Only show toast for non-auth errors
+            if (error.normalizedStatus !== 401 && error.normalizedStatus !== 403) {
+                toast.error('Failed to load categories');
+            }
         } finally {
             setLoading(false);
         }

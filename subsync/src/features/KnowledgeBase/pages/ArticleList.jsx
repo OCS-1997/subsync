@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 import Hamster from "@/components/animations/Hamster.jsx";
+import Pagination from "@/components/layouts/Pagination.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import api from "@/lib/axiosInstance.js";
@@ -75,6 +76,7 @@ export default function ArticleList() {
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const username = location.pathname.split('/')[1] || '';
+    const isSyncingRef = useRef(false);
 
     // State from URL or defaults
     const [search, setSearch] = useState(searchParams.get('search') || "");
@@ -99,29 +101,59 @@ export default function ArticleList() {
     const [totalRecords, setTotalRecords] = useState(0);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, articleId: null, title: "" });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+    const [initError, setInitError] = useState(false);
+    const [fetchError, setFetchError] = useState(false);
 
-    // Synchronization: State to URL
+    // Create stable reference for filters to prevent infinite loops
+    const filterDeps = useMemo(() => ({
+        search,
+        page,
+        selectedCategoryId,
+        selectedTagsString: selectedTags.join(','),
+        statusFilter: advancedFilters.status,
+        visibilityFilter: advancedFilters.visibility,
+        createdByFilter: advancedFilters.createdBy,
+        dateFromFilter: advancedFilters.dateFrom,
+        dateToFilter: advancedFilters.dateTo,
+        hasLinkedDCRFilter: advancedFilters.hasLinkedDCR
+    }), [search, page, selectedCategoryId, selectedTags.join(','), advancedFilters.status, advancedFilters.visibility, advancedFilters.createdBy, advancedFilters.dateFrom, advancedFilters.dateTo, advancedFilters.hasLinkedDCR]);
+
+    // URL Sync: Only update URL when params actually change (prevents infinite loops)
     useEffect(() => {
-        const params = new URLSearchParams();
-        if (search) params.set('search', search);
-        if (selectedCategoryId) params.set('category', selectedCategoryId);
-        if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
-        if (page > 1) params.set('page', page);
+        const newParams = new URLSearchParams();
+        if (search) newParams.set('search', search);
+        if (selectedCategoryId) newParams.set('category', selectedCategoryId);
+        if (selectedTags.length > 0) newParams.set('tags', selectedTags.join(','));
+        if (page > 1) newParams.set('page', page);
 
         // Advanced filters
         Object.entries(advancedFilters).forEach(([key, value]) => {
             if (value && value !== 'all' && value !== '') {
-                params.set(key, value);
+                newParams.set(key, value);
             }
         });
 
-        setSearchParams(params, { replace: true });
-    }, [search, selectedCategoryId, selectedTags, advancedFilters, page, setSearchParams]);
+        // Only update if params are different (critical for preventing loops)
+        const newParamsString = newParams.toString();
+        const currentParamsString = searchParams.toString();
+        
+        if (newParamsString !== currentParamsString) {
+            setSearchParams(newParams, { replace: true });
+        }
+    // Use useMemo result as dependency to ensure stability
+    }, [filterDeps, searchParams]);
 
     // Data Fetching
     const fetchArticles = async () => {
+        // Don't fetch if there was an initialization error
+        if (initError || fetchError) {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
+            setFetchError(false);
             const params = new URLSearchParams();
 
             if (search) params.append('search', search);
@@ -146,8 +178,14 @@ export default function ArticleList() {
             setArticles(res.data.articles || []);
             setTotalPages(res.data.totalPages || 1);
             setTotalRecords(res.data.totalRecords || res.data.total || 0);
+            setFetchError(false);
         } catch (error) {
-            toast.error(error.normalizedMessage || 'Failed to fetch articles');
+            console.error('Failed to fetch articles:', error);
+            setFetchError(true);
+            // Only show toast for non-auth errors to prevent spam
+            if (error.normalizedStatus !== 401 && error.normalizedStatus !== 403) {
+                toast.error(error.normalizedMessage || 'Failed to fetch articles');
+            }
         } finally {
             setLoading(false);
         }
@@ -155,14 +193,21 @@ export default function ArticleList() {
 
     const fetchInitialData = async () => {
         try {
+            setInitError(false);
             const [catRes, userRes] = await Promise.all([
                 api.get('/kb/categories'),
                 api.get('/users').catch(() => ({ data: { users: [] } }))
             ]);
             setCategories(catRes.data.categories || []);
             setUsers(userRes.data.users || []);
+            setInitError(false);
         } catch (error) {
             console.error('Failed to fetch initial data:', error);
+            setInitError(true);
+            // Only show toast for non-auth errors
+            if (error.normalizedStatus !== 401 && error.normalizedStatus !== 403) {
+                toast.error('Failed to load initial data');
+            }
         }
     };
 
@@ -170,10 +215,11 @@ export default function ArticleList() {
         fetchInitialData();
     }, []);
 
+    
     useEffect(() => {
         fetchArticles();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, search, selectedCategoryId, selectedTags, advancedFilters]);
+    }, [filterDeps]);
 
     const handleDelete = async () => {
         if (!deleteDialog.articleId) return;
@@ -452,34 +498,12 @@ export default function ArticleList() {
 
                         {/* Pagination - Modern minimalist */}
                         {!loading && articles.length > 0 && totalPages > 1 && (
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-12 border-t border-gray-100 dark:border-slate-800">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                    Displaying <span className="text-slate-900 dark:text-white">{((page - 1) * 12) + 1}</span> — <span className="text-slate-900 dark:text-white">{Math.min(page * 12, totalRecords)}</span> of <span className="text-blue-600 dark:text-blue-400">{totalRecords}</span> entries
-                                </p>
-                                <div className="flex items-center gap-3 p-2 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-sm border border-gray-100 dark:border-slate-800">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                                        disabled={page === 1}
-                                        className="h-10 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                                    >
-                                        Prev
-                                    </Button>
-                                    <div className="flex items-center px-6 h-10 bg-blue-600 dark:bg-blue-600 rounded-xl text-[10px] font-black text-white shadow-lg shadow-blue-500/20">
-                                        {page} <span className="mx-2 opacity-50">/</span> {totalPages}
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                        disabled={page === totalPages}
-                                        className="h-10 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest disabled:opacity-20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
-                            </div>
+                            <Pagination
+                                currentPage={page}
+                                setCurrentPage={setPage}
+                                totalPages={totalPages}
+                                totalRecords={totalRecords}
+                            />
                         )}
                         <div className="h-24" /> {/* Extra padding for better scroll feel */}
                     </div>

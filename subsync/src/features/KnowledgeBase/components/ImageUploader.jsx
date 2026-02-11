@@ -135,6 +135,8 @@ export default function ImageUploader({ articleId, onUploadComplete, maxFiles = 
             >
                 <input
                     ref={fileInputRef}
+                    id="kb-image-upload"
+                    name="kb-image-upload"
                     type="file"
                     multiple
                     accept="image/*"
