@@ -141,7 +141,7 @@ const TimerWidget = ({ onTimerUpdate }) => {
                                 <span className="text-[10px] font-bold text-blue-100 uppercase tracking-widest">{activeTimer.customer_name}</span>
                             </div>
                         )}
-                        {activeTimer.is_billable && (
+                        {!!activeTimer.is_billable && (
                             <div className="bg-emerald-500/20 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-emerald-500/30 flex items-center gap-2">
                                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Billable</span>
                             </div>

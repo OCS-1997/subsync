@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
     BarChart, Bar, PieChart, Pie, LineChart, Line, 
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -25,6 +26,10 @@ const TimeTrackingReports = () => {
     const [dateRange, setDateRange] = useState('this_week');
     const [startDate, setStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [endDate, setEndDate] = useState(endOfWeek(new Date(), { weekStartsOn: 1 }));
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [userEntries, setUserEntries] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [fetchingDetails, setFetchingDetails] = useState(false);
 
     useEffect(() => {
         updateDateRange(dateRange);
@@ -84,6 +89,28 @@ const TimeTrackingReports = () => {
             toast.error('Failed to load reports');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUserActivity = async (user) => {
+        setSelectedUser(user);
+        setIsModalOpen(true);
+        setFetchingDetails(true);
+        try {
+            const response = await api.get('/time-tracking/entries', {
+                params: {
+                    user_id: user.user_id,
+                    startDate: format(startDate, 'yyyy-MM-dd'),
+                    endDate: format(endDate, 'yyyy-MM-dd'),
+                    limit: 1000
+                }
+            });
+            setUserEntries(response.data.entries || []);
+        } catch (error) {
+            console.error('Error fetching user activity:', error);
+            toast.error('Failed to load activity details');
+        } finally {
+            setFetchingDetails(false);
         }
     };
 
@@ -410,9 +437,13 @@ const TimeTrackingReports = () => {
                         <div className="divide-y divide-gray-50 dark:divide-slate-800">
                             {topUsers.length > 0 ? (
                                 topUsers.map((user, i) => (
-                                    <div key={i} className="p-6 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                                    <div 
+                                        key={i} 
+                                        onClick={() => fetchUserActivity(user)}
+                                        className="p-6 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors cursor-pointer group"
+                                    >
                                         <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg shadow-blue-500/10">
+                                            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg shadow-blue-500/10 group-hover:scale-110 transition-transform">
                                                 {user.first_name?.[0]}{user.last_name?.[0]}
                                             </div>
                                             <div>
@@ -428,7 +459,7 @@ const TimeTrackingReports = () => {
                                                 <div className="text-sm font-black text-slate-900 dark:text-white">{(user.total_minutes / 60).toFixed(1)}h</div>
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Hours</span>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-slate-200" />
+                                            <ChevronRight className="w-4 h-4 text-slate-200 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                                         </div>
                                     </div>
                                 ))
@@ -439,6 +470,90 @@ const TimeTrackingReports = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* User Activity Drill-down Modal */}
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="max-w-4xl rounded-[3rem] p-0 overflow-hidden border-none dark:bg-slate-950 shadow-2xl">
+                    <DialogHeader className="p-10 bg-slate-900 dark:bg-slate-900">
+                        <div className="flex items-center gap-6">
+                            <div className="h-16 w-16 rounded-3xl bg-blue-600 flex items-center justify-center text-xl font-black text-white shadow-xl shadow-blue-500/20">
+                                {selectedUser?.first_name?.[0]}{selectedUser?.last_name?.[0]}
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-black text-white tracking-tight uppercase">
+                                    {selectedUser?.first_name} {selectedUser?.last_name}
+                                </DialogTitle>
+                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mt-1 italic">
+                                    Operational Activity Registry • {format(startDate, 'MMM dd')} - {format(endDate, 'MMM dd')}
+                                </p>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="p-10 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-4">
+                        {fetchingDetails ? (
+                            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                <Activity className="w-8 h-8 text-blue-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compiling activities...</span>
+                            </div>
+                        ) : userEntries.length > 0 ? (
+                            <div className="space-y-3">
+                                {userEntries.map((entry, idx) => (
+                                    <div key={idx} className="p-6 rounded-[1.5rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-between group hover:border-blue-500/30 transition-all">
+                                        <div className="flex items-start gap-4 flex-1">
+                                            <div className="mt-1 h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: entry.activity_color || '#3b82f6' }} />
+                                            <div>
+                                                <h5 className="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">{entry.title}</h5>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {entry.customer_name && (
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-950 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-800">
+                                                            {entry.customer_name}
+                                                        </span>
+                                                    )}
+                                                    {entry.project_name && (
+                                                        <span className="text-[9px] font-bold text-blue-500/70 uppercase tracking-widest bg-blue-500/5 px-2 py-0.5 rounded-md border border-blue-500/10">
+                                                            {entry.project_name}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                                                        {format(new Date(entry.start_time), 'MMM dd')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right pl-6">
+                                            <div className="text-sm font-black text-blue-600 dark:text-blue-400 tabular-nums">
+                                                {formatHours(entry.duration_minutes)}
+                                            </div>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Duration</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-20">
+                                <Target className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No activities logged in this period</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="p-8 border-t border-slate-50 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/50 flex justify-between items-center">
+                        <div>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cumulative Time</p>
+                            <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums">
+                                {selectedUser ? (selectedUser.total_minutes / 60).toFixed(1) + 'h' : '0.0h'}
+                            </span>
+                        </div>
+                        <Button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="h-10 px-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] font-black uppercase tracking-widest"
+                        >
+                            Close Registry
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

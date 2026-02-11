@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -306,12 +307,13 @@ const CalendarGrid = ({ currentMonth, entries, onDateSelect, selectedDate }) => 
     );
 };
 
-const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [] }) => {
+const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [], users = [], teams = [] }) => {
+    const currentUser = useSelector(state => state.auth.user);
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
-        user_id: '',
+        user_id: currentUser?.user_id || '',
         team_id: '',
         customer_id: '',
         project_id: '',
@@ -324,6 +326,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         startDate: '',
         endDate: ''
     });
+    const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const [viewType, setViewType] = useState('calendar'); // 'table' or 'calendar'
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -381,7 +384,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
 
     useEffect(() => {
         fetchEntries();
-    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.startDate, filters.endDate]);
+    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.user_id, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.startDate, filters.endDate]);
 
     // Debounced search effect
     useEffect(() => {
@@ -441,7 +444,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const resetFilters = () => {
         setFilters({
             search: '',
-            user_id: '',
+            user_id: currentUser?.user_id || '',
             team_id: '',
             customer_id: '',
             project_id: '',
@@ -498,9 +501,14 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         ),
         title: (
             <div className="flex flex-col max-w-[250px]">
-                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {entry.title}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {entry.title}
+                    </span>
+                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-1.5 h-4 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500">
+                        {entry.display_name || entry.user_name || `User #${entry.user_id}`}
+                    </Badge>
+                </div>
                 {entry.description && (
                     <span className="text-[10px] font-medium text-slate-400 truncate leading-relaxed">
                         {entry.description}
@@ -760,6 +768,59 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                         className="h-11 pl-10 rounded-xl bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800 font-bold text-sm transition-all"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Resource</label>
+                                <Popover open={userPopoverOpen} onOpenChange={setUserPopoverOpen} modal={false}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className="h-11 w-full justify-between items-center px-4 rounded-xl font-bold text-sm bg-gray-50/50 dark:bg-slate-900 border-gray-100 dark:border-slate-800"
+                                        >
+                                            <span className="truncate">
+                                                {filters.user_id
+                                                    ? (users.find((u) => String(u.user_id) === String(filters.user_id))?.display_name || users.find((u) => String(u.user_id) === String(filters.user_id))?.name || "Selected Resource")
+                                                    : "All Resources..."}
+                                            </span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                        <Command className="dark:bg-slate-900">
+                                            <CommandInput placeholder="Search resources..." className="font-bold border-none focus:ring-0" />
+                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No resource found.</CommandEmpty>
+                                            <CommandGroup className="max-h-64 overflow-y-auto p-2">
+                                                <CommandItem
+                                                    value="all-users"
+                                                    onSelect={() => {
+                                                        setFilters(prev => ({ ...prev, user_id: '' }));
+                                                        setUserPopoverOpen(false);
+                                                    }}
+                                                    className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", !filters.user_id ? "opacity-100" : "opacity-0")} />
+                                                    <span className="font-bold text-sm tracking-tight">All Resources</span>
+                                                </CommandItem>
+                                                {users.map((u) => (
+                                                    <CommandItem
+                                                        key={u.user_id}
+                                                        value={u.display_name || u.name}
+                                                        onSelect={() => {
+                                                            setFilters(prev => ({ ...prev, user_id: u.user_id }));
+                                                            setUserPopoverOpen(false);
+                                                        }}
+                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", String(filters.user_id) === String(u.user_id) ? "opacity-100" : "opacity-0")} />
+                                                        <span className="font-bold text-sm tracking-tight">{u.display_name || u.name}</span>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             <div className="space-y-2">

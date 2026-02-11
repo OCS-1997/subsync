@@ -166,7 +166,7 @@ const QuickTimerButton = () => {
         <>
             {activeTimer ? (
                 // Active timer display
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all cursor-pointer group"
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all cursor-pointer group shadow-sm"
                     onClick={() => setDialogOpen(true)}
                 >
                     <div className="relative">
@@ -174,20 +174,20 @@ const QuickTimerButton = () => {
                         <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+                        <span className="text-[10px] font-mono font-black text-blue-600 dark:text-blue-400 tabular-nums uppercase tracking-tighter">
                             {formatTime(elapsedTime)}
                         </span>
                     </div>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 hover:bg-red-500/20 rounded-full"
+                        className="h-6 w-6 p-0 hover:bg-red-500/20 rounded-full transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleStopTimer();
                         }}
                     >
-                        <Square className="h-3 w-3 text-red-500" />
+                        <Square className="h-2.5 w-2.5 text-red-500 fill-current" />
                     </Button>
                 </div>
             ) : (
@@ -195,88 +195,109 @@ const QuickTimerButton = () => {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400 transition-colors border border-transparent hover:border-green-500/20"
+                    className="h-10 w-10 rounded-full hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
                     onClick={() => setDialogOpen(true)}
-                    title="Start Time Tracking"
+                    title="Quick Launch Timer"
                 >
-                    <Play className="h-5 w-5" />
+                    <Play className="h-5 w-5 fill-current opacity-70" />
                 </Button>
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-slate-900">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
-                            <Clock className="h-5 w-5 text-blue-500" />
-                            Time Tracker
-                        </DialogTitle>
-                        <DialogDescription className="text-sm">
-                            {activeTimer ? 'Manage your running timer' : 'Start tracking time or log manually'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    
-                    {activeTimer ? (
-                        <div className="space-y-4">
-                            {/* Active Timer Display */}
-                            <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border border-blue-200 dark:border-blue-800 rounded-xl">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Currently Tracking</p>
-                                        <h3 className="text-2xl font-bold text-blue-900 dark:text-blue-100">{activeTimer.title}</h3>
-                                        {activeTimer.description && (
-                                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">{activeTimer.description}</p>
-                                        )}
+                <DialogContent className="max-w-5xl p-0 overflow-hidden dark:bg-slate-950 border-none shadow-2xl rounded-[2.5rem]">
+                    <div className="flex flex-col h-full max-h-[90vh]">
+                        <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/50 backdrop-blur-md sticky top-0 z-10">
+                            <div>
+                                <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">
+                                    <div className="h-10 w-10 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                        <Timer className="h-5 w-5 text-white" />
                                     </div>
-                                    <div className="relative">
-                                        <div className="h-16 w-16 rounded-full bg-white dark:bg-blue-950 border-4 border-blue-500 flex items-center justify-center shadow-lg">
-                                            <Timer className="h-8 w-8 text-blue-500 animate-pulse" />
-                                        </div>
-                                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full animate-pulse"></span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Elapsed Time</p>
-                                        <p className="text-3xl font-mono font-bold text-blue-900 dark:text-blue-100 tabular-nums">
+                                    Sync Hub
+                                </DialogTitle>
+                                <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    {activeTimer ? 'Mission in progress' : 'Ready for deployment'}
+                                </DialogDescription>
+                            </div>
+                            
+                            {activeTimer && (
+                                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 px-6 py-3 rounded-[1.5rem] border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Runtime</span>
+                                        <span className="text-xl font-mono font-black text-blue-500 tabular-nums">
                                             {formatTime(elapsedTime)}
-                                        </p>
+                                        </span>
                                     </div>
                                     <Button
                                         onClick={handleStopTimer}
-                                        className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+                                        className="h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-4 shadow-lg shadow-red-500/20 transition-all"
                                     >
-                                        <Square className="h-4 w-4 mr-2" />
-                                        Stop Timer
+                                        <Square className="h-3 w-3 mr-2 fill-current" />
+                                        Kill Process
                                     </Button>
                                 </div>
-                            </div>
-
-                            {/* Timer Details */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {activeTimer.project_name && (
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Project</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{activeTimer.project_name}</p>
-                                    </div>
-                                )}
-                                {activeTimer.customer_name && (
-                                    <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Customer</p>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">{activeTimer.customer_name}</p>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
-                    ) : (
-                        <TimeEntryForm
-                            onSubmit={handleSubmit}
-                            customers={customers}
-                            projects={projects}
-                            categories={categories}
-                            compact={true}
-                        />
-                    )}
+                        
+                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
+                            {activeTimer ? (
+                                <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm">
+                                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-3">Target Objective</p>
+                                                <h3 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">{activeTimer.title}</h3>
+                                                {activeTimer.description && (
+                                                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-4 leading-relaxed line-clamp-3">
+                                                        {activeTimer.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 flex items-center gap-6">
+                                                <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center">
+                                                    <Clock className="h-6 w-6 text-indigo-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Project Assignment</p>
+                                                    <p className="text-base font-black text-slate-900 dark:text-white">
+                                                        {activeTimer.project_name || 'Individual Task'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-gray-100 dark:border-slate-800 flex items-center gap-6">
+                                                <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center">
+                                                    <Timer className="h-6 w-6 text-emerald-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client Entity</p>
+                                                    <p className="text-base font-black text-slate-900 dark:text-white">
+                                                        {activeTimer.customer_name || 'Internal Operations'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-8 border-t border-gray-100 dark:border-slate-800">
+                                        <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                                            System Status: Synchronized & Live
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <TimeEntryForm
+                                    onSubmit={handleSubmit}
+                                    customers={customers}
+                                    projects={projects}
+                                    categories={categories}
+                                    compact={true}
+                                />
+                            )}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
