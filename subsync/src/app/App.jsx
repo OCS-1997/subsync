@@ -11,6 +11,7 @@ import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
 import InstallPrompt from '@/components/PWA/InstallPrompt'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
+import { CallLogManager } from '@/components/CallLogPrompt'
 
 function App() {
   // Enable auto-refresh token
@@ -69,6 +70,7 @@ function App() {
         </ThemeProvider>
       </ErrorBoundary>
       <FloatingCalculator />
+      <CallLogManager />
     </>
   );
 }

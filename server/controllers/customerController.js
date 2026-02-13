@@ -221,6 +221,40 @@ const addCustomerContactController = async (req, res) => {
     } catch (e) {
         res.status(400).json({ error: e.message || 'Failed to add contact' });
     }
-};
+}
 
-export { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController };
+import { searchCustomerByPhone } from "../models/customerModel.js";
+
+// Controller function for searchCustomerByPhone() to be executed at /search-by-phone
+// @param   {Request}  req The request received from the client in an endpoint
+// @param   {Response} res The response sent to the client in that endpoint
+// @returns {Promise<void>}
+async function searchByPhoneController(req, res) {
+    try {
+        const { phone } = req.query;
+
+        if (!phone) {
+            return res.status(400).json({ error: 'Phone number is required' });
+        }
+
+        const result = await searchCustomerByPhone(phone);
+
+        if (result.customer) {
+            return res.status(200).json({
+                customer: result.customer,
+                contact: result.contact || null
+            });
+        } else {
+            return res.status(404).json({
+                error: 'No customer found with this phone number',
+                customer: null,
+                contact: null
+            });
+        }
+    } catch (error) {
+        console.error('Search by phone error:', error);
+        return res.status(500).json({ error: 'Failed to search customer by phone' });
+    }
+}
+
+export { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController, searchByPhoneController };

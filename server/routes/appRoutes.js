@@ -2,7 +2,7 @@ import express from 'express';
 import { isAuthenticated, authorize } from '../middlewares/auth.js';
 import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
-import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController } from '../controllers/customerController.js';
+import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController, searchByPhoneController } from '../controllers/customerController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
 import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers, getDcrDetailedReport } from '../controllers/dcrController.js';
@@ -205,6 +205,7 @@ router.get('/all-customer-details', isAuthenticated, authorize(PERMISSIONS.CUSTO
 router.put('/update-customer/:cid', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_UPDATE), updateCustomerDetails);
 router.post('/import-customers', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_CREATE), importCustomers);
 router.post('/customer/:cid/contacts', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_UPDATE), addCustomerContactController);
+router.get('/customers/search-by-phone', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_VIEW), searchByPhoneController);
 
 // Payment Terms
 router.get('/payment-terms', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getPaymentTerms);
