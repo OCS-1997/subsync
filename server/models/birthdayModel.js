@@ -11,37 +11,35 @@ export async function getUpcomingBirthdays() {
     const todayDay = today.getDate();
     const todayYear = today.getFullYear();
 
-    // Get user birthdays
-    const [allUsers] = await appDB.query(
-        `SELECT u.username, u.name, u.email, u.date_of_birth, b.id
-         FROM users u
-         LEFT JOIN birthdays b ON b.user_id = u.username
-         WHERE u.date_of_birth IS NOT NULL`
-    );
-
-    // Get customer birthdays
-    const [allCustomers] = await appDB.query(
-        `SELECT c.customer_id, 
-                CONCAT(c.first_name, ' ', c.last_name) AS name,
-                c.primary_email AS email,
-                c.date_of_birth,
-                c.company_name,
-                b.id
-         FROM customers c
-         LEFT JOIN birthdays b ON b.customer_id = c.customer_id AND b.type = 'customer'
-         WHERE c.date_of_birth IS NOT NULL`
-    );
-
-    // Get customers with contact persons who have birthdays
-    const [customersWithContacts] = await appDB.query(
-        `SELECT customer_id, 
-                company_name,
-                other_contacts
-         FROM customers
-         WHERE other_contacts IS NOT NULL 
-         AND other_contacts != '[]'
-         AND other_contacts != ''`
-    );
+    // Execute independent queries in parallel
+    const [[allUsers], [allCustomers], [customersWithContacts]] = await Promise.all([
+        appDB.query(
+            `SELECT u.username, u.name, u.email, u.date_of_birth, b.id
+             FROM users u
+             LEFT JOIN birthdays b ON b.user_id = u.username
+             WHERE u.date_of_birth IS NOT NULL`
+        ),
+        appDB.query(
+            `SELECT c.customer_id,
+                    CONCAT(c.first_name, ' ', c.last_name) AS name,
+                    c.primary_email AS email,
+                    c.date_of_birth,
+                    c.company_name,
+                    b.id
+             FROM customers c
+             LEFT JOIN birthdays b ON b.customer_id = c.customer_id AND b.type = 'customer'
+             WHERE c.date_of_birth IS NOT NULL`
+        ),
+        appDB.query(
+            `SELECT customer_id,
+                    company_name,
+                    other_contacts
+             FROM customers
+             WHERE other_contacts IS NOT NULL
+             AND other_contacts != '[]'
+             AND other_contacts != ''`
+        )
+    ]);
 
     // Process contact persons
     const contactPersonBirthdays = [];
