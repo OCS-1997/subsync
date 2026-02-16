@@ -129,15 +129,14 @@ async function deleteTimeEntryController(req, res) {
 /**
  * Controller to get time entries with filters
  */
+/**
+ * Controller to get time entries for the logged-in user only
+ */
 async function getTimeEntriesController(req, res) {
     try {
         const userId = req.user.username;
-        const hasTeamView = req.user.permissions?.includes('time-tracking.view-team') || 
-                            req.user.permissions?.includes('time-tracking.manage');
 
         const {
-            user_id,
-            team_id,
             start_date,
             end_date,
             customer_id,
@@ -150,26 +149,12 @@ async function getTimeEntriesController(req, res) {
             sort_order
         } = req.query;
 
-        // If user doesn't have team view permission, ALWAYS enforce their own userId
-        // Admins with team view can optionally filter by user_id or see all entries
-        let filterUserId;
-        if (hasTeamView) {
-            // Admin can filter by specific user or see all (undefined)
-            filterUserId = user_id;
-        } else {
-            // Regular users MUST only see their own entries
-            if (!userId) {
-                return res.status(400).json({ error: "User ID not found in session" });
-            }
-            filterUserId = userId;
+        if (!userId) {
+            return res.status(400).json({ error: "User ID not found in session" });
         }
-        
-        // If user doesn't have team view permission, ignore team_id filter
-        const filterTeamId = hasTeamView ? team_id : null;
 
         const result = await getTimeEntries({
-            userId: filterUserId,
-            teamId: filterTeamId,
+            userId: userId,
             startDate: start_date,
             endDate: end_date,
             customerId: customer_id,
@@ -186,6 +171,48 @@ async function getTimeEntriesController(req, res) {
     } catch (error) {
         console.error("Error in getTimeEntriesController:", error);
         res.status(500).json({ error: error.message || "Failed to fetch time entries" });
+    }
+}
+
+/**
+ * Controller to get time entries for all users (Admin only)
+ */
+async function getAllTimeEntriesController(req, res) {
+    try {
+        const {
+            user_id,
+            team_id,
+            start_date,
+            end_date,
+            customer_id,
+            project_id,
+            activity_type_id,
+            is_billable,
+            page,
+            limit,
+            sort_by,
+            sort_order
+        } = req.query;
+
+        const result = await getTimeEntries({
+            userId: user_id, // Admin can still filter by a specific user if provided
+            teamId: team_id,
+            startDate: start_date,
+            endDate: end_date,
+            customerId: customer_id,
+            projectId: project_id,
+            activityTypeId: activity_type_id,
+            isBillable: is_billable,
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 50,
+            sortBy: sort_by,
+            sortOrder: sort_order
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error in getAllTimeEntriesController:", error);
+        res.status(500).json({ error: error.message || "Failed to fetch all time entries" });
     }
 }
 
@@ -357,5 +384,6 @@ export {
     startTimerController,
     stopTimerController,
     getActiveTimerController,
-    getTimeReportsController
+    getTimeReportsController,
+    getAllTimeEntriesController
 };

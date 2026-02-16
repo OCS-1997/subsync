@@ -309,6 +309,10 @@ const CalendarGrid = ({ currentMonth, entries, onDateSelect, selectedDate }) => 
 
 const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categories = [], users = [], teams = [] }) => {
     const currentUser = useSelector(state => state.auth.user);
+    const [showAllUsers, setShowAllUsers] = useState(false);
+    const permissions = useSelector(state => state.auth.permissions);
+    const isAdmin = permissions?.includes('time-tracking.view-team') || permissions?.includes('time-tracking.manage');
+
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
@@ -370,7 +374,8 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                 }
             });
 
-            const response = await api.get(`/time-tracking/entries?${params}`);
+            const endpoint = showAllUsers ? '/time-tracking/entries/all' : '/time-tracking/entries';
+            const response = await api.get(`${endpoint}?${params}`);
             setEntries(response.data.entries || []);
             setTotalPages(response.data.totalPages || 1);
             setTotalRecords(response.data.totalRecords || 0);
@@ -384,7 +389,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
 
     useEffect(() => {
         fetchEntries();
-    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.user_id, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.startDate, filters.endDate]);
+    }, [refresh, filters.page, filters.limit, filters.sort_by, filters.sort_order, filters.user_id, filters.customer_id, filters.project_id, filters.activity_type_id, filters.is_billable, filters.startDate, filters.endDate, showAllUsers]);
 
     // Debounced search effect
     useEffect(() => {
@@ -477,14 +482,25 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         });
     };
 
-    const tableHeaders = [
-        { key: 'timestamp', label: 'Timestamp', align: 'left' },
-        { key: 'title', label: 'Objective', align: 'left' },
-        { key: 'dimensions', label: 'Dimensions', align: 'left' },
-        { key: 'classification', label: 'Classification', align: 'left' },
-        { key: 'duration_minutes', label: 'Duration', align: 'center' },
-        { key: 'actions', label: 'Actions', align: 'center' }
-    ];
+    const tableHeaders = useMemo(() => {
+        const headers = [
+            { key: 'timestamp', label: 'Timestamp', align: 'left' },
+            { key: 'title', label: 'Objective', align: 'left' }
+        ];
+
+        if (showAllUsers) {
+            headers.push({ key: 'user', label: 'Resource', align: 'left' });
+        }
+
+        headers.push(
+            { key: 'dimensions', label: 'Dimensions', align: 'left' },
+            { key: 'classification', label: 'Classification', align: 'left' },
+            { key: 'duration_minutes', label: 'Duration', align: 'center' },
+            { key: 'actions', label: 'Actions', align: 'center' }
+        );
+
+        return headers;
+    }, [showAllUsers]);
 
     const tableData = entries.map(entry => ({
         id: entry.entry_id,
@@ -501,19 +517,24 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
         ),
         title: (
             <div className="flex flex-col max-w-[250px]">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                        {entry.title}
-                    </span>
-                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-1.5 h-4 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500">
-                        {entry.display_name || entry.user_name || `User #${entry.user_id}`}
-                    </Badge>
-                </div>
+                <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    {entry.title}
+                </span>
                 {entry.description && (
                     <span className="text-[10px] font-medium text-slate-400 truncate leading-relaxed">
                         {entry.description}
                     </span>
                 )}
+            </div>
+        ),
+        user: (
+            <div className="flex flex-col">
+                <span className="text-xs font-black text-slate-900 dark:text-white tracking-tight">
+                    {entry.user_full_name || 'System User'}
+                </span>
+                <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest">
+                    @{entry.user_name || entry.user_id}
+                </span>
             </div>
         ),
         dimensions: (
@@ -717,6 +738,23 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                         )}
                         
                         <div className="h-8 w-[1px] bg-gray-200 dark:bg-slate-800 mx-1" />
+
+                        {isAdmin && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowAllUsers(!showAllUsers)}
+                                className={cn(
+                                    "h-10 px-4 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
+                                    showAllUsers 
+                                        ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white" 
+                                        : "border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-950"
+                                )}
+                            >
+                                <User className={cn("mr-2 h-3.5 w-3.5", showAllUsers ? "text-white" : "text-blue-500")} />
+                                {showAllUsers ? "Showing All Users" : "Show All Users"}
+                            </Button>
+                        )}
 
                         <div className="flex items-center gap-3">
                             <Button
@@ -1183,9 +1221,17 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                                 </div>
                                                 <div>
                                                     <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{entry.title}</h4>
+                                                    {showAllUsers && (
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            <User className="h-3 w-3 text-blue-500" />
+                                                            <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase truncate">
+                                                                {entry.user_full_name} (@{entry.user_name})
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                     {entry.customer_name && (
-                                                        <div className="flex items-center gap-1.5 mt-2">
-                                                            <User className="h-3 w-3 text-slate-300" />
+                                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                                            <Briefcase className="h-3 w-3 text-slate-300" />
                                                             <span className="text-[9px] font-bold text-slate-400 uppercase truncate">{entry.customer_name}</span>
                                                         </div>
                                                     )}

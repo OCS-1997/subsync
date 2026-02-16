@@ -163,7 +163,8 @@ import {
     startTimerController,
     stopTimerController,
     getActiveTimerController,
-    getTimeReportsController
+    getTimeReportsController,
+    getAllTimeEntriesController
 } from '../controllers/timeTrackingController.js';
 import {
     createProjectController,
@@ -541,6 +542,7 @@ router.get('/users/:username/teams', isAuthenticated, getUserTeamsController);
 router.get('/teams/:id/stats', isAuthenticated, authorize(PERMISSIONS.TEAMS_VIEW), getTeamStatsController);
 
 // Time Tracking - Time Entries
+router.get('/time-tracking/entries/all', isAuthenticated, authorize([PERMISSIONS.TIME_TRACKING_VIEW_TEAM, PERMISSIONS.TIME_TRACKING_MANAGE]), getAllTimeEntriesController);
 router.get('/time-tracking/entries', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeEntriesController);
 router.post('/time-tracking/entries', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_USE), createTimeEntryController);
 router.get('/time-tracking/entries/:id', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeEntryByIdController);
