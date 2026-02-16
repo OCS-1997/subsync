@@ -766,7 +766,7 @@ export default function DCRForm() {
             className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
             <Save className="w-3.5 h-3.5 mr-2" />
-            {saving ? "Processing..." : isEditing ? "Update Report" : "Commit Report"}
+            {saving ? "Processing..." : isEditing ? "Update Report" : "Log DCR"}
           </Button>
         </div>
       </form>

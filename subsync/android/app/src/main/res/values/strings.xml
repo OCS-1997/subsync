@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Subsync</string>
+    <string name="title_activity_main">Subsync</string>
+    <string name="package_name">com.subsync.crm</string>
+    <string name="custom_url_scheme">com.subsync.crm</string>
+</resources>

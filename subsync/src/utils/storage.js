@@ -1,12 +1,15 @@
 /**
  * Smart Storage Utility
- * Automatically uses localStorage for PWA, sessionStorage for web
+ * Automatically uses localStorage for PWA, sessionStorage for web, Capacitor Preferences for native
  * Includes token expiration and security features
  */
 
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
+
 const TOKEN_EXPIRY_KEY = 'subsync_token_expiry';
 const REMEMBER_ME_KEY = 'subsync_remember_me';
-const TOKEN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const TOKEN_DURATION = 12 * 60 * 60 * 1000; // 12 hours (for mobile CRM with call detection)
 
 /**
  * Detect if app is running as PWA
@@ -20,6 +23,13 @@ export const isPWA = () => {
 };
 
 /**
+ * Detect if app is running on Capacitor (native)
+ */
+export const isCapacitor = () => {
+  return Capacitor.isNativePlatform();
+};
+
+/**
  * Check if user has "Remember me" enabled
  */
 const isRememberMeEnabled = () => {
@@ -28,11 +38,13 @@ const isRememberMeEnabled = () => {
 
 /**
  * Get the appropriate storage based on context
+ * - Capacitor (native): Use Capacitor Preferences
  * - PWA: Always use localStorage
  * - Web + Remember Me: Use localStorage
  * - Web: Use sessionStorage
  */
 export const getStorage = () => {
+  // Note: Capacitor uses a separate API (Preferences), so this returns web storage
   if (isPWA() || isRememberMeEnabled()) {
     return localStorage;
   }
@@ -41,11 +53,25 @@ export const getStorage = () => {
 
 /**
  * Set item in appropriate storage with expiration
+ * Synchronous for web, handles Capacitor async internally
  */
 export const setStorageItem = (key, value, options = {}) => {
-  const storage = getStorage();
-  
   try {
+    // Use Capacitor Preferences on native platforms (async but fire-and-forget for compatibility)
+    if (isCapacitor()) {
+      Preferences.set({ key, value }).catch(err => console.error('Capacitor storage error:', err));
+      
+      // Set expiration for token
+      if (key === 'subsync_token' && !options.skipExpiry) {
+        const expiryTime = Date.now() + TOKEN_DURATION;
+        Preferences.set({ key: TOKEN_EXPIRY_KEY, value: expiryTime.toString() })
+          .catch(err => console.error('Capacitor storage error:', err));
+      }
+      return;
+    }
+
+    // Fall back to web storage (synchronous)
+    const storage = getStorage();
     storage.setItem(key, value);
     
     // Set expiration for token
@@ -60,44 +86,113 @@ export const setStorageItem = (key, value, options = {}) => {
 
 /**
  * Get item from storage with expiration check
+ * Synchronous for web, returns null for Capacitor (use getStorageItemAsync)
  */
 export const getStorageItem = (key) => {
-  // Try both storages (for migration scenarios)
-  let value = localStorage.getItem(key);
-  if (!value) {
-    value = sessionStorage.getItem(key);
-  }
-  
-  // Check token expiration
-  if (key === 'subsync_token' && value) {
-    const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY) || 
-                       sessionStorage.getItem(TOKEN_EXPIRY_KEY);
-    
-    if (expiryTime && Date.now() > parseInt(expiryTime)) {
-      // Token expired
-      clearAuth();
+  try {
+    // For Capacitor, we can't do sync reads - return null and use async version
+    if (isCapacitor()) {
+      console.warn('[storage] getStorageItem called on Capacitor - use getStorageItemAsync instead');
       return null;
     }
+
+    // Fall back to web storage
+    // Try both storages (for migration scenarios)
+    let value = localStorage.getItem(key);
+    if (!value) {
+      value = sessionStorage.getItem(key);
+    }
+    
+    // Check token expiration
+    if (key === 'subsync_token' && value) {
+      const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY) || 
+                         sessionStorage.getItem(TOKEN_EXPIRY_KEY);
+      
+      if (expiryTime && Date.now() > parseInt(expiryTime)) {
+        // Token expired
+        clearAuth();
+        return null;
+      }
+    }
+    
+    return value;
+  } catch (error) {
+    console.error('Storage error:', error);
+    return null;
   }
-  
-  return value;
 };
 
 /**
- * Remove item from both storages
+ * Async version of getStorageItem for Capacitor compatibility
+ */
+export const getStorageItemAsync = async (key) => {
+  try {
+    // Use Capacitor Preferences on native platforms
+    if (isCapacitor()) {
+      const { value } = await Preferences.get({ key });
+      
+      // Check token expiration
+      if (key === 'subsync_token' && value) {
+        const { value: expiryTime } = await Preferences.get({ key: TOKEN_EXPIRY_KEY });
+        
+        if (expiryTime && Date.now() > parseInt(expiryTime)) {
+          // Token expired
+          await clearAuthAsync();
+          return null;
+        }
+      }
+      
+      return value;
+    }
+
+    // Fall back to sync version for web
+    return getStorageItem(key);
+  } catch (error) {
+    console.error('Storage error:', error);
+    return null;
+  }
+};
+
+/**
+ * Remove item from all storages (including Capacitor Preferences)
+ * Synchronous for web, fire-and-forget for Capacitor
  */
 export const removeStorageItem = (key) => {
+  if (isCapacitor()) {
+    Preferences.remove({ key }).catch(err => console.error('Capacitor storage error:', err));
+  }
   localStorage.removeItem(key);
   sessionStorage.removeItem(key);
 };
 
 /**
- * Clear all auth data
+ * Async version of removeStorageItem
+ */
+export const removeStorageItemAsync = async (key) => {
+  if (isCapacitor()) {
+    await Preferences.remove({ key });
+  }
+  localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
+};
+
+/**
+ * Clear all auth data (synchronous)
  */
 export const clearAuth = () => {
   removeStorageItem('subsync_token');
   removeStorageItem('subsync_user');
   removeStorageItem(TOKEN_EXPIRY_KEY);
+  // Keep remember_me preference
+};
+
+/**
+ * Async version of clearAuth for explicit async contexts
+ */
+export const clearAuthAsync = async () => {
+  await removeStorageItemAsync('subsync_token');
+  await removeStorageItemAsync('subsync_user');
+  await removeStorageItemAsync(TOKEN_EXPIRY_KEY);
   // Keep remember_me preference
 };
 
@@ -136,11 +231,18 @@ export const isTokenExpiringSoon = () => {
 
 /**
  * Extend token expiration (for auto-refresh)
+ * Synchronous for web, fire-and-forget for Capacitor
  */
 export const extendTokenExpiry = () => {
-  const storage = getStorage();
   const newExpiryTime = Date.now() + TOKEN_DURATION;
-  storage.setItem(TOKEN_EXPIRY_KEY, newExpiryTime.toString());
+  
+  if (isCapacitor()) {
+    Preferences.set({ key: TOKEN_EXPIRY_KEY, value: newExpiryTime.toString() })
+      .catch(err => console.error('Capacitor storage error:', err));
+  } else {
+    const storage = getStorage();
+    storage.setItem(TOKEN_EXPIRY_KEY, newExpiryTime.toString());
+  }
 };
 
 /**

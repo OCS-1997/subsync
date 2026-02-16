@@ -108,12 +108,10 @@ export const saveBirthdayController = async (req, res) => {
             return res.status(400).json({ error: 'Invalid type. Must be user, customer, or contact_person' });
         }
 
-        // Ensure appropriate ID fields are set based on type - for manual entries
-        // If user manually adds a birthday, they won't have user_id/customer_id/contact_person_index
-        // so we need to allow these to be null
+        // user_id represents the logged-in user who is creating/editing this birthday record
         const dataToSave = {
             ...birthdayData,
-            user_id: birthdayData.user_id || null,
+            user_id: req.user.username, // The authenticated user creating this record
             customer_id: birthdayData.customer_id || null,
             contact_person_index: birthdayData.contact_person_index || null
         };
@@ -161,5 +159,123 @@ export const syncBirthdaysController = async (req, res) => {
     } catch (error) {
         console.error('Error syncing birthdays:', error);
         res.status(500).json({ error: error.message || 'Failed to sync birthdays' });
+    }
+};
+
+/**
+ * GET /api/birthdays/search-people?q=search_term
+ * Search for people across users, customers, and contact persons
+ * Used for autocomplete in birthday form
+ */
+export const searchPeopleController = async (req, res) => {
+    try {
+        const { q } = req.query;
+
+        if (!q || q.trim().length < 2) {
+            return res.json({ results: [] });
+        }
+
+        const searchTerm = `%${q.trim()}%`;
+        const results = [];
+
+        // Import database connection
+        const appDB = (await import('../db/subsyncDB.js')).default;
+
+        // Search users table
+        const [users] = await appDB.query(
+            `SELECT 
+                username as id,
+                name,
+                email,
+                date_of_birth,
+                'user' as type,
+                NULL as customer_id,
+                NULL as contact_person_index,
+                NULL as company_name
+            FROM users 
+            WHERE (name LIKE ? OR email LIKE ?) 
+            AND is_active = 1
+            LIMIT 10`,
+            [searchTerm, searchTerm]
+        );
+
+        results.push(...users);
+
+        // Search customers table  
+        const [customers] = await appDB.query(
+            `SELECT 
+                customer_id as id,
+                CONCAT(first_name, ' ', last_name) as name,
+                primary_email as email,
+                date_of_birth,
+                'customer' as type,
+                customer_id,
+                NULL as contact_person_index,
+                company_name
+            FROM customers 
+            WHERE (display_name LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR primary_email LIKE ?)
+            AND customer_status = 'Active'
+            LIMIT 10`,
+            [searchTerm, searchTerm, searchTerm, searchTerm]
+        );  
+
+        //console.log(`[Birthday Search] Found ${customers.length} customers for query "${q}"`);
+        results.push(...customers);
+
+        // Search contact persons in customers' other_contacts JSON
+        const [customersWithContacts] = await appDB.query(
+            `SELECT 
+                customer_id,
+                company_name,
+                other_contacts
+            FROM customers 
+            WHERE customer_status = 'Active'
+            AND other_contacts IS NOT NULL 
+            AND other_contacts != ''
+            AND other_contacts != '[]'`,
+            []
+        );
+
+        // Parse other_contacts and search
+        for (const customer of customersWithContacts) {
+            try {
+                const contacts = typeof customer.other_contacts === 'string' 
+                    ? JSON.parse(customer.other_contacts) 
+                    : customer.other_contacts;
+
+                if (Array.isArray(contacts)) {
+                    contacts.forEach((contact, index) => {
+                        const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+                        const searchQuery = q.trim().toLowerCase();
+                        
+                        if (
+                            fullName.toLowerCase().includes(searchQuery) ||
+                            (contact.email && contact.email.toLowerCase().includes(searchQuery))
+                        ) {
+                            results.push({
+                                id: `${customer.customer_id}_${index}`,
+                                name: fullName,
+                                email: contact.email || '',
+                                date_of_birth: contact.date_of_birth || null,
+                                type: 'contact_person',
+                                customer_id: customer.customer_id,
+                                contact_person_index: index,
+                                company_name: customer.customer_name
+                            });
+                        }
+                    });
+                }
+            } catch (parseError) {
+                console.error(`Error parsing other_contacts for customer ${customer.customer_id}:`, parseError);
+            }
+        }
+
+        // Limit total results
+        const limitedResults = results.slice(0, 30);
+
+        res.json({ results: limitedResults });
+    } catch (error) {
+        console.error('Error searching people:', error);
+        res.status(500).json({ error: error.message || 'Failed to search people' });
     }
 };

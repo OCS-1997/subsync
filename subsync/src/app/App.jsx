@@ -11,11 +11,17 @@ import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculator.jsx'
 import InstallPrompt from '@/components/PWA/InstallPrompt'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
+import { useCapacitorAuth } from '@/hooks/useCapacitorAuth'
 import { CallLogManager } from '@/components/CallLogPrompt'
+import CallDetectorManager from '@/components/CallDetector/CallDetectorManager'
 
 function App() {
   // Enable auto-refresh token
   useTokenRefresh();
+  
+  // Enable Capacitor authentication persistence
+  useCapacitorAuth();
+  
   useEffect(() => {
     const handleOffline = () => {
       toast.error('You are offline. Please check your internet connection.', {
@@ -71,6 +77,7 @@ function App() {
       </ErrorBoundary>
       <FloatingCalculator />
       <CallLogManager />
+      <CallDetectorManager />
     </>
   );
 }

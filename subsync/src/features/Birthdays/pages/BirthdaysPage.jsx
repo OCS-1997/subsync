@@ -54,6 +54,7 @@ import { toast } from 'react-toastify';
 import { format, isToday as isDateToday, isTomorrow as isDateTomorrow, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addMonths, parseISO } from 'date-fns';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
+import { BirthdayFormDialog } from '../components/BirthdayFormDialog.jsx';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -90,16 +91,6 @@ function BirthdaysPage() {
     const [selectedBirthday, setSelectedBirthday] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSendingWish, setIsSendingWish] = useState(false);
-
-    // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        date_of_birth: '',
-        type: 'contact_person',
-        email_send: true,
-        include_in_communication: true
-    });
 
     useEffect(() => {
         fetchBirthdays();
@@ -149,25 +140,6 @@ function BirthdaysPage() {
         }
     };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        try {
-            setIsSubmitting(true);
-            const data = { ...formData };
-            if (selectedBirthday?.id) data.id = selectedBirthday.id;
-
-            await api.post('/birthdays', data);
-            toast.success(selectedBirthday ? 'Birthday updated successfully' : 'Birthday added successfully');
-            setIsAddDialogOpen(false);
-            resetForm();
-            fetchBirthdays();
-        } catch (error) {
-            toast.error(error.response?.data?.error || 'Failed to save birthday');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     const handleDelete = async () => {
         try {
             setIsSubmitting(true);
@@ -197,32 +169,12 @@ function BirthdaysPage() {
 
     const openEditDialog = (birthday) => {
         setSelectedBirthday(birthday);
-        setFormData({
-            name: birthday.name,
-            email: birthday.email,
-            date_of_birth: birthday.date_of_birth ? format(new Date(birthday.date_of_birth), 'yyyy-MM-dd') : '',
-            type: birthday.type,
-            email_send: birthday.email_send === 1 || birthday.email_send === true,
-            include_in_communication: birthday.include_in_communication === 1 || birthday.include_in_communication === true
-        });
         setIsAddDialogOpen(true);
     };
 
     const openDeleteDialog = (birthday) => {
         setSelectedBirthday(birthday);
         setIsDeleteDialogOpen(true);
-    };
-
-    const resetForm = () => {
-        setSelectedBirthday(null);
-        setFormData({
-            name: '',
-            email: '',
-            date_of_birth: '',
-            type: 'contact_person',
-            email_send: true,
-            include_in_communication: true
-        });
     };
 
     const getTypeIcon = (type) => {
@@ -321,7 +273,7 @@ function BirthdaysPage() {
 
                     <PermissionGate permissions={[PERMISSIONS.BIRTHDAYS_MANAGE]}>
                         <Button
-                            onClick={() => { resetForm(); setIsAddDialogOpen(true); }}
+                            onClick={() => { setSelectedBirthday(null); setIsAddDialogOpen(true); }}
                             className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-md shadow-rose-500/20"
                         >
                             <Plus className="mr-2 h-4 w-4" /> Add Birthday
@@ -481,84 +433,17 @@ function BirthdaysPage() {
                 </TabsContent>
             </Tabs>
 
-            {/* Add/Edit Dialog */}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>{selectedBirthday ? 'Edit Birthday' : 'New Birthday'}</DialogTitle>
-                        <DialogDescription>
-                            Enter details to keep track of a special day.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleSave} className="space-y-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">Name</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="dob" className="text-right">Birthday</Label>
-                            <div className="col-span-3">
-                                <Input
-                                    type="date"
-                                    id="date_of_birth"
-                                    value={formData.date_of_birth || ""}
-                                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                                    className="h-10 px-3 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="type" className="text-right">Type</Label>
-                            <Select
-                                value={formData.type}
-                                onValueChange={(v) => setFormData({ ...formData, type: v })}
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="user">Team Member</SelectItem>
-                                    <SelectItem value="customer">Customer</SelectItem>
-                                    <SelectItem value="contact_person">Contact Person</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center justify-between space-x-2 pt-4 border-t">
-                            <div className="space-y-0.5">
-                                <Label>Send Emails</Label>
-                                <p className="text-[0.8rem] text-muted-foreground">Automatically send wishes</p>
-                            </div>
-                            <Switch
-                                checked={formData.email_send}
-                                onCheckedChange={(c) => setFormData({ ...formData, email_send: c })}
-                            />
-                        </div>
-                    </form>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={isSubmitting} className="bg-rose-500 hover:bg-rose-600">
-                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
+            {/* Add/Edit Dialog with Autocomplete */}
+            <BirthdayFormDialog
+                open={isAddDialogOpen}
+                onOpenChange={(open) => {
+                    setIsAddDialogOpen(open);
+                    if (!open) setSelectedBirthday(null);
+                }}
+                selectedBirthday={selectedBirthday}
+                onSuccess={fetchBirthdays}
+            />
 
             {/* Delete Confirmation */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
