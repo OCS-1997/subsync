@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Timer, Play, Square, Clock } from 'lucide-react';
+import { Timer, PlayCircle, Square, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import TimeEntryForm from '@/features/TimeTracking/components/TimeEntryForm';
 import api from '@/lib/axiosInstance.js';
@@ -195,11 +195,11 @@ const QuickTimerButton = () => {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-emerald-500/5 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10 hover:border-emerald-500/30 transition-all shadow-sm hover:shadow-emerald-500/10 group active:scale-95 shrink-0"
                     onClick={() => setDialogOpen(true)}
                     title="Quick Launch Timer"
                 >
-                    <Play className="h-5 w-5 fill-current opacity-70" />
+                    <PlayCircle className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-emerald-500/10 group-hover:fill-emerald-500/20 group-hover:scale-110 transition-all" />
                 </Button>
             )}
 

@@ -13,17 +13,25 @@ async function getDetailedReportsController(req, res) {
             user_id,
             start_date,
             end_date,
-            team_id
+            team_id,
+            customer_id,
+            project_id,
+            activity_type_id,
+            is_billable
         } = req.query;
 
         // If user doesn't have team view permission, force userId to their own
-        const filterUserId = hasTeamView ? user_id : userId;
+        const filterUserId = hasTeamView ? (user_id === 'all' ? null : user_id) : userId;
 
         const reports = await getDetailedReports({
             userId: filterUserId,
             startDate: start_date,
             endDate: end_date,
-            teamId: team_id
+            teamId: team_id === 'all' ? null : team_id,
+            customerId: customer_id === 'all' ? null : customer_id,
+            projectId: project_id === 'all' ? null : project_id,
+            activityTypeId: activity_type_id === 'all' ? null : activity_type_id,
+            isBillable: is_billable === 'all' ? null : is_billable
         });
 
         res.status(200).json(reports);

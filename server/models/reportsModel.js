@@ -5,7 +5,7 @@ import appDB from "../db/subsyncDB.js";
  * @param {Object} filters - Filter options
  * @returns {Promise<Object>}
  */
-async function getDetailedReports({ userId, startDate, endDate, teamId }) {
+async function getDetailedReports({ userId, startDate, endDate, teamId, customerId, projectId, activityTypeId, isBillable }) {
     try {
         let whereConditions = ['te.deleted_at IS NULL', 'te.end_time IS NOT NULL'];
         let params = [];
@@ -28,6 +28,26 @@ async function getDetailedReports({ userId, startDate, endDate, teamId }) {
         if (endDate) {
             whereConditions.push('te.start_time <= ?');
             params.push(endDate);
+        }
+
+        if (customerId) {
+            whereConditions.push('te.customer_id = ?');
+            params.push(customerId);
+        }
+
+        if (projectId) {
+            whereConditions.push('te.project_id = ?');
+            params.push(projectId);
+        }
+
+        if (activityTypeId) {
+            whereConditions.push('te.activity_type_id = ?');
+            params.push(activityTypeId);
+        }
+
+        if (isBillable !== undefined && isBillable !== null && isBillable !== '') {
+            whereConditions.push('te.is_billable = ?');
+            params.push(isBillable === 'true' || isBillable === true);
         }
 
         const whereClause = whereConditions.join(' AND ');

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
     BarChart, Bar, PieChart, Pie, LineChart, Line, 
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -11,7 +13,7 @@ import {
 } from 'recharts';
 import { 
     Download, TrendingUp, Clock, 
-    DollarSign, Users, FolderKanban,
+    DollarSign, Users, User, FolderKanban,
     Calendar, ArrowUpRight, Target, Activity,
     Shapes, Filter, ChevronRight
 } from 'lucide-react';
@@ -31,58 +33,61 @@ const TimeTrackingReports = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [fetchingDetails, setFetchingDetails] = useState(false);
 
+    // Advanced Filters State
+    const [filterUserId, setFilterUserId] = useState('all');
+    const [customerId, setCustomerId] = useState('all');
+    const [projectId, setProjectId] = useState('all');
+    const [activityTypeId, setActivityTypeId] = useState('all');
+    const [isBillable, setIsBillable] = useState('all');
+    
+    // Filter Options
+    const [users, setUsers] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const [isInternalLoading, setIsInternalLoading] = useState(false);
+
+    // Temp states for custom dates
+    const [tempFromDate, setTempFromDate] = useState(startDate);
+    const [tempToDate, setTempToDate] = useState(endDate);
+
     useEffect(() => {
+        const fetchFilters = async () => {
+            try {
+                const [usersRes, customersRes, projectsRes, categoriesRes] = await Promise.all([
+                    api.get('/users'),
+                    api.get('/time-tracking/customers?limit=1000'),
+                    api.get('/time-tracking/projects?limit=1000'),
+                    api.get('/time-tracking/categories')
+                ]);
+                setUsers(usersRes.data);
+                setCustomers(customersRes.data.customers || []);
+                setProjects(projectsRes.data.projects || []);
+                setCategories(categoriesRes.data.categories || []);
+            } catch (error) {
+                console.error('Error fetching filter options:', error);
+            }
+        };
+        fetchFilters();
         updateDateRange(dateRange);
     }, []);
-
-    useEffect(() => {
-        if (startDate && endDate) {
-            fetchReports();
-        }
-    }, [startDate, endDate]);
-
-    const updateDateRange = (range) => {
-        const now = new Date();
-        switch (range) {
-            case 'today':
-                setStartDate(new Date(now.setHours(0, 0, 0, 0)));
-                setEndDate(new Date(now.setHours(23, 59, 59, 999)));
-                break;
-            case 'yesterday':
-                const yesterday = subDays(now, 1);
-                setStartDate(new Date(yesterday.setHours(0, 0, 0, 0)));
-                setEndDate(new Date(yesterday.setHours(23, 59, 59, 999)));
-                break;
-            case 'this_week':
-                setStartDate(startOfWeek(now, { weekStartsOn: 1 }));
-                setEndDate(endOfWeek(now, { weekStartsOn: 1 }));
-                break;
-            case 'last_week':
-                const lastWeek = subDays(now, 7);
-                setStartDate(startOfWeek(lastWeek, { weekStartsOn: 1 }));
-                setEndDate(endOfWeek(lastWeek, { weekStartsOn: 1 }));
-                break;
-            case 'this_month':
-                setStartDate(startOfMonth(now));
-                setEndDate(endOfMonth(now));
-                break;
-            case 'last_30_days':
-                setStartDate(subDays(now, 30));
-                setEndDate(now);
-                break;
-        }
-        setDateRange(range);
-    };
 
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/time-tracking/reports/detailed', {
-                params: {
-                    start_date: startDate.toISOString(),
-                    end_date: endDate.toISOString()
-                }
-            });
+            const params = {
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString()
+            };
+
+            if (filterUserId !== 'all') params.user_id = filterUserId;
+            if (customerId !== 'all') params.customer_id = customerId;
+            if (projectId !== 'all') params.project_id = projectId;
+            if (activityTypeId !== 'all') params.activity_type_id = activityTypeId;
+            if (isBillable !== 'all') params.is_billable = isBillable;
+
+            const response = await api.get('/time-tracking/reports/detailed', { params });
             setReports(response.data);
         } catch (error) {
             console.error('Error fetching reports:', error);
@@ -92,19 +97,92 @@ const TimeTrackingReports = () => {
         }
     };
 
+    useEffect(() => {
+        if (startDate && endDate) {
+            fetchReports();
+        }
+    }, [startDate, endDate, filterUserId, customerId, projectId, activityTypeId, isBillable]);
+
+    const updateDateRange = (range) => {
+        const now = new Date();
+        if (range === 'custom') {
+            setDateRange('custom');
+            setTempFromDate(startDate);
+            setTempToDate(endDate);
+            return;
+        }
+        
+        let start = new Date();
+        let end = new Date();
+
+        switch (range) {
+            case 'today':
+                start = new Date(now.setHours(0, 0, 0, 0));
+                end = new Date(now.setHours(23, 59, 59, 999));
+                break;
+            case 'yesterday':
+                const yesterday = subDays(now, 1);
+                start = new Date(yesterday.setHours(0, 0, 0, 0));
+                end = new Date(yesterday.setHours(23, 59, 59, 999));
+                break;
+            case 'this_week':
+                start = startOfWeek(now, { weekStartsOn: 1 });
+                end = endOfWeek(now, { weekStartsOn: 1 });
+                break;
+            case 'last_week':
+                const lastWeek = subDays(now, 7);
+                start = startOfWeek(lastWeek, { weekStartsOn: 1 });
+                end = endOfWeek(lastWeek, { weekStartsOn: 1 });
+                break;
+            case 'this_month':
+                start = startOfMonth(now);
+                end = endOfMonth(now);
+                break;
+            case 'last_30_days':
+                start = subDays(now, 30);
+                end = now;
+                break;
+        }
+        setStartDate(start);
+        setEndDate(end);
+        setTempFromDate(start);
+        setTempToDate(end);
+        setDateRange(range);
+    };
+
+    const handleRefreshCustomRange = () => {
+        setStartDate(tempFromDate);
+        setEndDate(tempToDate);
+        fetchReports();
+    };
+
     const fetchUserActivity = async (user) => {
         setSelectedUser(user);
         setIsModalOpen(true);
         setFetchingDetails(true);
         try {
-            const response = await api.get('/time-tracking/entries', {
-                params: {
-                    user_id: user.user_id,
-                    startDate: format(startDate, 'yyyy-MM-dd'),
-                    endDate: format(endDate, 'yyyy-MM-dd'),
-                    limit: 1000
-                }
-            });
+            // Use username from row if available, fallback to user_id or id
+            const userId = user.username || user.user_id || user.id;
+
+            if (!userId) {
+                console.warn('No user ID found for activity fetch:', user);
+                setUserEntries([]);
+                return;
+            }
+
+            const params = {
+                user_id: userId,
+                startDate: format(startDate, 'yyyy-MM-dd'),
+                endDate: format(endDate, 'yyyy-MM-dd'),
+                limit: 1000
+            };
+
+            if (customerId !== 'all') params.customer_id = customerId;
+            if (projectId !== 'all') params.project_id = projectId;
+            if (activityTypeId !== 'all') params.activity_type_id = activityTypeId;
+            if (isBillable !== 'all') params.is_billable = isBillable;
+
+            const response = await api.get('/time-tracking/entries/all', { params });
             setUserEntries(response.data.entries || []);
         } catch (error) {
             console.error('Error fetching user activity:', error);
@@ -116,12 +194,18 @@ const TimeTrackingReports = () => {
 
     const handleExport = async (formatType = 'csv') => {
         try {
-            const response = await api.get('/time-tracking/reports/export', {
-                params: {
-                    start_date: startDate.toISOString(),
-                    end_date: endDate.toISOString()
-                }
-            });
+            const params = {
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString()
+            };
+
+            if (filterUserId !== 'all') params.user_id = filterUserId;
+            if (customerId !== 'all') params.customer_id = customerId;
+            if (projectId !== 'all') params.project_id = projectId;
+            if (activityTypeId !== 'all') params.activity_type_id = activityTypeId;
+            if (isBillable !== 'all') params.is_billable = isBillable;
+
+            const response = await api.get('/time-tracking/reports/export', { params });
 
             const entries = response.data.entries || [];
             
@@ -206,6 +290,36 @@ const TimeTrackingReports = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    {dateRange === 'custom' && (
+                        <div className="flex items-center gap-2 mr-2 bg-gray-50 dark:bg-slate-950 p-1.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <div className="flex items-center gap-2 px-2">
+                                <Label className="text-[9px] font-black uppercase text-slate-400">From</Label>
+                                <Input 
+                                    type="date" 
+                                    value={format(tempFromDate, 'yyyy-MM-dd')}
+                                    onChange={(e) => setTempFromDate(new Date(e.target.value))}
+                                    className="h-7 w-32 border-none bg-transparent font-bold text-[10px] focus-visible:ring-0 p-0"
+                                />
+                            </div>
+                            <div className="h-4 w-px bg-gray-200 dark:bg-slate-800" />
+                            <div className="flex items-center gap-2 px-2">
+                                <Label className="text-[9px] font-black uppercase text-slate-400">To</Label>
+                                <Input 
+                                    type="date" 
+                                    value={format(tempToDate, 'yyyy-MM-dd')}
+                                    onChange={(e) => setTempToDate(new Date(e.target.value))}
+                                    className="h-7 w-32 border-none bg-transparent font-bold text-[10px] focus-visible:ring-0 p-0"
+                                />
+                            </div>
+                            <Button 
+                                onClick={handleRefreshCustomRange}
+                                size="sm"
+                                className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest"
+                            >
+                                Apply
+                            </Button>
+                        </div>
+                    )}
                     <div className="bg-gray-50 dark:bg-slate-950 p-1 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-1">
                         <Select value={dateRange} onValueChange={updateDateRange}>
                             <SelectTrigger className="h-9 w-40 border-none bg-transparent font-black text-[10px] uppercase tracking-widest focus:ring-0">
@@ -218,18 +332,115 @@ const TimeTrackingReports = () => {
                                 <SelectItem value="last_week">Last Week</SelectItem>
                                 <SelectItem value="this_month">This Month</SelectItem>
                                 <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+                                <SelectItem value="custom">Custom Range</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+                    <Button 
+                        variant="outline"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className={cn(
+                            "h-11 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest border-gray-100 dark:border-slate-800 transition-all",
+                            showAdvanced ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-slate-900"
+                        )}
+                    >
+                        <Filter className="mr-2 h-4 w-4" />
+                        Filters
+                    </Button>
                     <Button 
                         onClick={() => handleExport('csv')}
                         className="h-11 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95"
                     >
                         <Download className="mr-2 h-4 w-4" />
-                        Export Report
+                        Export
                     </Button>
                 </div>
             </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvanced && (
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-top-4 duration-500">
+                    <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Team Member</Label>
+                        <Select value={filterUserId} onValueChange={setFilterUserId}>
+                            <SelectTrigger className="h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950 font-bold text-xs">
+                                <SelectValue placeholder="All Members" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">All Members</SelectItem>
+                                {users.map(u => (
+                                    <SelectItem key={u.username} value={u.username}>{u.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Client</Label>
+                        <Select value={customerId} onValueChange={(val) => {
+                            setCustomerId(val);
+                            setProjectId('all'); // Reset project when client changes
+                        }}>
+                            <SelectTrigger className="h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950 font-bold text-xs">
+                                <SelectValue placeholder="All Clients" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">All Clients</SelectItem>
+                                {customers.map(c => (
+                                    <SelectItem key={c.customer_id} value={String(c.customer_id)}>{c.display_name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Project</Label>
+                        <Select value={projectId} onValueChange={setProjectId}>
+                            <SelectTrigger className="h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950 font-bold text-xs">
+                                <SelectValue placeholder="All Projects" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">All Projects</SelectItem>
+                                {projects
+                                    .filter(p => customerId === 'all' || String(p.customer_id) === customerId)
+                                    .map(p => (
+                                        <SelectItem key={p.id} value={String(p.id)}>{p.project_name}</SelectItem>
+                                    ))
+                                }
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Activity</Label>
+                        <Select value={activityTypeId} onValueChange={setActivityTypeId}>
+                            <SelectTrigger className="h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950 font-bold text-xs">
+                                <SelectValue placeholder="All Activities" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">All Activities</SelectItem>
+                                {categories.map(c => (
+                                    <SelectItem key={c.id} value={String(c.id)}>{c.type_name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Billing</Label>
+                        <Select value={isBillable} onValueChange={setIsBillable}>
+                            <SelectTrigger className="h-10 rounded-xl border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950 font-bold text-xs">
+                                <SelectValue placeholder="All Entries" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">All Entries</SelectItem>
+                                <SelectItem value="true">Billable Only</SelectItem>
+                                <SelectItem value="false">Non-Billable</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -450,7 +661,10 @@ const TimeTrackingReports = () => {
                                                 <h4 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">{user.first_name} {user.last_name}</h4>
                                                 <div className="flex gap-2 mt-1">
                                                     <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-950 text-[8px] font-black uppercase tracking-widest px-2">{user.entry_count} entries</Badge>
-                                                    <Badge className="bg-blue-600/10 text-blue-600 dark:text-blue-400 border-none text-[8px] font-black uppercase tracking-widest px-2">Active</Badge>
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                                        <User className="h-2 w-2" />
+                                                        {user.username}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>

@@ -365,6 +365,15 @@ function NavBar({ toggleSidebar }) {
                   </Link>
                 )}
 
+                <Link
+                  to={`/${user?.username}/dashboard/settings/appearance`}
+                  onClick={() => setSettingsOpen(false)}
+                  className="text-foreground hover:text-primary hover:translate-x-2 transition-all duration-200 ease-in-out flex items-center gap-2"
+                >
+                  <Palette className="h-5 w-5" />
+                  Appearance & Themes
+                </Link>
+
                 
 
                 {hasPermission(PERMISSIONS.BACKUPS_VIEW) && (

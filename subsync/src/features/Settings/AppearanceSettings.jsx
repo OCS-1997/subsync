@@ -52,9 +52,20 @@ const AppearanceSettings = () => {
     if (filter === "light") return t.type === "light";
     if (filter === "dark") return t.type === "dark";
     if (filter === "luxury") return ["champagne", "midnight-gold", "slate-luxury", "ebony-silver", "royal-velvet"].includes(t.id);
-    if (filter === "soft") return ["soft-lavender", "sage-serenity", "rose-quartz", "pastel"].includes(t.id);
+    if (filter === "soft") return ["soft-lavender", "sage-serenity", "rose-quartz", "pastel", "nordic-frost"].includes(t.id);
+    if (filter === "special") return ["cyberpunk", "retrowave", "retro-crt", "dracula", "tokyo-night"].includes(t.id);
+    if (filter === "earthy") return ["forest-deep", "sage-serenity", "barista", "everforest", "gruvbox-dark"].includes(t.id);
     return true;
   });
+
+  const customColorFields = [
+    { key: "--primary", label: "Primary Accent", desc: "Main branding color" },
+    { key: "--background", label: "Background", desc: "Main app background" },
+    { key: "--card", label: "Card & Surface", desc: "Background for components" },
+    { key: "--sidebar-background", label: "Sidebar", desc: "Fixed navigation panel" },
+    { key: "--border", label: "Border & Stroke", desc: "Subtle lines and dividers" },
+    { key: "--foreground", label: "Base Text", desc: "Primary content color" },
+  ];
 
   return (
     <div className="w-full py-8 space-y-12 animate-in fade-in duration-500 px-4 sm:px-8">
@@ -117,7 +128,9 @@ const AppearanceSettings = () => {
               <div className="flex flex-wrap gap-2 px-2">
                 {[
                   { id: "all", label: "All" },
-                  { id: "luxury", label: "Luxurious" },
+                  { id: "luxury", label: "Luxury" },
+                  { id: "special", label: "Cyber" },
+                  { id: "earthy", label: "Nature" },
                   { id: "soft", label: "Soft" },
                   { id: "light", label: "Light" },
                   { id: "dark", label: "Dark" },
@@ -159,14 +172,29 @@ const AppearanceSettings = () => {
                     color: `hsl(${t.tokens["--foreground"]})`
                   }}
                 >
-                  {/* Luxury Badge */}
-                  {["champagne", "midnight-gold", "slate-luxury", "ebony-silver", "royal-velvet"].includes(t.id) && (
-                    <div className="absolute top-4 right-4 z-20">
+                  {/* Theme Badges */}
+                  <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
+                    {["champagne", "midnight-gold", "slate-luxury", "ebony-silver", "royal-velvet"].includes(t.id) && (
                       <div className="bg-amber-400/20 backdrop-blur-md border border-amber-400/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">
                         Luxury
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {["cyberpunk", "retrowave", "retro-crt"].includes(t.id) && (
+                      <div className="bg-pink-500/20 backdrop-blur-md border border-pink-500/30 text-pink-500 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ring-4 ring-pink-500/5">
+                        Cyber
+                      </div>
+                    )}
+                    {["forest-deep", "sage-serenity", "everforest"].includes(t.id) && (
+                      <div className="bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        Nature
+                      </div>
+                    )}
+                    {["retro-crt", "barista"].includes(t.id) && (
+                      <div className="bg-orange-500/20 backdrop-blur-md border border-orange-500/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        Vintage
+                      </div>
+                    )}
+                  </div>
 
                   <div className={cn(
                     "p-6 space-y-4",
@@ -298,50 +326,31 @@ const AppearanceSettings = () => {
                   <CardDescription className="text-base font-medium">Design your own signature theme. Your imagination is the only limit.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-10 pt-0 space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Primary Accent</label>
-                        <span className="text-[10px] font-mono text-slate-400">HSL FORMAT</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="relative flex-1">
-                          <input 
-                            type="text" 
-                            value={customColors["--primary"] || "240 5.9% 10%"} 
-                            onChange={(e) => handleCustomColorChange("--primary", e.target.value)}
-                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-sm shadow-inner transition-all focus:border-purple-500 focus:ring-0"
-                            placeholder="H S% L%"
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {customColorFields.map((field) => (
+                      <div key={field.key} className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{field.label}</label>
+                          <span className="text-[8px] font-mono text-slate-400">HSL FORMAT</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-1">
+                            <input 
+                              type="text" 
+                              value={customColors[field.key] || "0 0% 0%"} 
+                              onChange={(e) => handleCustomColorChange(field.key, e.target.value)}
+                              className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-xs shadow-inner transition-all focus:border-purple-500 focus:ring-0"
+                              placeholder="H S% L%"
+                            />
+                          </div>
+                          <div 
+                            className="w-12 h-12 rounded-xl border-2 border-white dark:border-slate-800 shadow-lg shrink-0"
+                            style={{ backgroundColor: `hsl(${customColors[field.key] || "0 0% 100%"})` }}
                           />
                         </div>
-                        <div 
-                          className="w-14 h-14 rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl"
-                          style={{ backgroundColor: `hsl(${customColors["--primary"] || "240 5.9% 10%"})` }}
-                        />
+                        <p className="text-[10px] text-slate-500 italic font-medium">{field.desc}</p>
                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Canvas Base</label>
-                        <span className="text-[10px] font-mono text-slate-400">HSL FORMAT</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="relative flex-1">
-                          <input 
-                            type="text" 
-                            value={customColors["--background"] || "0 0% 100%"} 
-                            onChange={(e) => handleCustomColorChange("--background", e.target.value)}
-                            className="w-full h-14 px-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-sm shadow-inner transition-all focus:border-purple-500 focus:ring-0"
-                            placeholder="H S% L%"
-                          />
-                        </div>
-                        <div 
-                          className="w-14 h-14 rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl shadow-inner"
-                          style={{ backgroundColor: `hsl(${customColors["--background"] || "0 0% 100%"})` }}
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
                   <div className="p-8 rounded-[2rem] bg-gradient-to-br from-purple-500/5 to-blue-500/5 border border-purple-100 dark:border-purple-500/20 relative overflow-hidden group">
