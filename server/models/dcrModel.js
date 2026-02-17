@@ -192,11 +192,12 @@ async function getDcrEntries({
 
         const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-        // Count query
+        // Count query - Only JOIN domains if we're filtering by domain-related fields
+        const joinClause = whereClause.includes('d.') ? 'LEFT JOIN domains d ON de.domain_id = d.domain_id' : '';
         const [[{ total }]] = await appDB.query(
             `SELECT COUNT(*) as total
              FROM dcr_entries de
-             LEFT JOIN domains d ON de.domain_id = d.domain_id
+             ${joinClause}
              ${whereClause}`,
             params
         );
