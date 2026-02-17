@@ -4,6 +4,7 @@ import { logActivity } from "../models/activityLogModel.js";
 import { resolveRoleIdentifier } from "../services/rbacService.js";
 import { PERMISSIONS } from "../constants/permissions.js";
 import { assignUserToMultipleTeams, removeUserFromAllTeams, getUserTeams } from "../models/teamsModel.js";
+import { isValidPassword } from "../middlewares/validations.js";
 
 export const getallUsers = async (req, res) => {
     try {
@@ -55,6 +56,9 @@ export const createUserController = async (req, res) => {
         const existing = await getUserByUsername(username);
         if (existing) {
             return res.status(409).json({ message: "Username already exists" });
+        }
+        if (!isValidPassword(password)) {
+            return res.status(400).json({ message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character." });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         await createUser({
@@ -153,6 +157,9 @@ export const updateUserController = async (req, res) => {
         }
 
         if (updateData.password) {
+            if (!isValidPassword(updateData.password)) {
+                return res.status(400).json({ message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character." });
+            }
             updateData.password = await bcrypt.hash(updateData.password, 10);
         }
 
