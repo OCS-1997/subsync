@@ -15,7 +15,8 @@ import {
     getBackupConfigurationById,
     getBackupHistoryById,
     getBackupHistory,
-    getEnabledBackupConfigurations
+    getEnabledBackupConfigurations,
+    deleteBackupHistory
 } from '../models/backupModel.js';
 import { backupTasksQueue } from '../queues/queueConfig.js';
 
@@ -87,6 +88,81 @@ async function getTableCount() {
     } catch (error) {
         console.error('Error getting table count:', error);
         return 0;
+    }
+}
+
+/**
+ * Enforce retention policy for a backup configuration
+ * @param {number} configId
+ * @param {Object} dependencies - Optional dependencies for testing
+ */
+export async function enforceRetentionPolicy(configId, dependencies = {}) {
+    const {
+        getBackupConfigurationById: getConfig = getBackupConfigurationById,
+        getBackupHistory: getHistory = getBackupHistory,
+        deleteBackupHistory: deleteHistory = deleteBackupHistory,
+        fs: fileSystem = fs
+    } = dependencies;
+
+    try {
+        const config = await getConfig(configId);
+        if (!config || !config.max_backups) {
+            return;
+        }
+
+        const maxBackups = config.max_backups;
+
+        // Get all completed backups for this config, ordered by created_at DESC
+        // We need to fetch all, not just limited, to find excess ones.
+        // The getBackupHistory has pagination, so we set a large limit.
+        const { history } = await getHistory({
+            configId,
+            status: 'completed',
+            page: 1,
+            limit: 1000000 // Large limit to ensure we catch all old backups
+        });
+
+        if (history.length <= maxBackups) {
+            return;
+        }
+
+        // Identify excess backups (those after the first N)
+        const excessBackups = history.slice(maxBackups);
+
+        console.log(`Enforcing retention policy for config ${configId}: Deleting ${excessBackups.length} excess backups (Max: ${maxBackups})`);
+
+        for (const backup of excessBackups) {
+            try {
+                // Delete file from filesystem
+                if (backup.file_path) {
+                    const fullPath = path.isAbsolute(backup.file_path)
+                        ? backup.file_path
+                        : path.join(process.cwd(), backup.file_path);
+
+                    try {
+                        await fileSystem.access(fullPath);
+                        await fileSystem.unlink(fullPath);
+                        console.log(`Deleted backup file: ${fullPath}`);
+                    } catch (err) {
+                        if (err.code !== 'ENOENT') {
+                            console.error(`Error deleting backup file ${fullPath}:`, err);
+                        } else {
+                            console.warn(`Backup file not found (already deleted?): ${fullPath}`);
+                        }
+                    }
+                }
+
+                // Delete record from database
+                await deleteHistory(backup.id);
+                console.log(`Deleted backup history record ID: ${backup.id}`);
+
+            } catch (error) {
+                console.error(`Error cleaning up backup ID ${backup.id}:`, error);
+            }
+        }
+
+    } catch (error) {
+        console.error(`Error enforcing retention policy for config ${configId}:`, error);
     }
 }
 
@@ -167,6 +243,9 @@ async function executeBackup(configId, configName) {
 
         // Update config last run
         await updateBackupConfigLastRun(configId, 'success', new Date().toISOString().slice(0, 19).replace('T', ' '));
+
+        // Enforce retention policy
+        await enforceRetentionPolicy(configId);
 
         return {
             success: true,
@@ -465,4 +544,3 @@ export async function syncAllBackupSchedules() {
         console.error('Error syncing backup schedules:', error);
     }
 }
-

@@ -444,4 +444,21 @@ export async function getEnabledBackupConfigurations() {
     }
 }
 
+/**
+ * Delete backup history entry
+ * @param {number} id
+ * @returns {Promise<boolean>}
+ */
+export async function deleteBackupHistory(id) {
+    try {
+        const [result] = await appDB.query(
+            'DELETE FROM backup_history WHERE id = ?',
+            [id]
+        );
 
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error('Error deleting backup history:', error);
+        throw error;
+    }
+}
