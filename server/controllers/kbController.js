@@ -24,7 +24,7 @@ import {
 import { logActivity } from "../models/activityLogModel.js";
 import { getDcrEntryById } from "../models/dcrModel.js";
 import { getClientIp } from "../utils/ipHelper.js";
-import { generateMetaTags, generateStructuredData, generateSitemap } from "../utils/seoHelper.js";
+import { generateMetaTags, generateStructuredData, generateSitemap, extractKeywords } from "../utils/seoHelper.js";
 import { generateFingerprint, hashIP, isBot } from "../utils/securityHelper.js";
 
 // --- CATEGORIES ---
@@ -127,19 +127,6 @@ export const createArticleFromDCRController = async (req, res) => {
             return res.status(404).json({ error: "DCR entry not found or access denied" });
         }
 
-        // Extract keywords from description for tags
-        const extractKeywords = (text) => {
-            if (!text) return [];
-            const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'was', 'are', 'were'];
-            const words = text.toLowerCase()
-                .replace(/[^\w\s]/g, '')
-                .split(/\s+/)
-                .filter(word => word.length > 3 && !commonWords.includes(word));
-
-            // Get unique words and limit to 5
-            return [...new Set(words)].slice(0, 5);
-        };
-
         // Create article content
         // Note: DCR has 'notes' field which contains the description
         const title = `[DCR] Issue from ${dcr.company_name || dcr.domain_name || 'Customer'}`;
@@ -158,7 +145,7 @@ export const createArticleFromDCRController = async (req, res) => {
         `;
 
         // Extract tags from notes
-        const tags = extractKeywords(dcr.notes || '');
+        const tags = extractKeywords(dcr.notes || '', 5);
         tags.push('dcr', 'troubleshooting');
         if (dcr.call_type) {
             tags.push(dcr.call_type.replace('-', '_'));
