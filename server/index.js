@@ -109,9 +109,16 @@ app.use((req, res, next) => {
 // Centralized error handler (last)
 app.use((err, req, res, next) => {
     const status = err.status || err.statusCode || 500;
+    const isProduction = process.env.NODE_ENV === 'production';
+
     const code = err.code || (status >= 500 ? 'INTERNAL_ERROR' : 'ERROR');
-    const message = err.message || 'Internal Server Error';
-    console.error('Error:', { status, code, message });
+
+    // In production, hide detailed error messages for internal server errors (500+)
+    const message = (isProduction && status >= 500)
+        ? 'Internal Server Error'
+        : (err.message || 'Internal Server Error');
+
+    console.error('Error:', { status, code, message: err.message || message });
     return res.status(status).json({ success: false, error: { code, message } });
 });
 
