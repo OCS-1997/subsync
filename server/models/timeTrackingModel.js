@@ -466,6 +466,31 @@ async function getTimeEntriesSummary({ userId, startDate, endDate, teamId }) {
   }
 }
 
+/**
+ * Get users who have time entries in a given date range
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @returns {Promise<Array>} List of users { user_id, name, email }
+ */
+async function getUsersWithTimeEntries(startDate, endDate) {
+  try {
+    const [users] = await appDB.query(
+      `SELECT DISTINCT
+          te.user_id,
+          u.name,
+          u.email
+       FROM time_entries te
+       JOIN users u ON te.user_id = u.username
+       WHERE te.start_time >= ? AND te.start_time <= ? AND te.deleted_at IS NULL`,
+      [formatDateTimeForMySQL(startDate), formatDateTimeForMySQL(endDate)],
+    );
+    return users;
+  } catch (error) {
+    console.error("Error fetching users with time entries:", error);
+    throw error;
+  }
+}
+
 export {
   createTimeEntry,
   updateTimeEntry,
@@ -476,4 +501,5 @@ export {
   stopTimer,
   getActiveTimer,
   getTimeEntriesSummary,
+  getUsersWithTimeEntries,
 };
