@@ -15,27 +15,27 @@ export const getDashboardController = async (req, res) => {
         const user = req.user;
         const { filterType = 'today', startDate, endDate } = req.query;
 
-        // Get renewals based on filter
-        const renewals = await getRenewalsWithFilters({
-            filterType,
-            startDate,
-            endDate
-        });
-
-        // Get expired services (with optional date filter)
-        const expiredServices = await getExpiredServices({
-            startDate: req.query.expiredStartDate,
-            endDate: req.query.expiredEndDate
-        });
-
-        // Get expiring today count
-        const expiringTodayCount = await getExpiringTodayCount();
-
-        // Get birthdays
-        const birthdays = await getUpcomingBirthdays();
-
-        // Get dashboard stats
-        const stats = await getDashboardStats();
+        // Execute independent queries in parallel for better performance
+        const [
+            renewals,
+            expiredServices,
+            expiringTodayCount,
+            birthdays,
+            stats
+        ] = await Promise.all([
+            getRenewalsWithFilters({
+                filterType,
+                startDate,
+                endDate
+            }),
+            getExpiredServices({
+                startDate: req.query.expiredStartDate,
+                endDate: req.query.expiredEndDate
+            }),
+            getExpiringTodayCount(),
+            getUpcomingBirthdays(),
+            getDashboardStats()
+        ]);
 
         res.json({
             stats,
