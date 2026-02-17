@@ -3,6 +3,7 @@ import { reconciliationCron } from '../services/reminderService.js';
 import { archiveOldSubscriptions } from '../services/reminderService.js';
 import { sendTodayBirthdayEmails } from '../services/birthdayService.js';
 import { sendDailyDcrReportEmail } from '../services/dcrService.js';
+import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportService.js';
 
 const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
 
@@ -116,6 +117,26 @@ export function setupDcrReportCron() {
 }
 
 /**
+ * Setup daily time tracking report cron job
+ * Runs daily at 00:00 UTC (05:30 IST)
+ */
+export function setupTimeTrackingReportCron() {
+    // Run at 00:00 UTC daily (05:30 IST)
+    cron.schedule('0 0 * * *', async () => {
+        console.log('Running daily time tracking report cron job...');
+        try {
+            await sendDailyTimeTrackingReports();
+        } catch (error) {
+            console.error('Error in time tracking report cron:', error);
+        }
+    }, {
+        timezone: 'UTC',
+    });
+
+    console.log('Time tracking report cron scheduled for 00:00 UTC daily (05:30 IST)');
+}
+
+/**
  * Setup all cron jobs
  */
 export function setupCronJobs() {
@@ -123,5 +144,6 @@ export function setupCronJobs() {
     setupArchivalCron();
     setupBirthdayCron();
     setupDcrReportCron();
+    setupTimeTrackingReportCron();
 }
 
