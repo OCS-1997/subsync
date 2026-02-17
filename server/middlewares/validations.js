@@ -35,4 +35,22 @@ function isValidPhoneNumber(phoneNumber) {
     return digits.length >= 6 && digits.length <= 14;
 }
 
-export { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber }
+/**
+ * Regex function to validate password strength
+ * Requirements:
+ * - Minimum 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ * @param {string} password - The password to validate
+ * @returns {boolean} - True if valid
+ */
+function isValidPassword(password) {
+    if (!password || typeof password !== 'string') return false;
+    // Minimum 8 characters, at least one uppercase, one lowercase, one number and one special char
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    return passwordRegex.test(password);
+}
+
+export { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber, isValidPassword }
