@@ -141,6 +141,7 @@ export async function getExpiringTodayCount() {
  */
 export async function getDashboardStats() {
     const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
@@ -151,6 +152,7 @@ export async function getDashboardStats() {
             return result;
         } catch (err) {
             console.warn('Dashboard stats query failed:', err.message);
+            // Return an object that has all expected properties to avoid errors later
             return [{ count: 0, revenue: 0 }];
         }
     };
@@ -167,10 +169,10 @@ export async function getDashboardStats() {
     ] = await Promise.all([
         // Total customers
         safeQuery('SELECT COUNT(*) as count FROM customers'),
-        // Active subscriptions
-        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND end_date >= ?', [now]),
-        // Expired subscriptions
-        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND end_date < ?', [now]),
+        // Active subscriptions (not archived and end_date >= today_midnight)
+        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) >= DATE(?)', [todayStart]),
+        // Expired subscriptions (not archived and end_date < today_midnight)
+        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) < DATE(?)', [todayStart]),
         // Monthly revenue (sum of subscription totals that are active this month)
         safeQuery(`
             SELECT COALESCE(SUM(total), 0) as revenue 

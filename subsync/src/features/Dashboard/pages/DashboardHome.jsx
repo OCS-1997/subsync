@@ -59,19 +59,18 @@ function DashboardHome() {
                     setActiveTab(visibleTabs[0].tabKey);
                 }
             } catch (err) {
-                console.error('Failed to fetch dashboard config:', err);
-                // Fallback to all tabs visible
+                // Fallback to all tabs and widgets visible
                 setDashboardConfig({
                     tabs: [
                         { tabKey: 'overview', name: 'Overview', icon: 'LayoutGrid' },
                         { tabKey: 'subscriptions', name: 'Subscriptions', icon: 'Package' },
-                        { tabKey: 'assets', name: 'Assets', icon: 'HardDrive' },
                         { tabKey: 'time_tracking', name: 'Time Tracking', icon: 'Clock' },
+                        { tabKey: 'assets', name: 'Assets', icon: 'HardDrive' },
                         { tabKey: 'dcr', name: 'DCR', icon: 'Phone' },
                         { tabKey: 'opportunities', name: 'Opportunities', icon: 'Target' },
                         { tabKey: 'kb', name: 'Knowledge Base', icon: 'BookOpen' },
                     ],
-                    widgets: []
+                    widgets: null // Setting to null allows all widgets to be visible by default
                 });
                 setActiveTab('overview');
             } finally {
@@ -100,6 +99,7 @@ function DashboardHome() {
     };
 
     const visibleWidgets = useMemo(() => {
+        if (dashboardConfig.widgets === null) return null;
         return new Set(dashboardConfig.widgets || []);
     }, [dashboardConfig.widgets]);
 

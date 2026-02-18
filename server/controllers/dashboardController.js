@@ -16,6 +16,7 @@ export const getDashboardController = async (req, res) => {
         const { filterType = 'today', startDate, endDate } = req.query;
 
         // Execute independent queries in parallel for better performance
+        // Wrap with individual try-catches to ensure one failing query doesn't break the whole dashboard
         const [
             renewals,
             expiredServices,
@@ -27,14 +28,14 @@ export const getDashboardController = async (req, res) => {
                 filterType,
                 startDate,
                 endDate
-            }),
+            }).catch(err => { console.error('Renewals fetch failed:', err); return []; }),
             getExpiredServices({
                 startDate: req.query.expiredStartDate,
                 endDate: req.query.expiredEndDate
-            }),
-            getExpiringTodayCount(),
-            getUpcomingBirthdays(),
-            getDashboardStats()
+            }).catch(err => { console.error('Expired services fetch failed:', err); return []; }),
+            getExpiringTodayCount().catch(err => { console.error('Expiring count fetch failed:', err); return 0; }),
+            getUpcomingBirthdays().catch(err => { console.error('Birthdays fetch failed:', err); return { today: [], upcoming: [] }; }),
+            getDashboardStats().catch(err => { console.error('Stats fetch failed:', err); return {}; })
         ]);
 
         res.json({
@@ -123,9 +124,11 @@ export const getDashboardConfigController = async (req, res) => {
     try {
         const { getDashboardConfig, getAllDashboardTabs, getAllDashboardWidgets } = await import('../models/dashboardModel.js');
         const roleId = req.user?.roleId;
+        const roleKey = req.user?.roleKey;
+        const isAdmin = roleKey === 'admin' || req.user?.isAdmin;
 
-        // If no role ID, return all tabs/widgets (fallback for admin or legacy users)
-        if (!roleId) {
+        // If no role ID or is admin, return all tabs/widgets
+        if (!roleId || isAdmin) {
             const [tabs, widgets] = await Promise.all([
                 getAllDashboardTabs(),
                 getAllDashboardWidgets()
@@ -137,6 +140,21 @@ export const getDashboardConfigController = async (req, res) => {
         }
 
         const config = await getDashboardConfig(roleId);
+        
+        // Fallback: If no tabs or widgets are configured for this role, return all enabled ones
+        // This prevents an empty dashboard for newly created roles
+        if (config.tabs.length === 0 || config.widgets.length === 0) {
+            const [allTabs, allWidgets] = await Promise.all([
+                getAllDashboardTabs(),
+                getAllDashboardWidgets()
+            ]);
+            
+            return res.json({
+                tabs: (config.tabs.length > 0 ? config.tabs : allTabs).map(t => ({ tabKey: t.tab_key, name: t.name, icon: t.icon })),
+                widgets: config.widgets.length > 0 ? config.widgets : allWidgets.map(w => w.widget_key)
+            });
+        }
+
         res.json({
             tabs: config.tabs.map(t => ({ tabKey: t.tab_key, name: t.name, icon: t.icon })),
             widgets: config.widgets

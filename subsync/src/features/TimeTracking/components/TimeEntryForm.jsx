@@ -485,7 +485,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-64 overflow-y-auto custom-scrollbar">
+                                        <CommandList className="max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
                                             <CommandGroup className="p-2">
                                                 {sortedCustomers.map((c) => (
@@ -545,7 +545,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-64 overflow-y-auto custom-scrollbar">
+                                        <CommandList className="max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
                                             <CommandGroup className="p-2">
                                                 {sortedProjects.map((p) => (

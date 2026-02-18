@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Clock, Timer, LayoutGrid, Tag, PieChart as PieChartIcon, Briefcase, Plus } from 'lucide-react';
+import { Clock, Timer, LayoutGrid, Tag, PieChart as PieChartIcon, Briefcase, Plus, List } from 'lucide-react';
 import TimerWidget from '../components/TimerWidget';
 import TimeEntryForm from '../components/TimeEntryForm';
 import TimeEntriesList from '../components/TimeEntriesList';
@@ -23,6 +24,7 @@ const TimeTracking = () => {
     const [users, setUsers] = useState([]);
     const [teams, setTeams] = useState([]);
     const [editingEntry, setEditingEntry] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('track');
 
     useEffect(() => {
@@ -92,6 +94,7 @@ const TimeTracking = () => {
                     await api.put(`/time-tracking/entries/${editingEntry.entry_id}`, entryData);
                     toast.success('Time entry updated');
                     setEditingEntry(null);
+                    setIsEditModalOpen(false);
                 } else {
                     await api.post('/time-tracking/entries', entryData);
                     toast.success('Time entry saved');
@@ -120,14 +123,12 @@ const TimeTracking = () => {
 
     const handleEdit = (entry) => {
         setEditingEntry(entry);
-        // Scroll to form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setIsEditModalOpen(true);
     };
 
     const handleNewEntry = () => {
         setEditingEntry(null);
-        // Dispatch event to clear form in child if needed, 
-        // but since editingEntry is passed as prop, TimeEntryForm handles it via useEffect
+        setActiveTab('track');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -162,6 +163,13 @@ const TimeTracking = () => {
                                 <Timer className="w-3.5 h-3.5 mr-2.5" />
                                 Track Time
                             </TabsTrigger>
+                            <TabsTrigger 
+                                value="logs" 
+                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                            >
+                                <List className="w-3.5 h-3.5 mr-2.5" />
+                                Time Logs
+                            </TabsTrigger>
                             <PermissionGate required={PERMISSIONS.TIME_TRACKING_MANAGE}>
                                 <TabsTrigger 
                                     value="projects" 
@@ -190,7 +198,7 @@ const TimeTracking = () => {
                         </TabsList>
                     </div>
 
-                    {activeTab === 'track' && (
+                    {(activeTab === 'track' || activeTab === 'logs') && (
                         <Button 
                             onClick={handleNewEntry}
                             className="h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 transition-all group active:scale-95 border-none"
@@ -208,7 +216,7 @@ const TimeTracking = () => {
                         <div className="lg:col-span-8 space-y-8">
                             <TimeEntryForm
                                 onSubmit={handleTimeEntrySubmit}
-                                initialData={editingEntry}
+                                initialData={null}
                                 customers={customers}
                                 projects={projects}
                                 categories={categories}
@@ -231,18 +239,18 @@ const TimeTracking = () => {
                         </div>
                     </div>
 
-                    {/* Full Width Section: Time Entries List */}
-                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        <TimeEntriesList
-                            refresh={refreshKey}
-                            onEdit={handleEdit}
-                            customers={customers}
-                            projects={projects}
-                            categories={categories}
-                            users={users}
-                            teams={teams}
-                        />
-                    </div>
+                </TabsContent>
+
+                <TabsContent value="logs" className="animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                    <TimeEntriesList
+                        refresh={refreshKey}
+                        onEdit={handleEdit}
+                        customers={customers}
+                        projects={projects}
+                        categories={categories}
+                        users={users}
+                        teams={teams}
+                    />
                 </TabsContent>
 
                 <PermissionGate permission={PERMISSIONS.TIME_TRACKING_MANAGE}>
@@ -261,6 +269,34 @@ const TimeTracking = () => {
                     <TimeTrackingReports />
                 </TabsContent>
             </Tabs>
+
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-[2.5rem] border-none shadow-2xl">
+                    <DialogHeader className="p-8 bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-black uppercase tracking-tight">Refine Time Log</DialogTitle>
+                                <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mt-1">Adjust entry details for precision record keeping</p>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                    <div className="p-8 pb-10 max-h-[80vh] overflow-y-auto custom-scrollbar bg-white dark:bg-slate-950">
+                        {editingEntry && (
+                            <TimeEntryForm
+                                onSubmit={handleTimeEntrySubmit}
+                                initialData={editingEntry}
+                                customers={customers}
+                                projects={projects}
+                                categories={categories}
+                                compact={true}
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

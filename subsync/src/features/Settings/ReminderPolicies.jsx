@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast, Bounce } from "react-toastify";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
@@ -17,8 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox.jsx";
 import { cn } from "@/lib/utils";
 import Hamster from "@/components/animations/Hamster.jsx";
+import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
 
 const ReminderPolicies = () => {
+  const { username } = useParams();
   const [policies, setPolicies] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +58,7 @@ const ReminderPolicies = () => {
         loadPolicy(defaultPolicy);
       }
     } catch (error) {
-      toast.error("Manifest retrieval failed");
+      toast.error("Failed to load settings");
     } finally {
       setLoading(false);
     }
@@ -87,7 +90,7 @@ const ReminderPolicies = () => {
 
   const handleSavePolicy = async () => {
     if (!policyForm.name.trim()) {
-      toast.error("Identity signature mandatory");
+      toast.error("Please enter a policy name");
       return;
     }
 
@@ -99,20 +102,20 @@ const ReminderPolicies = () => {
           is_default: policyForm.is_default,
           offsets: offsets,
         });
-        toast.success("Protocol updated", { theme: "colored" });
+        toast.success("Policy updated", { theme: "colored" });
       } else {
         const { data } = await api.post("/reminder-policies", {
           name: policyForm.name,
           is_default: policyForm.is_default,
           offsets: offsets,
         });
-        toast.success("New protocol operational", { theme: "colored" });
+        toast.success("New policy created", { theme: "colored" });
         setSelectedPolicyId(data.policyId);
       }
       setShowPolicyDialog(false);
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Protocol initialization failed");
+      toast.error(error.response?.data?.error || "Failed to save policy");
     } finally {
       setSaving(false);
     }
@@ -120,13 +123,13 @@ const ReminderPolicies = () => {
 
   const handleDeletePolicy = async (policy) => {
     if (policy.is_default) {
-      toast.info("Cannot terminate root protocol");
+      toast.info("Cannot delete the default policy");
       return;
     }
 
     try {
       await api.delete(`/reminder-policies/${policy.id}`);
-      toast.success("Protocol terminated", { theme: "colored" });
+      toast.success("Policy deleted", { theme: "colored" });
       setShowDeleteConfirm(null);
       if (selectedPolicyId === policy.id) {
         setSelectedPolicyId(null);
@@ -135,7 +138,7 @@ const ReminderPolicies = () => {
       }
       await fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Termination failed");
+      toast.error(error.response?.data?.error || "Delete failed");
     }
   };
 
@@ -180,7 +183,7 @@ const ReminderPolicies = () => {
     return (
       <div className="flex flex-col justify-center items-center my-32">
         <Hamster />
-        <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Scanning Protocols...</p>
+        <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-[0.2em] animate-pulse">Loading Policies...</p>
       </div>
     );
   }
@@ -190,13 +193,14 @@ const ReminderPolicies = () => {
       {/* Header */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-            <span>Settings</span>
-            <span className="opacity-40">/</span>
-            <span className="text-blue-500">Autonomous Notifications</span>
-          </div>
-          <h1 className="text-4xl font-black uppercase tracking-tight">Reminder Protocols</h1>
-          <p className="text-slate-500 font-medium max-w-xl">Configure intelligent scheduling for subscription lifecycle alerts and renewal sequences.</p>
+          <Breadcrumb 
+            items={[
+              { label: "Settings", href: `/${username}/dashboard/settings` },
+              { label: "Automated Reminders" }
+            ]} 
+          />
+          <h1 className="text-4xl font-black uppercase tracking-tight">Reminder Policies</h1>
+          <p className="text-slate-500 font-medium max-w-xl">Manage when reminders are sent to users for renewals and expirations.</p>
         </div>
         {canCreate && (
           <Button
@@ -214,7 +218,7 @@ const ReminderPolicies = () => {
           <div className="relative group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
             <Input
-              placeholder="SEARCH PROTOCOLS..."
+              placeholder="SEARCH POLICIES..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-14 pl-12 rounded-2xl border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-blue-500/20 font-black uppercase tracking-widest text-[10px]"
@@ -256,12 +260,12 @@ const ReminderPolicies = () => {
                         <div className="flex items-center gap-1">
                           <History size={10} className="mt-0.5 opacity-60" />
                           <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">
-                            {policy.offsets?.length || 0} SEQS
+                            {policy.offsets?.length || 0} STEPS
                           </span>
                         </div>
-                        {policy.is_default && (
+                        {!!policy.is_default && (
                           <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full", selectedPolicyId === policy.id ? "bg-white/20" : "bg-amber-500/10 text-amber-500")}>
-                            MASTER
+                            DEFAULT
                           </span>
                         )}
                       </div>
@@ -275,7 +279,7 @@ const ReminderPolicies = () => {
             {filteredPolicies.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 text-slate-400">
                 <AlertCircle className="w-10 h-10 mb-4 opacity-20" />
-                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Zero Protocols Detected</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]">No Policies Found</p>
               </div>
             )}
           </div>
@@ -300,8 +304,8 @@ const ReminderPolicies = () => {
                           <Settings2 className="text-indigo-500" size={20} />
                         </div>
                         <div>
-                          <h2 className="text-xl font-black uppercase tracking-tight">Configuration Deck</h2>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol ID: #{String(selectedPolicy.id).slice(0, 8)}</p>
+                          <h2 className="text-xl font-black uppercase tracking-tight">Policy Details</h2>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Policy ID: #{String(selectedPolicy.id).slice(0, 8)}</p>
                         </div>
                       </div>
                     </div>
@@ -314,7 +318,7 @@ const ReminderPolicies = () => {
                             disabled={saving}
                             className="bg-slate-950 dark:bg-white dark:text-slate-950 text-white rounded-2xl h-12 px-6 font-black uppercase tracking-widest text-[10px] flex-1 sm:flex-none shadow-lg active:scale-95 transition-all"
                           >
-                            <Save className="w-4 h-4 mr-3" /> Update Protocol
+                            <Save className="w-4 h-4 mr-3" /> Save Changes
                           </Button>
                           {canDelete && (
                             <Button
@@ -330,7 +334,7 @@ const ReminderPolicies = () => {
                       {selectedPolicy.is_default && (
                         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           <ShieldCheck size={16} />
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Immutable Root Protocol</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Default Policy (Protected)</span>
                         </div>
                       )}
                     </div>
@@ -338,12 +342,12 @@ const ReminderPolicies = () => {
 
                   <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
-                      <Label htmlFor="policy_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protocol Identifier</Label>
+                      <Label htmlFor="policy_name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Policy Name</Label>
                       <Input
                         id="policy_name"
                         value={policyForm.name}
                         onChange={(e) => setPolicyForm({ ...policyForm, name: e.target.value })}
-                        placeholder="PROTOCOL NAME"
+                        placeholder="e.g. Standard Policy"
                         className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 font-black tracking-tight uppercase"
                         disabled={selectedPolicy.is_default || !canUpdate}
                       />
@@ -358,7 +362,7 @@ const ReminderPolicies = () => {
                       <div className="h-8 w-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
                         <Bell className="text-blue-500" size={16} />
                       </div>
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Trigger Sequences</h3>
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Reminder Steps</h3>
                     </div>
                     {canUpdate && !selectedPolicy.is_default && (
                       <Button
@@ -366,7 +370,7 @@ const ReminderPolicies = () => {
                         variant="outline"
                         className="rounded-xl h-10 px-4 border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                       >
-                        <Plus className="w-3 h-3 mr-2" /> Add Sequence
+                        <Plus className="w-3 h-3 mr-2" /> Add Step
                       </Button>
                     )}
                   </div>
@@ -409,33 +413,44 @@ const ReminderPolicies = () => {
 
                             <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 w-full font-black">
                               <div className="md:col-span-3 space-y-2">
-                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">Temporal Offset (Days)</Label>
+                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">When to send</Label>
                                 <div className="relative">
                                   <Input
-                                    type="number"
+                                    type="text"
                                     value={offset.days_offset ?? ""}
-                                    onChange={(e) => updateOffset(index, { days_offset: parseInt(e.target.value) || 0 })}
+                                    onFocus={(e) => {
+                                      if (e.target.value === "0") {
+                                        updateOffset(index, { days_offset: "" });
+                                      }
+                                    }}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val === "" || /^[+-]?\d*$/.test(val)) {
+                                        const parsed = parseInt(val);
+                                        updateOffset(index, { days_offset: isNaN(parsed) ? (val === "-" || val === "+" ? val : 0) : parsed });
+                                      }
+                                    }}
                                     className="h-12 rounded-xl border-slate-100 dark:border-slate-800 tabular-nums px-4 font-black"
                                     disabled={selectedPolicy.is_default || !canUpdate}
                                   />
                                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-40 uppercase">Days</div>
                                 </div>
                                 <p className="text-[9px] text-blue-500 uppercase tracking-widest pl-1 font-black">
-                                  {offset.days_offset < 0 ? `${Math.abs(offset.days_offset)} Pre-Expiry` :
-                                    offset.days_offset === 0 ? 'Cycle Termination' :
-                                      `${offset.days_offset} Post-Expiry`}
+                                  {offset.days_offset < 0 ? `${Math.abs(offset.days_offset)} days before expiry` :
+                                    offset.days_offset === 0 || offset.days_offset === "" ? 'on the day of expiry' :
+                                      `${offset.days_offset} days after expiry`}
                                 </p>
                               </div>
 
                               <div className="md:col-span-6 space-y-2">
-                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">Manifest Template</Label>
+                                <Label className="text-[9px] uppercase tracking-[0.2em] text-slate-400 ml-1">Email Template</Label>
                                 <Select
                                   value={offset.template_key}
                                   onValueChange={(value) => updateOffset(index, { template_key: value })}
                                   disabled={selectedPolicy.is_default || !canUpdate}
                                 >
                                   <SelectTrigger className="h-12 rounded-xl border-slate-100 dark:border-slate-800 font-black uppercase text-[10px] tracking-widest">
-                                    <SelectValue placeholder="CHOOSE SCHEMATIC" />
+                                    <SelectValue placeholder="SELECT TEMPLATE" />
                                   </SelectTrigger>
                                   <SelectContent className="rounded-2xl dark:bg-slate-900 border-slate-800">
                                     {templates.map((template) => (
@@ -483,10 +498,10 @@ const ReminderPolicies = () => {
                     {offsets.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-20 bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 text-slate-400 italic">
                         <Mail className="w-16 h-16 mb-4 opacity-10" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4">Sequence Engine Offline</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4">No reminder steps configured</p>
                         {canUpdate && !selectedPolicy.is_default && (
                           <Button onClick={addOffset} variant="outline" className="rounded-2xl border-blue-500/20 text-blue-500 font-black uppercase tracking-widest text-[10px] h-12 px-6">
-                            Initialize Sequence
+                            Add First Step
                           </Button>
                         )}
                       </div>
@@ -504,8 +519,8 @@ const ReminderPolicies = () => {
                   <div className="h-24 w-24 bg-slate-100 dark:bg-slate-900 rounded-[3rem] items-center justify-center flex mx-auto mb-8 border-2 border-dashed border-slate-200 dark:border-slate-800">
                     <Settings2 className="w-10 h-10 text-slate-300" strokeWidth={1} />
                   </div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Protocol Deck Inactive</h3>
-                  <p className="text-slate-500 font-medium">Select a system protocol from the left navigator to initiate sequence management.</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight mb-2">No Policy Selected</h3>
+                  <p className="text-slate-500 font-medium">Select a reminder policy from the left to manage its schedule.</p>
                 </div>
               </motion.div>
             )}
@@ -517,20 +532,20 @@ const ReminderPolicies = () => {
       <Dialog open={showPolicyDialog} onOpenChange={setShowPolicyDialog}>
         <DialogContent className="max-w-2xl rounded-[3rem] border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 p-0 overflow-hidden">
           <DialogHeader className="p-10 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{policyForm.id ? "Modify Policy" : "Add New Policy"}</DialogTitle>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{policyForm.id ? "Edit Policy" : "Add Policy"}</DialogTitle>
             <DialogDescription className="text-slate-500 font-medium">
-              Define the architectural parameters for this notification sequence.
+              Give your reminder policy a name to get started.
             </DialogDescription>
           </DialogHeader>
 
           <div className="p-10 space-y-8">
             <div className="space-y-3">
-              <Label htmlFor="dialog-policy-name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Logic Identity</Label>
+              <Label htmlFor="dialog-policy-name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Policy Name</Label>
               <Input
                 id="dialog-policy-name"
                 value={policyForm.name}
                 onChange={(e) => setPolicyForm({ ...policyForm, name: e.target.value })}
-                placeholder="e.g. ENTERPRISE STANDARD"
+                placeholder="e.g. Enterprise Policy"
                 className="h-14 rounded-2xl border-slate-100 dark:border-slate-800 font-black uppercase"
               />
             </div>
@@ -556,7 +571,7 @@ const ReminderPolicies = () => {
               Cancel
             </Button>
             <Button onClick={handleSavePolicy} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-10 font-black uppercase text-[11px] tracking-widest shadow-xl shadow-blue-500/25">
-              {saving ? "Deploying..." : (policyForm.id ? "Update" : "Create")}
+              {saving ? "Saving..." : (policyForm.id ? "Update" : "Create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -584,7 +599,7 @@ const ReminderPolicies = () => {
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Delete Policy?</h3>
               <p className="text-slate-500 font-medium mb-8">
-                Confirming termination of <strong className="text-slate-900 dark:text-white">{showDeleteConfirm.name}</strong>. This sequence will be permanently erased from the master records.
+                Are you sure you want to delete <strong className="text-slate-900 dark:text-white">{showDeleteConfirm.name}</strong>? This action cannot be undone.
               </p>
               <div className="flex flex-col gap-3">
                 <Button
