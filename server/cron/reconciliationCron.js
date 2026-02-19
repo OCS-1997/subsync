@@ -118,14 +118,19 @@ export function setupDcrReportCron() {
 
 /**
  * Setup daily time tracking report cron job
- * Runs daily at 00:00 UTC (05:30 IST)
+ * Runs daily at 18:30 UTC (00:00 IST)
  */
 export function setupTimeTrackingReportCron() {
-    // Run at 00:00 UTC daily (05:30 IST)
-    cron.schedule('0 0 * * *', async () => {
+    // Run at 18:30 UTC daily (00:00 IST - midnight)
+    cron.schedule('30 18 * * *', async () => {
         console.log('Running daily time tracking report cron job...');
         try {
-            await sendDailyTimeTrackingReports();
+            // Since we run at the END of the day (UTC 18:30), we want the report for TODAY.
+            // sendDailyTimeTrackingReports subtracts 1 day from the input date.
+            // So we need to pass TOMORROW's date to get TODAY's report.
+            const tomorrow = new Date();
+            tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+            await sendDailyTimeTrackingReports(tomorrow);
         } catch (error) {
             console.error('Error in time tracking report cron:', error);
         }
@@ -133,7 +138,7 @@ export function setupTimeTrackingReportCron() {
         timezone: 'UTC',
     });
 
-    console.log('Time tracking report cron scheduled for 00:00 UTC daily (05:30 IST)');
+    console.log('Time tracking report cron scheduled for 18:30 UTC daily (00:00 IST)');
 }
 
 /**

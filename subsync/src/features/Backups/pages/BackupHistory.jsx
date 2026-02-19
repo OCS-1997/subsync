@@ -168,7 +168,7 @@ export default function BackupHistory() {
 
     if (loading && history.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex-0 flex-col items-center  justify-center min-h-[80vh]">
                 <Hamster />
             </div>
         );

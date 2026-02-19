@@ -29,7 +29,7 @@ export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
     // Calculate start and end of the PREVIOUS day (UTC)
     // If run at 00:00 UTC on 2023-10-27, we want report for 2023-10-26
     const targetDate = new Date(reportDate);
-    targetDate.setDate(targetDate.getDate() - 1);
+    targetDate.setUTCDate(targetDate.getUTCDate() - 1);
 
     const startOfDay = new Date(targetDate);
     startOfDay.setUTCHours(0, 0, 0, 0);
