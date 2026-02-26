@@ -241,10 +241,11 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
  * @param {string|Array} emailData.to
  * @param {string} emailData.subject
  * @param {string} emailData.html
- * @param {string|null} emailData.attachment_url
+ * @param {string|null} emailData.attachment_url - Legacy single attachment URL
+ * @param {Array} emailData.attachments - Array of attachment objects { filename, content, type, disposition, content_id (SendGrid) / cid (Nodemailer) }
  * @returns {Promise<{success: boolean, providerId: string|null, error: string|null}>}
  */
-export async function sendEmail({ to, subject, html, attachment_url = null }) {
+export async function sendEmail({ to, subject, html, attachment_url = null, attachments = [] }) {
     if (!emailProvider) {
         throw new Error('Email provider not configured');
     }
@@ -260,11 +261,15 @@ export async function sendEmail({ to, subject, html, attachment_url = null }) {
                 html,
             };
 
-            // Add attachment if provided
+            // Add legacy attachment if provided
             if (attachment_url) {
                 // For now, we'll just include the URL in the email body
-                // In production, you might want to fetch and attach the file
                 msg.html += `<p><a href="${attachment_url}">Download Invoice</a></p>`;
+            }
+
+            // Add generic attachments (for inline images etc)
+            if (attachments && attachments.length > 0) {
+                msg.attachments = attachments;
             }
 
             const [response] = await sgMail.send(msg);
@@ -293,6 +298,11 @@ export async function sendEmail({ to, subject, html, attachment_url = null }) {
 
             if (attachment_url) {
                 mailOptions.html += `<p><a href="${attachment_url}">Download Invoice</a></p>`;
+            }
+
+            // Add generic attachments
+            if (attachments && attachments.length > 0) {
+                mailOptions.attachments = attachments;
             }
 
             const info = await transporter.sendMail(mailOptions);

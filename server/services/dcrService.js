@@ -83,7 +83,11 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
         };
 
         // Generate charts
-        const charts = await generateCharts(entries, userStats, callTypeStats);
+        const { userChart, callTypeChart } = await generateCharts(entries, userStats, callTypeStats);
+        
+        const attachments = [];
+        if (userChart) attachments.push(userChart.attachment);
+        if (callTypeChart) attachments.push(callTypeChart.attachment);
 
         // Generate HTML email
         const html = generateEmailHTML({
@@ -95,7 +99,10 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
             userStats: Object.values(userStats),
             callTypeStats,
             entries,
-            charts
+            charts: {
+                userChartSrc: userChart ? `cid:${userChart.attachment.cid}` : null,
+                callTypeChartSrc: callTypeChart ? `cid:${callTypeChart.attachment.cid}` : null
+            }
         });
 
         // Send email
@@ -105,7 +112,8 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
         const result = await sendEmail({
             to: recipient,
             subject,
-            html
+            html,
+            attachments
         });
 
         if (result.success) {
@@ -128,12 +136,22 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
  * @param {Object} callTypeStats
  * @returns {Promise<{userChart: string, callTypeChart: string}>}
  */
+/**
+ * Generate charts for the report
+ * @param {Array} entries
+ * @param {Object} userStats
+ * @param {Object} callTypeStats
+ * @returns {Promise<{userChart: Object|null, callTypeChart: Object|null}>}
+ */
 async function generateCharts(entries, userStats, callTypeStats) {
     try {
+        const userChartId = 'user-dcr-chart';
+        const callTypeChartId = 'call-type-chart';
+
         // Chart 1: DCR count per user (bar chart)
         const userLabels = Object.values(userStats).map(u => u.name);
         const userCounts = Object.values(userStats).map(u => u.count);
-        const userChart = await generateBarChart({
+        const userChartBase64 = await generateBarChart({
             labels: userLabels,
             datasets: [{
                 label: 'Number of DCRs',
@@ -142,14 +160,40 @@ async function generateCharts(entries, userStats, callTypeStats) {
             }]
         }, 'DCRs per User');
 
+        const userChartContent = userChartBase64.replace(/^data:image\/png;base64,/, '');
+
+        const userChart = {
+            attachment: {
+                filename: 'user_dcr_chart.png',
+                content: userChartContent,
+                encoding: 'base64',
+                type: 'image/png',
+                disposition: 'inline',
+                cid: userChartId
+            }
+        };
+
         // Chart 2: Inbound vs Outbound (pie chart)
-        const callTypeChart = await generatePieChart({
+        const callTypeChartBase64 = await generatePieChart({
             labels: ['Inbound', 'Outbound'],
             datasets: [{
                 data: [callTypeStats.inbound, callTypeStats.outbound],
                 backgroundColor: ['#1d4ed8', '#3b82f6']
             }]
         }, 'Call Type Distribution');
+
+        const callTypeChartContent = callTypeChartBase64.replace(/^data:image\/png;base64,/, '');
+
+        const callTypeChart = {
+            attachment: {
+                filename: 'call_type_chart.png',
+                content: callTypeChartContent,
+                encoding: 'base64',
+                type: 'image/png',
+                disposition: 'inline',
+                cid: callTypeChartId
+            }
+        };
 
         return { userChart, callTypeChart };
     } catch (error) {
@@ -266,20 +310,20 @@ function generateEmailHTML(data) {
             </div>
         </div>
 
-        ${charts.userChart ? `
+        ${charts.userChartSrc ? `
         <div class="section">
             <h2>DCRs per User</h2>
             <div class="chart-container">
-                <img src="${charts.userChart}" alt="DCRs per User" />
+                <img src="${charts.userChartSrc}" alt="DCRs per User" />
             </div>
         </div>
         ` : ''}
 
-        ${charts.callTypeChart ? `
+        ${charts.callTypeChartSrc ? `
         <div class="section">
             <h2>Call Type Distribution</h2>
             <div class="chart-container">
-                <img src="${charts.callTypeChart}" alt="Call Type Distribution" />
+                <img src="${charts.callTypeChartSrc}" alt="Call Type Distribution" />
             </div>
         </div>
         ` : ''}

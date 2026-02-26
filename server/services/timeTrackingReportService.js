@@ -1,4 +1,5 @@
 import { getUsersWithTimeEntries, getTimeEntries } from "../models/timeTrackingModel.js";
+import { getAllUsers } from "../models/userModel.js";
 import { sendEmail } from "./emailService.js";
 import { generateBarChart, generatePieChart } from "../utils/chartGenerator.js";
 import { minutesToTime } from "../models/dcrModel.js";
@@ -40,16 +41,19 @@ export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
     console.log(`Report range: ${startOfDay.toISOString()} to ${endOfDay.toISOString()}`);
 
     try {
-        // 1. Get users who logged time
-        const users = await getUsersWithTimeEntries(startOfDay, endOfDay);
-        console.log(`Found ${users.length} users with time entries.`);
+        // 1. Get ALL active users
+        const allUsers = await getAllUsers();
+        const activeUsers = allUsers.filter(u => u.isActive);
+        console.log(`Found ${activeUsers.length} active users to check.`);
 
         // 2. Process each user
-        for (const user of users) {
+        for (const user of activeUsers) {
             try {
-                await processUserReport(user, startOfDay, endOfDay, targetDate);
+                // Adapter: getAllUsers returns 'username', report expects 'user_id'
+                const userForReport = { ...user, user_id: user.username };
+                await processUserReport(userForReport, startOfDay, endOfDay, targetDate);
             } catch (err) {
-                console.error(`Error processing report for user ${user.name} (${user.user_id}):`, err);
+                console.error(`Error processing report for user ${user.name} (${user.username}):`, err);
             }
         }
         console.log("Daily time tracking reports completed.");
@@ -72,7 +76,8 @@ async function processUserReport(user, startDate, endDate, reportDate) {
     });
 
     if (!entries || entries.length === 0) {
-        console.log(`No entries found for user ${user.name} (checked again). Skipping.`);
+        console.log(`No entries found for user ${user.name}. Sending missing time reminder.`);
+        await sendNoTimeLoggedEmail(user, reportDate);
         return;
     }
 
@@ -118,7 +123,8 @@ async function processUserReport(user, startDate, endDate, reportDate) {
     const result = await sendEmail({
         to: user.email,
         subject,
-        html
+        html,
+        attachments: charts.attachments || []
     });
 
     if (result.success) {
@@ -130,34 +136,61 @@ async function processUserReport(user, startDate, endDate, reportDate) {
 
 async function generateCharts(billable, nonBillable, projectStats) {
     try {
+        const billableChartId = 'billable-chart';
+        const projectChartId = 'project-chart';
+
         // Pie Chart: Billable vs Non-Billable
-        const billableChart = await generatePieChart({
+        const billableChartBase64 = await generatePieChart({
             labels: ['Billable', 'Non-Billable'],
             datasets: [{
                 data: [billable, nonBillable],
-                backgroundColor: ['#10b981', '#6b7280'] // Emerald-500, Gray-500
+                backgroundColor: ['#10b981', '#6b7280']
             }]
         }, 'Billable Status');
 
+        const billableChartContent = billableChartBase64.replace(/^data:image\/png;base64,/, '');
+
         // Bar Chart: Projects
-        // Sort projects by duration desc
         const sortedProjects = Object.entries(projectStats)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 10); // Top 10 projects
+            .slice(0, 10);
 
-        const projectChart = await generateBarChart({
+        const projectChartBase64 = await generateBarChart({
             labels: sortedProjects.map(p => p[0]),
             datasets: [{
                 label: 'Minutes',
                 data: sortedProjects.map(p => p[1]),
-                backgroundColor: '#3b82f6' // Blue-500
+                backgroundColor: '#3b82f6'
             }]
         }, 'Time by Project');
 
-        return { billableChart, projectChart };
+        const projectChartContent = projectChartBase64.replace(/^data:image\/png;base64,/, '');
+
+        return {
+            billableChart: `cid:${billableChartId}`,
+            projectChart: `cid:${projectChartId}`,
+            attachments: [
+                {
+                    filename: 'billable_chart.png',
+                    content: billableChartContent,
+                    encoding: 'base64',
+                    type: 'image/png',
+                    disposition: 'inline',
+                    cid: billableChartId
+                },
+                {
+                    filename: 'project_chart.png',
+                    content: projectChartContent,
+                    encoding: 'base64',
+                    type: 'image/png',
+                    disposition: 'inline',
+                    cid: projectChartId
+                }
+            ]
+        };
     } catch (error) {
         console.error("Error generating charts:", error);
-        return {};
+        return { attachments: [] };
     }
 }
 
@@ -287,3 +320,76 @@ function generateEmailHTML(data) {
 </html>
     `;
 }
+
+/**
+ * Send email to users with no time entries
+ */
+async function sendNoTimeLoggedEmail(user, reportDate) {
+    const dateStr = formatDate(reportDate);
+    const subject = `Action Required: No Time Logged for ${dateStr}`;
+    
+    // In development, prefer the client port. In production, use the configured base URL.
+    const clientPort = process.env.CLIENT_PORT || 5173;
+    const appUrl = process.env.NODE_ENV === 'production' 
+        ? (process.env.APP_BASE_URL || `http://localhost:${clientPort}`)
+        : `http://localhost:${clientPort}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Time Entries</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1f2937;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); margin-top: 40px; margin-bottom: 40px;">
+        
+        <!-- Header -->
+    <div style="background-color: #dc2626; padding: 20px 40px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Action Required: Time Entry Missing</h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px;">
+        <p style="font-size: 16px; margin: 0;">Hello <strong>${user.name}</strong>,</p>
+        
+        <p style="color: #4b5563; margin-top: 20px; line-height: 1.6;">
+            Our records indicate that no time entries have been submitted for <strong>${dateStr}</strong>.
+        </p>
+
+        <p style="color: #4b5563; margin-top: 20px; line-height: 1.6;">
+            Timely and accurate time logging is a mandatory compliance requirement. Failure to maintain updated records may result in administrative escalation, impact on project reporting, and potential restrictions on system access.
+        </p>
+
+        <p style="color: #4b5563; margin-top: 20px; line-height: 1.6;">
+            You are required to update your time entries immediately to avoid further action.
+        </p>
+
+        <p style="color: #4b5563; margin-top: 20px; line-height: 1.6;">
+            Continued non-compliance will be formally reviewed.
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af;">
+        <p style="margin: 0;">This is an automated notification from Subsync. No further reminders may be issued.</p>
+    </div>
+    </div>
+    </body>
+</html>
+    `;
+
+    const result = await sendEmail({
+        to: user.email,
+        subject,
+        html
+    });
+
+    if (result.success) {
+        //console.log(`Missing time reminder sent to ${user.email}`);
+    } else {
+        console.error(`Failed to send reminder to ${user.email}: ${result.error}`);
+    }
+}
+

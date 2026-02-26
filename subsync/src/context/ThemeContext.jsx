@@ -13,6 +13,14 @@ const ThemeContext = createContext({
   setFonts: () => {},
   customColors: {},
   setCustomColors: () => {},
+  appearance: {
+    radius: "0.5rem",
+    density: 1,
+    sidebarStyle: "default",
+    animationSpeed: "normal",
+    shadowDepth: "medium"
+  },
+  setAppearance: () => {},
   resetToDefault: () => {},
 });
 
@@ -42,6 +50,17 @@ export const ThemeProvider = ({ children }) => {
   const [customColors, setCustomColorsState] = useState(() => {
     const saved = localStorage.getItem("customColors");
     return saved ? JSON.parse(saved) : {};
+  });
+
+  const [appearance, setAppearanceState] = useState(() => {
+    const saved = localStorage.getItem("appearance");
+    return saved ? JSON.parse(saved) : {
+      radius: "0.5rem",
+      density: 1,
+      sidebarStyle: "default",
+      animationSpeed: "normal",
+      shadowDepth: "medium"
+    };
   });
 
   // --- Theme Application Logic ---
@@ -79,6 +98,49 @@ export const ThemeProvider = ({ children }) => {
     document.body.style.fontFamily = bodyFont;
   }, []);
 
+  const applyAppearance = useCallback((settings) => {
+    const root = document.documentElement;
+
+    // Radius
+    root.style.setProperty("--radius", settings.radius);
+
+    // Density (Scale factor for spacing/sizing)
+    // We can use this to multiply base spacing units if we had them or set specific overrides
+    // For now, let's set a generic factor that components can use
+    root.style.setProperty("--density", settings.density);
+
+    // Sidebar Style
+    if (settings.sidebarStyle === "floating") {
+      root.style.setProperty("--sidebar-m", "1rem");
+      root.style.setProperty("--sidebar-r", "1rem");
+    } else if (settings.sidebarStyle === "inset") {
+      root.style.setProperty("--sidebar-m", "1rem 0 1rem 1rem"); // Inset from left
+      root.style.setProperty("--sidebar-r", "1rem");
+    } else {
+      root.style.setProperty("--sidebar-m", "0");
+      root.style.setProperty("--sidebar-r", "0");
+    }
+
+    // Animation Speed
+    const speeds = {
+      none: "0s",
+      fast: "150ms",
+      normal: "300ms",
+      slow: "500ms"
+    };
+    root.style.setProperty("--transition-speed", speeds[settings.animationSpeed] || "300ms");
+
+    // Shadow Depth (Opacity multiplier)
+    const shadowOpacities = {
+      none: "0",
+      subtle: "0.5",
+      medium: "1",
+      deep: "1.5"
+    };
+    root.style.setProperty("--shadow-strength", shadowOpacities[settings.shadowDepth] || "1");
+
+  }, []);
+
   // --- Actions ---
   const setTheme = (id) => {
     setThemeId(id);
@@ -105,6 +167,12 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const setAppearance = (updates) => {
+    const updated = { ...appearance, ...updates };
+    setAppearanceState(updated);
+    localStorage.setItem("appearance", JSON.stringify(updated));
+  };
+
   const resetToDefault = () => {
     setTheme("light");
     const defaultFonts = {
@@ -113,6 +181,16 @@ export const ThemeProvider = ({ children }) => {
       monospace: "jetbrains-mono",
     };
     setFonts(defaultFonts);
+    
+    const defaultAppearance = {
+      radius: "0.5rem",
+      density: 1,
+      sidebarStyle: "default",
+      animationSpeed: "normal",
+      shadowDepth: "medium"
+    };
+    setAppearance(defaultAppearance);
+
     setCustomColorsState({});
     localStorage.removeItem("customColors");
   };
@@ -125,6 +203,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     applyFonts(fonts);
   }, [fonts, applyFonts]);
+
+  useEffect(() => {
+    applyAppearance(appearance);
+  }, [appearance, applyAppearance]);
 
   // Sync with system theme if configured (optional addition)
   useEffect(() => {
@@ -150,6 +232,8 @@ export const ThemeProvider = ({ children }) => {
         setFonts, 
         customColors, 
         setCustomColors,
+        appearance,
+        setAppearance,
         resetToDefault,
         themes: THEMES,
         fontPresets: FONT_PRESETS

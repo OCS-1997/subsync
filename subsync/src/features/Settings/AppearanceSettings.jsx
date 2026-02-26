@@ -13,9 +13,14 @@ import {
   Monitor,
   Layout,
   MousePointer2,
-  Trash2
+  Trash2,
+  Zap,
+  BoxSelect,
+  Layers,
+  Move,
+  Pipette
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, hexToHSL, hslToHex } from "@/lib/utils";
 
 const AppearanceSettings = () => {
   const { 
@@ -27,7 +32,9 @@ const AppearanceSettings = () => {
     fontPresets, 
     resetToDefault,
     customColors,
-    setCustomColors
+    setCustomColors,
+    appearance,
+    setAppearance
   } = useTheme();
 
   const [activeTab, setActiveTab] = useState("themes");
@@ -39,6 +46,10 @@ const AppearanceSettings = () => {
 
   const handleCustomColorChange = (key, value) => {
     setCustomColors({ [key]: value });
+  };
+
+  const handleAppearanceChange = (key, value) => {
+    setAppearance({ [key]: value });
   };
 
   const applyRandomTheme = () => {
@@ -104,7 +115,10 @@ const AppearanceSettings = () => {
             {[
               { id: "themes", label: "Color Palettes", icon: Palette },
               { id: "fonts", label: "Typography", icon: Type },
-              { id: "custom", label: "Custom Studio", icon: Layout },
+              { id: "interface", label: "Interface", icon: BoxSelect },
+              { id: "layout", label: "Layout", icon: Layout },
+              { id: "behavior", label: "Behavior", icon: Zap },
+              { id: "custom", label: "Custom Studio", icon: MousePointer2 },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -149,6 +163,24 @@ const AppearanceSettings = () => {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+          {activeTab === "interface" && (
+            <div className="space-y-4 pt-6 text-center">
+               <div className="mx-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[var(--radius)] border border-slate-200 dark:border-slate-800 space-y-4 transition-all duration-300 shadow-[var(--shadow-strength)_0_10px_15px_-3px_rgb(0_0_0_/_0.1)]">
+                 <div className="flex gap-2">
+                   <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                   <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                   <div className="w-3 h-3 rounded-full bg-green-400/80" />
+                 </div>
+                 <div className="h-2 w-2/3 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                 <div className="space-y-2">
+                   <div className="h-8 w-full bg-blue-500 rounded-[calc(var(--radius)*0.8)] shadow-sm flex items-center justify-center text-[10px] text-white font-bold opacity-90">
+                     Button
+                   </div>
+                 </div>
+               </div>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">Live Preview</p>
             </div>
           )}
         </aside>
@@ -315,6 +347,190 @@ const AppearanceSettings = () => {
             </div>
           )}
 
+
+
+          {activeTab === "interface" && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              {/* Corner Radius */}
+              <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Corner Radius</CardTitle>
+                  <CardDescription>Define the curvature of your interface elements.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-10 pt-0">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {[
+                      { label: "Sharp", value: "0px", class: "rounded-none" },
+                      { label: "Slight", value: "0.25rem", class: "rounded" },
+                      { label: "Standard", value: "0.5rem", class: "rounded-lg" },
+                      { label: "Round", value: "1rem", class: "rounded-2xl" },
+                      { label: "Pill", value: "9999px", class: "rounded-full" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleAppearanceChange("radius", opt.value)}
+                        className={cn(
+                          "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
+                          appearance.radius === opt.value 
+                            ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20" 
+                            : "border-transparent"
+                        )}
+                      >
+                        <div className={cn("w-12 h-12 bg-blue-500 shadow-lg shadow-blue-500/30", opt.class)} />
+                        <span className="text-xs font-bold">{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Shadows */}
+              <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Depth & Shadows</CardTitle>
+                  <CardDescription>Control the elevation intensity of cards and modals.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-10 pt-0">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     {[
+                      { label: "Flat", value: "none", shadow: "none" },
+                      { label: "Subtle", value: "subtle", shadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)" },
+                      { label: "Medium", value: "medium", shadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" },
+                      { label: "Deep", value: "deep", shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleAppearanceChange("shadowDepth", opt.value)}
+                        className={cn(
+                          "group p-6 rounded-2xl border-2 transition-all text-left",
+                          appearance.shadowDepth === opt.value 
+                            ? "border-blue-500 bg-white dark:bg-slate-800" 
+                            : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50"
+                        )}
+                      >
+                         <div className="h-16 bg-white dark:bg-slate-700 rounded-lg mb-4 mx-auto w-full transition-shadow duration-300" style={{ boxShadow: opt.shadow }} />
+                         <div className="text-center font-bold text-sm">{opt.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "layout" && (
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+               {/* Sidebar Style */}
+              <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Sidebar Style</CardTitle>
+                </CardHeader>
+                <CardContent className="p-10 pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     {[
+                      { id: "default", label: "Default", desc: "Full height, attached to edge." },
+                      { id: "floating", label: "Floating", desc: "Detached panel with spacing." },
+                      { id: "inset", label: "Inset", desc: "MacOS style layout." },
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => handleAppearanceChange("sidebarStyle", style.id)}
+                        className={cn(
+                          "relative p-6 rounded-3xl border-2 transition-all text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex flex-col gap-4",
+                          appearance.sidebarStyle === style.id ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10" : "border-slate-200 dark:border-slate-800"
+                        )}
+                      >
+                        <div className="h-24 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden relative border border-slate-200 dark:border-slate-800 w-full">
+                           {/* Mini Mockup */}
+                           <div className={cn(
+                             "absolute top-0 bottom-0 w-8 bg-blue-500 transition-all",
+                             style.id === "default" && "left-0",
+                             style.id === "floating" && "left-2 top-2 bottom-2 rounded-md",
+                             style.id === "inset" && "left-2 top-2 bottom-2 rounded-l-md"
+                           )} />
+                           <div className={cn(
+                             "absolute bg-white dark:bg-slate-800 transition-all",
+                             style.id === "default" && "left-8 top-0 bottom-0 right-0",
+                             style.id === "floating" && "left-12 top-2 bottom-2 right-2 rounded-md",
+                             style.id === "inset" && "left-10 top-2 bottom-2 right-2 rounded-r-md"
+                           )} />
+                        </div>
+                        <div>
+                          <div className="font-bold">{style.label}</div>
+                          <div className="text-xs text-slate-500">{style.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Density */}
+              <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                 <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Interface Density</CardTitle>
+                </CardHeader>
+                <CardContent className="p-10 pt-0">
+                   <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl">
+                     {[0.8, 1, 1.2].map((d, i) => {
+                       const labels = ["Compact", "Comfortable", "Spacious"];
+                       return (
+                         <button
+                           key={d}
+                           onClick={() => handleAppearanceChange("density", d)}
+                           className={cn(
+                             "flex-1 py-3 rounded-xl text-sm font-bold transition-all",
+                             appearance.density === d 
+                               ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" 
+                               : "text-slate-500 hover:text-slate-700"
+                           )}
+                         >
+                           {labels[i]}
+                         </button>
+                       );
+                     })}
+                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "behavior" && (
+             <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+               <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Motion & Feedback</CardTitle>
+                </CardHeader>
+                <CardContent className="p-10 pt-0 space-y-8">
+                  <div className="space-y-4">
+                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Animation Speed</label>
+                     <div className="grid grid-cols-4 gap-4">
+                        {[
+                          { id: "none", label: "Off" },
+                          { id: "fast", label: "Fast" },
+                          { id: "normal", label: "Normal" },
+                          { id: "slow", label: "Slow" },
+                        ].map((s) => (
+                           <button
+                             key={s.id}
+                             onClick={() => handleAppearanceChange("animationSpeed", s.id)}
+                             className={cn(
+                               "py-4 rounded-2xl border-2 font-bold transition-all",
+                               appearance.animationSpeed === s.id 
+                                 ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300" 
+                                 : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                             )}
+                           >
+                             {s.label}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                </CardContent>
+               </Card>
+             </div>
+          )}
+
           {activeTab === "custom" && (
             <div className="animate-in slide-in-from-bottom-4 duration-500">
               <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-dashed">
@@ -342,9 +558,22 @@ const AppearanceSettings = () => {
                               className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-xs shadow-inner transition-all focus:border-purple-500 focus:ring-0"
                               placeholder="H S% L%"
                             />
+                            <div className="absolute right-2 top-2 bottom-2">
+                               <div className="relative w-8 h-8">
+                                 <input 
+                                   type="color"
+                                   value={hslToHex(customColors[field.key] || "0 0% 100%")}
+                                   onChange={(e) => handleCustomColorChange(field.key, hexToHSL(e.target.value))}
+                                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                 />
+                                 <div className="w-full h-full rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                   <Pipette className="w-4 h-4 text-slate-500" />
+                                 </div>
+                               </div>
+                            </div>
                           </div>
                           <div 
-                            className="w-12 h-12 rounded-xl border-2 border-white dark:border-slate-800 shadow-lg shrink-0"
+                            className="w-12 h-12 rounded-xl border-2 border-white dark:border-slate-800 shadow-lg shrink-0 transition-colors duration-300"
                             style={{ backgroundColor: `hsl(${customColors[field.key] || "0 0% 100%"})` }}
                           />
                         </div>
