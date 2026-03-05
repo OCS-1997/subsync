@@ -49,6 +49,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
     const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
     const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
     const [durationPopoverOpen, setDurationPopoverOpen] = useState(false);
+    const [isStartTimeModified, setIsStartTimeModified] = useState(false);
 
     // Sync form with initialData for editing
     useEffect(() => {
@@ -78,6 +79,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                 is_billable: false,
             });
         }
+        setIsStartTimeModified(false);
     }, [initialData]);
 
     // Expanded Duration presets
@@ -213,6 +215,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
             description: '',
             is_billable: false,
         });
+        setIsStartTimeModified(false);
     };
 
     const handleSubmit = async (e) => {
@@ -221,8 +224,15 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
         try {
             // If no duration specified, automatically start a timer
             if (!formData.duration_minutes) {
+                // Refresh start_time to 'now' if it hasn't been manually modified
+                // and we are creating a new entry (not editing)
+                const finalStartTime = (!isStartTimeModified && !initialData) 
+                    ? new Date().toISOString() 
+                    : formData.start_time;
+
                 const timerData = {
                     ...formData,
+                    start_time: finalStartTime,
                     is_timer_running: true,
                     duration_minutes: null,
                     end_time: null,
@@ -245,8 +255,15 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
     };
 
     const handleStartTimer = async () => {
+        // Refresh start_time to 'now' if it hasn't been manually modified
+        // and we are creating a new entry (not editing)
+        const finalStartTime = (!isStartTimeModified && !initialData) 
+            ? new Date().toISOString() 
+            : formData.start_time;
+
         const timerData = {
             ...formData,
+            start_time: finalStartTime,
             is_timer_running: true,
             duration_minutes: null,
             end_time: null,
@@ -287,7 +304,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             <Input
                                 type="datetime-local"
                                 value={toLocalDateTimeString(formData.start_time)}
-                                onChange={(e) => setFormData(prev => ({ ...prev, start_time: fromLocalDateTimeString(e.target.value) }))}
+                                onChange={(e) => {
+                                    setFormData(prev => ({ ...prev, start_time: fromLocalDateTimeString(e.target.value) }));
+                                    setIsStartTimeModified(true);
+                                }}
                                 className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800"
                             />
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight pl-1">

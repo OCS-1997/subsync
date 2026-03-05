@@ -32,7 +32,7 @@ export const useTokenRefresh = () => {
 
       // Option 2: Extend expiry based on activity (simpler approach)
       extendTokenExpiry();
-      console.log('✅ Token expiry extended');
+      //console.log('✅ Token expiry extended');
     } catch (error) {
       console.error('Token refresh failed:', error);
       // If refresh fails, logout user
@@ -55,7 +55,7 @@ export const useTokenRefresh = () => {
 
     // If token is expiring soon (within 1 hour), refresh it
     if (isTokenExpiringSoon()) {
-      console.log('⚠️ Token expiring soon, refreshing...');
+      //console.log('⚠️ Token expiring soon, refreshing...');
       refreshToken();
     }
   }, [isAuthenticated, dispatch, refreshToken]);

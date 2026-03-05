@@ -35,7 +35,7 @@ export default function ImageGallery({ images = [], onDelete, onSetFeatured, onR
 
     const getImageUrl = (image) => {
         const url = `/api/${image.file_path}`;
-        console.log('Image URL:', url, 'for image:', image);
+        //console.log('Image URL:', url, 'for image:', image);
         return url;
     };
 
