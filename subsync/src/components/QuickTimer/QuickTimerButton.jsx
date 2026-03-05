@@ -232,7 +232,7 @@ const QuickTimerButton = () => {
                                         className="h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-4 shadow-lg shadow-red-500/20 transition-all"
                                     >
                                         <Square className="h-3 w-3 mr-2 fill-current" />
-                                        Kill Process
+                                        Stop / Log Session
                                     </Button>
                                 </div>
                             )}
@@ -283,7 +283,7 @@ const QuickTimerButton = () => {
 
                                     <div className="pt-8 border-t border-gray-100 dark:border-slate-800">
                                         <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                                            System Status: Synchronized & Live
+                                            System Status: Live Tracking
                                         </p>
                                     </div>
                                 </div>

@@ -1,10 +1,10 @@
 import api from '@/lib/axiosInstance';
 
 /**
- * Search for customer/contact by phone number
- * Matches against customer contacts and returns best match
- * 
- * @param {string} phoneNumber - Phone number to search (with or without country code)
+ * Search for any entity (customer/vendor/contact) by phone number.
+ * Uses the new /resolve-number API which searches across all entity types.
+ *
+ * @param {string} phoneNumber - Phone number to search
  * @returns {Promise<{customer: Object|null, contact: Object|null}>}
  */
 export async function searchCustomerByPhone(phoneNumber) {
@@ -13,30 +13,35 @@ export async function searchCustomerByPhone(phoneNumber) {
     }
 
     try {
-        // Clean phone number (remove spaces, dashes, parentheses)
-        const cleanNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
-
-        // Search in DCR entries and customers
-        const response = await api.get('/customers/search-by-phone', {
-            params: { phone: cleanNumber }
+        // Use the new unified resolve-number endpoint
+        const response = await api.post('/resolve-number', {
+            phone_number: phoneNumber,
         });
 
-        if (response.data && response.data.customer) {
-            return {
-                customer: response.data.customer,
-                contact: response.data.contact || null
-            };
-        }
-
-        return { customer: null, contact: null };
-    } catch (err) {
-        // 404 means no customer found - this is expected, not an error
-        if (err.response && err.response.status === 404) {
+        const resolved = response.data?.data;
+        if (!resolved || resolved.type === 'unknown') {
             return { customer: null, contact: null };
         }
-        
-        // Only log actual errors (network issues, 500s, etc.)
-        console.error('Phone search error:', err);
+
+        // Adapt to the shape expected by CallLogPrompt
+        const customer = {
+            customer_id:   resolved.id,
+            customer_name: resolved.name,
+            company_name:  resolved.company,
+            entity_type:   resolved.type,
+        };
+        const contact = {
+            contact_name:  resolved.name,
+            phone_number:  resolved.phone,
+            country_code:  '+91',
+        };
+
+        return { customer, contact };
+    } catch (err) {
+        if (err.response?.status === 404) {
+            return { customer: null, contact: null };
+        }
+        console.error('Phone resolve error:', err);
         return { customer: null, contact: null };
     }
 }

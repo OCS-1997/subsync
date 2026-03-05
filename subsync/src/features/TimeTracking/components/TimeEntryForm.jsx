@@ -201,35 +201,63 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
         setFormData(prev => ({ ...prev, end_time: end.toISOString(), duration_minutes: newDuration }));
     };
 
-    const handleSubmit = (e) => {
+    const resetForm = () => {
+        setFormData({
+            start_time: new Date().toISOString(),
+            duration_minutes: null,
+            end_time: null,
+            customer_id: '',
+            project_id: '',
+            activity_type_id: '',
+            title: '',
+            description: '',
+            is_billable: false,
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // If no duration specified, automatically start a timer
-        if (!formData.duration_minutes) {
-            const timerData = {
-                ...formData,
-                is_timer_running: true,
-                duration_minutes: null,
-                end_time: null,
-            };
-            onSubmit(timerData, true); // true flag indicates it's a timer start
+        try {
+            // If no duration specified, automatically start a timer
+            if (!formData.duration_minutes) {
+                const timerData = {
+                    ...formData,
+                    is_timer_running: true,
+                    duration_minutes: null,
+                    end_time: null,
+                };
+                await onSubmit(timerData, true); // true flag indicates it's a timer start
+            } else {
+                // Save as completed time entry
+                await onSubmit(formData);
+            }
+            
+            // Only reset if it was a new entry (not editing)
+            if (!initialData) {
+                resetForm();
+            }
+            
             window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
-        } else {
-            // Save as completed time entry
-            onSubmit(formData);
-            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
+        } catch (error) {
+            console.error('Form submission error:', error);
         }
     };
 
-    const handleStartTimer = () => {
+    const handleStartTimer = async () => {
         const timerData = {
             ...formData,
             is_timer_running: true,
             duration_minutes: null,
             end_time: null,
         };
-        onSubmit(timerData, true);
-        window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
+        try {
+            await onSubmit(timerData, true);
+            if (!initialData) resetForm();
+            window.dispatchEvent(new CustomEvent('timeTrackingUpdated'));
+        } catch (error) {
+            console.error('Timer start error:', error);
+        }
     };
 
     const selectedCustomer = customers.find(c => c.customer_id === formData.customer_id);

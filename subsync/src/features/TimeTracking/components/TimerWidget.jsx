@@ -155,7 +155,7 @@ const TimerWidget = ({ onTimerUpdate }) => {
                     className="w-full h-14 bg-white hover:bg-red-50 text-blue-900 hover:text-red-600 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all duration-300 active:scale-95 group"
                 >
                     <Square className="mr-3 h-4 w-4 fill-current group-hover:scale-110 transition-transform" />
-                    Terminate Session
+                    Stop / Log Session
                 </Button>
             </CardContent>
         </Card>

@@ -1,33 +1,33 @@
 import { Table2, Kanban } from 'lucide-react';
-import { Button } from '@/components/ui/button.jsx';
+import { cn } from "@/lib/utils";
 
 export default function ViewSwitcher({ viewMode, onViewChange }) {
     return (
-        <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800/50">
-            <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+            <button
                 onClick={() => onViewChange('table')}
-                className={`h-9 gap-2 ${viewMode === 'table'
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}
+                className={cn(
+                    "flex items-center gap-2 h-10 px-5 rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                    viewMode === 'table'
+                        ? "bg-slate-900 dark:bg-slate-800 text-white shadow-md scale-100"
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
             >
                 <Table2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Table</span>
-            </Button>
-            <Button
-                variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
-                size="sm"
+                <span className="hidden sm:inline">List</span>
+            </button>
+            <button
                 onClick={() => onViewChange('pipeline')}
-                className={`h-9 gap-2 ${viewMode === 'pipeline'
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}
+                className={cn(
+                    "flex items-center gap-2 h-10 px-5 rounded-[12px] text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                    viewMode === 'pipeline'
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-100"
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
             >
                 <Kanban className="h-4 w-4" />
-                <span className="hidden sm:inline">Pipeline</span>
-            </Button>
+                <span className="hidden sm:inline">Kanban</span>
+            </button>
         </div>
     );
 }

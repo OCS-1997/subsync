@@ -1,6 +1,6 @@
 import { getDcrEntriesForDate, minutesToTime } from "../models/dcrModel.js";
 import { sendEmail } from "./emailService.js";
-import { generateBarChart, generatePieChart } from "../utils/chartGenerator.js";
+import { generateBarChart } from "../utils/chartGenerator.js";
 
 /**
  * Format date to readable string
@@ -69,25 +69,19 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
             userStats[userId].count++;
             userStats[userId].totalMinutes += entry.time_spent_minutes || 0;
             
-            if (entry.call_type === 'inbound') {
+            const cType = (entry.call_type || '').toLowerCase();
+            if (cType === 'inbound' || cType === 'incoming') {
                 userStats[userId].inbound++;
             } else {
                 userStats[userId].outbound++;
             }
         });
 
-        // Per call type breakdown
-        const callTypeStats = {
-            inbound: entries.filter(e => e.call_type === 'inbound').length,
-            outbound: entries.filter(e => e.call_type === 'outbound').length
-        };
-
         // Generate charts
-        const { userChart, callTypeChart } = await generateCharts(entries, userStats, callTypeStats);
+        const { userChart } = await generateCharts(entries, userStats);
         
         const attachments = [];
         if (userChart) attachments.push(userChart.attachment);
-        if (callTypeChart) attachments.push(callTypeChart.attachment);
 
         // Generate HTML email
         const html = generateEmailHTML({
@@ -97,11 +91,9 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
             totalTimeMins,
             activeUsersCount,
             userStats: Object.values(userStats),
-            callTypeStats,
             entries,
             charts: {
-                userChartSrc: userChart ? `cid:${userChart.attachment.cid}` : null,
-                callTypeChartSrc: callTypeChart ? `cid:${callTypeChart.attachment.cid}` : null
+                userChartSrc: userChart ? `cid:${userChart.attachment.cid}` : null
             }
         });
 
@@ -133,20 +125,11 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
  * Generate charts for the report
  * @param {Array} entries
  * @param {Object} userStats
- * @param {Object} callTypeStats
- * @returns {Promise<{userChart: string, callTypeChart: string}>}
+ * @returns {Promise<{userChart: Object|null}>}
  */
-/**
- * Generate charts for the report
- * @param {Array} entries
- * @param {Object} userStats
- * @param {Object} callTypeStats
- * @returns {Promise<{userChart: Object|null, callTypeChart: Object|null}>}
- */
-async function generateCharts(entries, userStats, callTypeStats) {
+async function generateCharts(entries, userStats) {
     try {
         const userChartId = 'user-dcr-chart';
-        const callTypeChartId = 'call-type-chart';
 
         // Chart 1: DCR count per user (bar chart)
         const userLabels = Object.values(userStats).map(u => u.name);
@@ -173,32 +156,10 @@ async function generateCharts(entries, userStats, callTypeStats) {
             }
         };
 
-        // Chart 2: Inbound vs Outbound (pie chart)
-        const callTypeChartBase64 = await generatePieChart({
-            labels: ['Inbound', 'Outbound'],
-            datasets: [{
-                data: [callTypeStats.inbound, callTypeStats.outbound],
-                backgroundColor: ['#1d4ed8', '#3b82f6']
-            }]
-        }, 'Call Type Distribution');
-
-        const callTypeChartContent = callTypeChartBase64.replace(/^data:image\/png;base64,/, '');
-
-        const callTypeChart = {
-            attachment: {
-                filename: 'call_type_chart.png',
-                content: callTypeChartContent,
-                encoding: 'base64',
-                type: 'image/png',
-                disposition: 'inline',
-                cid: callTypeChartId
-            }
-        };
-
-        return { userChart, callTypeChart };
+        return { userChart };
     } catch (error) {
         console.error("Error generating charts:", error);
-        return { userChart: null, callTypeChart: null };
+        return { userChart: null };
     }
 }
 
@@ -215,7 +176,6 @@ function generateEmailHTML(data) {
         totalTimeMins,
         activeUsersCount,
         userStats,
-        callTypeStats,
         entries,
         charts
     } = data;
@@ -315,15 +275,6 @@ function generateEmailHTML(data) {
             <h2>DCRs per User</h2>
             <div class="chart-container">
                 <img src="${charts.userChartSrc}" alt="DCRs per User" />
-            </div>
-        </div>
-        ` : ''}
-
-        ${charts.callTypeChartSrc ? `
-        <div class="section">
-            <h2>Call Type Distribution</h2>
-            <div class="chart-container">
-                <img src="${charts.callTypeChartSrc}" alt="Call Type Distribution" />
             </div>
         </div>
         ` : ''}

@@ -1,98 +1,130 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import CallDetector from '@/plugins/CallDetector';
+import { CallDetector } from '../plugins/CallDetectorPlugin';
+import api from '@/lib/axiosInstance';
 
-export const useCallDetector = () => {
-  const [isActive, setIsActive] = useState(false);
-  const [hasPermissions, setHasPermissions] = useState(false);
-  const [lastCall, setLastCall] = useState(null);
-  const [error, setError] = useState(null);
+/**
+ * useCallDetector — React hook for post-call DCR logging.
+ *
+ * Bridges the native CallDetectorPlugin (Android) to React.
+ * Exposes:
+ *   - isNative     : boolean — is this running on Android native
+ *   - isActive     : boolean — is the call listener running
+ *   - lastCall     : object | null — latest ended call data
+ *   - startDetection  : fn — start listening for calls
+ *   - stopDetection   : fn — stop listening
+ *   - checkPermissions: fn — check/request permissions
+ *
+ * On Web (dev): responds to `window.dispatchEvent(new CustomEvent('dev:callEnded', { detail: {...} }))`
+ */
+export function useCallDetector() {
+  const [isActive, setIsActive]   = useState(false);
+  const [lastCall, setLastCall]   = useState(null);
+  const listenerRef               = useRef(null);
+  const isNative                  = Capacitor.isNativePlatform();
 
-  // Only run on native platforms
-  const isNative = Capacitor.isNativePlatform();
-
-  useEffect(() => {
-    if (!isNative) {
-      console.log('[useCallDetector] Running on web, call detection disabled');
-      return;
-    }
-
-    // Check permissions on mount
-    checkPermissions();
-
-    // Set up event listeners
-    const callStartedListener = CallDetector.addListener(
-      'callStarted',
-      (event) => {
-        console.log('[useCallDetector] Call started:', event);
-      }
-    );
-
-    const callEndedListener = CallDetector.addListener(
-      'callEnded',
-      (event) => {
-        console.log('[useCallDetector] Call ended:', event);
-        setLastCall(event);
-      }
-    );
-
-    return () => {
-      callStartedListener.then((l) => l.remove());
-      callEndedListener.then((l) => l.remove());
-    };
-  }, [isNative]);
-
+  // ------------------------------------------------------------------
+  // Check / request permissions
+  // ------------------------------------------------------------------
   const checkPermissions = useCallback(async () => {
-    if (!isNative) return;
-
     try {
       const result = await CallDetector.checkPermissions();
-      setHasPermissions(result.granted);
-    } catch (err) {
-      console.error('[useCallDetector] Failed to check permissions:', err);
-      setError('Failed to check permissions');
+      return result;
+    } catch {
+      return { allGranted: false };
     }
-  }, [isNative]);
+  }, []);
 
+  // ------------------------------------------------------------------
+  // Start listening for call events
+  // ------------------------------------------------------------------
   const startDetection = useCallback(async () => {
-    if (!isNative) {
-      console.warn('[useCallDetector] Cannot start detection on web');
-      return;
-    }
-
     try {
-      setError(null);
-      await CallDetector.startCallDetection();
+      await CallDetector.startListening();
       setIsActive(true);
-      console.log('[useCallDetector] Call detection started');
     } catch (err) {
-      console.error('[useCallDetector] Failed to start detection:', err);
-      setError(err.message || 'Failed to start call detection');
-      setIsActive(false);
+      console.warn('[useCallDetector] startListening failed:', err.message);
     }
-  }, [isNative]);
+  }, []);
 
+  // ------------------------------------------------------------------
+  // Stop listening
+  // ------------------------------------------------------------------
   const stopDetection = useCallback(async () => {
-    if (!isNative) return;
-
     try {
-      await CallDetector.stopCallDetection();
+      await CallDetector.stopListening();
       setIsActive(false);
-      console.log('[useCallDetector] Call detection stopped');
-    } catch (err) {
-      console.error('[useCallDetector] Failed to stop detection:', err);
-      setError(err.message || 'Failed to stop call detection');
-    }
-  }, [isNative]);
+    } catch { /* ignore */ }
+  }, []);
+
+  // ------------------------------------------------------------------
+  // Subscribe to callEnded events when active
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    let mounted = true;
+
+    const subscribe = async () => {
+      try {
+        const handle = await CallDetector.addListener('callEnded', async (data) => {
+          if (!mounted) return;
+
+          const { phoneNumber, duration, callType } = data;
+
+          // Resolve the number immediately via backend
+          let resolved = null;
+          try {
+            const response = await api.post('/resolve-number', { phone_number: phoneNumber });
+            resolved = response.data?.data || null;
+          } catch {
+            resolved = {
+              type: 'unknown', id: null,
+              name: 'Unknown Number', company: null, phone: phoneNumber,
+            };
+          }
+
+          if (mounted) {
+            setLastCall({
+              phoneNumber,
+              duration,
+              callType,
+              timestamp: new Date().toISOString(),
+              resolved,
+            });
+          }
+        });
+
+        listenerRef.current = handle;
+      } catch (err) {
+        console.warn('[useCallDetector] addListener failed:', err.message);
+      }
+    };
+
+    subscribe();
+
+    return () => {
+      mounted = false;
+      if (listenerRef.current) {
+        listenerRef.current.remove?.();
+        listenerRef.current = null;
+      }
+    };
+  }, []);
+
+  // ------------------------------------------------------------------
+  // Cleanup on unmount
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    return () => {
+      stopDetection();
+    };
+  }, [stopDetection]);
 
   return {
     isNative,
     isActive,
-    hasPermissions,
     lastCall,
-    error,
     startDetection,
     stopDetection,
     checkPermissions,
   };
-};
+}

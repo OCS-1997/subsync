@@ -54,7 +54,25 @@ const OpportunityDetailedReport = () => {
                     userId: selectedUser === 'all' ? undefined : selectedUser
                 }
             });
-            setData(response.data.data);
+            const rawData = response.data.data;
+            if (rawData) {
+                if (rawData.monthlyTrend) {
+                    rawData.monthlyTrend = rawData.monthlyTrend.map(d => ({ ...d, value: Number(d.value) || 0, count: Number(d.count) || 0 }));
+                }
+                if (rawData.stageDistribution) {
+                    rawData.stageDistribution = rawData.stageDistribution.map(d => ({ ...d, value: Number(d.value) || 0, count: Number(d.count) || 0 }));
+                }
+                if (rawData.userBreakdown) {
+                    rawData.userBreakdown = rawData.userBreakdown.map(d => ({ ...d, value: Number(d.value) || 0, count: Number(d.count) || 0 }));
+                }
+                if (rawData.summary) {
+                    rawData.summary.total_value = Number(rawData.summary.total_value) || 0;
+                    rawData.summary.total_count = Number(rawData.summary.total_count) || 0;
+                    rawData.summary.won_value = Number(rawData.summary.won_value) || 0;
+                    rawData.summary.won_count = Number(rawData.summary.won_count) || 0;
+                }
+            }
+            setData(rawData);
         } catch (error) {
             console.error('Error fetching Opportunity report:', error);
             toast.error('Failed to load Opportunity report');
@@ -91,6 +109,14 @@ const OpportunityDetailedReport = () => {
             style: 'currency',
             currency: 'INR',
             maximumFractionDigits: 0
+        }).format(val);
+    };
+
+    const formatCompactNumber = (val) => {
+        return new Intl.NumberFormat('en-IN', {
+            notation: 'compact',
+            compactDisplay: 'short',
+            maximumFractionDigits: 1
         }).format(val);
     };
 
@@ -213,7 +239,13 @@ const OpportunityDetailedReport = () => {
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}} tickFormatter={(val) => `₹${val/1000}k`} />
+                                        <YAxis 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}} 
+                                            tickFormatter={(val) => `₹${formatCompactNumber(val)}`} 
+                                            width={60}
+                                        />
                                         <Tooltip 
                                             contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, fontSize: '10px', textTransform: 'uppercase'}}
                                             formatter={(val) => formatCurrency(val)}

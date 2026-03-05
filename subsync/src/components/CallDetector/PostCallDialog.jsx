@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
+import router from '@/routes/Index';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/axiosInstance';
 import { toast } from 'react-toastify';
-import { Phone, Clock, User, UserPlus } from 'lucide-react';
+import { Phone, Clock, User, UserPlus, Building2, Tag } from 'lucide-react';
 
+/**
+ * PostCallDialog — shown by CallDetectorManager after every call ends.
+ *
+ * Uses the /api/resolve-number endpoint to look up the caller
+ * (pre-resolved by useCallDetector hook and passed via lastCall.resolved).
+ * Logs the call as a DCR entry via /api/log-call (call_source = 'phone').
+ */
 const PostCallDialog = ({ lastCall }) => {
   const [open, setOpen] = useState(false);
-  const [customer, setCustomer] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -18,51 +24,46 @@ const PostCallDialog = ({ lastCall }) => {
     if (lastCall) {
       setOpen(true);
       setNotes('');
-      fetchCustomer(lastCall.phoneNumber);
     }
   }, [lastCall]);
 
-  const fetchCustomer = async (phoneNumber) => {
-    if (!phoneNumber) {
-      setCustomer(null);
-      return;
-    }
+  if (!lastCall) return null;
 
-    setLoading(true);
-    try {
-      const response = await api.get(`/api/customers`, {
-        params: { phone: phoneNumber },
-      });
+  const { phoneNumber, duration, callType, resolved } = lastCall;
 
-      if (response.data && response.data.length > 0) {
-        setCustomer(response.data[0]);
-      } else {
-        setCustomer(null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch customer:', error);
-      setCustomer(null);
-    } finally {
-      setLoading(false);
-    }
+  const formatDuration = (seconds) => {
+    const mins = Math.floor((seconds || 0) / 60);
+    const secs = (seconds || 0) % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const entityColors = {
+    customer:      '#8b5cf6',
+    vendor:        '#f59e0b',
+    contact:       '#06b6d4',
+    other_contact: '#06b6d4',
+    unknown:       '#6b7280',
+  };
+  const entityColor = entityColors[resolved?.type] || '#6b7280';
+  const entityLabel = (resolved?.type || 'unknown').replace('_', ' ');
 
   const handleSubmit = async () => {
     if (!lastCall) return;
 
     setSubmitting(true);
     try {
-      const payload = {
-        customer_id: customer?.customer_id || null,
-        status: 'completed',
-        notes: notes || `${lastCall.callType} call`,
-        callDuration: lastCall.duration,
-        phoneNumber: lastCall.phoneNumber,
-        callType: lastCall.callType,
-      };
+      await api.post('/log-call', {
+        phone:       resolved?.phone || phoneNumber,
+        name:        resolved?.name  || 'Unknown Number',
+        entity_type: resolved?.type  || 'unknown',
+        entity_id:   resolved?.id    || null,
+        company:     resolved?.company || null,
+        call_type:   callType || 'incoming',
+        duration:    duration || 0,
+        description: notes.trim() || '',
+      });
 
-      await api.post('/api/daily-call-register', payload);
-      toast.success('Call logged successfully!');
+      toast.success('Call logged as DCR entry!');
       setOpen(false);
     } catch (error) {
       console.error('Failed to log call:', error);
@@ -72,80 +73,77 @@ const PostCallDialog = ({ lastCall }) => {
     }
   };
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleCreateContact = () => {
+    setOpen(false);
+    const username = localStorage.getItem('subsync_user') || '';
+    router.navigate(`/${username}/dashboard/contacts/new?prefill_phone=${encodeURIComponent(phoneNumber || '')}`);
   };
-
-  const handleCreateCustomer = () => {
-    // Navigate to create contact page with phone number pre-filled
-    window.location.href = `/contacts/new?phone=${lastCall.phoneNumber}`;
-  };
-
-  if (!lastCall) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            Call Ended
+            <Phone className="h-5 w-5 text-violet-500" />
+            Log Call to DCR
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Call Information */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Call Metadata */}
+          <div className="grid grid-cols-3 gap-3 p-3 bg-muted/50 rounded-xl">
             <div className="space-y-1">
-              <Label className="text-sm text-muted-foreground">Phone Number</Label>
-              <p className="font-medium">{lastCall.phoneNumber || 'Unknown'}</p>
+              <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                Phone
+              </Label>
+              <p className="text-sm font-bold break-all">{phoneNumber || 'Unknown'}</p>
             </div>
             <div className="space-y-1">
-              <Label className="text-sm text-muted-foreground">Duration</Label>
-              <p className="font-medium flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {formatDuration(lastCall.duration)}
+              <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                Duration
+              </Label>
+              <p className="text-sm font-bold flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-violet-500" />
+                {formatDuration(duration)}
               </p>
             </div>
             <div className="space-y-1">
-              <Label className="text-sm text-muted-foreground">Type</Label>
-              <p className="font-medium capitalize">{lastCall.callType}</p>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm text-muted-foreground">Time</Label>
-              <p className="font-medium">
-                {new Date(lastCall.timestamp).toLocaleTimeString()}
-              </p>
+              <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                Type
+              </Label>
+              <p className="text-sm font-bold capitalize">{callType || 'unknown'}</p>
             </div>
           </div>
 
-          {/* Customer Information */}
-          {loading ? (
-            <div className="p-4 border rounded-lg">
-              <p className="text-sm text-muted-foreground">Looking up customer...</p>
-            </div>
-          ) : customer ? (
-            <div className="p-4 border rounded-lg bg-muted/50 space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-semibold">Customer Found</Label>
+          {/* Resolved Entity */}
+          {resolved && resolved.type !== 'unknown' ? (
+            <div className="p-3 border rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border-violet-200 dark:border-violet-500/20 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-violet-500" />
+                  <span className="text-sm font-bold">{resolved.name}</span>
+                </div>
+                <span
+                  className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full"
+                  style={{ background: `${entityColor}20`, color: entityColor, border: `1px solid ${entityColor}40` }}
+                >
+                  {entityLabel}
+                </span>
               </div>
-              <p className="font-medium">{customer.customer_name}</p>
-              {customer.email && (
-                <p className="text-sm text-muted-foreground">{customer.email}</p>
+              {resolved.company && (
+                <div className="flex items-center gap-1 pl-6">
+                  <Building2 className="h-3 w-3 text-slate-400" />
+                  <span className="text-xs text-slate-500">{resolved.company}</span>
+                </div>
               )}
             </div>
           ) : (
-            <div className="p-4 border rounded-lg border-dashed space-y-3">
-              <p className="text-sm text-muted-foreground">
-                No customer found for this number
-              </p>
+            <div className="p-3 border border-dashed rounded-xl space-y-2">
+              <p className="text-sm text-muted-foreground">No match found for this number</p>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleCreateCustomer}
+                onClick={handleCreateContact}
                 className="w-full"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -156,10 +154,10 @@ const PostCallDialog = ({ lastCall }) => {
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="post-call-notes">Call Notes (optional)</Label>
             <Textarea
-              id="notes"
-              placeholder="Add notes about this call..."
+              id="post-call-notes"
+              placeholder="What was discussed during this call?"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
@@ -175,7 +173,11 @@ const PostCallDialog = ({ lastCall }) => {
           >
             Skip
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="bg-violet-600 hover:bg-violet-700"
+          >
             {submitting ? 'Logging...' : 'Log Call'}
           </Button>
         </DialogFooter>

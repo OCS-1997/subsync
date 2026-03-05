@@ -33,7 +33,6 @@ import { Switch } from "@/components/ui/switch.jsx";
 import {
     Gift,
     Search,
-    RefreshCw,
     Calendar,
     User,
     Building2,
@@ -78,23 +77,47 @@ function BirthdaysPage() {
     const navigate = useNavigate();
     const [birthdays, setBirthdays] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [syncing, setSyncing] = useState(false);
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
+    // Summary stats fetched from the dashboard endpoint (accurate, not page-limited)
+    const [summary, setSummary] = useState({ todayCount: 0, upcomingCount: 0, teamCount: 0 });
 
     // Dialog States
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedBirthday, setSelectedBirthday] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSendingWish, setIsSendingWish] = useState(false);
+    const [sendingWishId, setSendingWishId] = useState(null); // tracks which card's wish is in-flight
 
     useEffect(() => {
         fetchBirthdays();
     }, [page, typeFilter]);
+
+    // Fetch summary stats once on mount and after mutations
+    useEffect(() => {
+        fetchSummary();
+    }, []);
+
+    const fetchSummary = async () => {
+        try {
+            const [upcomingRes, teamRes, totalRes] = await Promise.all([
+                api.get('/dashboard/birthdays'),
+                api.get('/birthdays', { params: { type: 'user', limit: 1, page: 1 } }),
+                api.get('/birthdays', { params: { limit: 1, page: 1 } })
+            ]);
+            const { today = [], upcoming = [] } = upcomingRes.data;
+            setSummary({
+                todayCount: today.length,
+                upcomingCount: upcoming.length,
+                teamCount: teamRes.data.totalRecords || 0
+            });
+        } catch (err) {
+            console.error('Failed to fetch birthday summary:', err);
+        }
+    };
 
     const fetchBirthdays = async () => {
         try {
@@ -126,20 +149,6 @@ function BirthdaysPage() {
         fetchBirthdays();
     };
 
-    const handleSync = async () => {
-        try {
-            setSyncing(true);
-            await api.post('/birthdays/sync');
-            toast.success('Birthdays synced successfully!');
-            fetchBirthdays();
-        } catch (error) {
-            console.error('Error syncing birthdays:', error);
-            toast.error('Failed to sync birthdays');
-        } finally {
-            setSyncing(false);
-        }
-    };
-
     const handleDelete = async () => {
         try {
             setIsSubmitting(true);
@@ -148,6 +157,7 @@ function BirthdaysPage() {
             setIsDeleteDialogOpen(false);
             setSelectedBirthday(null);
             fetchBirthdays();
+            fetchSummary();
         } catch (error) {
             toast.error('Failed to delete birthday');
         } finally {
@@ -157,13 +167,13 @@ function BirthdaysPage() {
 
     const sendWish = async (birthday) => {
         try {
-            setIsSendingWish(true);
+            setSendingWishId(birthday.id);
             await api.post(`/birthdays/${birthday.id}/wish`);
             toast.success(`Birthday wish sent to ${birthday.name}!`);
         } catch (error) {
             toast.error('Failed to send wish: ' + (error.response?.data?.error || 'Unknown error'));
         } finally {
-            setIsSendingWish(false);
+            setSendingWishId(null);
         }
     };
 
@@ -234,15 +244,7 @@ function BirthdaysPage() {
         return groups;
     }, [birthdays]);
 
-    // Summary totals logic
-    const summary = useMemo(() => {
-        const todayCount = birthdays.filter(b => getDaysUntilBirthday(b.date_of_birth) === 0).length;
-        const upcomingCount = birthdays.filter(b => {
-            const days = getDaysUntilBirthday(b.date_of_birth);
-            return days > 0 && days <= 7;
-        }).length;
-        return { todayCount, upcomingCount };
-    }, [birthdays]);
+
 
     return (
         <div className="container mx-auto p-4 md:p-8 space-y-8 min-h-screen bg-slate-50/50 dark:bg-slate-950/50">
@@ -259,18 +261,6 @@ function BirthdaysPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <PermissionGate permissions={[PERMISSIONS.BIRTHDAYS_SYNC]}>
-                        <Button
-                            variant="outline"
-                            onClick={handleSync}
-                            disabled={syncing}
-                            className="bg-white dark:bg-slate-900 border-rose-100 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950"
-                        >
-                            {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                            Sync
-                        </Button>
-                    </PermissionGate>
-
                     <PermissionGate permissions={[PERMISSIONS.BIRTHDAYS_MANAGE]}>
                         <Button
                             onClick={() => { setSelectedBirthday(null); setIsAddDialogOpen(true); }}
@@ -288,7 +278,7 @@ function BirthdaysPage() {
                     { label: 'Total', value: totalRecords, icon: Gift, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-500/10' },
                     { label: "Today's", value: summary.todayCount, icon: PartyPopper, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' },
                     { label: 'Upcoming (7d)', value: summary.upcomingCount, icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                    { label: 'Team Members', value: birthdays.filter(b => b.type === 'user').length, icon: User, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                    { label: 'Team Members', value: summary.teamCount, icon: User, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
                 ].map((stat, i) => (
                     <motion.div
                         key={i}
@@ -354,7 +344,7 @@ function BirthdaysPage() {
                         onEdit={openEditDialog}
                         onDelete={openDeleteDialog}
                         onSendWish={sendWish}
-                        isSendingWish={isSendingWish}
+                        sendingWishId={sendingWishId}
                     />
 
                     {/* Pagination */}
@@ -389,7 +379,7 @@ function BirthdaysPage() {
                         onEdit={openEditDialog}
                         onDelete={openDeleteDialog}
                         onSendWish={sendWish}
-                        isSendingWish={isSendingWish}
+                        sendingWishId={sendingWishId}
                     />
                 </TabsContent>
 
@@ -404,7 +394,7 @@ function BirthdaysPage() {
                         onEdit={openEditDialog}
                         onDelete={openDeleteDialog}
                         onSendWish={sendWish}
-                        isSendingWish={isSendingWish}
+                        sendingWishId={sendingWishId}
                     />
                 </TabsContent>
 
@@ -424,7 +414,7 @@ function BirthdaysPage() {
                                         onEdit={openEditDialog}
                                         onDelete={openDeleteDialog}
                                         onSendWish={sendWish}
-                                        isSendingWish={isSendingWish}
+                                        sendingWishId={sendingWishId}
                                     />
                                 </div>
                             )
@@ -442,7 +432,7 @@ function BirthdaysPage() {
                     if (!open) setSelectedBirthday(null);
                 }}
                 selectedBirthday={selectedBirthday}
-                onSuccess={fetchBirthdays}
+                onSuccess={() => { fetchBirthdays(); fetchSummary(); }}
             />
 
             {/* Delete Confirmation */}
@@ -466,12 +456,29 @@ function BirthdaysPage() {
     );
 }
 
-function BirthdayGrid({ birthdays, loading, emptyMessage = "No magic found here yet ✨", onEdit, onDelete, onSendWish, isSendingWish }) {
+function BirthdayGrid({ birthdays, loading, emptyMessage = "No magic found here yet ✨", onEdit, onDelete, onSendWish, sendingWishId }) {
     if (loading) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="h-48 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 animate-pulse" />
+                    <div key={i} className="rounded-3xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 animate-pulse">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-4 w-3/4 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                                <div className="h-3 w-1/2 rounded-lg bg-slate-100 dark:bg-slate-700" />
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="flex-1 h-12 rounded-xl bg-slate-100 dark:bg-slate-800" />
+                            <div className="w-16 h-12 rounded-xl bg-slate-100 dark:bg-slate-800" />
+                        </div>
+                        <div className="h-3 w-2/3 rounded-lg bg-slate-100 dark:bg-slate-800" />
+                        <div className="flex justify-between items-center pt-1 border-t border-slate-100 dark:border-slate-800">
+                            <div className="h-7 w-28 rounded-full bg-slate-100 dark:bg-slate-800" />
+                            <div className="h-8 w-16 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                        </div>
+                    </div>
                 ))}
             </div>
         );
@@ -480,12 +487,12 @@ function BirthdayGrid({ birthdays, loading, emptyMessage = "No magic found here 
     if (birthdays.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                <div className="p-6 rounded-full bg-slate-100 dark:bg-slate-800">
-                    <Calendar className="h-12 w-12 text-slate-300" />
+                <div className="p-6 rounded-3xl bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 border-2 border-pink-100 dark:border-pink-900/30 shadow-sm">
+                    <Cake className="h-12 w-12 text-rose-300 dark:text-rose-600" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold">{emptyMessage}</h3>
-                    <p className="text-slate-500">Wait for the next sync or add one manually</p>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{emptyMessage}</h3>
+                    <p className="text-slate-400 dark:text-slate-500 mt-1 text-sm">Birthdays will appear here once synced or added manually</p>
                 </div>
             </div>
         );
@@ -506,7 +513,7 @@ function BirthdayGrid({ birthdays, loading, emptyMessage = "No magic found here 
                         onEdit={onEdit}
                         onDelete={onDelete}
                         onSendWish={onSendWish}
-                        isSendingWish={isSendingWish}
+                        sendingWishId={sendingWishId}
                     />
                 ))}
             </AnimatePresence>
@@ -514,7 +521,8 @@ function BirthdayGrid({ birthdays, loading, emptyMessage = "No magic found here 
     );
 }
 
-function BirthdayCard({ person, onEdit, onDelete, onSendWish, isSendingWish }) {
+function BirthdayCard({ person, onEdit, onDelete, onSendWish, sendingWishId }) {
+    const isWishing = sendingWishId === person.id;
     const daysUntil = useMemo(() => {
         const today = new Date();
         const birthDate = new Date(person.date_of_birth);
@@ -535,113 +543,192 @@ function BirthdayCard({ person, onEdit, onDelete, onSendWish, isSendingWish }) {
         return age;
     };
 
-    const getTypeIcon = (type) => {
+    const getTypeConfig = (type) => {
         switch (type) {
-            case 'user': return <User className="h-4 w-4" />;
-            case 'customer': return <Building2 className="h-4 w-4" />;
-            case 'contact_person': return <Users className="h-4 w-4" />;
-            default: return <User className="h-4 w-4" />;
-        }
-    };
-
-    const getTypeBadgeColor = (type) => {
-        switch (type) {
-            case 'user': return 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300';
-            case 'customer': return 'bg-emerald-100/50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300';
-            case 'contact_person': return 'bg-violet-100/50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300';
-            default: return 'bg-slate-100/50 text-slate-700 dark:bg-slate-900/20 dark:text-slate-300';
+            case 'user': return {
+                icon: <User className="h-3.5 w-3.5" />,
+                label: 'Team Member',
+                badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                avatar: 'from-blue-400 to-indigo-500',
+                ring: 'ring-blue-200 dark:ring-blue-800',
+            };
+            case 'customer': return {
+                icon: <Building2 className="h-3.5 w-3.5" />,
+                label: 'Client',
+                badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                avatar: 'from-emerald-400 to-teal-500',
+                ring: 'ring-emerald-200 dark:ring-emerald-800',
+            };
+            case 'contact_person': return {
+                icon: <Users className="h-3.5 w-3.5" />,
+                label: 'Contact',
+                badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+                avatar: 'from-violet-400 to-purple-500',
+                ring: 'ring-violet-200 dark:ring-violet-800',
+            };
+            default: return {
+                icon: <User className="h-3.5 w-3.5" />,
+                label: 'Person',
+                badge: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300',
+                avatar: 'from-slate-400 to-slate-500',
+                ring: 'ring-slate-200 dark:ring-slate-800',
+            };
         }
     };
 
     const isToday = daysUntil === 0;
+    const isTomorrow = daysUntil === 1;
+    const typeConfig = getTypeConfig(person.type);
+    const initials = person.name
+        ? person.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+        : '?';
+    const age = calculateAge(person.date_of_birth);
 
     return (
         <motion.div
             variants={itemVariants}
             layout
-            className={`group relative overflow-hidden rounded-3xl border-2 transition-all duration-300 p-6 
-                ${isToday
-                    ? 'border-rose-400 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20 shadow-lg shadow-rose-200 dark:shadow-rose-900/20'
-                    : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-rose-100 dark:hover:border-rose-900 shadow-sm'
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className={`group relative overflow-hidden rounded-3xl transition-all duration-300
+                ${ isToday
+                    ? 'bg-gradient-to-br from-white via-pink-50/60 to-rose-50/60 dark:from-slate-900 dark:via-pink-950/20 dark:to-rose-950/20 border-2 border-rose-300 dark:border-rose-700 shadow-xl shadow-rose-200/60 dark:shadow-rose-900/30'
+                    : 'bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 hover:border-pink-200 dark:hover:border-pink-900 shadow-sm hover:shadow-lg hover:shadow-pink-100/50 dark:hover:shadow-pink-900/20'
                 }`}
         >
-            {/* Background Decoration */}
+            {/* Today radial glow + confetti blobs */}
             {isToday && (
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full" />
+                <>
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-400/15 via-transparent to-pink-400/10 pointer-events-none" />
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-rose-400/20 rounded-full blur-2xl" />
+                    <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-pink-400/15 rounded-full blur-xl" />
+                    <div className="absolute top-3 right-14 w-2 h-2 rounded-full bg-rose-300/70 dark:bg-rose-500/40" />
+                    <div className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-pink-400/60 dark:bg-pink-500/40" />
+                    <div className="absolute top-5 right-20 w-1 h-1 rounded-full bg-amber-300/70 dark:bg-amber-500/40" />
+                </>
             )}
 
-            <div className="flex flex-col h-full gap-4 relative">
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-2xl ${getTypeBadgeColor(person.type)} transition-transform group-hover:scale-110 duration-300`}>
-                            {getTypeIcon(person.type)}
+            <div className="relative p-5 flex flex-col gap-4">
+
+                {/* Top: Avatar + Name + hover actions */}
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                        {/* Gradient avatar initials */}
+                        <div className={`relative flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br ${typeConfig.avatar} flex items-center justify-center shadow-lg ring-2 ${typeConfig.ring} group-hover:scale-105 transition-transform duration-300`}>
+                            <span className="text-white font-black text-sm tracking-wide select-none">{initials}</span>
+                            {isToday && (
+                                <span className="absolute -top-1 -right-1 text-base leading-none animate-bounce select-none">🎂</span>
+                            )}
                         </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 truncate max-w-[150px]">
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-base text-slate-900 dark:text-slate-50 truncate leading-tight">
                                 {person.name}
                             </h3>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <Badge variant="outline" className={`${getTypeBadgeColor(person.type)} border-none py-0 px-2 h-5 text-[10px] uppercase font-bold`}>
-                                    {person.type === 'user' ? 'Member' : person.type === 'customer' ? 'Client' : 'Contact'}
-                                </Badge>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${typeConfig.badge}`}>
+                                    {typeConfig.icon}
+                                    {typeConfig.label}
+                                </span>
                                 {person.company_name && (
-                                    <span className="text-[10px] text-slate-400 font-medium truncate max-w-[80px]">@ {person.company_name}</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[90px]">
+                                        @ {person.company_name}
+                                    </span>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => onEdit(person)}>
-                            <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-500" onClick={() => onDelete(person)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                    {/* Edit/Delete slide in on hover */}
+                    <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+                        <PermissionGate permissions={[PERMISSIONS.BIRTHDAYS_MANAGE]}>
+                            <button
+                                onClick={() => onEdit(person)}
+                                className="w-7 h-7 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-pink-100 dark:hover:bg-pink-900/40 hover:text-pink-600 dark:hover:text-pink-400 text-slate-500 transition-colors"
+                                title="Edit"
+                            >
+                                <Edit2 className="h-3 w-3" />
+                            </button>
+                            <button
+                                onClick={() => onDelete(person)}
+                                className="w-7 h-7 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-400 text-slate-500 transition-colors"
+                                title="Delete"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </button>
+                        </PermissionGate>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 py-2 border-y border-slate-50 dark:border-slate-800/50">
-                    <div className="flex-1">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Born</p>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">{format(new Date(person.date_of_birth), 'MMM dd')}</p>
+                {/* Stats: Date + Age pills */}
+                <div className="flex items-center gap-3 px-1">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50 flex-1">
+                        <Calendar className="h-3.5 w-3.5 text-pink-400 dark:text-pink-500 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Date</p>
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-0.5">
+                                {format(new Date(person.date_of_birth), 'MMM dd, yyyy')}
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex-1 text-right">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Age</p>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300">{calculateAge(person.date_of_birth)} Yrs</p>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/50">
+                        <Cake className="h-3.5 w-3.5 text-rose-400 dark:text-rose-500 flex-shrink-0" />
+                        <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                {isToday ? 'Turns' : 'Age'}
+                            </p>
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-0.5">{age}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-auto pt-2">
-                    <div className="space-y-1">
-                        {isToday ? (
-                            <div className="flex items-center gap-2 bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-bounce shadow-md">
-                                <PartyPopper className="h-3 w-3" />
-                                <span>HAPPY BIRTHDAY!</span>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                <Calendar className="h-3.5 w-3.5" />
-                                <span className="text-xs font-medium">
-                                    {daysUntil === 1 ? 'Tomorrow!' : `In ${daysUntil} days`}
-                                </span>
-                            </div>
-                        )}
+                {/* Email */}
+                {person.email && (
+                    <div className="flex items-center gap-2 px-1 -mt-1">
+                        <Send className="h-3 w-3 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                        <span className="text-xs text-slate-400 dark:text-slate-500 truncate">{person.email}</span>
                     </div>
+                )}
 
-                    <Button
-                        size="sm"
-                        disabled={isSendingWish}
-                        onClick={() => onSendWish(person)}
-                        className={`rounded-xl h-9 px-4 transition-all duration-300
-                            ${isToday
-                                ? 'bg-white text-rose-600 hover:bg-rose-50 dark:bg-slate-900 shadow-sm border border-rose-100 dark:border-rose-900'
-                                : 'bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-rose-500 hover:text-white border-none'
-                            }`}
-                    >
-                        {isSendingWish ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-2" />}
-                        Send Wish
-                    </Button>
+                {/* Bottom: Countdown + Wish button */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                    {isToday ? (
+                        <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 py-1.5 rounded-full text-[11px] font-bold shadow-md shadow-rose-300/40 dark:shadow-rose-800/30 animate-pulse">
+                            <PartyPopper className="h-3 w-3" />
+                            Happy Birthday! 🎉
+                        </div>
+                    ) : isTomorrow ? (
+                        <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-full text-[11px] font-semibold">
+                            <Gift className="h-3 w-3" />
+                            Tomorrow!
+                        </div>
+                    ) : daysUntil <= 7 ? (
+                        <div className="flex items-center gap-1.5 bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-400 px-3 py-1.5 rounded-full text-[11px] font-semibold">
+                            <Calendar className="h-3 w-3" />
+                            In {daysUntil} days
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[11px] font-medium px-1">
+                            <Calendar className="h-3 w-3" />
+                            {daysUntil} days away
+                        </div>
+                    )}
+
+                    <PermissionGate permissions={[PERMISSIONS.BIRTHDAYS_MANAGE]}>
+                        <Button
+                            size="sm"
+                            disabled={isWishing}
+                            onClick={() => onSendWish(person)}
+                            className={`h-8 px-3 rounded-xl text-xs font-semibold transition-all duration-200 shadow-sm
+                                ${ isToday
+                                    ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950 hover:shadow-md'
+                                    : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-none shadow-rose-200/50 dark:shadow-rose-800/30 hover:shadow-lg hover:shadow-rose-300/40'
+                                }`}
+                        >
+                            {isWishing
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <><Send className="h-3 w-3 mr-1.5" />Wish</>
+                            }
+                        </Button>
+                    </PermissionGate>
                 </div>
             </div>
         </motion.div>

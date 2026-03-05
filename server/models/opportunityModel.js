@@ -77,8 +77,17 @@ export const updateOpportunity = async (opportunityId, updatedData) => {
             'last_contacted_at', 'status_id', 'remarks', 'opportunity_value', 'is_deleted'
         ].includes(key)) {
             fields.push(`${key} = ?`);
-            // Stringify customer_details if it's an object
-            values.push(key === 'customer_details' && typeof value === 'object' ? JSON.stringify(value) : value);
+            
+            let finalValue = value;
+            if (key === 'customer_details' && value !== null && typeof value === 'object') {
+                finalValue = JSON.stringify(value);
+            } else if (key === 'opportunity_value') {
+                finalValue = parseFloat(value) || 0;
+            } else if (value === undefined) {
+                finalValue = null;
+            }
+            
+            values.push(finalValue);
         }
     }
 
@@ -87,7 +96,7 @@ export const updateOpportunity = async (opportunityId, updatedData) => {
     const query = `UPDATE opportunities SET ${fields.join(', ')} WHERE opportunity_id = ?`;
     values.push(opportunityId);
 
-    const [result] = await appDB.execute(query, values);
+    const [result] = await appDB.query(query, values);
     return result.affectedRows > 0;
 };
 
@@ -143,7 +152,7 @@ export const getAllOpportunities = async ({
     const countQuery = `
         SELECT COUNT(*) as total 
         FROM opportunities o
-        JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
         ${whereSql}
     `;
     // We use .query here as well for consistency

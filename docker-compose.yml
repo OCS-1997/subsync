@@ -10,7 +10,17 @@ services:
     ports:
       - "3307:3306"
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "-p${DB_PASS}" ]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "${DB_USER}",
+          "-p${DB_PASS}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -40,7 +50,7 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test: [ "CMD-SHELL", "pgrep node || exit 1" ]
+      test: ["CMD-SHELL", "pgrep node || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -57,11 +67,16 @@ services:
       context: ./subsync
       dockerfile: Dockerfile
       args:
+        # Update this to your VPS IP or domain before deploying! e.g. http://YOUR_VPS_IP:3000/api
         VITE_API_URL: http://localhost:3000/api/
     ports:
       - "80:80"
     environment:
       NGINX_HOST: 0.0.0.0
+    volumes:
+      # Mount APK folder: place subsync.apk in /var/www/downloads on your VPS
+      # Accessible at: http://YOUR_VPS_IP/download/app
+      - /var/www/downloads:/downloads:ro
     depends_on:
       backend:
         condition: service_healthy

@@ -1,60 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Capacitor } from '@capacitor/core';
-import { Preferences } from '@capacitor/preferences';
+import { getStorageItem, clearAuth } from '../utils/storage';
+import { logout } from '../features/Auth/authSlice';
+import api from '../lib/axiosInstance';
 
 /**
- * Hook to detect if running on Capacitor and manage authentication storage
+ * useCapacitorAuth — Maintains auth session persistence on native Capacitor Android.
+ *
+ * When the Capacitor WebView resumes from background, validates the session.
+ * On web: no-op (Capacitor.isNativePlatform() = false).
  */
-export const useCapacitorAuth = () => {
-  const [isCapacitor, setIsCapacitor] = useState(false);
-  const [migrated, setMigrated] = useState(false);
+export function useCapacitorAuth() {
+  const dispatch        = useDispatch();
+  const isAuthenticated = useSelector((state) => state.auth?.isAuthenticated);
 
   useEffect(() => {
-    const isNative = Capacitor.isNativePlatform();
-    setIsCapacitor(isNative);
+    if (!Capacitor.isNativePlatform()) return; // web — do nothing
 
-    if (isNative && !migrated) {
-      migrateToCapacitorPreferences();
-      setMigrated(true);
-    }
-  }, [migrated]);
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
 
-  const migrateToCapacitorPreferences = async () => {
-    console.log('[useCapacitorAuth] Migrating localStorage to Capacitor Preferences');
-
-    try {
-      // Get existing token from localStorage
-      const token = localStorage.getItem('subsync_token');
-      const user = localStorage.getItem('subsync_user');
-      const tokenExpiry = localStorage.getItem('subsync_token_expiry');
-
-      if (token) {
-        // Save to Capacitor Preferences
-        await Preferences.set({ key: 'subsync_token', value: token });
-        console.log('[useCapacitorAuth] Token migrated');
+      // App came to foreground — check session
+      const token = getStorageItem('subsync_token');
+      if (!token) {
+        if (isAuthenticated) dispatch(logout());
+        return;
       }
 
-      if (user) {
-        await Preferences.set({ key: 'subsync_user', value: user });
-        console.log('[useCapacitorAuth] User migrated');
+      try {
+        await api.get('/health');
+      } catch (err) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          clearAuth();
+          dispatch(logout());
+        }
       }
+    };
 
-      if (tokenExpiry) {
-        await Preferences.set({ key: 'subsync_token_expiry', value: tokenExpiry });
-        console.log('[useCapacitorAuth] Token expiry migrated');
-      }
-
-      // Clear localStorage (optional - keeps web version working)
-      // Uncomment if you want to force exclusive use of Capacitor Preferences
-      // localStorage.removeItem('subsync_token');
-      // localStorage.removeItem('subsync_user');
-      // localStorage.removeItem('subsync_token_expiry');
-    } catch (error) {
-      console.error('[useCapacitorAuth] Migration failed:', error);
-    }
-  };
-
-  return {
-    isCapacitor,
-  };
-};
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [dispatch, isAuthenticated]);
+}

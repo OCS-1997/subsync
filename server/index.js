@@ -12,6 +12,7 @@ import { createBackupWorker } from './workers/backupWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
 import { syncAllBackupSchedules } from './services/backupService.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
+import { syncBirthdays } from './models/birthdayModel.js';
 
 dotenv.config();
 const app = express();
@@ -51,6 +52,8 @@ app.use(cors({
         `http://localhost:4173`,
         `http://dev.ocs365.in`,
         `https://dev.ocs365.in`,
+        `capacitor://localhost`,   // Android Capacitor WebView origin
+        `ionic://localhost`,       // Ionic/Capacitor alternate origin
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -125,6 +128,11 @@ app.use((err, req, res, next) => {
 const server = app.listen(process.env.NODE_PORT || 3000, () => {
     console.log(`Server is running at http://localhost:${process.env.NODE_PORT || 3000}`.bgGreen.white);
     console.log(`Bull Board available at http://localhost:${process.env.NODE_PORT || 3000}/admin/queues`.bgCyan.white);
+
+    // Run an initial birthday sync on startup to populate from users/customers/contacts
+    syncBirthdays()
+        .then(() => console.log('Initial birthday sync completed'.bgGreen.white))
+        .catch(err => console.error('Initial birthday sync failed:', err));
 });
 
 // Graceful shutdown

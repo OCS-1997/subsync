@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Save, Lock, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { createContact, updateContact, fetchContactById, clearCurrentContact, cl
 export default function ContactForm() {
     const navigate = useNavigate();
     const { username, id } = useParams();
+    const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
     const { currentContact, loading, error } = useSelector((state) => state.contacts);
 
@@ -30,7 +31,7 @@ export default function ContactForm() {
         last_name: '',
         email: '',
         country_code: '+91',
-        phone_number: '',
+        phone_number: searchParams.get('prefill_phone') || '',
         company_name: '',
         designation: '',
         domain_id: '',

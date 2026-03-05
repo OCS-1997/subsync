@@ -209,7 +209,7 @@ function generateEmailHTML(data) {
     // Show previous day's date in the header
     const previousDay = new Date(reportDate);
     previousDay.setDate(previousDay.getDate() - 1);
-    const dateStr = formatDate(previousDay);
+    const previousDayStr = formatDate(previousDay);
     const totalTimeStr = minutesToTime(totalMinutes);
     const billableStr = minutesToTime(billableMinutes);
     const nonBillableStr = minutesToTime(nonBillableMinutes);

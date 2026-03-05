@@ -186,6 +186,11 @@ import {
     getDetailedReportsController,
     exportEntriesController
 } from '../controllers/reportsController.js';
+import {
+    resolveNumberController,
+    logCallController,
+    getCallLogsController
+} from '../controllers/callLogController.js';
 // Reports 360 removed
 
 const router = express.Router();
@@ -486,14 +491,16 @@ router.post('/kb/public/articles/:slug/read', setSecurityHeaders, configureCORS,
 // Opportunities
 router.get('/opportunities', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getAllOpportunitiesController);
 router.post('/opportunities', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_CREATE), createOpportunityController);
+// NOTE: specific sub-routes MUST come before /:id to prevent Express matching 'detailed'/'statuses' as an ID
+router.get('/opportunities/detailed', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityDetailedReport);
 router.get('/opportunities/statuses', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityStatusesController);
 router.post('/opportunities/statuses', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), createStatusController);
+router.put('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), updateStatusController);
+router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), deleteStatusController);
+// Parameterized routes come after all specific paths
 router.get('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityByIdController);
 router.put('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_UPDATE), updateOpportunityController);
 router.delete('/opportunities/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_DELETE), deleteOpportunityController);
-router.put('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), updateStatusController);
-router.delete('/opportunities/statuses/:id', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_MANAGE_STATUSES), deleteStatusController);
-router.get('/opportunities/detailed', isAuthenticated, authorize(PERMISSIONS.OPPORTUNITIES_VIEW), getOpportunityDetailedReport);
 
 // User Preferences
 router.get('/preferences/:username/:key', isAuthenticated, getPreference);
@@ -580,6 +587,11 @@ router.get('/time-tracking/reports/export', isAuthenticated, authorize(PERMISSIO
 
 // Reports 360 routes removed
 
+// Call Log / Phone DCR
+// These create DCR entries with call_source = 'phone', complementing the manual DCR module
+router.post('/resolve-number', isAuthenticated, resolveNumberController);
+router.post('/log-call', isAuthenticated, logCallController);
+router.get('/call-logs', isAuthenticated, getCallLogsController);
 
 
 export default router;

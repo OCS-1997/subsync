@@ -4,6 +4,7 @@ import { archiveOldSubscriptions } from '../services/reminderService.js';
 import { sendTodayBirthdayEmails } from '../services/birthdayService.js';
 import { sendDailyDcrReportEmail } from '../services/dcrService.js';
 import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportService.js';
+import { syncBirthdays } from '../models/birthdayModel.js';
 
 const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
 
@@ -142,12 +143,40 @@ export function setupTimeTrackingReportCron() {
 }
 
 /**
+ * Setup birthday sync cron job
+ * Runs every 6 hours to sync birthdays from users, customers, and contact persons
+ * WITHOUT deleting manually-added birthday records.
+ */
+export function setupBirthdaySyncCron() {
+    // Run at 00:00, 06:00, 12:00, and 18:00 UTC every day
+    cron.schedule('0 0,6,12,18 * * *', async () => {
+        console.log('Running automatic birthday sync cron job...');
+        try {
+            const result = await syncBirthdays();
+            console.log(JSON.stringify({
+                event: 'birthday_sync_completed',
+                success: result.success,
+                message: result.message,
+                timestamp: new Date().toISOString(),
+            }));
+        } catch (error) {
+            console.error('Error in birthday sync cron:', error);
+        }
+    }, {
+        timezone: 'UTC',
+    });
+
+    console.log('Birthday sync cron scheduled for 00:00, 06:00, 12:00, 18:00 UTC daily');
+}
+
+/**
  * Setup all cron jobs
  */
 export function setupCronJobs() {
     setupReconciliationCron();
     setupArchivalCron();
     setupBirthdayCron();
+    setupBirthdaySyncCron();
     setupDcrReportCron();
     setupTimeTrackingReportCron();
 }

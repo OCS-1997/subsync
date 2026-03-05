@@ -3,6 +3,7 @@ import {
     getAllBirthdays,
     getBirthdayById,
     saveBirthday,
+    updateBirthdaySource,
     deleteBirthday,
     syncBirthdays
 } from '../models/birthdayModel.js';
@@ -108,18 +109,46 @@ export const saveBirthdayController = async (req, res) => {
             return res.status(400).json({ error: 'Invalid type. Must be user, customer, or contact_person' });
         }
 
-        // user_id represents the logged-in user who is creating/editing this birthday record
+        const isEdit = !!birthdayData.id;
+
+        // Fetch the EXISTING record first if editing, so we have its source links (user_id, customer_id, index)
+        let existingRecord = null;
+        if (isEdit) {
+            existingRecord = await getBirthdayById(birthdayData.id);
+            if (!existingRecord) {
+                return res.status(404).json({ error: 'Birthday record not found' });
+            }
+        }
+
         const dataToSave = {
             ...birthdayData,
-            user_id: req.user.username, // The authenticated user creating this record
-            customer_id: birthdayData.customer_id || null,
-            contact_person_index: birthdayData.contact_person_index || null
+            // user_id should only be set for type='user' records (it's the FK to users table).
+            // For customer/contact_person types, user_id is meaningless — leave it null on new records.
+            // On edits, always preserve the original user_id from the existing record.
+            user_id: isEdit
+                ? existingRecord.user_id
+                : (birthdayData.type === 'user' ? (birthdayData.user_id || null) : null),
+            customer_id: birthdayData.customer_id || (existingRecord?.customer_id) || null,
+            contact_person_index: (birthdayData.contact_person_index !== undefined && birthdayData.contact_person_index !== null)
+                ? birthdayData.contact_person_index
+                : (existingRecord?.contact_person_index ?? null)
         };
 
         const result = await saveBirthday(dataToSave);
+
+        // ── Write date change back to the source table ──
+        if (isEdit && existingRecord) {
+            try {
+                await updateBirthdaySource(existingRecord, birthdayData.date_of_birth);
+            } catch (sourceErr) {
+                // Log but don't fail the whole request — the birthdays table is already updated
+                console.error('[Birthday] Failed to update source record:', sourceErr.message);
+            }
+        }
+
         res.status(201).json({
             success: true,
-            message: 'Birthday saved successfully',
+            message: isEdit ? 'Birthday updated successfully' : 'Birthday saved successfully',
             id: result
         });
     } catch (error) {
@@ -256,11 +285,11 @@ export const searchPeopleController = async (req, res) => {
                                 id: `${customer.customer_id}_${index}`,
                                 name: fullName,
                                 email: contact.email || '',
-                                date_of_birth: contact.date_of_birth || null,
+                                date_of_birth: contact.birthday || contact.date_of_birth || null,
                                 type: 'contact_person',
                                 customer_id: customer.customer_id,
                                 contact_person_index: index,
-                                company_name: customer.customer_name
+                                company_name: customer.company_name
                             });
                         }
                     });
