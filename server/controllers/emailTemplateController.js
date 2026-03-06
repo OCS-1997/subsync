@@ -199,7 +199,7 @@ export const previewEmailTemplateController = async (req, res) => {
                 items_table_html: '',
                 renewal_link: `${process.env.APP_BASE_URL || 'http://localhost'}/subscriptions/SUB001/renew`,
                 current_year: new Date().getFullYear(),
-                company_name: process.env.COMPANY_NAME || 'Subsync Solutions',
+                company_name: process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)',
                 support_email: process.env.SUPPORT_EMAIL || 'support@subsync.example.com',
             };
         }

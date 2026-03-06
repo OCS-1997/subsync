@@ -21,7 +21,8 @@ export async function sendBirthdayEmail(person) {
             email: person.email,
             isCustomer: person.type === 'customer',
             isUser: person.type === 'user',
-            type: person.type
+            type: person.type,
+            company_name: process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)'
         };
 
         // Render birthday template

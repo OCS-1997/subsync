@@ -228,7 +228,7 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
         items_table_html: invoiceHtml,
         renewal_link: `${process.env.APP_BASE_URL || 'http://localhost'}/subscriptions/${subscription.sub_id}/renew`,
         current_year: new Date().getFullYear(),
-        company_name: process.env.COMPANY_NAME || 'Subsync Solutions',
+        company_name: process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)',
         support_email: process.env.SUPPORT_EMAIL || 'support@subsync.example.com',
         subscription: subscription,
         customer: customer,
@@ -256,7 +256,10 @@ export async function sendEmail({ to, subject, html, attachment_url = null, atta
         if (emailProvider === 'sendgrid') {
             const msg = {
                 to: recipients,
-                from: process.env.SENDGRID_FROM_EMAIL || 'noreply@ocsindia.net',
+                from: {
+                    email: process.env.SENDGRID_FROM_EMAIL || 'noreply@ocsindia.net',
+                    name: 'Online Consultancy Services (OCS)'
+                },
                 subject,
                 html,
             };
@@ -290,7 +293,7 @@ export async function sendEmail({ to, subject, html, attachment_url = null, atta
             });
 
             const mailOptions = {
-                from: process.env.SMTP_FROM || process.env.SMTP_USER,
+                from: `"Online Consultancy Services (OCS)" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
                 to: recipients.join(', '),
                 subject,
                 html,

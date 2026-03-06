@@ -374,10 +374,10 @@ function generateEmailHTML(data) {
         <!-- Footer -->
         <div style="background-color: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af;">
             <p style="margin: 0;">This is an automated report from Subsync.</p>
-            <p style="margin: 5px 0 0;">&copy; ${new Date().getFullYear()} Subsync Solutions.</p>
+            <p style="margin: 5px 0 0;">&copy; ${new Date().getFullYear()} Online Consultancy Services (OCS).</p>
         <div style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
             <p style="margin: 0; font-size: 14px; color: #64748b;">Automated report from Subsync</p>
-            <p style="margin: 8px 0 0; font-size: 12px; color: #94a3b8;">© ${new Date().getFullYear()} Subsync Solutions</p>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #94a3b8;">© ${new Date().getFullYear()} Online Consultancy Services (OCS)</p>
         </div>
     </div>
 </body>
