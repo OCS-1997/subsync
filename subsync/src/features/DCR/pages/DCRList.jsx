@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown, Copy } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -520,6 +520,15 @@ export default function DCRList() {
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => navigate(`/${username}/dashboard/dcr/${entry.id}/clone`)}
+                        className="text-blue-600 hover:text-blue-700"
+                        title="Clone"
+                      >
+                        <Copy className="w-4 h-4" />
                       </Button>
                       {canEdit && (
                         <Button

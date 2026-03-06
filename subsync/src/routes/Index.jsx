@@ -111,6 +111,7 @@ const router = createBrowserRouter([
 
       { path: "dcr", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DCRList /></PermissionGate> },
       { path: "dcr/new", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
+      { path: "dcr/:id/clone", element: <PermissionGate required={PERMISSIONS.DCR_CREATE}><DCRForm /></PermissionGate> },
       { path: "dcr/:id", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><ViewDCR /></PermissionGate> },
       { path: "dcr/:id/edit", element: <PermissionGate required={PERMISSIONS.DCR_UPDATE}><DCRForm /></PermissionGate> },
       { path: "dcr/detailed", element: <PermissionGate required={PERMISSIONS.DCR_VIEW}><DcrDetailedReport /></PermissionGate> },

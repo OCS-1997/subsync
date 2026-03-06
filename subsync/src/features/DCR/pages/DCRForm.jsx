@@ -25,7 +25,8 @@ export default function DCRForm() {
   const dispatch = useDispatch();
   const { currentEntry, loading } = useSelector((state) => state.dcr);
 
-  const isEditing = !!id;
+  const isEditing = !!id && !window.location.pathname.endsWith('/clone');
+  const isCloning = !!id && window.location.pathname.endsWith('/clone');
   const [saving, setSaving] = useState(false);
   const [domains, setDomains] = useState([]);
   const [domainDetails, setDomainDetails] = useState(null);
@@ -69,17 +70,17 @@ export default function DCRForm() {
 
   // Load entry if editing
   useEffect(() => {
-    if (isEditing && id) {
+    if ((isEditing || isCloning) && id) {
       dispatch(getDcrById(id));
     }
     return () => {
       dispatch(clearDcrState());
     };
-  }, [isEditing, id, dispatch]);
+  }, [isEditing, isCloning, id, dispatch]);
 
   // Populate form when entry is loaded
   useEffect(() => {
-    if (isEditing && currentEntry) {
+    if ((isEditing || isCloning) && currentEntry) {
       const entry = currentEntry;
       const timestamp = new Date(entry.timestamp);
       const dateStr = timestamp.toISOString().slice(0, 10);
@@ -88,7 +89,7 @@ export default function DCRForm() {
       const minutes = totalMinutes % 60;
 
       setFormData({
-        date: dateStr,
+        date: isCloning ? new Date().toISOString().slice(0, 10) : dateStr,
         hours: String(hours).padStart(2, '0'),
         minutes: String(minutes).padStart(2, '0'),
         call_type: entry.call_type || "incoming",
@@ -111,7 +112,13 @@ export default function DCRForm() {
         setIsExistingCustomer(false);
         setShowAddToContacts(true);
       }
-    } else if (!isEditing) {
+
+      if (entry.contact_id) {
+        setIsExistingContact(true);
+      } else if (entry.contact_name) {
+        setIsExistingContact(false);
+      }
+    } else if (!isEditing && !isCloning) {
       // Set current date for new entry
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
@@ -324,11 +331,11 @@ export default function DCRForm() {
         <Breadcrumb
           items={[
             { label: "Daily Call Reports", href: `/${username}/dashboard/dcr` },
-            { label: isEditing ? 'Edit Entry' : 'New Entry' }
+            { label: isEditing ? 'Edit Entry' : isCloning ? 'Clone Entry' : 'New Entry' }
           ]}
         />
         <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2">
-          {isEditing ? "Edit DCR Entry" : "New DCR Entry"}
+          {isEditing ? "Edit DCR Entry" : isCloning ? "Clone DCR Entry" : "New DCR Entry"}
         </h1>
       </div>
 
@@ -766,7 +773,7 @@ export default function DCRForm() {
             className="bg-blue-600 hover:bg-blue-700 h-11 px-10 rounded-xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
             <Save className="w-3.5 h-3.5 mr-2" />
-            {saving ? "Processing..." : isEditing ? "Update Report" : "Log DCR"}
+            {saving ? "Processing..." : isEditing ? "Update Report" : isCloning ? "Clone & Log" : "Log DCR"}
           </Button>
         </div>
       </form>
