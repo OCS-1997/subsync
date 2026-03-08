@@ -28,10 +28,20 @@ export function useCallDetector() {
   // ------------------------------------------------------------------
   const checkPermissions = useCallback(async () => {
     try {
-      const result = await CallDetector.checkPermissions();
-      return result;
-    } catch {
-      return { allGranted: false };
+      const status = await CallDetector.checkPermissions();
+      console.log('[useCallDetector] Permission status:', status);
+      
+      if (status.phone !== 'granted') {
+        console.log('[useCallDetector] Requesting phone permissions...');
+        const requestStatus = await CallDetector.requestPermissions({ permissions: ['phone'] });
+        console.log('[useCallDetector] Request result:', requestStatus);
+        return requestStatus.phone === 'granted';
+      }
+      
+      return status.phone === 'granted';
+    } catch (err) {
+      console.error('[useCallDetector] Permission check failed:', err);
+      return false;
     }
   }, []);
 
@@ -66,6 +76,7 @@ export function useCallDetector() {
     const subscribe = async () => {
       try {
         const handle = await CallDetector.addListener('callEnded', async (data) => {
+          console.log('[useCallDetector] Call event received:', data);
           if (!mounted) return;
 
           const { phoneNumber, duration, callType } = data;
@@ -73,9 +84,12 @@ export function useCallDetector() {
           // Resolve the number immediately via backend
           let resolved = null;
           try {
+            console.log('[useCallDetector] Resolving number:', phoneNumber);
             const response = await api.post('/resolve-number', { phone_number: phoneNumber });
             resolved = response.data?.data || null;
-          } catch {
+            console.log('[useCallDetector] Number resolved:', resolved);
+          } catch (err) {
+            console.error('[useCallDetector] Resolve failed:', err);
             resolved = {
               type: 'unknown', id: null,
               name: 'Unknown Number', company: null, phone: phoneNumber,
@@ -94,8 +108,9 @@ export function useCallDetector() {
         });
 
         listenerRef.current = handle;
+        console.log('[useCallDetector] Listener subscribed successfully');
       } catch (err) {
-        console.warn('[useCallDetector] addListener failed:', err.message);
+        console.error('[useCallDetector] addListener failed:', err.message);
       }
     };
 
@@ -126,5 +141,18 @@ export function useCallDetector() {
     startDetection,
     stopDetection,
     checkPermissions,
+    checkOverlayPermission: async () => {
+      try {
+        const result = await CallDetector.checkOverlayPermission();
+        return result.granted;
+      } catch {
+        return false;
+      }
+    },
+    requestOverlayPermission: async () => {
+      try {
+        await CallDetector.requestOverlayPermission();
+      } catch { /* ignore */ }
+    },
   };
 }

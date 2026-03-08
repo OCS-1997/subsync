@@ -18,7 +18,7 @@ function LoginPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { error, isLoading, isAuthenticated } = useSelector((state) => state.auth);
+  const { error, isLoading, isAuthenticated, user } = useSelector((state) => state.auth);
 
   // Check for active festival on component mount
   useEffect(() => {
@@ -32,10 +32,7 @@ function LoginPage() {
 
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading && !error) {
-      const loggedInUsername = (typeof window !== "undefined" && JSON.parse(sessionStorage.getItem('subsync_user') || localStorage.getItem('subsync_user'))?.username)
-        || '';
-
+    if (isAuthenticated && !isLoading && !error && user) {
       toast.success("Login successful!", {
         position: "top-right",
         autoClose: 2000,
@@ -46,9 +43,9 @@ function LoginPage() {
         transition: Bounce,
       });
 
-      navigate(`/${loggedInUsername}/dashboard`);
+      navigate(`/${user.username}/dashboard`);
     }
-  }, [isAuthenticated, isLoading, error, navigate]);
+  }, [isAuthenticated, isLoading, error, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -67,7 +67,7 @@ export const setStorageItem = (key, value, options = {}) => {
         Preferences.set({ key: TOKEN_EXPIRY_KEY, value: expiryTime.toString() })
           .catch(err => console.error('Capacitor storage error:', err));
       }
-      return;
+      // Continue to set in localStorage/sessionStorage as a sync cache
     }
 
     // Fall back to web storage (synchronous)
@@ -90,12 +90,9 @@ export const setStorageItem = (key, value, options = {}) => {
  */
 export const getStorageItem = (key) => {
   try {
-    // For Capacitor, we can't do sync reads - return null and use async version
-    if (isCapacitor()) {
-      console.warn('[storage] getStorageItem called on Capacitor - use getStorageItemAsync instead');
-      return null;
-    }
-
+    // For Capacitor, we return the value from localStorage as a sync cache
+    // Note: getStorageItemAsync should be used for critical persistent reads
+    
     // Fall back to web storage
     // Try both storages (for migration scenarios)
     let value = localStorage.getItem(key);

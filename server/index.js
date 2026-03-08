@@ -46,13 +46,14 @@ app.use(cors({
         `http://localhost:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
         `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
         `http://localhost`, // allows requests from your Nginx frontend (port 80)
+        `https://localhost`, // Capacitor Android default for some versions
         `http://127.0.0.1`,
         `http://ocs365.in`,
         `https://ocs365.in`,
         `http://localhost:4173`,
         `http://dev.ocs365.in`,
         `https://dev.ocs365.in`,
-        `capacitor://localhost`,   // Android Capacitor WebView origin
+        `capacitor://localhost`,   // Android/iOS Capacitor WebView origin
         `ionic://localhost`,       // Ionic/Capacitor alternate origin
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
