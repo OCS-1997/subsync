@@ -80,6 +80,13 @@ async function processUserReport(user, startDate, endDate, reportDate) {
     });
 
     if (!entries || entries.length === 0) {
+        // Skip missing time reminder on Sundays
+        const targetDate = new Date(startDate);
+        if (targetDate.getDay() === 0) { // 0 is Sunday
+            console.log(`No entries found for user ${user.name} on Sunday. Skipping reminder.`);
+            return;
+        }
+
         console.log(`No entries found for user ${user.name}. Sending missing time reminder.`);
         await sendNoTimeLoggedEmail(user, reportDate);
         return;
