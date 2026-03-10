@@ -54,8 +54,8 @@ export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
             try {
                 // Adapter: getAllUsers returns 'username', report expects 'user_id'
                 const userForReport = { ...user, user_id: user.username };
-                // Pass the trigger date (reportDate) so sub-functions can handle "Yesterday" display consistently
-                await processUserReport(userForReport, startOfDay, endOfDay, reportDate);
+                // Pass the target date so sub-functions can handle the reporting date consistently
+                await processUserReport(userForReport, startOfDay, endOfDay, targetDate);
             } catch (err) {
                 console.error(`Error processing report for user ${user.name} (${user.username}):`, err);
             }
@@ -70,7 +70,7 @@ export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
 /**
  * Process report for a single user
  */
-async function processUserReport(user, startDate, endDate, reportDate) {
+async function processUserReport(user, startDate, endDate, targetDate) {
     // Fetch entries
     const { entries } = await getTimeEntries({
         userId: user.user_id,
@@ -88,7 +88,7 @@ async function processUserReport(user, startDate, endDate, reportDate) {
         }
 
         console.log(`No entries found for user ${user.name}. Sending missing time reminder.`);
-        await sendNoTimeLoggedEmail(user, reportDate);
+        await sendNoTimeLoggedEmail(user, targetDate);
         return;
     }
 
@@ -120,7 +120,7 @@ async function processUserReport(user, startDate, endDate, reportDate) {
     // Generate HTML
     const html = generateEmailHTML({
         user,
-        reportDate,
+        targetDate,
         entries,
         totalMinutes,
         billableMinutes,
@@ -129,7 +129,7 @@ async function processUserReport(user, startDate, endDate, reportDate) {
     });
 
     // Send Email
-    const subject = `Your Daily Time Tracking Report - ${formatDate(reportDate)}`;
+    const subject = `Your Daily Time Tracking Report - ${formatDate(targetDate)}`;
 
     const result = await sendEmail({
         to: user.email,
@@ -187,7 +187,7 @@ async function generateCharts(projectStats) {
 function generateEmailHTML(data) {
     const {
         user,
-        reportDate,
+        targetDate,
         entries,
         totalMinutes,
         billableMinutes,
@@ -195,10 +195,7 @@ function generateEmailHTML(data) {
         charts
     } = data;
 
-    // Display the date for which the report is generated (one day before reportDate)
-    const displayDate = new Date(reportDate);
-    displayDate.setDate(displayDate.getDate() - 1);
-    const dateStr = formatDate(displayDate);
+    const dateStr = formatDate(targetDate);
     const totalTimeStr = minutesToTime(totalMinutes);
 
     // Generate table rows
@@ -209,16 +206,16 @@ function generateEmailHTML(data) {
 
         return `
             <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 16px 20px; font-weight: 500; color: #334155;">${entry.project_name || '-'}</td>
-                <td style="padding: 16px 20px;">
+                <td style="padding: 16px 20px; font-weight: 500; color: #334155; width: 20%; word-break: break-word;">${entry.project_name || '-'}</td>
+                <td style="padding: 16px 20px; width: 35%; word-break: break-word;">
                     <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">${entry.title}</div>
                     ${entry.description ? `<div style="font-size: 13px; color: #64748b; line-height: 1.4;">${entry.description}</div>` : ''}
                 </td>
-                <td style="padding: 16px 20px; text-align: center;">
-                    ${entry.activity_type_name ? `<span style="background-color: ${entry.activity_color || '#f1f5f9'}; color: #334155; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">${entry.activity_type_name}</span>` : '-'}
+                <td style="padding: 16px 20px; text-align: center; width: 15%;">
+                    ${entry.activity_type_name ? `<span style="background-color: ${entry.activity_color || '#f1f5f9'}; color: #334155; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; white-space: nowrap;">${entry.activity_type_name}</span>` : '-'}
                 </td>
-                <td style="padding: 16px 20px; text-align: center; color: #475569; font-size: 14px; white-space: nowrap;">${startTime} - ${endTime}</td>
-                <td style="padding: 16px 20px; text-align: right; font-weight: 600; color: #0f172a;">${timeStr}</td>
+                <td style="padding: 16px 20px; text-align: center; color: #475569; font-size: 14px; white-space: nowrap; width: 20%;">${startTime} - ${endTime}</td>
+                <td style="padding: 16px 20px; text-align: right; font-weight: 600; color: #0f172a; white-space: nowrap; width: 10%;">${timeStr}</td>
             </tr>
         `;
     }).join('');
@@ -274,11 +271,11 @@ function generateEmailHTML(data) {
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                     <thead>
                         <tr style="background-color: #f8fafc;">
-                            <th style="padding: 20px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Project</th>
-                            <th style="padding: 20px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Task Snapshot</th>
-                            <th style="padding: 20px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Activity</th>
-                            <th style="padding: 20px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Time</th>
-                            <th style="padding: 20px; text-align: right; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px;">Duration</th>
+                            <th style="padding: 20px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; width: 20%;">Project</th>
+                            <th style="padding: 20px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; width: 35%;">Task Snapshot</th>
+                            <th style="padding: 20px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; width: 15%;">Activity</th>
+                            <th style="padding: 20px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; width: 20%;">Time</th>
+                            <th style="padding: 20px; text-align: right; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; font-size: 12px; width: 10%;">Duration</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -305,11 +302,8 @@ function generateEmailHTML(data) {
 /**
  * Send email to users with no time entries
  */
-async function sendNoTimeLoggedEmail(user, reportDate) {
-    // Display the date for which the report is generated (one day before reportDate)
-    const displayDate = new Date(reportDate);
-    displayDate.setDate(displayDate.getDate() - 1);
-    const dateStr = formatDate(displayDate);
+async function sendNoTimeLoggedEmail(user, targetDate) {
+    const dateStr = formatDate(targetDate);
     const subject = `Action Required: No Time Logged for ${dateStr}`;
     
     // In development, prefer the client port. In production, use the configured base URL.
