@@ -27,21 +27,39 @@ function formatDate(date) {
 export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
     console.log(`Starting daily time tracking reports generation for date: ${reportDate.toISOString()}`);
 
-    // Calculate the TARGET date for the report (the day BEFORE reportDate)
-    // If run at 12:00 IST on March 8th, we want the report for March 7th.
-    // We explicitly calculate this relative to IST to ensure consistency.
-    const targetDate = new Date(reportDate);
-    // Subtract 1 day
-    targetDate.setDate(targetDate.getDate() - 1);
+    // Calculate the TARGET date (previous calendar day in IST).
+    // Server may run in UTC, so we derive IST date explicitly.
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30
+    const nowIST = new Date(reportDate.getTime() + IST_OFFSET_MS);
+    // Go back one calendar day in IST
+    const yesterdayIST = new Date(nowIST);
+    yesterdayIST.setUTCDate(yesterdayIST.getUTCDate() - 1);
 
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    // Build start/end of that IST calendar day in UTC equivalents
+    // Start = Yesterday 00:00 IST = Yesterday 00:00 IST - 5h30m UTC
+    const startOfDayUTC = new Date(Date.UTC(
+        yesterdayIST.getUTCFullYear(),
+        yesterdayIST.getUTCMonth(),
+        yesterdayIST.getUTCDate(),
+        0, 0, 0, 0
+    ) - IST_OFFSET_MS);
 
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const endOfDayUTC = new Date(Date.UTC(
+        yesterdayIST.getUTCFullYear(),
+        yesterdayIST.getUTCMonth(),
+        yesterdayIST.getUTCDate(),
+        23, 59, 59, 999
+    ) - IST_OFFSET_MS);
+
+    // targetDate: a Date object representing "yesterday in IST" for display
+    const targetDate = new Date(Date.UTC(
+        yesterdayIST.getUTCFullYear(),
+        yesterdayIST.getUTCMonth(),
+        yesterdayIST.getUTCDate()
+    ));
 
     console.log(`Generating report for: ${formatDate(targetDate)}`);
-    console.log(`Report range: ${startOfDay.toISOString()} to ${endOfDay.toISOString()}`);
+    console.log(`Report range (UTC): ${startOfDayUTC.toISOString()} to ${endOfDayUTC.toISOString()}`);
 
     try {
         // 1. Get ALL active users
@@ -54,8 +72,8 @@ export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
             try {
                 // Adapter: getAllUsers returns 'username', report expects 'user_id'
                 const userForReport = { ...user, user_id: user.username };
-                // Pass the target date so sub-functions can handle the reporting date consistently
-                await processUserReport(userForReport, startOfDay, endOfDay, targetDate);
+                // Pass startOfDayUTC / endOfDayUTC for the DB query, and targetDate for display
+                await processUserReport(userForReport, startOfDayUTC, endOfDayUTC, targetDate);
             } catch (err) {
                 console.error(`Error processing report for user ${user.name} (${user.username}):`, err);
             }
@@ -80,9 +98,8 @@ async function processUserReport(user, startDate, endDate, targetDate) {
     });
 
     if (!entries || entries.length === 0) {
-        // Skip missing time reminder on Sundays
-        const targetDate = new Date(startDate);
-        if (targetDate.getDay() === 0) { // 0 is Sunday
+        // Skip missing time reminder on Sundays (check against targetDate)
+        if (targetDate.getUTCDay() === 0) { // 0 is Sunday
             console.log(`No entries found for user ${user.name} on Sunday. Skipping reminder.`);
             return;
         }
@@ -229,7 +246,10 @@ function generateEmailHTML(data) {
     <title>Daily Activity Report</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a; line-height: 1.6;">
-    <div style="max-width: 700px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 0;">
+    <tr><td align="center">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 900px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);">
+    <tr><td>
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 40px; text-align: center; color: white;">
@@ -289,11 +309,14 @@ function generateEmailHTML(data) {
         <div style="background-color: #f8fafc; padding: 40px; text-align: center; border-top: 1px solid #e2e8f0;">
             <p style="margin: 0; font-size: 15px; color: #475569; font-weight: 500;">Efficiency through transparency.</p>
             <p style="margin: 8px 0 0; font-size: 13px; color: #94a3b8;">This is an automated report from <strong>Subsync</strong></p>
-            <div style="margin-top: 24px; border-top: 1px solid #e2e8f0; pt: 24px;">
+            <div style="margin-top: 24px; border-top: 1px solid #e2e8f0;">
                 <p style="margin: 24px 0 0; font-size: 12px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px;">&copy; ${new Date().getFullYear()} Online Consultancy Services (OCS)</p>
             </div>
         </div>
-    </div>
+    </td></tr>
+    </table>
+    </td></tr>
+    </table>
 </body>
 </html>
     `;
