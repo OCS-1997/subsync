@@ -119,19 +119,19 @@ export function setupDcrReportCron() {
 
 /**
  * Setup daily time tracking report cron job
- * Runs daily at 18:30 UTC (00:00 IST)
+ * Runs daily at 18:30 UTC (00:00 IST next calendar day).
+ * At that moment, new Date() in UTC is still "today", and the service
+ * subtracts 1 IST calendar day to produce "yesterday IST" — which is
+ * exactly the day whose logs we want to report on.
  */
 export function setupTimeTrackingReportCron() {
-    // Run at 18:30 UTC daily (00:00 IST - midnight)
+    // Run at 18:30 UTC daily (= 00:00 IST — start of the next IST calendar day)
     cron.schedule('30 18 * * *', async () => {
         console.log('Running daily time tracking report cron job...');
         try {
-            // Since we run at the END of the day (UTC 18:30), we want the report for TODAY.
-            // sendDailyTimeTrackingReports subtracts 1 day from the input date.
-            // So we need to pass TOMORROW's date to get TODAY's report.
-            const tomorrow = new Date();
-            tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-            await sendDailyTimeTrackingReports(tomorrow);
+            // Pass the current UTC time directly — the service's own IST offset
+            // logic will resolve this to the correct previous calendar day in IST.
+            await sendDailyTimeTrackingReports(new Date());
         } catch (error) {
             console.error('Error in time tracking report cron:', error);
         }
