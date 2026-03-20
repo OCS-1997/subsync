@@ -55,6 +55,7 @@ app.use(cors({
         `https://dev.ocs365.in`,
         `capacitor://localhost`,   // Android/iOS Capacitor WebView origin
         `ionic://localhost`,       // Ionic/Capacitor alternate origin
+        /^chrome-extension:\/\/.*/, // Allow browser extension requests
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization"],

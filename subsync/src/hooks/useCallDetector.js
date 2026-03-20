@@ -108,9 +108,13 @@ export function useCallDetector() {
   // ------------------------------------------------------------------
   const handleCallData = useCallback(async (data) => {
     const { phoneNumber, duration, callType, name } = normalizeCallPayload(data);
+    // Stable ID for this specific call event — used by PostCallDialog
+    // to distinguish a new call (reset UI) from a resolve-update (refresh name only)
+    const callId = `${phoneNumber}|${Date.now()}`;
 
     // 1. Set preliminary state immediately to trigger the popup
     setLastCall({
+      callId,
       phoneNumber,
       duration,
       callType,
@@ -118,7 +122,7 @@ export function useCallDetector() {
       resolved: { 
         type: 'unknown', 
         loading: true,
-        name: name || 'Unknown Number',
+        name: name || null,
         phone: phoneNumber
       }, 
     });
@@ -133,18 +137,21 @@ export function useCallDetector() {
       console.error('[useCallDetector] Resolve failed:', err);
       resolved = {
         type: 'unknown', id: null,
-        name: name || 'Unknown Number', company: null, phone: phoneNumber,
+        name: name || null, company: null, phone: phoneNumber,
       };
     }
 
-    // 2. Update with resolved info
+    // 2. Update resolved info — same callId, so PostCallDialog won't reset
     setLastCall(prev => ({
       ...prev,
       resolved: { 
         ...resolved, 
         loading: false,
         phone: resolved?.phone || prev?.phoneNumber || phoneNumber,
-        name: resolved?.name || prev?.resolved?.name || name || 'Unknown Number'
+        // Priority: DB name → native contact name → null (popup handles null as number-only)
+        name: (resolved?.name && resolved.name !== 'Unknown Number' && resolved.name !== 'Unknown Contact')
+          ? resolved.name
+          : (name && name.trim() ? name.trim() : null),
       },
     }));
   }, [normalizeCallPayload]);

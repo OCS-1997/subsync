@@ -1,31 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { X, Phone, Clock, User, FileText, CheckCircle2, UserPlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Phone, Clock, User, Building2, CheckCircle2, UserPlus, X, ChevronRight, Mail, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { addDcrEntry } from '@/features/DCR/dcrSlice';
 import { searchCustomerByPhone } from './services/callLogService';
 import api from '@/lib/axiosInstance';
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * isValidName — Business rule: a name is valid if it is:
+ *   • non-null, non-empty, non-whitespace-only
+ *   • not a sentinel string ('Unknown Number', 'Unknown Contact', 'Unknown')
+ * ───────────────────────────────────────────────────────────────────────────── */
+const SENTINEL_NAMES = new Set(['unknown number', 'unknown contact', 'unknown']);
+
+function isValidName(raw) {
+    if (!raw || typeof raw !== 'string') return false;
+    const trimmed = raw.trim();
+    if (!trimmed) return false;
+    return !SENTINEL_NAMES.has(trimmed.toLowerCase());
+}
+
 /**
- * CallLogPrompt - Post-call logging dialog
+ * CallLogPrompt - Post-call logging dialog (Android Bridge Path)
  * 
- * Appears after a phone call ends, prompting user to log the call to DCR.
- * Auto-dismisses after 30 seconds of inactivity.
- * Mobile-friendly with option to create new contact for unmatched calls.
- * 
- * @param {Object} callData - Metadata from Android CallLog
- * @param {string} callData.phoneNumber - Phone number from call
- * @param {number} callData.duration - Call duration in seconds
- * @param {string} callData.timestamp - Call start time (ISO format)
- * @param {string} callData.callType - 'incoming' | 'outgoing'
- * @param {boolean} open - Dialog open state
- * @param {Function} onClose - Close handler
- * @param {Function} onSkip - Skip handler (stores to Recent Calls)
+ * Re-designed as a premium mobile-friendly bottom-sheet using framer-motion.
  */
 export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
     const dispatch = useDispatch();
@@ -35,18 +34,20 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
     const [matchedContact, setMatchedContact] = useState(null);
     const [loading, setLoading] = useState(false);
     const [autoCloseTimer, setAutoCloseTimer] = useState(30);
+    const [isResolving, setIsResolving] = useState(false);
     
     // New contact creation state
     const [showCreateContact, setShowCreateContact] = useState(false);
     const [newContactName, setNewContactName] = useState('');
     const [newContactEmail, setNewContactEmail] = useState('');
+    const [creating, setCreating] = useState(false);
 
-    // Reset inactivity timer when user interacts
     const [lastInteraction, setLastInteraction] = useState(Date.now());
 
     // Auto-match customer by phone number
     useEffect(() => {
         if (open && callData?.phoneNumber) {
+            setIsResolving(true);
             searchCustomerByPhone(callData.phoneNumber)
                 .then(result => {
                     if (result.customer) {
@@ -54,41 +55,36 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
                         setMatchedContact(result.contact);
                         setShowCreateContact(false);
                     } else {
-                        // Prefill name from caller ID if available
                         setNewContactName(callData.contactName || '');
                     }
                 })
-                .catch(err => console.error('Customer lookup failed:', err));
+                .catch(err => console.error('Customer lookup failed:', err))
+                .finally(() => setIsResolving(false));
         }
     }, [open, callData?.phoneNumber, callData?.contactName]);
 
-    // Auto-dismiss timer
+    // Auto-dismiss timer — paused while contact creation form is visible
     useEffect(() => {
-        if (!open) return;
-
+        if (!open || showCreateContact) return;
         const interval = setInterval(() => {
             const timeElapsed = Math.floor((Date.now() - lastInteraction) / 1000);
             const remaining = 30 - timeElapsed;
-
             if (remaining <= 0) {
                 handleSkip();
             } else {
                 setAutoCloseTimer(remaining);
             }
         }, 1000);
-
         return () => clearInterval(interval);
-    }, [open, lastInteraction]);
+    }, [open, lastInteraction, showCreateContact]);
 
-    // Reset interaction timer on user activity
     const handleInteraction = useCallback(() => {
         setLastInteraction(Date.now());
+        setAutoCloseTimer(30);
     }, []);
 
     const handleSkip = () => {
-        if (onSkip) {
-            onSkip(callData);
-        }
+        if (onSkip) onSkip(callData);
         resetAndClose();
     };
 
@@ -99,47 +95,55 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
         }
 
         try {
-            setLoading(true);
+            handleInteraction();
+            setCreating(true);
             
-            // Extract country code from phone number if present, otherwise use default
             let countryCode = '+91';
-            let phoneNumber = callData.phoneNumber;
+            let phoneNumber = callData.phoneNumber || '';
             
-            // If phone starts with +, extract country code
             if (phoneNumber.startsWith('+')) {
                 const match = phoneNumber.match(/^(\+\d{1,3})/);
                 if (match) {
                     countryCode = match[1];
                     phoneNumber = phoneNumber.substring(match[1].length);
                 }
+            } else if (phoneNumber.startsWith('91') && phoneNumber.length === 12) {
+                countryCode = '+91';
+                phoneNumber = phoneNumber.substring(2);
             }
             
             const contactData = {
                 first_name: newContactName.split(' ')[0] || '',
                 last_name: newContactName.split(' ').slice(1).join(' ') || '',
-                email: newContactEmail.trim() || null, // Allow null email
+                email: newContactEmail.trim() || null,
                 phone_number: phoneNumber,
                 country_code: countryCode,
                 notes: `Created from call log on ${new Date().toLocaleString()}`
             };
 
             const response = await api.post('/contacts', contactData);
-            
             toast.success('Contact created successfully!');
             
-            // Use the newly created contact for DCR entry
-            setMatchedContact({
+            const savedContact = {
                 contact_id: response.data.contact_id,
                 contact_name: newContactName,
                 phone_number: phoneNumber,
                 email: newContactEmail || null,
                 country_code: countryCode
+            };
+
+            setMatchedContact(savedContact);
+            setMatchedCustomer({
+                customer_id: null,
+                customer_name: newContactName,
+                company_name: null,
+                entity_type: 'contact',
             });
             setShowCreateContact(false);
         } catch (err) {
             toast.error('Failed to create contact: ' + (err.response?.data?.error || err.message));
         } finally {
-            setLoading(false);
+            setCreating(false);
         }
     };
 
@@ -151,25 +155,24 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
             return;
         }
 
+        handleInteraction();
         setLoading(true);
 
         try {
-            // Convert duration from seconds to HH:MM format
-            const hours = Math.floor(callData.duration / 3600);
-            const minutes = Math.floor((callData.duration % 3600) / 60);
+            const hours = Math.floor((callData.duration || 0) / 3600);
+            const minutes = Math.floor(((callData.duration || 0) % 3600) / 60);
+            const fallbackName = newContactName || callData.contactName || null;
 
             const dcrData = {
                 timestamp: callData.timestamp,
-                call_type: callData.callType,
+                call_type: callData.callType || 'incoming',
                 time_spent: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
-                // Don't send domain_id - send company_name instead for free text
-                // This avoids foreign key constraint issues
                 domain_id: null,
                 domain_free_text: matchedCustomer?.company_name || null,
                 company_name: matchedCustomer?.company_name || null,
                 contact_id: matchedContact?.contact_id || null,
-                contact_name: matchedContact?.contact_name || newContactName || callData.contactName || null,
-                contact_phone_number: callData.phoneNumber,
+                contact_name: matchedContact?.contact_name || fallbackName,
+                contact_phone_number: callData.phoneNumber || '',
                 contact_phone_country_code: callData.countryCode || '+91',
                 contact_email: matchedContact?.email || newContactEmail || null,
                 notes: notes.trim() + (outcome ? `\n\nOutcome: ${outcome}` : ''),
@@ -201,204 +204,373 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
 
     if (!callData) return null;
 
+    const { phoneNumber, duration, callType } = callData;
+
+    // ── Name priority logic ────────────────────────────────────────────────────
+    const resolvedName = matchedContact?.contact_name || matchedCustomer?.customer_name || callData.contactName;
+    const hasName = isValidName(resolvedName);
+    const headline = hasName ? `${resolvedName} — ${phoneNumber}` : (phoneNumber || 'Unknown');
+    const subtitle = hasName ? phoneNumber : null;
+
+    const isKnown = !!matchedCustomer;
+
+    const formatDur = (s) => {
+        const n = Number(s) || 0;
+        return `${Math.floor(n / 60)}m ${String(n % 60).padStart(2, '0')}s`;
+    };
+
+    const glass = (alpha = 0.06) => `rgba(255,255,255,${alpha})`;
+
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleSkip()}>
-            <DialogContent 
-                className="w-[92vw] max-w-lg p-0 dark:bg-slate-950/90 border-slate-800/50 rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl"
-                onPointerDown={handleInteraction}
-                onKeyDown={handleInteraction}
-            >
-                {/* Premium Branding Header */}
-                <div className="bg-gradient-to-r from-blue-600/20 to-violet-600/20 px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/30">
-                            <Phone className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-black text-white tracking-widest uppercase flex items-center gap-1.5">
-                                SubSync <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-blue-400">RMS</span>
-                            </h2>
-                            <p className="text-[10px] font-bold text-slate-400">Log Call to DCR</p>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Auto-dismiss</span>
-                        <span className="text-xs font-mono font-bold text-blue-400">00:{String(autoCloseTimer).padStart(2, '0')}</span>
-                    </div>
-                </div>
+        <AnimatePresence>
+            {open && (
+                <>
+                    {/* Backdrop */}
+                    <motion.div
+                        key="backdrop"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        onClick={handleSkip}
+                        style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+                    />
 
-                <div className="p-5 sm:p-7 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                    {/* Bottom Sheet Panel */}
+                    <motion.div
+                        key="panel"
+                        initial={{ y: '100%', opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: '110%', opacity: 0 }}
+                        transition={{ type: 'spring', damping: 32, stiffness: 360 }}
+                        onPointerDown={handleInteraction}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+                            maxWidth: 560, margin: '0 auto',
+                            background: 'linear-gradient(160deg, #13131f 0%, #0c0c18 100%)',
+                            borderRadius: '32px 32px 0 0',
+                            padding: '12px 20px 48px',
+                            boxShadow: '0 -16px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.06)',
+                            fontFamily: 'inherit',
+                            maxHeight: '90vh',
+                            overflowY: 'auto'
+                        }}
+                        className="custom-scrollbar"
+                    >
+                        {/* Drag handle */}
+                        <div style={{ width: 44, height: 5, borderRadius: 3, background: glass(0.2), margin: '0 auto 20px' }} />
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Call Metadata Display */}
-                    {/* Modern Metadata Cards */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-900/40 border border-white/5 rounded-[20px] p-4 flex flex-col gap-1">
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</span>
-                            <p className="text-sm font-bold text-white break-all leading-tight">
-                                {callData.phoneNumber}
-                            </p>
-                        </div>
-                        <div className="bg-slate-900/40 border border-white/5 rounded-[20px] p-4 flex flex-col gap-1">
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Duration</span>
-                            <div className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-blue-400" />
-                                <p className="text-sm font-bold text-white uppercase tabular-nums">
-                                    {Math.floor(callData.duration / 60)}m {callData.duration % 60}s
-                                </p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <div style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 6,
+                                background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+                                borderRadius: 100, padding: '5px 14px', color: '#60a5fa', fontSize: 12, fontWeight: 800
+                            }}>
+                                <Phone size={14} />
+                                SubSync RMS
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{
+                                    fontFamily: 'monospace', fontSize: 13, fontWeight: 800,
+                                    color: autoCloseTimer <= 10 ? '#f87171' : 'rgba(255,255,255,0.28)',
+                                    transition: 'color 0.4s',
+                                }}>
+                                    {String(autoCloseTimer).padStart(2, '0')}s
+                                </span>
+                                <button
+                                    onClick={handleSkip}
+                                    style={{
+                                        width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                                        background: glass(0.08), color: 'rgba(255,255,255,0.5)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Identity Match Card */}
-                    {matchedCustomer ? (
-                        <div className="bg-green-500/10 border border-green-500/20 rounded-[24px] p-5 flex items-start gap-4">
-                            <div className="bg-green-500/20 p-2.5 rounded-full">
-                                <User className="w-5 h-5 text-green-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <span className="text-[9px] font-black text-green-400/80 uppercase tracking-widest block mb-1">✓ Matched Entity</span>
-                                <p className="text-base font-extrabold text-white leading-tight">
-                                    {matchedCustomer.company_name || matchedCustomer.customer_name}
-                                </p>
-                                {matchedContact && (
-                                    <p className="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-1">
-                                        <FileText className="w-3 h-3 opacity-50" />
-                                        {matchedContact.contact_name}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    ) : !showCreateContact && (
-                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-[24px] p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-amber-500/20 p-2 rounded-full">
-                                    <UserPlus className="w-5 h-5 text-amber-500" />
+                        {/* Caller Card */}
+                        <div style={{
+                            borderRadius: 22,
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.03) 100%)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            padding: '18px', marginBottom: 16,
+                            position: 'relative', overflow: 'hidden',
+                        }}>
+                            <div style={{
+                                position: 'absolute', top: -30, right: -30, width: 100, height: 100,
+                                borderRadius: '50%', background: 'rgba(59,130,246,0.3)', filter: 'blur(40px)', opacity: 0.5,
+                                pointerEvents: 'none',
+                            }} />
+
+                            {isResolving ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <Loader2 size={18} color="#60a5fa" style={{ animation: 'spin 1s linear infinite' }} />
+                                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, fontWeight: 600 }}>Looking up contact…</span>
                                 </div>
-                                <div className="text-center sm:text-left">
-                                    <p className="text-sm font-bold text-white">No Contact Found</p>
-                                    <p className="text-[10px] font-semibold text-slate-500">Add this number to SubSync?</p>
-                                </div>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setShowCreateContact(true);
-                                    handleInteraction();
-                                }}
-                                className="rounded-full h-10 px-6 font-black text-[10px] uppercase tracking-widest border-amber-500/20 text-amber-500 hover:bg-amber-500/10"
-                            >
-                                Create Contact
-                            </Button>
-                        </div>
-                    )}
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                                    <div style={{
+                                        width: 56, height: 56, borderRadius: 18, flexShrink: 0,
+                                        background: hasName ? 'linear-gradient(135deg, #3b82f688, #2563eb44)' : 'rgba(255,255,255,0.07)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: 22, fontWeight: 900, color: '#fff',
+                                        border: hasName ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                                        boxShadow: hasName ? '0 4px 20px rgba(59,130,246,0.2)' : 'none',
+                                    }}>
+                                        {hasName ? resolvedName.charAt(0).toUpperCase() : <Phone size={22} color="rgba(255,255,255,0.3)" />}
+                                    </div>
 
-                    {/* Create New Contact Form */}
-                    {showCreateContact && (
-                        <div className="bg-blue-600/5 border border-blue-600/10 rounded-[24px] p-6 space-y-4 animate-in zoom-in-95">
-                            <div className="flex items-center gap-2 mb-2">
-                                <UserPlus className="w-4 h-4 text-blue-400" />
-                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">New Contact</span>
-                            </div>
-                            
-                            <div className="grid gap-3">
-                                <Input
-                                    placeholder="Full Name *"
-                                    value={newContactName}
-                                    onChange={(e) => { setNewContactName(e.target.value); handleInteraction(); }}
-                                    className="h-12 text-sm rounded-[14px] font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{
+                                            color: '#fff', fontSize: hasName ? 17 : 16, fontWeight: 800,
+                                            margin: '0 0 4px', lineHeight: 1.25,
+                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                            letterSpacing: hasName ? '-0.01em' : '0.01em',
+                                        }}>
+                                            {headline}
+                                        </p>
+
+                                        {subtitle && (
+                                            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, margin: '0 0 8px', fontFamily: 'monospace' }}>
+                                                {subtitle}
+                                            </p>
+                                        )}
+
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginTop: subtitle ? 0 : 8 }}>
+                                            {matchedCustomer?.company_name && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                                    <Building2 size={11} color="rgba(255,255,255,0.3)" />
+                                                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 600 }}>
+                                                        {matchedCustomer.company_name}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Duration Row */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            background: glass(0.04), borderRadius: 14,
+                            padding: '12px 18px', marginBottom: 16,
+                            border: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <Clock size={15} color="#60a5fa" />
+                            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                Duration
+                            </span>
+                            <span style={{ color: '#fff', fontSize: 16, fontWeight: 800, marginLeft: 6, fontFamily: 'monospace' }}>
+                                {formatDur(duration)}
+                            </span>
+                        </div>
+
+                        {/* Unknown Contact Actions */}
+                        <AnimatePresence mode="wait">
+                            {!isKnown && !isResolving && (
+                                showCreateContact ? (
+                                    <motion.div
+                                        key="cf"
+                                        initial={{ opacity: 0, scaleY: 0.95 }}
+                                        animate={{ opacity: 1, scaleY: 1 }}
+                                        exit={{ opacity: 0, scaleY: 0.95 }}
+                                        style={{
+                                            transformOrigin: 'top',
+                                            background: 'rgba(59,130,246,0.06)',
+                                            border: '1px solid rgba(59,130,246,0.15)',
+                                            borderRadius: 20, padding: '18px', marginBottom: 16,
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                                            <UserPlus size={14} color="#60a5fa" />
+                                            <span style={{ color: '#60a5fa', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                                New Contact
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="text" placeholder="Full Name *"
+                                            value={newContactName}
+                                            onChange={e => { setNewContactName(e.target.value); handleInteraction(); }}
+                                            style={{
+                                                width: '100%', boxSizing: 'border-box', outline: 'none',
+                                                background: glass(0.06), border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: 12, padding: '12px 14px', color: '#fff',
+                                                fontSize: 15, fontWeight: 600, marginBottom: 10,
+                                                fontFamily: 'inherit', transition: 'border-color 0.2s'
+                                            }}
+                                            onFocus={e => e.target.style.borderColor = 'rgba(96,165,250,0.5)'}
+                                            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                        />
+                                        <div style={{ position: 'relative', marginBottom: 14 }}>
+                                            <Mail size={14} color="rgba(255,255,255,0.25)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                            <input
+                                                type="email" placeholder="Email (optional)"
+                                                value={newContactEmail}
+                                                onChange={e => { setNewContactEmail(e.target.value); handleInteraction(); }}
+                                                style={{
+                                                    width: '100%', boxSizing: 'border-box', outline: 'none',
+                                                    background: glass(0.06), border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: 12, padding: '12px 14px 12px 36px', color: '#fff',
+                                                    fontSize: 15, fontWeight: 600,
+                                                    fontFamily: 'inherit', transition: 'border-color 0.2s'
+                                                }}
+                                                onFocus={e => e.target.style.borderColor = 'rgba(96,165,250,0.5)'}
+                                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: 10 }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setShowCreateContact(false); handleInteraction(); }}
+                                                style={{
+                                                    flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer',
+                                                    background: glass(0.06), border: '1px solid rgba(255,255,255,0.08)',
+                                                    color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+                                                }}>
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleCreateContact}
+                                                disabled={creating || !newContactName.trim()}
+                                                style={{
+                                                    flex: 2, padding: '12px 0', borderRadius: 12, cursor: creating ? 'not-allowed' : 'pointer',
+                                                    background: creating ? 'rgba(59,130,246,0.45)' : 'linear-gradient(135deg,#2563eb,#60a5fa)',
+                                                    border: 'none', color: '#fff', fontSize: 13, fontWeight: 800,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                                    fontFamily: 'inherit',
+                                                }}>
+                                                {creating
+                                                    ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+                                                    : <><CheckCircle2 size={16} /> Save Contact</>
+                                                }
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="nc"
+                                        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            background: 'rgba(245,158,11,0.06)',
+                                            border: '1px solid rgba(245,158,11,0.15)',
+                                            borderRadius: 16, padding: '12px 16px', marginBottom: 16,
+                                        }}
+                                    >
+                                        <div>
+                                            <p style={{ color: '#fff', fontSize: 13, fontWeight: 800, margin: '0 0 2px' }}>Unknown number</p>
+                                            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 600, margin: 0 }}>Save to SubSync?</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setShowCreateContact(true); handleInteraction(); }}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: 6,
+                                                background: 'rgba(245,158,11,0.12)',
+                                                border: '1px solid rgba(245,158,11,0.25)',
+                                                borderRadius: 10, padding: '8px 12px',
+                                                color: '#fbbf24', fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                                                fontFamily: 'inherit',
+                                            }}>
+                                            <UserPlus size={13} /> Add
+                                        </button>
+                                    </motion.div>
+                                )
+                            )}
+                        </AnimatePresence>
+
+                        {/* Form Fields Section */}
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    Call Notes <span style={{ color: '#60a5fa' }}>*</span>
+                                </label>
+                                <textarea
+                                    value={notes}
+                                    onChange={e => { setNotes(e.target.value); handleInteraction(); }}
+                                    placeholder="What was discussed?"
+                                    rows={3}
+                                    style={{
+                                        width: '100%', boxSizing: 'border-box', resize: 'none', outline: 'none',
+                                        background: glass(0.05), border: '1px solid rgba(255,255,255,0.08)',
+                                        borderRadius: 16, padding: '14px 16px',
+                                        color: '#fff', fontSize: 15, lineHeight: 1.5, fontFamily: 'inherit',
+                                        transition: 'border-color 0.2s',
+                                    }}
+                                    onFocus={e => e.target.style.borderColor = 'rgba(96,165,250,0.5)'}
+                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                                     required
                                 />
-                                <Input
-                                    type="email"
-                                    placeholder="Email (optional)"
-                                    value={newContactEmail}
-                                    onChange={(e) => { setNewContactEmail(e.target.value); handleInteraction(); }}
-                                    className="h-12 text-sm rounded-[14px] font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: 8, color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    Outcome <span style={{ color: 'rgba(255,255,255,0.2)' }}>(Optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={outcome}
+                                    onChange={e => { setOutcome(e.target.value); handleInteraction(); }}
+                                    placeholder="e.g. Schedule follow-up"
+                                    style={{
+                                        width: '100%', boxSizing: 'border-box', outline: 'none',
+                                        background: glass(0.05), border: '1px solid rgba(255,255,255,0.08)',
+                                        borderRadius: 14, padding: '14px 16px',
+                                        color: '#fff', fontSize: 15, fontFamily: 'inherit',
+                                        transition: 'border-color 0.2s',
+                                    }}
+                                    onFocus={e => e.target.style.borderColor = 'rgba(96,165,250,0.5)'}
+                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => {
-                                        setShowCreateContact(false);
-                                        handleInteraction();
+                            {/* Actions */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+                                <button
+                                    type="submit"
+                                    disabled={loading || !notes.trim()}
+                                    style={{
+                                        width: '100%', padding: '16px 0', borderRadius: 16,
+                                        cursor: loading || !notes.trim() ? 'not-allowed' : 'pointer',
+                                        background: loading || !notes.trim() ? 'rgba(37,99,235,0.4)' : 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)',
+                                        border: 'none', color: '#fff', fontSize: 14, fontWeight: 900,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                        textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        boxShadow: loading || !notes.trim() ? 'none' : '0 8px 32px rgba(37,99,235,0.3)',
+                                        fontFamily: 'inherit', transition: 'transform 0.15s, box-shadow 0.15s',
                                     }}
-                                    className="flex-1 rounded-full text-[10px] font-black uppercase text-slate-500 hover:text-white"
+                                    onMouseEnter={e => { if (!loading && notes.trim()) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(37,99,235,0.45)'; } }}
+                                    onMouseLeave={e => { if (!loading && notes.trim()) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(37,99,235,0.3)'; } }}
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
+                                    {loading
+                                        ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Processing…</>
+                                        : <><Sparkles size={18} /> Add to DCR Entry</>
+                                    }
+                                </button>
+                                <button
                                     type="button"
-                                    onClick={handleCreateContact}
-                                    disabled={loading || !newContactName.trim()}
-                                    className="flex-2 rounded-full h-11 bg-blue-600 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                                    onClick={handleSkip}
+                                    style={{
+                                        width: '100%', padding: '14px 0', borderRadius: 16, cursor: 'pointer',
+                                        background: 'transparent', border: 'none',
+                                        color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 800,
+                                        textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'inherit',
+                                        transition: 'color 0.2s, background 0.2s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; e.currentTarget.style.background = glass(0.04); }}
+                                    onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'transparent'; }}
                                 >
-                                    {loading ? 'Processing...' : 'Save & Attach'}
-                                </Button>
+                                    Log Later
+                                </button>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Form Fields Section */}
-                    <div className="space-y-5">
-                        <div className="space-y-2.5">
-                            <Label htmlFor="notes" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 pl-1">
-                                Call Notes <span className="text-blue-500">*</span>
-                            </Label>
-                            <Textarea
-                                id="notes"
-                                value={notes}
-                                onChange={(e) => { setNotes(e.target.value); handleInteraction(); }}
-                                placeholder="What was discussed?"
-                                rows={3}
-                                required
-                                className="rounded-[20px] p-4 text-sm font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 resize-none transition-all"
-                            />
-                        </div>
-
-                        <div className="space-y-2.5">
-                            <Label htmlFor="outcome" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 pl-1">
-                                Outcome (Optional)
-                            </Label>
-                            <Input
-                                id="outcome"
-                                value={outcome}
-                                onChange={(e) => { setOutcome(e.target.value); handleInteraction(); }}
-                                placeholder="e.g. Schedule follow-up"
-                                className="h-12 px-4 rounded-[16px] text-sm font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 transition-all"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Action Group */}
-                    <div className="flex flex-col gap-3 group">
-                        <Button
-                            type="submit"
-                            disabled={loading || !notes.trim()}
-                            className="h-14 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] rounded-full font-black uppercase text-[11px] tracking-[0.2em] text-white shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3"
-                        >
-                            <CheckCircle2 className="w-5 h-5" />
-                            {loading ? 'Finalizing Log...' : 'Add to DCR Entry'}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={handleSkip}
-                            className="h-12 rounded-full font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                            Log Later
-                        </Button>
-                    </div>
-                </form>
-                
-                {/* Visual Footer Gradient */}
-                <div className="h-2 bg-gradient-to-r from-blue-600/30 to-violet-600/30 w-full" />
-            </div>
-            </DialogContent>
-        </Dialog>
+                        </form>
+                    </motion.div>
+                </>
+            )}
+            <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        </AnimatePresence>
     );
 }

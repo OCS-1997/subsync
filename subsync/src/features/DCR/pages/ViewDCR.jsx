@@ -278,8 +278,10 @@ export default function ViewDCR() {
                                 <div className="flex items-center gap-2">
                                     <Phone className="w-4 h-4 text-gray-400" />
                                     <p className="text-base dark:text-white">
-                                        {entry.contact_phone_country_code && entry.contact_phone_number
-                                            ? `${entry.contact_phone_country_code} ${entry.contact_phone_number}`
+                                        {entry.contact_phone_number
+                                            ? (entry.contact_phone_number.startsWith('+') || !entry.contact_phone_country_code
+                                                ? entry.contact_phone_number
+                                                : `${entry.contact_phone_country_code} ${entry.contact_phone_number}`)
                                             : "-"}
                                     </p>
                                 </div>
