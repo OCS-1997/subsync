@@ -14,6 +14,7 @@ import { useTokenRefresh } from '@/hooks/useTokenRefresh'
 import { useCapacitorAuth } from '@/hooks/useCapacitorAuth'
 import { CallLogManager } from '@/components/CallLogPrompt'
 import CallDetectorManager from '@/components/CallDetector/CallDetectorManager'
+import ReleaseGuideManager from '@/features/ReleaseGuide/ReleaseGuideManager'
 
 function App() {
   // Enable auto-refresh token
@@ -78,6 +79,7 @@ function App() {
       <FloatingCalculator />
       <CallLogManager />
       <CallDetectorManager />
+      <ReleaseGuideManager />
     </>
   );
 }
