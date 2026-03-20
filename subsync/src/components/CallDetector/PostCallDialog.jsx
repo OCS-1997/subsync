@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/axiosInstance';
 import { toast } from 'react-toastify';
-import { Phone, Clock, User, UserPlus, Building2, Tag } from 'lucide-react';
+import { Phone, Clock, User, UserPlus, Building2, Loader2 } from 'lucide-react';
 
 /**
  * PostCallDialog — shown by CallDetectorManager after every call ends.
@@ -47,27 +47,37 @@ const PostCallDialog = ({ lastCall }) => {
   const entityColor = entityColors[resolved?.type] || '#6b7280';
   const entityLabel = (resolved?.type || 'unknown').replace('_', ' ');
 
+  const normalizeCallType = (type) => {
+    if (type === 'incoming' || type === 'outgoing' || type === 'missed') {
+      return type;
+    }
+    return 'incoming';
+  };
+
   const handleSubmit = async () => {
     if (!lastCall) return;
 
     setSubmitting(true);
     try {
-      await api.post('/log-call', {
-        phone:       resolved?.phone || phoneNumber,
-        name:        resolved?.name  || 'Unknown Number',
-        entity_type: resolved?.type  || 'unknown',
-        entity_id:   resolved?.id    || null,
-        company:     resolved?.company || null,
-        call_type:   callType || 'incoming',
-        duration:    duration || 0,
-        description: notes.trim() || '',
-      });
+      const payload = {
+        phone: resolved?.phone || phoneNumber,
+        name: resolved?.name || 'Unknown Number',
+        entity_type: resolved?.type || 'unknown',
+        entity_id: resolved?.id || null,
+        company: resolved?.company || null,
+        call_type: normalizeCallType(callType),
+        duration: Number(duration) || 0,
+        description: notes.trim() || 'Call Logged via Android',
+      };
 
-      toast.success('Call logged as DCR entry!');
+      console.log('[PostCallDialog] Submitting phone call log:', payload);
+      await api.post('/log-call', payload);
+
+      toast.success('Call logged successfully!');
       setOpen(false);
     } catch (error) {
-      console.error('Failed to log call:', error);
-      toast.error('Failed to log call. Please try again.');
+      console.error('[PostCallDialog] Submit error:', error);
+      toast.error(error.response?.data?.error || 'Failed to log call. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -84,8 +94,8 @@ const PostCallDialog = ({ lastCall }) => {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-violet-500" />
-            Log Call to DCR
+            <Phone className="h-5 w-5 text-blue-500" />
+            Log Call to DCR 
           </DialogTitle>
         </DialogHeader>
 
@@ -116,7 +126,12 @@ const PostCallDialog = ({ lastCall }) => {
           </div>
 
           {/* Resolved Entity */}
-          {resolved && resolved.type !== 'unknown' ? (
+          {resolved?.loading ? (
+             <div className="p-3 border rounded-xl bg-slate-50 dark:bg-slate-900/10 border-slate-200 dark:border-slate-500/20 flex items-center gap-2">
+               <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />
+               <span className="text-sm text-slate-500 italic">Resolving contact...</span>
+             </div>
+          ) : resolved && resolved.type !== 'unknown' ? (
             <div className="p-3 border rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border-violet-200 dark:border-violet-500/20 space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

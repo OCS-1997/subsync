@@ -1,29 +1,15 @@
-import { Link, useParams, useLocation } from 'react-router-dom';
-import { Command, X, Menu, Settings, Link2, Home, Users, Globe, Package, Building2, FileText, Shield, Bell, Mail, Palette, Zap, Calculator, Moon, Sun, Search, ChevronRight, Database, BookOpen, LayoutDashboard, TrendingUp, HelpCircle, Info, Calendar, Target } from 'lucide-react';
+/* eslint-disable react/prop-types */
+import { useParams, useLocation } from 'react-router-dom';
+import { Command, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, useEffect } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useRef, useEffect, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
-import { usePreferenceOrder } from '@/hooks/usePreferenceOrder.js';
+import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
+import SidebarTree from './SidebarTree.jsx';
 
 const sidebarItems = [
   { path: 'dashboard', title: 'Home', icon: 'home', icon_type: 'lucide', permission: PERMISSIONS.DASHBOARD_VIEW },
@@ -42,115 +28,30 @@ const sidebarItems = [
   { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE },
 ];
 
-function SortableItem({ item, active, isOpen, username, toggleSidebar }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: item.path });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : 'auto',
-    opacity: isDragging ? 0.6 : 1,
-  };
-
-  const destination = `/${username}/${item.path}`;
-
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className={`relative group list-none`}
-    >
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>
-          <Link
-            to={destination}
-            onClick={() => {
-              if (window.innerWidth < 1024) toggleSidebar();
-            }}
-            className={`flex items-center gap-3 py-1.5 px-3 rounded-xl transition-all duration-300 relative
-            ${active
-                ? 'bg-sidebar-accent shadow-lg text-sidebar-accent-foreground font-bold'
-                : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'}
-            ${active || !isOpen ? '' : 'hover:translate-x-1'}
-            active:scale-[0.98]`}
-          >
-            <div
-              {...attributes}
-              {...listeners}
-              className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg transition-all duration-300
-              ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
-              ${active ? 'text-sidebar-accent-foreground' : 'group-hover:bg-sidebar-accent/30'}`}
-            >
-              {item.icon_type === 'material' ? (
-                <span className={`material-symbols-outlined text-[22px] ${active ? 'fill-1' : 'opacity-80'}`}>
-                  {item.icon}
-                </span>
-              ) : (
-                <Home size={22} className={`${active ? 'fill-white' : 'opacity-80'}`} />
-              )}
-            </div>
-
-            {isOpen && (
-              <span className={`text-sm whitespace-nowrap tracking-tight transition-all duration-300
-              ${active ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
-                {item.title}
-              </span>
-            )}
-
-            {active && isOpen && (
-              <motion.div
-                layoutId="activeSideIndicator"
-                className="absolute right-0 top-2 bottom-2 w-1 bg-sidebar-accent-foreground rounded-l-full shadow-lg"
-                initial={{ opacity: 0, x: 5 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-              />
-            )}
-          </Link>
-        </TooltipTrigger>
-        {!isOpen && (
-          <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
-            {item.title}
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </li>
-  );
-}
-
 function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
   const location = useLocation();
   const { hasAnyPermission } = usePermissions();
   const sidebarRef = useRef(null);
 
-  const { orderedItems, reorderItems, isLoading } = usePreferenceOrder(
-    'sidebar_order',
+  const permissionFilter = useCallback(
+    (item) => !item.permission || hasAnyPermission(item.permission),
+    [hasAnyPermission]
+  );
+
+  const {
+    nodes,
+    isLoading,
+    restoredItemIds,
+    clearRestoredHighlights,
+    move,
+    createFolderFromDrop,
+    renameFolder,
+    deleteFolder,
+  } = useSidebarFolders(
     sidebarItems,
-    'path',
-    (item) => !item.permission || hasAnyPermission(item.permission)
+    permissionFilter
   );
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = orderedItems.findIndex(i => i.path === active.id);
-      const newIndex = orderedItems.findIndex(i => i.path === over.id);
-      reorderItems(arrayMove(orderedItems, oldIndex, newIndex));
-    }
-  };
 
   const handleOpenCommandPalette = () => {
     window.dispatchEvent(new CustomEvent('openCommandPalette'));
@@ -244,39 +145,24 @@ function SideBar({ isOpen, toggleSidebar }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar mt-6">
-          <ul className="space-y-1 px-3">
+          <div className="px-3">
             <TooltipProvider>
-              {isLoading && orderedItems.length === 0 ? (
-                <div className="space-y-2">
-                  {[...Array(10)].map((_, i) => (
-                    <div key={i} className="h-10 bg-sidebar-accent/20 rounded-xl animate-pulse mx-2" />
-                  ))}
-                </div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={orderedItems.map(i => i.path)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {orderedItems.map((item) => (
-                      <SortableItem
-                        key={item.path}
-                        item={item}
-                        active={isActive(item.path)}
-                        isOpen={isOpen}
-                        username={username}
-                        toggleSidebar={toggleSidebar}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              )}
+              <SidebarTree
+                nodes={nodes}
+                isOpen={isOpen}
+                isLoading={isLoading}
+                username={username}
+                isActive={isActive}
+                toggleSidebar={toggleSidebar}
+                restoredItemIds={restoredItemIds}
+                clearRestoredHighlights={clearRestoredHighlights}
+                move={move}
+                createFolderFromDrop={createFolderFromDrop}
+                renameFolder={renameFolder}
+                deleteFolder={deleteFolder}
+              />
             </TooltipProvider>
-          </ul>
+          </div>
         </nav>
 
         <div className="mt-auto border-t border-sidebar-border p-4 bg-sidebar-accent/10 backdrop-blur-sm">

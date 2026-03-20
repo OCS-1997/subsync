@@ -20,8 +20,37 @@ export class CallDetectorWebImpl {
     return { status: 'web_stub' };
   }
 
+  async getPendingCalls() {
+    return { calls: [] };
+  }
+
+  async clearPendingCalls() {
+    return { status: 'web_stub' };
+  }
+
+  async getLaunchCallData() {
+    return { call: null };
+  }
+
+  async clearLaunchCallData() {
+    return { status: 'web_stub' };
+  }
+
   async checkPermissions() {
-    return { phonePermission: false, callLogPermission: false, allGranted: false };
+    // Match the key that useCallDetector checks: status.phone
+    return { phone: 'denied' };
+  }
+
+  async requestPermissions() {
+    return { phone: 'denied' };
+  }
+
+  async checkOverlayPermission() {
+    return { granted: true }; // no-op on web
+  }
+
+  async requestOverlayPermission() {
+    return {};
   }
 
   addListener(eventName, callback) {

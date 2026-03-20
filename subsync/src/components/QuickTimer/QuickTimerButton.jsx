@@ -5,6 +5,7 @@ import { Timer, PlayCircle, Square, Clock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import TimeEntryForm from '@/features/TimeTracking/components/TimeEntryForm';
 import api from '@/lib/axiosInstance.js';
+import { getStorageItem } from '@/utils/storage.js';
 
 const QuickTimerButton = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -56,6 +57,43 @@ const QuickTimerButton = () => {
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [activeTimer]);
+
+    // Handle browser close / refresh warning and auto-stop
+    useEffect(() => {
+        if (!activeTimer) return;
+
+        const handleBeforeUnload = (event) => {
+            // Cancel the event to show Native Browser prompt "Leave Site?"
+            event.preventDefault();
+            // Chrome requires returnValue to be set
+            event.returnValue = '';
+        };
+
+        const handlePageHide = () => {
+            // When navigating away or closing, guarantee the timer stops
+            // using the fetch API with keepalive
+            const token = getStorageItem('subsync_token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/';
+            const endpoint = `${apiUrl}time-tracking/timer/stop/${activeTimer.entry_id}`;
+            
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                keepalive: true // guarantees request completion even if page unloads
+            }).catch(err => console.error('Error auto-stopping timer on exit:', err));
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        // pagehide works more reliably than unload in modern browsers
+        window.addEventListener('pagehide', handlePageHide);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('pagehide', handlePageHide);
+        };
     }, [activeTimer]);
 
     // Live timer countdown
@@ -204,9 +242,8 @@ const QuickTimerButton = () => {
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-5xl p-0 overflow-hidden dark:bg-slate-950 border-none shadow-2xl rounded-[2.5rem]">
-                    <div className="flex flex-col h-full max-h-[90vh]">
-                        <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/50 backdrop-blur-md sticky top-0 z-10">
+                <DialogContent className="w-full max-w-5xl h-[90vh] p-0 overflow-hidden dark:bg-slate-950 border-none shadow-2xl rounded-[2.5rem] flex flex-col">
+                    <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/50 backdrop-blur-md shrink-0 z-10">
                             <div>
                                 <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">
                                     <div className="h-10 w-10 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -238,7 +275,7 @@ const QuickTimerButton = () => {
                             )}
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
                             {activeTimer ? (
                                 <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -297,7 +334,6 @@ const QuickTimerButton = () => {
                                 />
                             )}
                         </div>
-                    </div>
                 </DialogContent>
             </Dialog>
         </>

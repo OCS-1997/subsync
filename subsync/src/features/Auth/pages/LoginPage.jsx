@@ -2,7 +2,7 @@ import { Eye, EyeOff, Lock, User, LayoutDashboard, ShieldCheck, BarChart3, Globe
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast, Bounce } from "react-toastify";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { loginUser } from "../authSlice";
 import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
 import * as LucideIcons from "lucide-react";
@@ -31,20 +31,25 @@ function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
 
 
+  // Tracker to avoid "Login successful" toast on initial load when already authenticated
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
     if (isAuthenticated && !isLoading && !error && user) {
-      toast.success("Login successful!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        theme: "colored",
-        transition: Bounce,
-      });
-
+      if (!isInitialMount.current) {
+        toast.success("Login successful!", {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          theme: "colored",
+          transition: Bounce,
+        });
+      }
       navigate(`/${user.username}/dashboard`);
     }
+    isInitialMount.current = false;
   }, [isAuthenticated, isLoading, error, user, navigate]);
 
   const handleSubmit = async (e) => {

@@ -204,95 +204,110 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
     return (
         <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleSkip()}>
             <DialogContent 
-                className="w-[95vw] max-w-lg p-4 sm:p-6 dark:bg-slate-900 border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+                className="w-[92vw] max-w-lg p-0 dark:bg-slate-950/90 border-slate-800/50 rounded-[32px] overflow-hidden shadow-2xl backdrop-blur-xl"
                 onPointerDown={handleInteraction}
                 onKeyDown={handleInteraction}
             >
-                <DialogHeader className="pb-3 sm:pb-4 border-b border-slate-800">
-                    <DialogTitle className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                        Log Call to DCR
-                    </DialogTitle>
-                    <DialogDescription className="text-xs font-bold text-slate-400 mt-1">
-                        Auto-dismiss in {autoCloseTimer}s
-                    </DialogDescription>
-                </DialogHeader>
+                {/* Premium Branding Header */}
+                <div className="bg-gradient-to-r from-blue-600/20 to-violet-600/20 px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/30">
+                            <Phone className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-white tracking-widest uppercase flex items-center gap-1.5">
+                                SubSync <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-blue-400">RMS</span>
+                            </h2>
+                            <p className="text-[10px] font-bold text-slate-400">Log Call to DCR</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Auto-dismiss</span>
+                        <span className="text-xs font-mono font-bold text-blue-400">00:{String(autoCloseTimer).padStart(2, '0')}</span>
+                    </div>
+                </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 pt-2">
+                <div className="p-5 sm:p-7 max-h-[80vh] overflow-y-auto custom-scrollbar">
+
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Call Metadata Display */}
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl">
-                        <div className="space-y-1">
-                            <Label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                Phone Number
-                            </Label>
-                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white break-all">
+                    {/* Modern Metadata Cards */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-900/40 border border-white/5 rounded-[20px] p-4 flex flex-col gap-1">
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Phone</span>
+                            <p className="text-sm font-bold text-white break-all leading-tight">
                                 {callData.phoneNumber}
                             </p>
                         </div>
-                        <div className="space-y-1">
-                            <Label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                Duration
-                            </Label>
-                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                                <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-blue-500" />
-                                {Math.floor(callData.duration / 60)}m {callData.duration % 60}s
-                            </p>
+                        <div className="bg-slate-900/40 border border-white/5 rounded-[20px] p-4 flex flex-col gap-1">
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Duration</span>
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                                <p className="text-sm font-bold text-white uppercase tabular-nums">
+                                    {Math.floor(callData.duration / 60)}m {callData.duration % 60}s
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Matched Customer/Contact Display */}
-                    {matchedCustomer && (
-                        <div className="p-3 sm:p-4 bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-500/20 rounded-xl sm:rounded-2xl animate-in fade-in slide-in-from-top-2">
-                            <Label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-green-600 dark:text-green-400 mb-2 block">
-                                ✓ Matched Customer
-                            </Label>
-                            <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                {matchedCustomer.company_name || matchedCustomer.customer_name}
-                            </p>
-                            {matchedContact && (
-                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1">
-                                    {matchedContact.contact_name}
+                    {/* Identity Match Card */}
+                    {matchedCustomer ? (
+                        <div className="bg-green-500/10 border border-green-500/20 rounded-[24px] p-5 flex items-start gap-4">
+                            <div className="bg-green-500/20 p-2.5 rounded-full">
+                                <User className="w-5 h-5 text-green-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <span className="text-[9px] font-black text-green-400/80 uppercase tracking-widest block mb-1">✓ Matched Entity</span>
+                                <p className="text-base font-extrabold text-white leading-tight">
+                                    {matchedCustomer.company_name || matchedCustomer.customer_name}
                                 </p>
-                            )}
+                                {matchedContact && (
+                                    <p className="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-1">
+                                        <FileText className="w-3 h-3 opacity-50" />
+                                        {matchedContact.contact_name}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    )}
-
-                    {/* No Match - Create New Contact Option */}
-                    {!matchedCustomer && !showCreateContact && (
-                        <div className="p-3 sm:p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl sm:rounded-2xl space-y-3">
-                            <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                ⚠ No customer match found
-                            </p>
+                    ) : !showCreateContact && (
+                        <div className="bg-amber-500/5 border border-amber-500/10 rounded-[24px] p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-amber-500/20 p-2 rounded-full">
+                                    <UserPlus className="w-5 h-5 text-amber-500" />
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <p className="text-sm font-bold text-white">No Contact Found</p>
+                                    <p className="text-[10px] font-semibold text-slate-500">Add this number to SubSync?</p>
+                                </div>
+                            </div>
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
                                 onClick={() => {
                                     setShowCreateContact(true);
                                     handleInteraction();
                                 }}
-                                className="w-full h-9 sm:h-10 rounded-lg font-bold text-xs border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+                                className="rounded-full h-10 px-6 font-black text-[10px] uppercase tracking-widest border-amber-500/20 text-amber-500 hover:bg-amber-500/10"
                             >
-                                <UserPlus className="w-4 h-4 mr-2" />
-                                Create New Contact
+                                Create Contact
                             </Button>
                         </div>
                     )}
 
                     {/* Create New Contact Form */}
                     {showCreateContact && (
-                        <div className="p-3 sm:p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-500/20 rounded-xl sm:rounded-2xl space-y-3">
-                            <Label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                                <UserPlus className="w-3 h-3 inline mr-1" />
-                                New Contact Details
-                            </Label>
+                        <div className="bg-blue-600/5 border border-blue-600/10 rounded-[24px] p-6 space-y-4 animate-in zoom-in-95">
+                            <div className="flex items-center gap-2 mb-2">
+                                <UserPlus className="w-4 h-4 text-blue-400" />
+                                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">New Contact</span>
+                            </div>
                             
-                            <div className="space-y-2">
+                            <div className="grid gap-3">
                                 <Input
-                                    placeholder="Contact Name *"
+                                    placeholder="Full Name *"
                                     value={newContactName}
                                     onChange={(e) => { setNewContactName(e.target.value); handleInteraction(); }}
-                                    className="h-9 sm:h-10 text-xs sm:text-sm rounded-lg font-semibold bg-white dark:bg-slate-950"
+                                    className="h-12 text-sm rounded-[14px] font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
                                     required
                                 />
                                 <Input
@@ -300,87 +315,89 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
                                     placeholder="Email (optional)"
                                     value={newContactEmail}
                                     onChange={(e) => { setNewContactEmail(e.target.value); handleInteraction(); }}
-                                    className="h-9 sm:h-10 text-xs sm:text-sm rounded-lg font-semibold bg-white dark:bg-slate-950"
+                                    className="h-12 text-sm rounded-[14px] font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
                                 />
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3 pt-2">
                                 <Button
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
+                                    variant="ghost"
                                     onClick={() => {
                                         setShowCreateContact(false);
                                         handleInteraction();
                                     }}
-                                    className="flex-1 h-9 rounded-lg text-xs"
+                                    className="flex-1 rounded-full text-[10px] font-black uppercase text-slate-500 hover:text-white"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="button"
-                                    size="sm"
                                     onClick={handleCreateContact}
                                     disabled={loading || !newContactName.trim()}
-                                    className="flex-1 h-9 rounded-lg text-xs bg-blue-600 hover:bg-blue-700"
+                                    className="flex-2 rounded-full h-11 bg-blue-600 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20"
                                 >
-                                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                                    {loading ? 'Creating...' : 'Create'}
+                                    {loading ? 'Processing...' : 'Save & Attach'}
                                 </Button>
                             </div>
                         </div>
                     )}
 
-                    {/* Notes Field (Required) */}
-                    <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            Call Notes <span className="text-red-500">*</span>
-                        </Label>
-                        <Textarea
-                            id="notes"
-                            value={notes}
-                            onChange={(e) => { setNotes(e.target.value); handleInteraction(); }}
-                            placeholder="What was discussed during the call?"
-                            rows={3}
-                            required
-                            className="rounded-lg sm:rounded-xl p-3 sm:p-4 font-semibold text-xs sm:text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 resize-none"
-                        />
+                    {/* Form Fields Section */}
+                    <div className="space-y-5">
+                        <div className="space-y-2.5">
+                            <Label htmlFor="notes" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 pl-1">
+                                Call Notes <span className="text-blue-500">*</span>
+                            </Label>
+                            <Textarea
+                                id="notes"
+                                value={notes}
+                                onChange={(e) => { setNotes(e.target.value); handleInteraction(); }}
+                                placeholder="What was discussed?"
+                                rows={3}
+                                required
+                                className="rounded-[20px] p-4 text-sm font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 resize-none transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2.5">
+                            <Label htmlFor="outcome" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 pl-1">
+                                Outcome (Optional)
+                            </Label>
+                            <Input
+                                id="outcome"
+                                value={outcome}
+                                onChange={(e) => { setOutcome(e.target.value); handleInteraction(); }}
+                                placeholder="e.g. Schedule follow-up"
+                                className="h-12 px-4 rounded-[16px] text-sm font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20 transition-all"
+                            />
+                        </div>
                     </div>
 
-                    {/* Outcome Field (Optional) */}
-                    <div className="space-y-2">
-                        <Label htmlFor="outcome" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            Outcome (Optional)
-                        </Label>
-                        <Input
-                            id="outcome"
-                            value={outcome}
-                            onChange={(e) => { setOutcome(e.target.value); handleInteraction(); }}
-                            placeholder="e.g., Follow-up scheduled, Deal closed"
-                            className="h-10 sm:h-11 px-3 sm:px-4 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800"
-                        />
-                    </div>
-
-                    {/* Action Buttons - Mobile Optimized */}
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleSkip}
-                            className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl font-black uppercase text-[10px] tracking-widest border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-transform"
-                        >
-                            Skip for Later
-                        </Button>
+                    {/* Action Group */}
+                    <div className="flex flex-col gap-3 group">
                         <Button
                             type="submit"
                             disabled={loading || !notes.trim()}
-                            className="w-full sm:flex-1 h-11 sm:h-12 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-transform"
+                            className="h-14 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] rounded-full font-black uppercase text-[11px] tracking-[0.2em] text-white shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3"
                         >
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            {loading ? 'Logging...' : 'Log Call'}
+                            <CheckCircle2 className="w-5 h-5" />
+                            {loading ? 'Finalizing Log...' : 'Add to DCR Entry'}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={handleSkip}
+                            className="h-12 rounded-full font-black uppercase text-[10px] tracking-widest text-slate-500 hover:text-white hover:bg-white/5 transition-colors"
+                        >
+                            Log Later
                         </Button>
                     </div>
                 </form>
+                
+                {/* Visual Footer Gradient */}
+                <div className="h-2 bg-gradient-to-r from-blue-600/30 to-violet-600/30 w-full" />
+            </div>
             </DialogContent>
         </Dialog>
     );

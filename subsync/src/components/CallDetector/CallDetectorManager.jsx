@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { useCallDetector } from '@/hooks/useCallDetector';
 import PostCallDialog from './PostCallDialog';
 
@@ -29,9 +30,10 @@ export const CallDetectorManager = () => {
     if (isNative) {
       checkOverlayPermission().then(granted => {
         if (!granted) {
+          // Automatically request the overlay permission to ensure Truecaller-style popups work
+          requestOverlayPermission();
           toast.info("Please enable 'Appear on top' permission to allow call logging from the home screen.", {
             autoClose: 10000,
-            onClick: () => requestOverlayPermission()
           });
         }
       });

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, Square, Clock, ArrowRight, Timer } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
+import { getStorageItem } from '@/utils/storage.js';
 import { toast } from 'react-toastify';
 
 const TimerWidget = ({ onTimerUpdate }) => {
@@ -22,6 +23,43 @@ const TimerWidget = ({ onTimerUpdate }) => {
         window.addEventListener('timeTrackingUpdated', handleCustomUpdate);
         return () => window.removeEventListener('timeTrackingUpdated', handleCustomUpdate);
     }, []);
+
+    // Handle browser close / refresh
+    useEffect(() => {
+        if (!activeTimer) return;
+
+        const handleBeforeUnload = (event) => {
+            // Cancel the event to show Native Browser prompt "Leave Site?"
+            event.preventDefault();
+            // Chrome requires returnValue to be set
+            event.returnValue = '';
+        };
+
+        const handlePageHide = () => {
+            // When navigating away or closing, guarantee the timer stops
+            // using the fetch API with keepalive
+            const token = getStorageItem('subsync_token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/';
+            const endpoint = `${apiUrl}time-tracking/timer/stop/${activeTimer.entry_id}`;
+            
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                keepalive: true // guarantees request completion even if page unloads
+            }).catch(err => console.error('Error auto-stopping timer on exit:', err));
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        // pagehide works more reliably than unload in modern browsers
+        window.addEventListener('pagehide', handlePageHide);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('pagehide', handlePageHide);
+        };
+    }, [activeTimer]);
 
     // Update elapsed time every second
     useEffect(() => {
