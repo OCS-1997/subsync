@@ -63,14 +63,12 @@ export function useCallDetector() {
   // Check / request permissions
   // ------------------------------------------------------------------
   const checkPermissions = useCallback(async () => {
+    if (!isNative) return true;
     try {
       const status = await CallDetector.checkPermissions();
-      console.log('[useCallDetector] Permission status:', status);
       
       if (status.phone !== 'granted') {
-        console.log('[useCallDetector] Requesting phone permissions...');
         const requestStatus = await CallDetector.requestPermissions({ permissions: ['phone'] });
-        console.log('[useCallDetector] Request result:', requestStatus);
         return requestStatus.phone === 'granted';
       }
       
@@ -79,29 +77,31 @@ export function useCallDetector() {
       console.error('[useCallDetector] Permission check failed:', err);
       return false;
     }
-  }, []);
+  }, [isNative]);
 
   // ------------------------------------------------------------------
   // Start listening for call events
   // ------------------------------------------------------------------
   const startDetection = useCallback(async () => {
+    if (!isNative) return;
     try {
       await CallDetector.startListening();
       setIsActive(true);
     } catch (err) {
-      console.warn('[useCallDetector] startListening failed:', err.message);
+      // Failed to start
     }
-  }, []);
+  }, [isNative]);
 
   // ------------------------------------------------------------------
   // Stop listening
   // ------------------------------------------------------------------
   const stopDetection = useCallback(async () => {
+    if (!isNative) return;
     try {
       await CallDetector.stopListening();
       setIsActive(false);
     } catch { /* ignore */ }
-  }, []);
+  }, [isNative]);
 
   // ------------------------------------------------------------------
   // Handle Call Data (Resolve Number + Set State)
@@ -129,10 +129,8 @@ export function useCallDetector() {
 
     let resolved = null;
     try {
-      console.log('[useCallDetector] Resolving number:', phoneNumber);
       const response = await api.post('/resolve-number', { phone_number: phoneNumber });
       resolved = response.data?.data || null;
-      console.log('[useCallDetector] Number resolved:', resolved);
     } catch (err) {
       console.error('[useCallDetector] Resolve failed:', err);
       resolved = {
@@ -178,14 +176,13 @@ export function useCallDetector() {
         const fp = getCallFingerprint(normalized);
         if (processedPendingRef.current.has(fp)) return;
 
-        console.log('[useCallDetector] Found launch intent call:', normalized);
         await handleCallData(normalized);
         processedPendingRef.current.add(fp);
 
         try {
           await CallDetector.clearLaunchCallData();
         } catch (clearErr) {
-          console.warn('[useCallDetector] Failed to clear launch call data:', clearErr);
+          // Ignore clear error
         }
       } catch (err) {
         console.error('[useCallDetector] Error checking launch intent call:', err);
@@ -199,7 +196,6 @@ export function useCallDetector() {
 
         if (!mounted || calls.length === 0) return;
 
-        console.log('[useCallDetector] Found pending calls:', calls.length);
         let processedCount = 0;
         for (const call of calls) {
           if (!mounted) break;
@@ -220,7 +216,7 @@ export function useCallDetector() {
           try {
             await CallDetector.clearPendingCalls();
           } catch (clearErr) {
-            console.warn('[useCallDetector] Failed to clear pending calls:', clearErr);
+            // Ignore clear error
           }
         }
       } catch (err) {
@@ -229,14 +225,13 @@ export function useCallDetector() {
     };
 
     const subscribe = async () => {
+      if (!isNative) return;
       try {
         const handle = await CallDetector.addListener('callEnded', async (data) => {
-          console.log('[useCallDetector] Call event received:', data);
           if (mounted) handleCallData(data);
         });
 
         const pendingHandle = await CallDetector.addListener('pendingCallsAdded', () => {
-          console.log('[useCallDetector] Pending calls trigger received via native Plugin!');
           if (mounted) checkPendingCalls();
         });
 
@@ -246,7 +241,6 @@ export function useCallDetector() {
              pendingHandle.remove?.();
           }
         };
-        console.log('[useCallDetector] Listeners subscribed successfully');
         
         // Initial check for pending calls (cold start)
         await checkLaunchIntentCall();
@@ -264,9 +258,9 @@ export function useCallDetector() {
 
     let appStateListener = null;
     const subscribeAppState = async () => {
+      if (!isNative) return;
       appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
         if (isActive && mounted) {
-          console.log('[useCallDetector] App resumed via Capacitor, checking for pending calls...');
           checkLaunchIntentCall();
           checkPendingCalls();
           
@@ -288,14 +282,16 @@ export function useCallDetector() {
     subscribe();
 
     // Extra startup polling for cases where bridge/plugin is late on app launch.
-    [300, 900, 1800, 3200].forEach(delay => {
-      setTimeout(() => {
-        if (mounted) {
-          checkLaunchIntentCall();
-          checkPendingCalls();
-        }
-      }, delay);
-    });
+    if (isNative) {
+      [300, 900, 1800, 3200].forEach(delay => {
+        setTimeout(() => {
+          if (mounted) {
+            checkLaunchIntentCall();
+            checkPendingCalls();
+          }
+        }, delay);
+      });
+    }
 
     return () => {
       mounted = false;
@@ -326,6 +322,7 @@ export function useCallDetector() {
     stopDetection,
     checkPermissions,
     checkOverlayPermission: async () => {
+      if (!isNative) return true;
       try {
         const result = await CallDetector.checkOverlayPermission();
         return result.granted;
@@ -334,6 +331,7 @@ export function useCallDetector() {
       }
     },
     requestOverlayPermission: async () => {
+      if (!isNative) return;
       try {
         await CallDetector.requestOverlayPermission();
       } catch { /* ignore */ }

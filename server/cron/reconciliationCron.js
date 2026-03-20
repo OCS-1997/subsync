@@ -5,6 +5,7 @@ import { sendTodayBirthdayEmails } from '../services/birthdayService.js';
 import { sendDailyDcrReportEmail } from '../services/dcrService.js';
 import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportService.js';
 import { syncBirthdays } from '../models/birthdayModel.js';
+import { syncDirectory } from '../services/directoryService.js';
 
 const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
 
@@ -170,6 +171,32 @@ export function setupBirthdaySyncCron() {
 }
 
 /**
+ * Setup phone directory sync cron job
+ * Runs every 4 hours to aggregate contacts from customers, vendors, and contacts
+ */
+export function setupDirectorySyncCron() {
+    // Run at 00:00, 04:00, 08:00, 12:00, 16:00, and 20:00 UTC every day
+    cron.schedule('0 0,4,8,12,16,20 * * *', async () => {
+        console.log('Running automatic phone directory sync cron job...');
+        try {
+            const result = await syncDirectory();
+            console.log(JSON.stringify({
+                event: 'directory_sync_completed',
+                success: result.success,
+                count: result.count,
+                timestamp: new Date().toISOString(),
+            }));
+        } catch (error) {
+            console.error('Error in directory sync cron:', error);
+        }
+    }, {
+        timezone: 'UTC',
+    });
+
+    console.log('Phone directory sync cron scheduled for every 4 hours (UTC)');
+}
+
+/**
  * Setup all cron jobs
  */
 export function setupCronJobs() {
@@ -177,6 +204,7 @@ export function setupCronJobs() {
     setupArchivalCron();
     setupBirthdayCron();
     setupBirthdaySyncCron();
+    setupDirectorySyncCron();
     setupDcrReportCron();
     setupTimeTrackingReportCron();
 }

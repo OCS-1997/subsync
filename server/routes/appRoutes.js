@@ -191,6 +191,11 @@ import {
     logCallController,
     getCallLogsController
 } from '../controllers/callLogController.js';
+import {
+    getDirectoryController,
+    lookupNumberController,
+    syncDirectoryController
+} from '../controllers/directoryController.js';
 // Reports 360 removed
 
 const router = express.Router();
@@ -592,6 +597,12 @@ router.get('/time-tracking/reports/export', isAuthenticated, authorize(PERMISSIO
 router.post('/resolve-number', isAuthenticated, resolveNumberController);
 router.post('/log-call', isAuthenticated, logCallController);
 router.get('/call-logs', isAuthenticated, getCallLogsController);
+
+// Phone Directory
+router.get('/directory', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_VIEW), getDirectoryController);
+router.get('/directory/lookup', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_VIEW), lookupNumberController);
+router.post('/directory/sync', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_MANAGE), syncDirectoryController);
+
 
 
 export default router;

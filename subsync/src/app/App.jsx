@@ -12,6 +12,7 @@ import FloatingCalculator from '@/components/FloatingCalculator/FloatingCalculat
 import InstallPrompt from '@/components/PWA/InstallPrompt'
 import { useTokenRefresh } from '@/hooks/useTokenRefresh'
 import { useCapacitorAuth } from '@/hooks/useCapacitorAuth'
+import { useCallDetectionSync } from '@/hooks/useCallDetectionSync'
 import { CallLogManager } from '@/components/CallLogPrompt'
 import CallDetectorManager from '@/components/CallDetector/CallDetectorManager'
 import ReleaseGuideManager from '@/features/ReleaseGuide/ReleaseGuideManager'
@@ -22,6 +23,9 @@ function App() {
   
   // Enable Capacitor authentication persistence
   useCapacitorAuth();
+
+  // Sync contacts to native call detector
+  useCallDetectionSync();
   
   useEffect(() => {
     const handleOffline = () => {

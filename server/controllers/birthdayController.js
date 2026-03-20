@@ -210,7 +210,7 @@ export const searchPeopleController = async (req, res) => {
         // Import database connection
         const appDB = (await import('../db/subsyncDB.js')).default;
 
-        // Search users table
+        // 1. Search users table (for user-type birthdays)
         const [users] = await appDB.query(
             `SELECT 
                 username as id,
@@ -227,82 +227,41 @@ export const searchPeopleController = async (req, res) => {
             LIMIT 10`,
             [searchTerm, searchTerm]
         );
-
         results.push(...users);
 
-        // Search customers table  
-        const [customers] = await appDB.query(
+        // 2. Search phone_directory (replaces searching customers + parsing other_contacts)
+        // This includes customers, vendors, and all contact persons in one indexed table.
+        const [dirEntries] = await appDB.query(
             `SELECT 
-                customer_id as id,
-                CONCAT(first_name, ' ', last_name) as name,
-                primary_email as email,
-                date_of_birth,
-                'customer' as type,
-                customer_id,
-                NULL as contact_person_index,
+                entity_id as id,
+                name,
+                email,
+                NULL as date_of_birth, 
+                entity_type as type,
+                CASE WHEN entity_type IN ('contact', 'other_contact') THEN parent_entity_id ELSE entity_id END as customer_id,
+                NULL as contact_person_index, 
                 company_name
-            FROM customers 
-            WHERE (display_name LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR primary_email LIKE ?)
-            AND customer_status = 'Active'
-            LIMIT 10`,
-            [searchTerm, searchTerm, searchTerm, searchTerm]
-        );  
-
-        //console.log(`[Birthday Search] Found ${customers.length} customers for query "${q}"`);
-        results.push(...customers);
-
-        // Search contact persons in customers' other_contacts JSON
-        const [customersWithContacts] = await appDB.query(
-            `SELECT 
-                customer_id,
-                company_name,
-                other_contacts
-            FROM customers 
-            WHERE customer_status = 'Active'
-            AND other_contacts IS NOT NULL 
-            AND other_contacts != ''
-            AND other_contacts != '[]'`,
-            []
+            FROM phone_directory
+            WHERE name LIKE ? OR phone_number LIKE ? OR email LIKE ?
+            LIMIT 20`,
+            [searchTerm, searchTerm, searchTerm]
         );
 
-        // Parse other_contacts and search
-        for (const customer of customersWithContacts) {
-            try {
-                const contacts = typeof customer.other_contacts === 'string' 
-                    ? JSON.parse(customer.other_contacts) 
-                    : customer.other_contacts;
+        // Map directory types to birthday types
+        const mappedEntries = dirEntries.map(entry => {
+            let birthType = 'customer';
+            if (entry.type === 'contact' || entry.type === 'other_contact') birthType = 'contact_person';
+            
+            return {
+                ...entry,
+                type: birthType
+            };
+        });
 
-                if (Array.isArray(contacts)) {
-                    contacts.forEach((contact, index) => {
-                        const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
-                        const searchQuery = q.trim().toLowerCase();
-                        
-                        if (
-                            fullName.toLowerCase().includes(searchQuery) ||
-                            (contact.email && contact.email.toLowerCase().includes(searchQuery))
-                        ) {
-                            results.push({
-                                id: `${customer.customer_id}_${index}`,
-                                name: fullName,
-                                email: contact.email || '',
-                                date_of_birth: contact.birthday || contact.date_of_birth || null,
-                                type: 'contact_person',
-                                customer_id: customer.customer_id,
-                                contact_person_index: index,
-                                company_name: customer.company_name
-                            });
-                        }
-                    });
-                }
-            } catch (parseError) {
-                console.error(`Error parsing other_contacts for customer ${customer.customer_id}:`, parseError);
-            }
-        }
+        results.push(...mappedEntries);
 
         // Limit total results
-        const limitedResults = results.slice(0, 30);
-
-        res.json({ results: limitedResults });
+        res.json({ results: results.slice(0, 30) });
     } catch (error) {
         console.error('Error searching people:', error);
         res.status(500).json({ error: error.message || 'Failed to search people' });

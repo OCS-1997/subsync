@@ -41,22 +41,27 @@ process.on('uncaughtException', (err) => {
 // });
 
 // CORS configuration
+const allowedOrigins = [
+    `http://localhost:${process.env.CLIENT_PORT || 5173}`,
+    `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`,
+    `http://localhost`,
+    `https://localhost`,
+    `http://127.0.0.1`,
+    `http://ocs365.in`,
+    `https://ocs365.in`,
+    `capacitor://localhost`,
+    `ionic://localhost`,
+    /^chrome-extension:\/\/.*/,
+];
+
+// Add origins from .env if provided
+if (process.env.ALLOWED_ORIGINS) {
+    const envOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+    allowedOrigins.push(...envOrigins);
+}
+
 app.use(cors({
-    origin: [
-        `http://localhost:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
-        `http://${process.env.HOME_IP || 'localhost'}:${process.env.CLIENT_PORT || 5173}`, // for dev outside Docker
-        `http://localhost`, // allows requests from your Nginx frontend (port 80)
-        `https://localhost`, // Capacitor Android default for some versions
-        `http://127.0.0.1`,
-        `http://ocs365.in`,
-        `https://ocs365.in`,
-        `http://localhost:4173`,
-        `http://dev.ocs365.in`,
-        `https://dev.ocs365.in`,
-        `capacitor://localhost`,   // Android/iOS Capacitor WebView origin
-        `ionic://localhost`,       // Ionic/Capacitor alternate origin
-        /^chrome-extension:\/\/.*/, // Allow browser extension requests
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,

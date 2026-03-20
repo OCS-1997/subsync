@@ -98,6 +98,9 @@ export const PERMISSIONS = Object.freeze({
     PERFORMANCE_REPORTS_VIEW: 'performance_reports.view',
     PERFORMANCE_REPORTS_VIEW_TEAM: 'performance_reports.view_team',
     PERFORMANCE_REPORTS_VIEW_ALL: 'performance_reports.view_all',
+    // Phone Directory
+    DIRECTORY_VIEW: 'directory.view',
+    DIRECTORY_MANAGE: 'directory.manage',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -200,6 +203,9 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW, resource: 'performance_reports', action: 'view', description: 'View own performance report' },
     { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW_TEAM, resource: 'performance_reports', action: 'view_team', description: 'View team performance reports' },
     { key: PERMISSIONS.PERFORMANCE_REPORTS_VIEW_ALL, resource: 'performance_reports', action: 'view_all', description: 'View all user performance reports' },
+    // Phone Directory
+    { key: PERMISSIONS.DIRECTORY_VIEW, resource: 'directory', action: 'view', description: 'View the centralized phone directory' },
+    { key: PERMISSIONS.DIRECTORY_MANAGE, resource: 'directory', action: 'manage', description: 'Manage directory synchronization and settings' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -252,6 +258,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TIME_TRACKING_USE,
         PERMISSIONS.TIME_TRACKING_VIEW_TEAM,
         PERMISSIONS.TIME_TRACKING_MANAGE,
+        PERMISSIONS.DIRECTORY_VIEW,
+        PERMISSIONS.DIRECTORY_MANAGE,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -276,6 +284,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         // Time Tracking
         PERMISSIONS.TIME_TRACKING_VIEW,
         PERMISSIONS.TIME_TRACKING_USE,
+        PERMISSIONS.DIRECTORY_VIEW,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,

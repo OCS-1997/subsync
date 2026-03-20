@@ -2,6 +2,11 @@ import appDB from "../db/subsyncDB.js";
 import { getCurrentTime } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
 
+// In-memory cache for resolved phone numbers to ensure near-instant caller ID
+// Limited to 1000 entries to prevent memory bloat
+const resolveCache = new Map();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Normalize a phone number to last 10 digits.
  * Strips country codes (+91, 91, +1, etc.) and non-numeric characters.
@@ -38,133 +43,43 @@ export async function resolvePhoneNumber(rawPhone) {
     const searchNumber = normalizePhone(rawPhone);
 
     if (!searchNumber || searchNumber.length < 10) {
-        return { type: 'unknown', id: null, name: 'Unknown Number', company: null, phone: rawPhone };
+        return { type: 'unknown', id: null, name: 'Unknown Number', company: null, phone: rawPhone || 'Unknown' };
     }
 
-    // ---- 1. Check customers (primary + secondary + other_contacts JSON) ----
-    const [customers] = await appDB.query(
-        `SELECT customer_id, display_name, first_name, last_name, company_name,
-                primary_phone_number, secondary_phone_number, other_contacts
-         FROM customers
-         WHERE customer_status = 'Active'`
+    // 1. Check Cache
+    if (resolveCache.has(searchNumber)) {
+        return resolveCache.get(searchNumber);
+    }
+
+    // 2. Search in the centralized phone_directory table
+    const [rows] = await appDB.query(
+        "SELECT entity_type, entity_id, name, company_name, phone_number FROM phone_directory WHERE normalized_number = ? LIMIT 1",
+        [searchNumber]
     );
 
-    for (const c of customers) {
-        if (normalizePhone(c.primary_phone_number) === searchNumber) {
-            return {
-                type: 'customer',
-                id: c.customer_id,
-                name: c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
-                company: c.company_name || null,
-                phone: searchNumber,
-            };
-        }
-        if (c.secondary_phone_number && normalizePhone(c.secondary_phone_number) === searchNumber) {
-            return {
-                type: 'customer',
-                id: c.customer_id,
-                name: c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
-                company: c.company_name || null,
-                phone: searchNumber,
-            };
-        }
-        // Check other_contacts JSON array
-        if (c.other_contacts) {
-            let contacts = [];
-            try {
-                contacts = typeof c.other_contacts === 'string'
-                    ? JSON.parse(c.other_contacts || '[]')
-                    : (c.other_contacts || []);
-            } catch { contacts = []; }
-
-            for (const oc of contacts) {
-                const ocPhone = oc.phone_number || oc.mobile || '';
-                if (ocPhone && normalizePhone(ocPhone) === searchNumber) {
-                    const ocName = `${oc.first_name || ''} ${oc.last_name || ''}`.trim()
-                        || oc.contact_name || '';
-                    return {
-                        type: 'other_contact',
-                        id: c.customer_id,           // belongs to this customer
-                        name: ocName || c.display_name,
-                        company: c.company_name || null,
-                        phone: searchNumber,
-                    };
-                }
-            }
-        }
+    let result;
+    if (rows.length > 0) {
+        const entry = rows[0];
+        result = {
+            type: entry.entity_type,
+            id: entry.entity_id,
+            name: entry.name,
+            company: entry.company_name,
+            phone: entry.phone_number,
+        };
+    } else {
+        result = { type: 'unknown', id: null, name: 'Unknown Number', company: null, phone: rawPhone };
     }
 
-    // ---- 2. Check vendors (primary + secondary + other_contacts JSON) ----
-    const [vendors] = await appDB.query(
-        `SELECT vendor_id, display_name, first_name, last_name, company_name,
-                primary_phone_number, secondary_phone_number, other_contacts
-         FROM vendors
-         WHERE vendor_status = 'Active'`
-    );
-
-    for (const v of vendors) {
-        if (normalizePhone(v.primary_phone_number) === searchNumber) {
-            return {
-                type: 'vendor',
-                id: v.vendor_id,
-                name: v.display_name || `${v.first_name || ''} ${v.last_name || ''}`.trim(),
-                company: v.company_name || null,
-                phone: searchNumber,
-            };
-        }
-        if (v.secondary_phone_number && normalizePhone(v.secondary_phone_number) === searchNumber) {
-            return {
-                type: 'vendor',
-                id: v.vendor_id,
-                name: v.display_name || `${v.first_name || ''} ${v.last_name || ''}`.trim(),
-                company: v.company_name || null,
-                phone: searchNumber,
-            };
-        }
-        if (v.other_contacts) {
-            let contacts = [];
-            try {
-                contacts = typeof v.other_contacts === 'string'
-                    ? JSON.parse(v.other_contacts || '[]')
-                    : (v.other_contacts || []);
-            } catch { contacts = []; }
-
-            for (const oc of contacts) {
-                const ocPhone = oc.phone_number || oc.mobile || '';
-                if (ocPhone && normalizePhone(ocPhone) === searchNumber) {
-                    return {
-                        type: 'vendor',
-                        id: v.vendor_id,
-                        name: `${oc.first_name || ''} ${oc.last_name || ''}`.trim() || v.display_name,
-                        company: v.company_name || null,
-                        phone: searchNumber,
-                    };
-                }
-            }
-        }
+    // 3. Update Cache
+    if (resolveCache.size >= MAX_CACHE_SIZE) {
+        // Simple eviction: clear oldest (first inserted) entry
+        const firstKey = resolveCache.keys().next().value;
+        resolveCache.delete(firstKey);
     }
+    resolveCache.set(searchNumber, result);
 
-    // ---- 3. Check contacts table ----
-    const [contacts] = await appDB.query(
-        `SELECT contact_id, first_name, last_name, company_name, phone_number
-         FROM contacts
-         WHERE phone_number IS NOT NULL`
-    );
-
-    for (const ct of contacts) {
-        if (ct.phone_number && normalizePhone(ct.phone_number) === searchNumber) {
-            return {
-                type: 'contact',
-                id: ct.contact_id,
-                name: `${ct.first_name || ''} ${ct.last_name || ''}`.trim() || 'Unknown Contact',
-                company: ct.company_name || null,
-                phone: searchNumber,
-            };
-        }
-    }
-
-    // ---- 4. Unknown ----
-    return { type: 'unknown', id: null, name: 'Unknown Number', company: null, phone: searchNumber };
+    return result;
 }
 
 /**

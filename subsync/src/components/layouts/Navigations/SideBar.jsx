@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useParams, useLocation } from 'react-router-dom';
-import { Command, X } from 'lucide-react';
+import { Command, X, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useEffect, useCallback } from 'react';
 
@@ -21,6 +21,7 @@ const sidebarItems = [
   { path: 'dashboard/assets', title: 'Assets', icon: 'devices', icon_type: 'material', permission: PERMISSIONS.ASSETS_VIEW },
   { path: 'dashboard/time-tracking', title: 'Time Tracking', icon: 'schedule', icon_type: 'material', permission: PERMISSIONS.TIME_TRACKING_VIEW },
   { path: 'dashboard/dcr', title: 'DCR Module', icon: 'phone', icon_type: 'material', permission: PERMISSIONS.DCR_VIEW },
+  { path: 'dashboard/phone-directory', title: 'Phone Directory', icon: 'contact_phone', icon_type: 'material', permission: PERMISSIONS.DIRECTORY_VIEW },
   { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW },
   { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
   { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW },
@@ -165,7 +166,29 @@ function SideBar({ isOpen, toggleSidebar }) {
           </div>
         </nav>
 
-        <div className="mt-auto border-t border-sidebar-border p-4 bg-sidebar-accent/10 backdrop-blur-sm">
+        <div className="mt-auto border-t border-sidebar-border p-4 bg-sidebar-accent/5 backdrop-blur-sm space-y-2">
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <a
+                  href="/download/app"
+                  className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all duration-300 group border border-emerald-500/20`}
+                  title="Download Android App"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl group-hover:bg-emerald-500/20 transition-colors">
+                    <Smartphone className={`h-5 w-5`} />
+                  </div>
+                  {isOpen && <span className="font-bold text-[10px] uppercase tracking-wider">Download App</span>}
+                </a>
+              </TooltipTrigger>
+              {!isOpen && (
+                <TooltipContent side="right" className="bg-emerald-600 text-white border-emerald-500 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
+                  Download Android APK
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>

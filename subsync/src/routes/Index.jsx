@@ -69,6 +69,7 @@ import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
+import PhoneDirectory from '@/features/PhoneDirectory/pages/PhoneDirectory.jsx';
 // Reports 360 removed
 
 const router = createBrowserRouter([
@@ -146,6 +147,9 @@ const router = createBrowserRouter([
 
       // Time Tracking
       { path: "time-tracking", element: <PermissionGate required={PERMISSIONS.TIME_TRACKING_VIEW}><TimeTracking /></PermissionGate> },
+      
+      // Phone Directory
+      { path: "phone-directory", element: <PermissionGate required={PERMISSIONS.DIRECTORY_VIEW}><PhoneDirectory /></PermissionGate> },
 
       // Reports 360
       // Reports 360 routes removed

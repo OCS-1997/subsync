@@ -574,6 +574,15 @@ export default function HelpPage() {
                                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">3</span>
                                     <p className="text-sm text-slate-600 dark:text-slate-400">Tap <b>Install App</b> or <b>Add to Home Screen</b></p>
                                 </div>
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                    <p className="text-xs text-slate-500 mb-3">Alternatively, download the high-performance Android App (APK):</p>
+                                    <a
+                                        href="/download/app"
+                                        className="w-full py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+                                    >
+                                        <Download size={16} /> Download Android APK
+                                    </a>
+                                </div>
                             </CardContent>
                         </Card>
 

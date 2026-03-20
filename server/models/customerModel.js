@@ -382,144 +382,44 @@ async function appendCustomerContact(customerId, contact) {
 
 /**
  * Search for customer and contact by phone number
- * Used by CallLog system to auto-match customers
+ * Refactored to use the centralized phone_directory table for high performance.
  * @param {string} phoneNumber - Phone number to search
  * @returns {Promise<{customer: Object|null, contact: Object|null}>}
  */
 async function searchCustomerByPhone(phoneNumber) {
     try {
-        if (!phoneNumber) {
-            return { customer: null, contact: null };
-        }
+        if (!phoneNumber) return { customer: null, contact: null };
 
-        /**
-         * Normalize phone number for comparison
-         * Strips country codes (+91, 91, etc.) and removes special characters
-         * Returns just the core 10-digit number
-         */
-        function normalizePhone(phone) {
-            if (!phone) return '';
-            
-            // Remove all non-digit characters
-            let digits = phone.replace(/\D/g, '');
-            
-            // Remove leading country codes (91, 1, etc.)
-            // For Indian numbers, remove leading 91
-            if (digits.startsWith('91') && digits.length > 10) {
-                digits = digits.substring(2);
-            }
-            // For US/Canada, remove leading 1
-            if (digits.startsWith('1') && digits.length === 11) {
-                digits = digits.substring(1);
-            }
-            
-            // Return last 10 digits (handles any remaining prefixes)
-            return digits.slice(-10);
-        }
+        const digits = normalizePhoneNumber(phoneNumber);
+        if (!digits || digits.length < 10) return { customer: null, contact: null };
+        const last10 = digits.slice(-10);
 
-        const searchNumber = normalizePhone(phoneNumber);
-        
-        if (!searchNumber || searchNumber.length < 10) {
-            return { customer: null, contact: null };
-        }
-
-        // Search in customers table
-        const [customers] = await appDB.query(
-            `SELECT 
-                customer_id,
-                display_name, 
-                company_name, 
-                first_name,
-                last_name,
-                primary_phone_number, 
-                secondary_phone_number,
-                country_code,
-                primary_email,
-                other_contacts
-             FROM customers 
-             WHERE customer_status = 'Active'`,
-            []
+        const [rows] = await appDB.query(
+            `SELECT entity_id as customer_id, name as display_name, company_name, phone_number
+             FROM phone_directory 
+             WHERE normalized_number = ? AND entity_type IN ('customer', 'contact', 'other_contact')
+             LIMIT 1`,
+            [last10]
         );
 
-        for (const customer of customers) {
-            let matchedContact = null;
-            let matchType = null;
-
-            // Check primary phone
-            const primaryNormalized = normalizePhone(customer.primary_phone_number);
-            if (primaryNormalized === searchNumber) {
-                matchType = 'primary';
-                matchedContact = {
+        if (rows.length > 0) {
+            const entry = rows[0];
+            return {
+                customer: {
+                    customer_id: entry.customer_id,
+                    customer_name: entry.display_name,
+                    company_name: entry.company_name,
+                    display_name: entry.display_name
+                },
+                contact: {
                     contact_id: null,
-                    contact_name: `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || customer.display_name,
-                    phone_number: customer.primary_phone_number,
-                    email: customer.primary_email,
-                    country_code: customer.country_code || '+91'
-                };
-            }
-
-            // Check secondary phone
-            if (!matchedContact && customer.secondary_phone_number) {
-                const secondaryNormalized = normalizePhone(customer.secondary_phone_number);
-                if (secondaryNormalized === searchNumber) {
-                    matchType = 'secondary';
-                    matchedContact = {
-                        contact_id: null,
-                        contact_name: `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || customer.display_name,
-                        phone_number: customer.secondary_phone_number,
-                        email: customer.primary_email,
-                        country_code: customer.country_code || '+91'
-                    };
+                    contact_name: entry.display_name,
+                    phone_number: entry.phone_number,
+                    email: '',
+                    country_code: '+91'
                 }
-            }
-
-            // Check other_contacts array
-            if (!matchedContact && customer.other_contacts) {
-                let contacts = [];
-                try {
-                    contacts = typeof customer.other_contacts === 'string' 
-                        ? JSON.parse(customer.other_contacts || '[]') 
-                        : (customer.other_contacts || []);
-                } catch (e) {
-                    contacts = [];
-                }
-
-                for (const contact of contacts) {
-                    if (contact.phone_number) {
-                        const contactNormalized = normalizePhone(contact.phone_number);
-                        if (contactNormalized === searchNumber) {
-                            matchType = 'other_contact';
-                            matchedContact = {
-                                contact_id: null,
-                                contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim(),
-                                phone_number: contact.phone_number,
-                                email: contact.email || '',
-                                country_code: contact.country_code || '+91',
-                                designation: contact.designation || ''
-                            };
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // If we found a match, return it
-            if (matchedContact) {
-                console.log(`Phone match found: ${matchType} for customer ${customer.customer_id}`);
-                return {
-                    customer: {
-                        customer_id: customer.customer_id,
-                        customer_name: customer.display_name,
-                        company_name: customer.company_name,
-                        display_name: customer.display_name
-                    },
-                    contact: matchedContact
-                };
-            }
+            };
         }
-
-        // No match found
-        //console.log(`No customer match found for phone: ${phoneNumber} (normalized: ${searchNumber})`);
         return { customer: null, contact: null };
     } catch (error) {
         console.error('Error searching customer by phone:', error);
