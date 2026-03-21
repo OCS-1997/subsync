@@ -70,11 +70,13 @@ import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
 import PhoneDirectory from '@/features/PhoneDirectory/pages/PhoneDirectory.jsx';
+import DownloadPage from '@/features/Download/DownloadPage.jsx';
 // Reports 360 removed
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
   { path: "/kb/p/:slug", element: <ArticleView publicView={true} /> },
+  { path: "/app/download", element: <DownloadPage /> },
   {
     path: "/:username/dashboard",
     element: (

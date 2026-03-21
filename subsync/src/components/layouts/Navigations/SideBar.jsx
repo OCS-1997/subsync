@@ -170,28 +170,6 @@ function SideBar({ isOpen, toggleSidebar }) {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <a
-                  href="/download/app"
-                  className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all duration-300 group border border-emerald-500/20`}
-                  title="Download Android App"
-                >
-                  <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl group-hover:bg-emerald-500/20 transition-colors">
-                    <Smartphone className={`h-5 w-5`} />
-                  </div>
-                  {isOpen && <span className="font-bold text-[10px] uppercase tracking-wider">Download App</span>}
-                </a>
-              </TooltipTrigger>
-              {!isOpen && (
-                <TooltipContent side="right" className="bg-emerald-600 text-white border-emerald-500 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
-                  Download Android APK
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-300 group`}

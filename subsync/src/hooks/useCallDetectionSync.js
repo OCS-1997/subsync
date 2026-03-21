@@ -27,7 +27,9 @@ export const useCallDetectionSync = () => {
 
         const uniqueContacts = allEntries.map(e => ({
             name: e.name,
-            phoneNumber: e.phone_number
+            phoneNumber: e.phone_number,
+            company: e.company_name || '',
+            type: e.entity_type || ''
         }));
 
         // Add a "meta" contact with the sync timestamp for native debugging
