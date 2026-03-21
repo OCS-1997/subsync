@@ -62,9 +62,9 @@ export default function DownloadPage() {
                             Download APK
                         </Button>
                         <div className="flex justify-center items-center gap-4 px-6 py-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm group/qr overflow-hidden relative">
-                            <div className="w-30 h-30 bg-white p-1 rounded-xl shadow-inner group-hover:scale-105 transition-transform duration-500">
+                            <div className="w-32 h-32 bg-white p-2 rounded-2xl shadow-inner group-hover:scale-105 transition-transform duration-500">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/download/subsync.apk')}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/download/subsync.apk')}`} 
                                     alt="QR Code"
                                     className="w-full h-full object-contain"
                                 />
