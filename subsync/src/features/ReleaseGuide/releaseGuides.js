@@ -39,18 +39,28 @@ export const RELEASE_GUIDES = [
     autoShow: true,
   },
 
-  // ─── Add future patch guides below this line ───────────────────────────────
-  //
-  // {
-  //   id: '1.1.0-new-feature',
-  //   version: '1.1.0',
-  //   title: "What's New in 1.1",
-  //   steps: [
-  //     {
-  //       id: 'step-feature-x',
-  //       title: '✨ Feature X',
-  //       body: 'Description of the feature.',
-  //     },
-  //   ],
-  // },
+  {
+    id: '2.1.0-help-downloads',
+    version: '2.1.0',
+    title: "What's New in 2.1.0",
+    description: 'Major UI overhaul and mobile accessibility improvements.',
+    steps: [
+      {
+        id: 'step-help-center',
+        title: '🆘 Revamped Help Center',
+        body: 'A faster, cleaner, and searchable help page. High-performance design that fixes previous navigation issues.',
+      },
+      {
+        id: 'step-mobile-downloads',
+        title: '📱 Public Mobile Download',
+        body: 'A dedicated public page at /app/download with an easy 6-step installation guide and QR code for mobile setup.',
+      },
+      {
+        id: 'step-command-palette-directory',
+        title: '📞 Phone Directory Integration',
+        body: 'Access the Phone Directory instantly from the Command Palette (Ctrl+K). Search callers and logs without leaving your current page.',
+      },
+    ],
+    autoShow: true,
+  },
 ];
