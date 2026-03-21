@@ -84,7 +84,18 @@ app.use(cors({
 // });
 
 // app.use(limiter);
-app.use('/api/download', express.static(path.join(__dirname, 'downloads')));
+app.get('/api/download/subsync.apk', (req, res) => {
+    const filePath = path.join(__dirname, 'downloads', 'subsync.apk');
+    console.log(`[DOWNLOAD] Serving APK from: ${filePath}`);
+    res.download(filePath, 'subsync.apk', (err) => {
+        if (err) {
+            console.error('[DOWNLOAD] Error sending file:', err);
+            if (!res.headersSent) {
+                res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'APK file not found on server' } });
+            }
+        }
+    });
+});
 app.use("/api", router);
 
 // Setup Bull Board for queue monitoring

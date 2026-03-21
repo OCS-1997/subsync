@@ -15,9 +15,13 @@ import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 
 export default function DownloadPage() {
+    const getDownloadUrl = () => {
+        const baseUrl = import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
+        return `${baseUrl}/download/subsync.apk`;
+    };
+
     const handleDownload = () => {
-        const downloadUrl = `${import.meta.env.VITE_API_URL}/download/subsync.apk`;
-        window.location.href = downloadUrl;
+        window.location.href = getDownloadUrl();
     };
 
     const steps = [
@@ -65,7 +69,7 @@ export default function DownloadPage() {
                         <div className="flex justify-center items-center gap-4 px-6 py-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm group/qr overflow-hidden relative">
                             <div className="w-32 h-32 bg-white p-2 rounded-2xl shadow-inner group-hover:scale-105 transition-transform duration-500">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(import.meta.env.VITE_API_URL + '/download/subsync.apk')}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getDownloadUrl())}`} 
                                     alt="QR Code"
                                     className="w-full h-full object-contain"
                                 />
