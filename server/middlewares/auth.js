@@ -8,7 +8,13 @@ export const isAuthenticated = async (req, res, next) => {
             return res.status(401).json({ error: "No token provided" });
         }
         const token = authHeader.split(' ')[1];
-        const secret = process.env.JWT_SECRET ;
+        const secret = process.env.JWT_SECRET;
+        
+        if (!secret) {
+            console.error("CRITICAL: JWT_SECRET is not defined in environment variables!".red);
+            return res.status(500).json({ error: "Internal Server Error: Auth configuration missing" });
+        }
+
         const decoded = jwt.verify(token, secret);
         const userContext = await buildUserContext(decoded.username);
         if (!userContext) {

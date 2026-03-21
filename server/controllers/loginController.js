@@ -16,7 +16,11 @@ const validateLogin = async (req, res) => {
         const user = await checkLogin(username, password);
 
         if (user) {
-            const secret = process.env.JWT_SECRET ;
+            const secret = process.env.JWT_SECRET;
+            if (!secret) {
+                console.error("CRITICAL: JWT_SECRET is missing during login!".red);
+                throw new Error("JWT_SECRET not configured");
+            }
             const token = jwt.sign({ username: user.username, roleId: user.roleId }, secret, { expiresIn: '1d' });
             const authContext = await buildUserContext(user.username);
             const loginTime = new Date().toISOString();
