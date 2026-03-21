@@ -15,7 +15,7 @@ export const isAuthenticated = async (req, res, next) => {
             return res.status(500).json({ error: "Internal Server Error: Auth configuration missing" });
         }
 
-        console.log(`[AUTH] Verifying token with secret length: ${secret.length}`);
+        //console.log(`[AUTH] Verifying token with secret length: ${secret.length}`);
         const decoded = jwt.verify(token, secret);
         const userContext = await buildUserContext(decoded.username);
         if (!userContext) {
