@@ -8,7 +8,8 @@ export const isAuthenticated = async (req, res, next) => {
             return res.status(401).json({ error: "No token provided" });
         }
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "your_secret_key");
+        const secret = process.env.JWT_SECRET ;
+        const decoded = jwt.verify(token, secret);
         const userContext = await buildUserContext(decoded.username);
         if (!userContext) {
             return res.status(401).json({ error: "Invalid user context" });

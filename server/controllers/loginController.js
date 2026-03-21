@@ -16,7 +16,8 @@ const validateLogin = async (req, res) => {
         const user = await checkLogin(username, password);
 
         if (user) {
-            const token = jwt.sign({ username: user.username, roleId: user.roleId }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            const secret = process.env.JWT_SECRET ;
+            const token = jwt.sign({ username: user.username, roleId: user.roleId }, secret, { expiresIn: '1d' });
             const authContext = await buildUserContext(user.username);
             const loginTime = new Date().toISOString();
             // Log successful login
