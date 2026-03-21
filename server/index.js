@@ -84,7 +84,7 @@ app.use(cors({
 // });
 
 // app.use(limiter);
-app.use('/download', express.static(path.join(__dirname, 'downloads')));
+app.use('/api/download', express.static(path.join(__dirname, 'downloads')));
 app.use("/api", router);
 
 // Setup Bull Board for queue monitoring
