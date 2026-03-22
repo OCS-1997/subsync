@@ -27,6 +27,11 @@ dist-ssr
 
 *.md
 
-android
+android/build
+.gradle/
+local.properties
+android/app/build
+android/app/debug
+android/app/release
 
 public/download/*

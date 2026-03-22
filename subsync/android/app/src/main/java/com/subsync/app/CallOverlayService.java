@@ -1,0 +1,366 @@
+package com.subsync.app;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.PixelFormat;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class CallOverlayService extends Service {
+    private static final String TAG = "CallOverlayService";
+    private static final String CHANNEL_ID = "CallOverlayChannel";
+    public static final String EXTRA_CALL_PHONE = "subsync_call_phone";
+    public static final String EXTRA_CALL_NAME = "subsync_call_name";
+    public static final String EXTRA_CALL_DURATION = "subsync_call_duration";
+    public static final String EXTRA_CALL_TYPE = "subsync_call_type";
+    private WindowManager windowManager;
+    private View overlayView;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // Start foreground notification IMPROREDIATELY on Android 14+ to avoid crash/blocking
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Subsync Call Tracker")
+                .setContentText("Processing call details...")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .build();
+                
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(1001, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(1001, notification);
+        }
+
+        if (intent != null) {
+            final String initialNumber = intent.getStringExtra("number");
+            final int initialDuration = intent.getIntExtra("duration", 0);
+            final String initialType = intent.getStringExtra("type");
+            final String initialName = intent.getStringExtra("name");
+
+            // Refine in background: pull from CallLog after a short delay to be sure it's updated
+            new Thread(() -> {
+                Log.d(TAG, "Background refining call log for: " + initialNumber);
+                
+                String finalNumber = initialNumber != null ? initialNumber : "";
+                int finalDuration = initialDuration;
+                String finalType = initialType != null ? initialType : "unknown";
+                String finalName = initialName;
+                String finalCompany = null;
+                String finalEntityType = null;
+
+                // Poll for CallLog (up to 3 seconds)
+                boolean foundInLog = false;
+                for (int i = 0; i < 3; i++) {
+                    try { Thread.sleep(1000); } catch (InterruptedException e) {}
+                    
+                    try {
+                        android.database.Cursor cursor = getContentResolver().query(
+                            android.provider.CallLog.Calls.CONTENT_URI,
+                            new String[] { 
+                                android.provider.CallLog.Calls.NUMBER, 
+                                android.provider.CallLog.Calls.DURATION, 
+                                android.provider.CallLog.Calls.TYPE,
+                                android.provider.CallLog.Calls.CACHED_NAME 
+                            },
+                            null, null, 
+                            android.provider.CallLog.Calls.DATE + " DESC LIMIT 1"
+                        );
+
+                        if (cursor != null && cursor.moveToFirst()) {
+                            String logNumber = cursor.getString(cursor.getColumnIndexOrThrow(android.provider.CallLog.Calls.NUMBER));
+                            int logDuration = cursor.getInt(cursor.getColumnIndexOrThrow(android.provider.CallLog.Calls.DURATION));
+                            int logType = cursor.getInt(cursor.getColumnIndexOrThrow(android.provider.CallLog.Calls.TYPE));
+                            String cachedName = cursor.getString(cursor.getColumnIndexOrThrow(android.provider.CallLog.Calls.CACHED_NAME));
+                            cursor.close();
+
+                            // Verify if it's likely the same call (matching number or if captured number was empty)
+                            boolean isMatch = finalNumber.isEmpty();
+                            if (!isMatch && logNumber != null) {
+                                String cleanFinal = finalNumber.replaceAll("[^0-9]", "");
+                                String cleanLog = logNumber.replaceAll("[^0-9]", "");
+                                isMatch = (!cleanFinal.isEmpty() && cleanLog.contains(cleanFinal)) ||
+                                          (!cleanLog.isEmpty() && cleanFinal.contains(cleanLog));
+                            }
+                            if (isMatch) {
+                                finalNumber = logNumber != null ? logNumber : finalNumber;
+                                if (logDuration > 0) finalDuration = logDuration;
+                                finalType = mapCallType(logType);
+                                if (finalName == null || finalName.isEmpty()) finalName = cachedName;
+                                foundInLog = true;
+                                break;
+                            }
+                        } else if (cursor != null) {
+                            cursor.close();
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error querying log in thread", e);
+                    }
+                }
+
+                // Call information lookup
+                JSONObject contactInfo = CallTracker.getInstance(getApplicationContext()).queryContactInfo(getApplicationContext(), finalNumber);
+                if (contactInfo != null) {
+                    finalName = contactInfo.optString("name", finalName);
+                    finalCompany = contactInfo.optString("company", "");
+                    finalEntityType = contactInfo.optString("type", "");
+                }
+
+                final String resultNumber = finalNumber;
+                final int resultDuration = finalDuration;
+                final String resultType = finalType;
+                final String resultName = finalName;
+                final String resultCompany = finalCompany;
+                final String resultEntityType = finalEntityType;
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    showOverlay(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType);
+                });
+            }).start();
+        }
+
+        return START_NOT_STICKY;
+    }
+
+    private String mapCallType(int type) {
+        switch (type) {
+            case android.provider.CallLog.Calls.INCOMING_TYPE: return "incoming";
+            case android.provider.CallLog.Calls.OUTGOING_TYPE: return "outgoing";
+            case android.provider.CallLog.Calls.MISSED_TYPE: return "missed";
+            default: return "unknown";
+        }
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    private void showOverlay(String number, int duration, String type, String name, String company, String entityType) {
+        if (overlayView != null)
+            return;
+
+        try {
+            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+            overlayView = inflater.inflate(R.layout.call_overlay, null);
+
+            int layoutFlag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    : WindowManager.LayoutParams.TYPE_PHONE;
+
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    layoutFlag,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                            | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    PixelFormat.TRANSLUCENT);
+
+            params.gravity = Gravity.BOTTOM;
+            params.windowAnimations = R.style.OverlayAnimation;
+
+            TextView tvName = overlayView.findViewById(R.id.tv_contact_name);
+            TextView tvCompany = overlayView.findViewById(R.id.tv_company_name);
+            TextView tvPhone = overlayView.findViewById(R.id.tv_phone_number);
+            TextView tvDurationType = overlayView.findViewById(R.id.tv_duration_type);
+            Button btnDismiss = overlayView.findViewById(R.id.btn_dismiss);
+            Button btnLogCall = overlayView.findViewById(R.id.btn_log_call);
+
+            boolean hasName = name != null && !name.trim().isEmpty();
+            boolean hasCompany = company != null && !company.trim().isEmpty();
+
+            if (hasName) {
+                tvName.setText(name);
+                tvPhone.setText(number);
+            } else if (hasCompany) {
+                // If no name but we have a company, show the company as the main name
+                tvName.setText(company);
+                tvPhone.setText(number);
+            } else {
+                tvName.setText(number);
+                tvPhone.setText("Not in contacts");
+            }
+
+            if (hasName && hasCompany) {
+                tvCompany.setVisibility(View.VISIBLE);
+                tvCompany.setText(company + (entityType != null && !entityType.trim().isEmpty() ? " • " + entityType : ""));
+            } else if (entityType != null && !entityType.trim().isEmpty()) {
+                tvCompany.setVisibility(View.VISIBLE);
+                tvCompany.setText(entityType);
+            } else {
+                tvCompany.setVisibility(View.GONE);
+            }
+
+            int mins = duration / 60;
+            int secs = duration % 60;
+            String timeStr = mins > 0 ? mins + "m " + secs + "s" : secs + "s";
+            String typeStr = "unknown".equals(type) ? "Call" : type.substring(0, 1).toUpperCase() + type.substring(1);
+            tvDurationType.setText(typeStr + " • " + timeStr);
+
+            btnDismiss.setOnClickListener(v -> {
+                removeOverlay();
+                stopSelf();
+            });
+            btnLogCall.setOnClickListener(v -> {
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
+                forceAppToForeground(number, duration, type, name);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
+                    if (plugin != null)
+                        plugin.emitPendingCallsAvailable();
+                    removeOverlay();
+                    stopSelf();
+                }, 1000);
+            });
+
+            setupSwipeToDismiss(overlayView, params);
+            try {
+                windowManager.addView(overlayView, params);
+            } catch (WindowManager.BadTokenException e) {
+                Log.e(TAG, "Overlay permission denied or invalid token (BadTokenException)", e);
+                // Gracefully fallback to in-app logging queue if overlay cannot be drawn
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
+                forceAppToForeground(number, duration, type, name);
+                stopSelf();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Overlay error", e);
+            CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
+            forceAppToForeground(number, duration, type, name);
+            stopSelf();
+        }
+    }
+
+    private void setupSwipeToDismiss(View view, WindowManager.LayoutParams params) {
+        view.setOnTouchListener(new View.OnTouchListener() {
+            private float initialY, initialTouchY;
+            private int swipeThreshold = 0;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (swipeThreshold == 0)
+                    swipeThreshold = view.getHeight() / 4;
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialY = params.y;
+                        initialTouchY = event.getRawY();
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        params.y = (int) (initialY + (initialTouchY - event.getRawY()));
+                        windowManager.updateViewLayout(overlayView, params);
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        if (Math.abs(initialTouchY - event.getRawY()) > swipeThreshold)
+                            dismissWithAnimation(params, (initialTouchY - event.getRawY()) > 0);
+                        else
+                            snapBack(params);
+                        return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    private void dismissWithAnimation(WindowManager.LayoutParams params, boolean toUp) {
+        float targetY = toUp ? getResources().getDisplayMetrics().heightPixels : -500;
+        ObjectAnimator animator = ObjectAnimator.ofInt(params, "y", params.y, (int) targetY);
+        animator.setDuration(300);
+        animator.addUpdateListener(animation -> {
+            if (overlayView != null)
+                windowManager.updateViewLayout(overlayView, params);
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                removeOverlay();
+                stopSelf();
+            }
+        });
+        animator.start();
+    }
+
+    private void snapBack(WindowManager.LayoutParams params) {
+        ObjectAnimator animator = ObjectAnimator.ofInt(params, "y", params.y, 0);
+        animator.setDuration(200);
+        animator.addUpdateListener(animation -> {
+            if (overlayView != null)
+                windowManager.updateViewLayout(overlayView, params);
+        });
+        animator.start();
+    }
+
+    private void forceAppToForeground(String number, int duration, String type, String name) {
+        try {
+            Intent launchIntent = new Intent(this, MainActivity.class);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            if (number != null)
+                launchIntent.putExtra(EXTRA_CALL_PHONE, number);
+            if (name != null)
+                launchIntent.putExtra(EXTRA_CALL_NAME, name);
+            launchIntent.putExtra(EXTRA_CALL_DURATION, duration);
+            launchIntent.putExtra(EXTRA_CALL_TYPE, type);
+            startActivity(launchIntent);
+        } catch (Exception e) {
+            Log.e(TAG, "Foreground launch error", e);
+        }
+    }
+
+    private void removeOverlay() {
+        if (overlayView != null && windowManager != null) {
+            try {
+                windowManager.removeView(overlayView);
+            } catch (Exception e) {
+                Log.e(TAG, "Remove overlay error", e);
+            }
+            overlayView = null;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        removeOverlay();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Call Overlay",
+                    NotificationManager.IMPORTANCE_LOW);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null)
+                manager.createNotificationChannel(serviceChannel);
+        }
+    }
+}

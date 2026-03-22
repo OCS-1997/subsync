@@ -1,8 +1,12 @@
-import { Search, RefreshCw, User, Briefcase, Phone, Mail, Building2 } from "lucide-react";
+import { Search, RefreshCw, User, Briefcase, Phone, Mail, Building2, FileDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import * as Papa from "papaparse";
+import { saveAs } from "file-saver";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -13,6 +17,20 @@ import Pagination from "@/components/layouts/Pagination.jsx";
 import SearchFilterForm from "@/components/layouts/SearchFilterForm.jsx";
 import { fetchDirectory, syncDirectoryAction } from "../directorySlice";
 import { Badge } from "@/components/ui/badge.jsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog.jsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.jsx";
+import { syncContactsToNative } from "@/hooks/useCallDetectionSync";
+import api from "@/lib/axiosInstance.js";
 
 const headers = [
   { key: "name", label: "Contact Name" },
@@ -29,6 +47,10 @@ function PhoneDirectory() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState("");
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Debounce search
   const debounceTimeout = useRef();
@@ -42,23 +64,89 @@ function PhoneDirectory() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, sortBy, sortOrder]);
+
+  const handleSort = (key) => {
+    if (sortBy === key && sortOrder === "asc") {
+      setSortOrder("desc");
+    } else if (sortBy === key && sortOrder === "desc") {
+      setSortBy(null);
+      setSortOrder("");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchDirectory({
+    const params = {
       search: debouncedSearch,
       page: currentPage,
       limit: 15
-    }));
-  }, [dispatch, debouncedSearch, currentPage]);
+    };
+    if (sortBy && sortOrder) {
+      params.sort = sortBy;
+      params.order = sortOrder;
+    }
+    dispatch(fetchDirectory(params));
+  }, [dispatch, debouncedSearch, currentPage, sortBy, sortOrder]);
 
   const handleManualSync = async () => {
     try {
       await dispatch(syncDirectoryAction()).unwrap();
       toast.success("Directory synchronization initiated successfully.");
+      // Trigger native sync immediately to update overlay
+      syncContactsToNative();
       dispatch(fetchDirectory({ search: debouncedSearch, page: currentPage, limit: 15 }));
     } catch (err) {
       toast.error(err || "Failed to synchronize directory.");
+    }
+  };
+
+  const handleExport = async (format) => {
+    setExportLoading(true);
+    try {
+      // Fetch all entries for export (limit high)
+      const res = await api.get('/directory', { params: { limit: 5000, search: debouncedSearch } });
+      const records = res.data.entries || [];
+
+      if (records.length === 0) {
+        toast.info("No records found to export.");
+        return;
+      }
+
+      const exportData = records.map(r => ({
+        "Name": r.name || "",
+        "Phone": r.phone_number || "",
+        "Entity Type": r.entity_type || "",
+        "Company": r.company_name || "",
+        "Email": r.email || "",
+        "Designation": r.designation || ""
+      }));
+
+      if (format === 'csv') {
+        const csv = Papa.unparse(exportData);
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        saveAs(blob, `phone_directory_${new Date().toISOString()}.csv`);
+        toast.success("CSV export complete.");
+      } else if (format === 'pdf') {
+        const doc = new jsPDF();
+        doc.text("Phone Directory", 14, 15);
+        autoTable(doc, {
+          startY: 20,
+          head: [["Name", "Phone", "Type", "Company", "Email"]],
+          body: records.map(r => [r.name, r.phone_number, r.entity_type, r.company_name, r.email]),
+          theme: 'grid',
+          headStyles: { fillColor: [30, 41, 59] } // Using RGB for #1e293b
+        });
+        doc.save(`phone_directory_${new Date().toISOString()}.pdf`);
+        toast.success("PDF export complete.");
+      }
+    } catch (err) {
+      toast.error("Export failed. Please try again.");
+      console.error(err);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -84,14 +172,42 @@ function PhoneDirectory() {
         description="Centralized lookup for all customers, vendors, and contact persons."
         breadcrumbItems={[{ label: "Directory" }]}
         actions={
-          <Button 
-            onClick={handleManualSync}
-            disabled={syncing}
-            className="bg-slate-900 hover:bg-black text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95 transition-all gap-3"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? "Syncing..." : "Sync Directory"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  disabled={exportLoading || loading}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-900 dark:text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95 transition-all gap-3"
+                >
+                  <FileDown className={`w-4 h-4 ${exportLoading ? 'animate-bounce' : ''}`} />
+                  {exportLoading ? "Preparing..." : "Export"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="rounded-2xl min-w-[150px] p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl">
+                <DropdownMenuItem 
+                    onClick={() => handleExport('csv')}
+                    className="rounded-xl h-12 font-bold text-xs uppercase tracking-widest cursor-pointer px-4"
+                >
+                    CSV / Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                    onClick={() => handleExport('pdf')}
+                    className="rounded-xl h-12 font-bold text-xs uppercase tracking-widest cursor-pointer px-4"
+                >
+                    PDF Document
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button 
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="bg-slate-900 hover:bg-black text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95 transition-all gap-3"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? "Syncing..." : "Sync Directory"}
+            </Button>
+          </div>
         }
       />
 
@@ -134,11 +250,14 @@ function PhoneDirectory() {
                 ...e,
                 name: (
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                    <div className="w-8 h-8 flex-shrink-0 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
                       <User className="w-4 h-4" />
                     </div>
-                    <div className="flex flex-col min-w-[150px]">
-                      <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    <div 
+                      className="flex flex-col min-w-[150px] cursor-pointer group"
+                      onClick={() => setSelectedContact(e)}
+                    >
+                      <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {e.name}
                       </span>
                       {e.designation && (
@@ -170,6 +289,9 @@ function PhoneDirectory() {
                 ) : <span className="text-slate-300">---</span>,
               }))}
               primaryKey="id"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
             <Pagination
               currentPage={currentPage}
@@ -198,6 +320,71 @@ function PhoneDirectory() {
           </div>
         )}
       </div>
+
+      {/* Contact Details Modal */}
+      <Dialog open={!!selectedContact} onOpenChange={(open) => !open && setSelectedContact(null)}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl p-0 overflow-hidden shadow-2xl">
+          {selectedContact && (
+            <div className="flex flex-col">
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-8 flex flex-col items-center justify-center border-b border-slate-100 dark:border-slate-800">
+                <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 shadow-xl shadow-black/5 ring-1 ring-slate-100 dark:ring-slate-800 mb-5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-blue-500/10" />
+                  <User className="w-10 h-10 text-blue-500" />
+                </div>
+                <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight text-center mb-1">
+                  {selectedContact.name}
+                </DialogTitle>
+                <div className="flex flex-wrap gap-2 justify-center mt-2">
+                  {getEntityBadge(selectedContact.entity_type)}
+                  {selectedContact.designation && (
+                    <Badge className="bg-slate-200/50 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-none uppercase text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full">
+                      {selectedContact.designation}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-8 pb-10 space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Phone Number</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                      {selectedContact.phone_number || "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {selectedContact.email || "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Company Name</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {selectedContact.company_name || "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

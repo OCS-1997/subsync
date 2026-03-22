@@ -13,26 +13,26 @@ export async function searchCustomerByPhone(phoneNumber) {
     }
 
     try {
-        // Use the new unified resolve-number endpoint
-        const response = await api.post('/resolve-number', {
-            phone_number: phoneNumber,
+        // Use the unified directory endpoint to search by phone
+        const response = await api.get('/directory', {
+            params: { search: phoneNumber, limit: 1 }
         });
 
-        const resolved = response.data?.data;
-        if (!resolved || resolved.type === 'unknown') {
+        const entry = response.data?.entries?.[0];
+        if (!entry || entry.entity_type === 'unknown') {
             return { customer: null, contact: null };
         }
 
         // Adapt to the shape expected by CallLogPrompt
         const customer = {
-            customer_id:   resolved.id,
-            customer_name: resolved.name,
-            company_name:  resolved.company,
-            entity_type:   resolved.type,
+            customer_id:   entry.id,
+            customer_name: entry.name,
+            company_name:  entry.company_name,
+            entity_type:   entry.entity_type,
         };
         const contact = {
-            contact_name:  resolved.name,
-            phone_number:  resolved.phone,
+            contact_name:  entry.name,
+            phone_number:  entry.phone_number,
             country_code:  '+91',
         };
 

@@ -18,16 +18,20 @@ export async function getDirectoryEntryByPhone(phoneNumber) {
 /**
  * Search the directory with pagination
  */
-export async function searchDirectory({ search = "", page = 1, limit = 20 }) {
+export async function searchDirectory({ search = "", page = 1, limit = 20, sort = "name", order = "ASC" }) {
     const offset = (page - 1) * limit;
     const s = `%${search}%`;
+
+    const allowedSortFields = ["name", "phone_number", "company_name", "email", "entity_type"];
+    const sortField = allowedSortFields.includes(sort) ? sort : "name";
+    const sortDir = order && order.toLowerCase() === "desc" ? "DESC" : "ASC";
 
     const [entries] = await appDB.query(
         `SELECT * FROM phone_directory 
          WHERE name LIKE ? OR phone_number LIKE ? OR company_name LIKE ? OR email LIKE ?
-         ORDER BY name ASC 
+         ORDER BY ?? ${sortDir} 
          LIMIT ? OFFSET ?`,
-        [s, s, s, s, parseInt(limit), parseInt(offset)]
+        [s, s, s, s, sortField, parseInt(limit), parseInt(offset)]
     );
 
     const [[{ total }]] = await appDB.query(

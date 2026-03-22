@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Clock, User, Building2, CheckCircle2, UserPlus, X, ChevronRight, Mail, Sparkles, Loader2 } from 'lucide-react';
+import { Phone, Clock, User, Building2, CheckCircle2, UserPlus, X, ChevronRight, Mail, Sparkles, Loader2, LogIn } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { addDcrEntry } from '@/features/DCR/dcrSlice';
 import { searchCustomerByPhone } from './services/callLogService';
@@ -26,8 +26,13 @@ function isValidName(raw) {
  * 
  * Re-designed as a premium mobile-friendly bottom-sheet using framer-motion.
  */
-export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
+export default function CallLogPrompt({ callData: incomingCall, open: incomingOpen, onClose, onSkip }) {
     const dispatch = useDispatch();
+    const isAuthenticated = useSelector((state) => !!state.auth?.user);
+
+    const [callData, setCallData] = useState(null);
+    const [open, setOpen] = useState(false);
+
     const [notes, setNotes] = useState('');
     const [outcome, setOutcome] = useState('');
     const [matchedCustomer, setMatchedCustomer] = useState(null);
@@ -43,6 +48,35 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
     const [creating, setCreating] = useState(false);
 
     const [lastInteraction, setLastInteraction] = useState(Date.now());
+
+    // ── Restore pending call after login ───────────────────────────────────────
+    useEffect(() => {
+        if (isAuthenticated) {
+            const pendingData = localStorage.getItem('subsync_pwa_pending_call_after_login');
+            if (pendingData) {
+                try {
+                    const parsedCall = JSON.parse(pendingData);
+                    localStorage.removeItem('subsync_pwa_pending_call_after_login');
+                    setCallData(parsedCall);
+                    setOpen(true);
+                } catch (e) {
+                    console.error('Failed to parse pending call', e);
+                    localStorage.removeItem('subsync_pwa_pending_call_after_login');
+                }
+            }
+        }
+    }, [isAuthenticated]);
+
+    // ── Sync props to state ────────────────────────────────────────────────────
+    useEffect(() => {
+        if (incomingCall && incomingOpen) {
+            setCallData(incomingCall);
+            setOpen(true);
+        } else if (!incomingOpen && !localStorage.getItem('subsync_pwa_pending_call_after_login')) {
+            setOpen(false);
+            setCallData(null);
+        }
+    }, [incomingCall, incomingOpen]);
 
     // Auto-match customer by phone number
     useEffect(() => {
@@ -86,6 +120,15 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
     const handleSkip = () => {
         if (onSkip) onSkip(callData);
         resetAndClose();
+    };
+
+    const handleLoginRedirect = () => {
+        if (!callData) return;
+        localStorage.setItem('subsync_pwa_pending_call_after_login', JSON.stringify(callData));
+        setOpen(false);
+        if (onClose) onClose();
+        window.location.href = '/login';
+        toast.info('Please sign in to log your call. We saved the call details.');
     };
 
     const handleCreateContact = async () => {
@@ -199,10 +242,11 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
         setNewContactEmail('');
         setAutoCloseTimer(30);
         setLastInteraction(Date.now());
-        onClose();
+        setOpen(false);
+        if (onClose) onClose();
     };
 
-    if (!callData) return null;
+    if (!callData || !open) return null;
 
     const { phoneNumber, duration, callType } = callData;
 
@@ -272,6 +316,7 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
                                     fontFamily: 'monospace', fontSize: 13, fontWeight: 800,
                                     color: autoCloseTimer <= 10 ? '#f87171' : 'rgba(255,255,255,0.28)',
                                     transition: 'color 0.4s',
+                                    display: !isAuthenticated ? 'none' : 'inline-block'
                                 }}>
                                     {String(autoCloseTimer).padStart(2, '0')}s
                                 </span>
@@ -367,10 +412,48 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
                             </span>
                         </div>
 
-                        {/* Unknown Contact Actions */}
-                        <AnimatePresence mode="wait">
-                            {!isKnown && !isResolving && (
-                                showCreateContact ? (
+                        {/* ── Unauthenticated State Overlay ───────────────────────── */}
+                        {!isAuthenticated ? (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                style={{
+                                    marginTop: 16,
+                                    background: 'rgba(59,130,246,0.1)',
+                                    border: '1px solid rgba(59,130,246,0.2)',
+                                    borderRadius: 16, padding: '20px',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <div style={{
+                                    width: 48, height: 48, borderRadius: '50%', background: 'rgba(59,130,246,0.2)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px'
+                                }}>
+                                    <LogIn size={24} color="#60a5fa" />
+                                </div>
+                                <p style={{ color: '#fff', fontSize: 16, fontWeight: 800, marginBottom: 8 }}>Sign in required</p>
+                                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 16, lineHeight: 1.4 }}>
+                                    You need to be signed in to log calls. We will save this call data and prompt you again after you sign in.
+                                </p>
+                                <button
+                                    onClick={handleLoginRedirect}
+                                    style={{
+                                        width: '100%', padding: '14px 0', borderRadius: 12, cursor: 'pointer',
+                                        background: 'linear-gradient(135deg,#2563eb,#60a5fa)',
+                                        border: 'none', color: '#fff', fontSize: 14, fontWeight: 800,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                        boxShadow: '0 4px 14px rgba(59,130,246,0.4)', fontFamily: 'inherit'
+                                    }}
+                                >
+                                    Sign in to continue
+                                </button>
+                            </motion.div>
+                        ) : (
+                            <>
+                                {/* Unknown Contact Actions */}
+                                <AnimatePresence mode="wait">
+                                    {!isKnown && !isResolving && (
+                                        showCreateContact ? (
                                     <motion.div
                                         key="cf"
                                         initial={{ opacity: 0, scaleY: 0.95 }}
@@ -567,6 +650,8 @@ export default function CallLogPrompt({ callData, open, onClose, onSkip }) {
                                 </button>
                             </div>
                         </form>
+                            </>
+                        )}
                     </motion.div>
                 </>
             )}

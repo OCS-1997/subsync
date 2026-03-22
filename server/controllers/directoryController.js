@@ -8,8 +8,14 @@ import { logActivity } from "../models/activityLogModel.js";
  */
 export async function getDirectoryController(req, res, next) {
     try {
-        const { search = "", page = 1, limit = 20 } = req.query;
-        const result = await searchDirectory({ search, page: parseInt(page), limit: parseInt(limit) });
+        const { search = "", page = 1, limit = 20, sort, order } = req.query;
+        const result = await searchDirectory({ 
+            search, 
+            page: parseInt(page), 
+            limit: parseInt(limit),
+            sort,
+            order
+        });
         res.json({ success: true, ...result });
     } catch (error) {
         next(error);

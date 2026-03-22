@@ -108,6 +108,23 @@ input[type="number"] {
   }
 }
 
+/* ── GLOBALS FOR MOBILE RESPONSIVENESS ── */
+body {
+  overflow-x: hidden; /* Prevent horizontal scrolling entirely globally */
+  -webkit-touch-callout: none; /* iOS Safari */
+}
+
+/* Make any table responsive by default on small screens */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-responsive-wrapper table {
+  min-width: 600px; /* Force minimum width to trigger scroll instead of squish */
+}
+
+
 
 /* Full border for the phone input */
 .phone-input-custom-style {
@@ -322,5 +339,13 @@ input[type="number"] {
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
     padding-top: max(env(safe-area-inset-top), env(titlebar-area-height, 0px));
+  }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  /* Hide the sidebar natively via tailwind, but ensure specific spacing */
+  .pb-safe {
+    padding-bottom: space(env(safe-area-inset-bottom), 1rem);
   }
 }

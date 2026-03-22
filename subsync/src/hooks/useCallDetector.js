@@ -129,10 +129,22 @@ export function useCallDetector() {
 
     let resolved = null;
     try {
-      const response = await api.post('/resolve-number', { phone_number: phoneNumber });
-      resolved = response.data?.data || null;
+      const response = await api.get('/directory', { params: { search: phoneNumber, limit: 1 } });
+      const entry = response.data?.entries?.[0];
+      if (entry) {
+        resolved = {
+          id: entry.id,
+          name: entry.name,
+          company: entry.company_name,
+          type: entry.entity_type || 'unknown',
+          phone: entry.phone_number || phoneNumber
+        };
+      }
     } catch (err) {
-      console.error('[useCallDetector] Resolve failed:', err);
+      console.error('[useCallDetector] Directory lookup failed:', err);
+    }
+
+    if (!resolved) {
       resolved = {
         type: 'unknown', id: null,
         name: name || null, company: null, phone: phoneNumber,
