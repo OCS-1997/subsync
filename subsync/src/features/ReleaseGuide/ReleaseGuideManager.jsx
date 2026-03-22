@@ -21,10 +21,20 @@ export default function ReleaseGuideManager() {
   useEffect(() => {
     // Only run after authentication and only once
     if (!isAuthenticated || hasChecked.current) return;
-    hasChecked.current = true;
 
     // Short defer so the dashboard/route has fully mounted before modal opens
     const timer = setTimeout(() => {
+      // If the user just logged in to log a pending call, respect their urgency.
+      // We skip showing the release guide for this session so they can focus on the call.
+      if (
+        localStorage.getItem('subsync_pending_call_after_login') ||
+        localStorage.getItem('subsync_pwa_pending_call_after_login')
+      ) {
+        hasChecked.current = true;
+        return;
+      }
+
+      hasChecked.current = true;
       const activeGuide = getActiveGuide();
       if (activeGuide) {
         setGuide(activeGuide);

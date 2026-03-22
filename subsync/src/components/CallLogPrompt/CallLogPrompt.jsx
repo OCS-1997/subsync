@@ -127,7 +127,7 @@ export default function CallLogPrompt({ callData: incomingCall, open: incomingOp
         localStorage.setItem('subsync_pwa_pending_call_after_login', JSON.stringify(callData));
         setOpen(false);
         if (onClose) onClose();
-        window.location.href = '/login';
+        window.location.href = '/';
         toast.info('Please sign in to log your call. We saved the call details.');
     };
 

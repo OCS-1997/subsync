@@ -199,7 +199,7 @@ export default function PostCallDialog({ lastCall: incomingCall }) {
     if (!lastCall) return;
     localStorage.setItem('subsync_pending_call_after_login', JSON.stringify(lastCall));
     setOpen(false);
-    window.location.href = '/login';
+    window.location.href = '/';
     toast.info('Please sign in to log your call. We saved the call details.');
   };
 
