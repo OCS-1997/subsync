@@ -38,6 +38,7 @@ public class CallOverlayService extends Service {
     public static final String EXTRA_CALL_NAME = "subsync_call_name";
     public static final String EXTRA_CALL_DURATION = "subsync_call_duration";
     public static final String EXTRA_CALL_TYPE = "subsync_call_type";
+    public static final String EXTRA_CALL_ID = "subsync_call_id";
     private WindowManager windowManager;
     private View overlayView;
 
@@ -68,6 +69,7 @@ public class CallOverlayService extends Service {
             final int initialDuration = intent.getIntExtra("duration", 0);
             final String initialType = intent.getStringExtra("type");
             final String initialName = intent.getStringExtra("name");
+            final String initialCallId = intent.getStringExtra("callId");
 
             // Refine in background: pull from CallLog after a short delay to be sure it's updated
             new Thread(() -> {
@@ -77,6 +79,7 @@ public class CallOverlayService extends Service {
                 int finalDuration = initialDuration;
                 String finalType = initialType != null ? initialType : "unknown";
                 String finalName = initialName;
+                final String finalCallId = initialCallId;
                 String finalCompany = null;
                 String finalEntityType = null;
 
@@ -145,7 +148,12 @@ public class CallOverlayService extends Service {
                 final String resultEntityType = finalEntityType;
 
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    showOverlay(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType);
+                    // Emit event to app immediately for in-app prompt
+                    CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
+                    if (plugin != null) {
+                        plugin.emitCallEnded(resultNumber, resultDuration, resultType, finalCallId);
+                    }
+                    showOverlay(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType, finalCallId);
                 });
             }).start();
         }
@@ -168,7 +176,7 @@ public class CallOverlayService extends Service {
         return null;
     }
 
-    private void showOverlay(String number, int duration, String type, String name, String company, String entityType) {
+    private void showOverlay(String number, int duration, String type, String name, String company, String entityType, String callId) {
         Log.d(TAG, "showOverlay called for: " + number + ", name: " + name);
         if (overlayView != null) {
             Log.d(TAG, "Overlay already exists, skipping");
@@ -261,8 +269,8 @@ public class CallOverlayService extends Service {
                 stopSelf();
             });
             btnLogCall.setOnClickListener(v -> {
-                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
-                forceAppToForeground(number, duration, type, name);
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
+                forceAppToForeground(number, duration, type, name, callId);
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
                     if (plugin != null)
@@ -280,14 +288,14 @@ public class CallOverlayService extends Service {
             } catch (WindowManager.BadTokenException e) {
                 Log.e(TAG, "Overlay permission denied or invalid token (BadTokenException)", e);
                 // Gracefully fallback to in-app logging queue if overlay cannot be drawn
-                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
-                forceAppToForeground(number, duration, type, name);
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
+                forceAppToForeground(number, duration, type, name, callId);
                 stopSelf();
             }
         } catch (Exception e) {
             Log.e(TAG, "Overlay error", e);
-            CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name);
-            forceAppToForeground(number, duration, type, name);
+            CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
+            forceAppToForeground(number, duration, type, name, callId);
             stopSelf();
         }
     }
@@ -301,12 +309,9 @@ public class CallOverlayService extends Service {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        if (swipeThreshold == 0) {
-                            swipeThreshold = view.getHeight() > 0 ? view.getHeight() / 4 : 300;
-                        }
                         initialY = params.y;
                         initialTouchY = event.getRawY();
-                        return true;
+                        return false; // let children have a chance to handle clicks initially
                     case MotionEvent.ACTION_MOVE:
                         params.y = (int) (initialY + (initialTouchY - event.getRawY()));
                         windowManager.updateViewLayout(overlayView, params);
@@ -351,7 +356,7 @@ public class CallOverlayService extends Service {
         animator.start();
     }
 
-    private void forceAppToForeground(String number, int duration, String type, String name) {
+    private void forceAppToForeground(String number, int duration, String type, String name, String callId) {
         try {
             Intent launchIntent = new Intent(this, MainActivity.class);
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
@@ -360,6 +365,8 @@ public class CallOverlayService extends Service {
                 launchIntent.putExtra(EXTRA_CALL_PHONE, number);
             if (name != null)
                 launchIntent.putExtra(EXTRA_CALL_NAME, name);
+            if (callId != null)
+                launchIntent.putExtra(EXTRA_CALL_ID, callId);
             launchIntent.putExtra(EXTRA_CALL_DURATION, duration);
             launchIntent.putExtra(EXTRA_CALL_TYPE, type);
             startActivity(launchIntent);

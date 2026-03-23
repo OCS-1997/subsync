@@ -169,6 +169,7 @@ public class CallDetectorPlugin extends Plugin {
             callObj.put("name", intent.getStringExtra(CallOverlayService.EXTRA_CALL_NAME));
             callObj.put("duration", intent.getIntExtra(CallOverlayService.EXTRA_CALL_DURATION, 0));
             callObj.put("callType", intent.getStringExtra(CallOverlayService.EXTRA_CALL_TYPE));
+            callObj.put("callId", intent.getStringExtra(CallOverlayService.EXTRA_CALL_ID));
             result.put("call", callObj);
             call.resolve(result);
         } catch (Exception e) {
@@ -184,6 +185,7 @@ public class CallDetectorPlugin extends Plugin {
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_PHONE);
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_DURATION);
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_TYPE);
+                intent.removeExtra(CallOverlayService.EXTRA_CALL_ID);
             }
             JSObject result = new JSObject();
             result.put("status", "cleared");
@@ -212,11 +214,12 @@ public class CallDetectorPlugin extends Plugin {
         }
     }
 
-    public void emitCallEnded(String phoneNumber, int duration, String callType) {
+    public void emitCallEnded(String phoneNumber, int duration, String callType, String callId) {
         JSObject data = new JSObject();
         data.put("phoneNumber", phoneNumber);
         data.put("duration", duration);
         data.put("callType", callType);
+        data.put("callId", callId);
         notifyListeners("callEnded", data);
     }
 

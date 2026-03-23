@@ -21,23 +21,34 @@ export async function getDirectoryEntryByPhone(phoneNumber) {
 export async function searchDirectory({ search = "", page = 1, limit = 20, sort = "name", order = "ASC" }) {
     const offset = (page - 1) * limit;
     const s = `%${search}%`;
+    const normalizedSearch = normalizePhone(search);
 
     const allowedSortFields = ["name", "phone_number", "company_name", "email", "entity_type"];
     const sortField = allowedSortFields.includes(sort) ? sort : "name";
     const sortDir = order && order.toLowerCase() === "desc" ? "DESC" : "ASC";
 
+    const whereClauses = ["(name LIKE ? OR phone_number LIKE ? OR company_name LIKE ? OR email LIKE ?)"];
+    const params = [s, s, s, s];
+
+    if (normalizedSearch && normalizedSearch.length >= 7) {
+        whereClauses.push("normalized_number = ?");
+        params.push(normalizedSearch);
+    }
+
+    const whereClause = `WHERE ${whereClauses.join(" OR ")}`;
+
     const [entries] = await appDB.query(
         `SELECT * FROM phone_directory 
-         WHERE name LIKE ? OR phone_number LIKE ? OR company_name LIKE ? OR email LIKE ?
+         ${whereClause}
          ORDER BY ?? ${sortDir} 
          LIMIT ? OFFSET ?`,
-        [s, s, s, s, sortField, parseInt(limit), parseInt(offset)]
+        [...params, sortField, parseInt(limit), parseInt(offset)]
     );
 
     const [[{ total }]] = await appDB.query(
         `SELECT COUNT(*) as total FROM phone_directory 
-         WHERE name LIKE ? OR phone_number LIKE ? OR company_name LIKE ? OR email LIKE ?`,
-        [s, s, s, s]
+         ${whereClause}`,
+        params
     );
 
     return {

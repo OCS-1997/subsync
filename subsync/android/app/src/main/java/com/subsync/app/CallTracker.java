@@ -3,6 +3,7 @@ package com.subsync.app;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import java.util.UUID;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -94,10 +95,12 @@ public class CallTracker {
 
                     prefs.edit().remove("callStartMs").remove("currentPhoneNumber").remove("currentCallType").commit();
 
+                    String callId = UUID.randomUUID().toString();
                     Intent serviceIntent = new Intent(context, CallOverlayService.class);
                     serviceIntent.putExtra("number", numberToEmit);
                     serviceIntent.putExtra("duration", (int)(durationMs / 1000));
                     serviceIntent.putExtra("type", typeToEmit);
+                    serviceIntent.putExtra("callId", callId);
 
                     Log.i(TAG, "Starting OverlayService for " + numberToEmit);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -166,13 +169,14 @@ public class CallTracker {
         prefs.edit().remove("pendingCalls").commit();
     }
 
-    public void addPendingCallToQueue(String phoneNumber, int duration, String callType, String name) {
+    public void addPendingCallToQueue(String phoneNumber, int duration, String callType, String name, String callId) {
         try {
             JSONObject callObj = new JSONObject();
             callObj.put("phoneNumber", phoneNumber);
             callObj.put("duration", duration);
             callObj.put("callType", callType);
             callObj.put("name", name);
+            callObj.put("callId", callId != null ? callId : UUID.randomUUID().toString());
             callObj.put("timestamp", System.currentTimeMillis());
             String pendingStr = prefs.getString("pendingCalls", "[]");
             JSONArray pendingArray = new JSONArray(pendingStr);

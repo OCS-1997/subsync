@@ -110,7 +110,7 @@ export function useCallDetector() {
     const { phoneNumber, duration, callType, name } = normalizeCallPayload(data);
     // Stable ID for this specific call event — used by PostCallDialog
     // to distinguish a new call (reset UI) from a resolve-update (refresh name only)
-    const callId = `${phoneNumber}|${Date.now()}`;
+    const callId = data.callId || `${phoneNumber}|${Date.now()}`;
 
     // 1. Set preliminary state immediately to trigger the popup
     setLastCall({

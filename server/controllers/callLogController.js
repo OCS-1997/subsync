@@ -1,4 +1,5 @@
 import { resolvePhoneNumber, createPhoneDcrEntry, getPhoneCallLogs, normalizePhone } from "../models/callLogModel.js";
+import { logActivity } from "../models/activityLogModel.js";
 
 /**
  * POST /api/resolve-number
@@ -97,6 +98,27 @@ export async function logCallController(req, res, next) {
             description: description || '',
             user_id,
         });
+
+        // Log the activity so it appears in the system activity logs
+        try {
+            await logActivity({
+                username: user_id,
+                action: 'LOG_PHONE_CALL',
+                resourceType: 'DCR',
+                resourceId: insertId.toString(),
+                ipAddress: req.ip,
+                details: {
+                    phone,
+                    name: name || 'Unknown Number',
+                    company: company || null,
+                    call_type: call_type || 'incoming',
+                    duration: parseInt(duration) || 0,
+                    source: 'android_overlay'
+                }
+            });
+        } catch (activityError) {
+            console.error("Error logging call activity:", activityError);
+        }
 
         return res.status(201).json({
             success: true,

@@ -125,13 +125,46 @@ export async function createPhoneDcrEntry(data) {
 
     const currentTime = getCurrentTime();
 
+    // Try to find a domain_id to link this DCR entry to a customer/domain
+    let domainId = null;
+    try {
+        if (entity_id) {
+            let customerId = null;
+            if (entity_type === 'customer') {
+                customerId = entity_id;
+            } else if (entity_type === 'contact' || entity_type === 'other_contact') {
+                // Find parent customer if it's a contact
+                const [directoryRows] = await appDB.query(
+                    "SELECT parent_entity_id FROM phone_directory WHERE entity_type = ? AND entity_id = ? LIMIT 1",
+                    [entity_type, entity_id]
+                );
+                if (directoryRows.length > 0) {
+                    customerId = directoryRows[0].parent_entity_id;
+                }
+            }
+
+            if (customerId) {
+                // Find the primary domain for this customer
+                const [domainRows] = await appDB.query(
+                    "SELECT domain_id FROM domains WHERE customer_id = ? ORDER BY created_at ASC LIMIT 1",
+                    [customerId]
+                );
+                if (domainRows.length > 0) {
+                    domainId = domainRows[0].domain_id;
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Error finding domain for call log:", err);
+    }
+
     const [result] = await appDB.query(
         `INSERT INTO dcr_entries (
             user_id, timestamp, call_type, time_spent_minutes,
             company_name, contact_name, contact_phone_number,
-            notes, call_source, contact_id,
+            notes, call_source, contact_id, domain_id,
             call_duration_seconds, created_at, updated_at
-        ) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, 'phone', ?, ?, ?, ?)`,
+        ) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, 'phone', ?, ?, ?, ?, ?)`,
         [
             user_id,
             dcrCallType,
@@ -140,7 +173,8 @@ export async function createPhoneDcrEntry(data) {
             name || null,
             phone || null,
             description || null,
-            (entity_type === 'contact') ? entity_id : null, // only set contact_id if it's a contact (FK constraint)
+            (entity_type === 'contact') ? entity_id : null, 
+            domainId,
             duration || 0,
             currentTime,
             currentTime,
