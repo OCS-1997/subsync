@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/axiosInstance';
 import { toast } from 'react-toastify';
+import { addDcrEntry } from '@/features/DCR/dcrSlice';
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * isValidName — Business rule: a name is valid if it is:
@@ -25,19 +26,9 @@ function isValidName(raw) {
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * PostCallDialog — Post-call DCR entry overlay (native Capacitor path).
- *
- * Display priority (business rule):
- *   1. If DB resolved a valid name  → "<Name> — <Number>"
- *   2. Otherwise                    → "<Number>"
- *
- * Key design choices:
- *   • Uses lastCall.callId to tell a NEW call from a resolve-update.
- *     Only a new callId triggers UI reset; a resolve update just refreshes
- *     the displayed name without closing or resetting anything.
- *   • resolvedOverride: local state set after inline contact creation.
- *     Takes priority over hook-supplied resolved.
  * ───────────────────────────────────────────────────────────────────────────── */
 export default function PostCallDialog({ lastCall: incomingCall }) {
+  const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => !!state.auth?.user);
   
   // To handle the post-login replay, we use local state that can be
@@ -129,14 +120,11 @@ export default function PostCallDialog({ lastCall: incomingCall }) {
   const isKnown        = !isLoading && activeResolved?.type && activeResolved.type !== 'unknown';
 
   // ── Name priority logic ────────────────────────────────────────────────────
-  // Business rule: prefer valid DB name; fall back to raw number.
   const resolvedName   = activeResolved?.name;
   const hasName        = isValidName(resolvedName);
-  // Primary display line: "Name — Number" or just "Number"
   const headline = hasName
     ? `${resolvedName} — ${phoneNumber}`
     : (phoneNumber || 'Unknown');
-  // Sub-line: only shown when we have a name (shows number alone in secondary slot)
   const subtitle = hasName ? phoneNumber : null;
 
   const formatDur = (s) => {
@@ -209,21 +197,39 @@ export default function PostCallDialog({ lastCall: incomingCall }) {
     setSubmitting(true);
     try {
       const ar = resolvedOverride || activeResolved;
-      await api.post('/log-call', {
-        phone:       phoneNumber || ar?.phone || '',
-        name:        (hasName ? resolvedName : null) || phoneNumber || 'Unknown Number',
-        entity_type: ar?.type  || 'unknown',
-        entity_id:   ar?.id    || null,
-        company:     ar?.company || null,
-        call_type:   ['incoming','outgoing','missed'].includes(callType) ? callType : 'incoming',
-        duration:    Number(duration) || 0,
-        description: notes.trim() || 'Call logged via Android overlay',
-      });
+      
+      // Calculate hours and minutes for standard DCR schema
+      // Ensure at least 1 minute is logged even for short calls
+      const totalDuration = Math.max(duration || 0, 60);
+      const h = Math.floor(totalDuration / 3600);
+      const m = Math.floor((totalDuration % 3600) / 60);
+
+      const dcrData = {
+        timestamp: lastCall.timestamp || new Date().toISOString(),
+        call_type: ['incoming', 'outgoing', 'missed'].includes(callType) ? callType : 'incoming',
+        time_spent: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+        domain_id: ar?.type === 'domain' ? ar.id : null,
+        domain_free_text: ar?.company || null,
+        company_name: ar?.company || null,
+        contact_id: (ar?.type === 'contact' || ar?.type === 'other_contact') ? ar.id : null,
+        contact_name: ar?.name || phoneNumber || 'Unknown Number',
+        contact_phone_number: phoneNumber,
+        contact_phone_country_code: '+91', // Fallback, improve if native sends CC
+        contact_email: ar?.email || null,
+        notes: (notes.trim() || 'Call logged via Android overlay') + `\n\n[Auto-logged duration: ${formatDur(duration)}]`,
+      };
+
+      console.log('[PostCallDialog] Submitting DCR:', dcrData);
+      
+      // Use the standard thunk hit hitting /api/dcr
+      await dispatch(addDcrEntry(dcrData)).unwrap();
+
       setSubmitted(true);
       setTimeout(() => setOpen(false), 1600);
     } catch (err) {
-      console.error('[PostCallDialog] submit:', err);
-      toast.error(err.response?.data?.error || 'Failed to log call');
+      console.error('[PostCallDialog] submit error:', err);
+      const msg = typeof err === 'string' ? err : (err.normalizedMessage || err.message || 'Failed to log call');
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

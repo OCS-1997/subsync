@@ -302,16 +302,15 @@ export default function DCRForm() {
         toast.success("DCR entry updated successfully!");
       } else {
         await dispatch(addDcrEntry(submitData)).unwrap();
-        if (shouldAddToCustomer) {
-          toast.success("DCR entry created and contact added to customer!");
-        } else {
-          toast.success("DCR entry created successfully!");
-        }
+        toast.success(shouldAddToCustomer ? "DCR entry created and contact added!" : "DCR entry logged successfully!");
       }
 
       navigate(`/${username}/dashboard/dcr`);
     } catch (err) {
-      toast.error(err || "Failed to save DCR entry");
+      console.error("DCR Submission Error:", err);
+      // Ensure we extract a string message for the toast
+      const errorMessage = typeof err === 'string' ? err : (err.normalizedMessage || err.message || "Failed to save DCR entry");
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }

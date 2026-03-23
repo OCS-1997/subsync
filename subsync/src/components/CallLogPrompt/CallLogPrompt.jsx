@@ -202,31 +202,54 @@ export default function CallLogPrompt({ callData: incomingCall, open: incomingOp
         setLoading(true);
 
         try {
-            const hours = Math.floor((callData.duration || 0) / 3600);
-            const minutes = Math.floor(((callData.duration || 0) % 3600) / 60);
+            // Ensure duration is at least 60 seconds (1 minute) for logging
+            // or use the actual duration if it's longer. Backend might reject 0-time entries.
+            const totalDuration = Math.max(callData.duration || 0, 60);
+            const hours = Math.floor(totalDuration / 3600);
+            const minutes = Math.floor((totalDuration % 3600) / 60);
+            
             const fallbackName = newContactName || callData.contactName || null;
+            
+            // Clean up phone number: if it starts with country code, try to split
+            let phoneNumber = callData.phoneNumber || '';
+            let countryCode = callData.countryCode || '+91';
+            
+            if (phoneNumber.startsWith('+')) {
+                // Try to extract country code from number if it exists
+                const ccMatch = phoneNumber.match(/^(\+\d{1,4})/);
+                if (ccMatch) {
+                    countryCode = ccMatch[1];
+                    phoneNumber = phoneNumber.replace(countryCode, '').trim();
+                }
+            }
 
             const dcrData = {
-                timestamp: callData.timestamp,
+                timestamp: callData.timestamp || new Date().toISOString(),
                 call_type: callData.callType || 'incoming',
                 time_spent: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
-                domain_id: null,
+                domain_id: matchedCustomer?.customer_id ? null : null, // Future: map to domain
                 domain_free_text: matchedCustomer?.company_name || null,
                 company_name: matchedCustomer?.company_name || null,
                 contact_id: matchedContact?.contact_id || null,
                 contact_name: matchedContact?.contact_name || fallbackName,
-                contact_phone_number: callData.phoneNumber || '',
-                contact_phone_country_code: callData.countryCode || '+91',
+                contact_phone_number: phoneNumber,
+                contact_phone_country_code: countryCode,
                 contact_email: matchedContact?.email || newContactEmail || null,
                 notes: notes.trim() + (outcome ? `\n\nOutcome: ${outcome}` : ''),
             };
 
+            console.log('[CallLogPrompt] Submitting DCR:', dcrData);
+            
             await dispatch(addDcrEntry(dcrData)).unwrap();
+            
             toast.success('Call logged successfully!');
-            window.dispatchEvent(new CustomEvent('callLogged', { detail: callData }));
+            // Notify other components (like DCR list) to refresh
+            window.dispatchEvent(new CustomEvent('callLogged', { detail: { ...callData, ...dcrData } }));
             resetAndClose();
         } catch (err) {
-            toast.error(err || 'Failed to log call');
+            console.error('[CallLogPrompt] Submission error:', err);
+            const errorMessage = typeof err === 'string' ? err : (err.normalizedMessage || err.message || 'Failed to log call');
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

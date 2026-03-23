@@ -5,13 +5,18 @@ const config: CapacitorConfig = {
   appName: 'Subsync',
   webDir: 'dist',
   server: {
-    androidScheme: 'http',
+    androidScheme: 'https',
     cleartext: true,
     hostname: 'localhost'
   },
   android: {
     allowMixedContent: true
-  }
+  },
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
 };
 
 export default config;
