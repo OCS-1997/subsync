@@ -16,7 +16,10 @@ import { Badge } from "@/components/ui/badge.jsx";
 
 export default function DownloadPage() {
     const getDownloadUrl = () => {
-        const baseUrl = import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
+        const viteUrl = import.meta.env.VITE_API_URL || '';
+        const baseUrl = viteUrl.startsWith('http') 
+            ? viteUrl 
+            : `${window.location.origin}${viteUrl || '/api'}`;
         return `${baseUrl}/download/subsync.apk`;
     };
 

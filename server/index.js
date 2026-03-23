@@ -17,6 +17,7 @@ import { setupCronJobs } from './cron/reconciliationCron.js';
 import { syncBirthdays } from './models/birthdayModel.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,13 +86,35 @@ app.use(cors({
 
 // app.use(limiter);
 app.get('/api/download/subsync.apk', (req, res) => {
-    const filePath = path.join(__dirname, 'downloads', 'subsync.apk');
-    console.log(`[DOWNLOAD] Serving APK from: ${filePath}`);
-    res.download(filePath, 'subsync.apk', (err) => {
+    const locations = [
+        process.env.APK_PATH, // Custom path from .env
+        path.join(__dirname, 'downloads', 'subsync.apk'), // Local development path
+        '/var/www/ocs365.in/app/subsync.apk', // New production path
+        '/var/www/ocs365.in/subsync/server/downloads/subsync.apk' // Old production path
+    ].filter(Boolean);
+
+    let foundPath = null;
+    for (const loc of locations) {
+        if (fs.existsSync(loc)) {
+            foundPath = loc;
+            break;
+        }
+    }
+
+    if (!foundPath) {
+        console.error('[DOWNLOAD] APK not found in any of searching locations:', locations);
+        return res.status(404).json({ 
+            success: false, 
+            error: { code: 'NOT_FOUND', message: 'APK file not found on server' } 
+        });
+    }
+
+    console.log(`[DOWNLOAD] Serving APK from: ${foundPath}`);
+    res.download(foundPath, 'subsync.apk', (err) => {
         if (err) {
             console.error('[DOWNLOAD] Error sending file:', err);
             if (!res.headersSent) {
-                res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'APK file not found on server' } });
+                res.status(500).json({ success: false, error: { code: 'DOWNLOAD_FAILED', message: 'Failed to send APK file' } });
             }
         }
     });
