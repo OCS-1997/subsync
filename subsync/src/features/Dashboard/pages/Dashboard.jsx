@@ -18,7 +18,7 @@ function Dashboard() {
       <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <NavBar toggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 pb-20 md:pb-2">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 pb-24 md:pb-2">
           <div key={location.key}>
             <Outlet />
           </div>

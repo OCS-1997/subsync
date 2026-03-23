@@ -295,7 +295,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
     const formContent = (
         <form onSubmit={handleSubmit} className={compact ? "space-y-6" : "space-y-10"}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         {/* Start Date/Time */}
                         <div className="md:col-span-1 lg:col-span-2 space-y-3">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
@@ -362,7 +362,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                             <Timer className="h-4 w-4 text-slate-400 group-hover:text-blue-500" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-80 p-5 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-2xl border-gray-100/50 backdrop-blur-xl" align="end">
+                                    <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80 p-5 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-2xl border-gray-100/50 backdrop-blur-xl" align="end">
                                         <div className="space-y-6">
                                             {/* Common Presets (Progressive Disclosure) */}
                                             <div>
@@ -373,7 +373,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                                         <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">Smarter Selection</span>
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-3 gap-2">
+                                                <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
                                                     {mainPresets.map(preset => (
                                                         <Button
                                                             key={preset.value}
@@ -419,7 +419,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                                     <div>
                                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Short Bursts</p>
-                                                        <div className="grid grid-cols-4 gap-1.5">
+                                                        <div className="grid grid-cols-2 xs:grid-cols-4 gap-1.5">
                                                             {durationPresets.short.map(preset => (
                                                                 <Button
                                                                     key={preset.value}
@@ -439,7 +439,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
                                                     <div>
                                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Deep Work Grid</p>
-                                                        <div className="grid grid-cols-4 gap-1.5">
+                                                        <div className="grid grid-cols-2 xs:grid-cols-4 gap-1.5">
                                                             {[...durationPresets.standard, ...durationPresets.blocks].map(preset => (
                                                                 <Button
                                                                     key={preset.value}
@@ -530,10 +530,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
+                                        <CommandList className="max-h-[280px] sm:max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
                                             <CommandGroup className="p-2">
                                                 {sortedCustomers.map((c) => (
@@ -590,10 +590,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl" align="start">
                                     <Command className="dark:bg-slate-900">
                                         <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
+                                        <CommandList className="max-h-[280px] sm:max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
                                             <CommandGroup className="p-2">
                                                 {sortedProjects.map((p) => (

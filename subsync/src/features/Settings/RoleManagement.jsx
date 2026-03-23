@@ -374,9 +374,9 @@ const RoleManagement = () => {
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-background">
+    <div className="flex flex-col lg:flex-row h-screen lg:h-[calc(100vh-64px)] overflow-hidden bg-background">
       {/* Role Sidebar */}
-      <aside className="w-72 border-r border-border bg-muted/20 flex flex-col">
+      <aside className="w-full lg:w-72 border-b lg:border-r border-border bg-muted/20 flex flex-col h-[35vh] lg:h-full shrink-0">
         <div className="p-4 border-b space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black tracking-widest uppercase opacity-40">User Roles</h2>
@@ -425,11 +425,11 @@ const RoleManagement = () => {
       </aside>
 
       {/* Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 bg-background">
+      <main className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden relative">
         {selectedRoleId || !roleForm.id ? (
           <>
             {/* Context Header */}
-            <header className="p-4 border-b bg-card flex items-center justify-between gap-4 sticky top-0 z-20">
+            <header className="p-4 border-b bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600 flex-shrink-0">
                   <Shield className="w-5 h-5" />
@@ -457,8 +457,8 @@ const RoleManagement = () => {
 
               <div className="flex items-center gap-2 flex-shrink-0 border-l pl-4 border-border/50">
                 {hasUnsavedChanges && (
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest animate-pulse border border-amber-500/20">
-                    <AlertTriangle className="w-3 h-3" /> Unsynced
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest animate-pulse border border-amber-500/20">
+                    <AlertTriangle className="w-3 h-3" /> <span className="hidden xs:inline">Unsynced</span>
                   </div>
                 )}
                 {roleForm.id && !selectedRole?.isSystem && canDelete && (
@@ -480,8 +480,8 @@ const RoleManagement = () => {
             </header>
 
             <Tabs defaultValue="permissions" className="flex-1 flex flex-col min-h-0">
-              <div className="px-6 border-b bg-muted/10">
-                <TabsList className="bg-transparent h-12 p-0 gap-12">
+              <div className="px-4 sm:px-6 border-b bg-muted/10 overflow-x-auto custom-scrollbar">
+                <TabsList className="bg-transparent h-12 p-0 gap-6 sm:gap-12 min-w-max">
                   {[
                     { id: 'permissions', label: 'What they can do' },
                     { id: 'personnel', label: 'Assigned Users' },
@@ -623,9 +623,9 @@ const RoleManagement = () => {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="profile" className="p-6 m-0 max-w-2xl bg-muted/5 h-full border-t">
+                  <TabsContent value="profile" className="p-4 sm:p-6 m-0 max-w-2xl bg-muted/5 h-full border-t">
                     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                         <div className="space-y-1.5">
                           <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Unique identifier (Key)</Label>
                           <Input

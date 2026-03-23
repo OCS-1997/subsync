@@ -317,11 +317,11 @@ export default function AddEditSubscription({ onBack, editId }) {
         return { ...addrValue, state: stateStr || addrValue?.state || '' };
       } catch { return {}; }
     })();
-    const state = (addr?.state || '').trim();
+    const state = (addr?.state || '').toString().trim();
     const countryVal = addr?.country;
     const country = typeof countryVal === 'object' ? (countryVal?.value || countryVal?.label || 'India') : (countryVal || 'India');
-    const countryStr = country.trim();
-    if (countryStr && countryStr.toLowerCase() !== 'india' && countryStr.toLowerCase() !== 'in') {
+    const countryStr = (country || 'India').toString().trim();
+    if (countryStr && (countryStr.toLowerCase() !== 'india' && countryStr.toLowerCase() !== 'in')) {
       return { scope: 'international', isIntra: false, intraRate: 0, interRate: 0 };
     }
     // Check if customer state matches company state (Tamil Nadu)
@@ -353,7 +353,8 @@ export default function AddEditSubscription({ onBack, editId }) {
 
   const totals = useMemo(() => {
     const subtotal = form.items.reduce((acc, it) => acc + Number(it.quantity || 0) * Number(it.rate || 0), 0);
-    const nonTaxable = (selectedCustomerDetails?.tax_preference || '').toLowerCase() !== 'taxable' || geoInfo.scope === 'international';
+    const taxPref = String(selectedCustomerDetails?.tax_preference || '').toLowerCase();
+    const nonTaxable = taxPref !== 'taxable' || geoInfo.scope === 'international';
     const tax_total = nonTaxable ? 0 : form.items.reduce((acc, it) => acc + (Number(it.quantity || 0) * Number(it.rate || 0) * Number(it.tax_percent || 0)) / 100, 0);
     const discountAmt = form.discount_type === 'percent' ? (subtotal * Number(form.discount_value || 0)) / 100 : Number(form.discount_value || 0);
     const roundingAbs = Math.abs(Number(form.rounding || 0));
@@ -377,7 +378,8 @@ export default function AddEditSubscription({ onBack, editId }) {
   const resolveServiceDefaults = (svc) => {
     if (!svc) return { rate: 0, tax_percent: 0 };
     const rate = Number(svc.price || 0);
-    const nonTaxable = (selectedCustomerDetails?.tax_preference || '').toLowerCase() !== 'taxable' || geoInfo.scope === 'international';
+    const taxPref = String(selectedCustomerDetails?.tax_preference || '').toLowerCase();
+    const nonTaxable = taxPref !== 'taxable' || geoInfo.scope === 'international';
     let taxPercent = 0;
     if (!nonTaxable) {
       // First try to use service-specific tax_details, otherwise fall back to default tax preferences

@@ -324,32 +324,32 @@ export default function DCRList() {
   const activeFiltersCount = [filterUserId, filterCallType, filterStartDate, filterEndDate].filter(Boolean).length;
 
   return (
-    <div className="max-w-[1600px] mx-auto py-8 px-4">
+    <div className="max-w-[1600px] mx-auto py-4 sm:py-8 px-4">
       <PageHeader
         title="Daily Call Reports"
         description="Chronological log of operational activities, stakeholder engagements, and system interactions."
         breadcrumbItems={[{ label: "Daily Call Reports" }]}
         actions={
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
             <Button
               variant="ghost"
-              className="rounded-xl h-14 px-6 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all gap-2"
+              className="flex-1 sm:flex-none rounded-xl h-11 sm:h-14 px-4 sm:px-6 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all gap-2"
               onClick={() => setExportDialogOpen(true)}
             >
-              <FileDown className="w-5 h-5 mr-1" /> Export
+              <FileDown className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden xs:inline">Export</span>
             </Button>
             <Button
               variant="outline"
-              className="rounded-xl h-14 px-6 font-black uppercase tracking-widest text-[10px] text-blue-600 border-blue-100 hover:bg-blue-50 transition-all gap-2"
+              className="flex-1 sm:flex-none rounded-xl h-11 sm:h-14 px-4 sm:px-6 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-blue-600 border-blue-100 hover:bg-blue-50 transition-all gap-2"
               onClick={() => navigate(`/${username}/dashboard/dcr/detailed`)}
             >
-              <Eye className="w-5 h-5 mr-1" /> Detailed Analytics
+              <Eye className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden xs:inline">Detailed Analytics</span>
             </Button>
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-6 sm:px-8 h-11 sm:h-14 font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all mt-2 sm:mt-0"
               onClick={() => navigate(`/${username}/dashboard/dcr/new`)}
             >
-              <Plus className="w-5 h-5 mr-3" /> New Entry
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" /> New Entry
             </Button>
           </div>
         }
@@ -357,36 +357,38 @@ export default function DCRList() {
 
       <div className="space-y-8 mt-12">
         {/* Control Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 mt-6 sm:mt-12">
+          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl min-h-[3.5rem] flex flex-wrap items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-3 sm:px-5 py-2 sm:py-0">
             <SearchFilterForm
               search={search}
               setSearch={setSearch}
-              placeholder="Search by domain, company, contact, or notes..."
-              className="w-full"
+              placeholder="Search data..."
+              className="flex-1"
             />
-            <div className="h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
-            <Button
-              variant="ghost"
-              onClick={() => setShowFilters(!showFilters)}
-              className={cn(
-                "rounded-xl h-11 px-6 font-black uppercase tracking-widest text-[10px] gap-2",
-                activeFiltersCount > 0 ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" : "text-slate-500 dark:text-slate-400"
-              )}
-            >
-              <Filter className="w-4 h-4" />
-              Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </Button>
-            {activeFiltersCount > 0 && (
+            <div className="hidden sm:block h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
+            <div className="flex w-full sm:w-auto items-center justify-between gap-2 mt-2 sm:mt-0">
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="rounded-xl h-11 px-4 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "flex-1 sm:flex-none rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[9px] sm:text-[10px] gap-2",
+                  activeFiltersCount > 0 ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" : "text-slate-500 dark:text-slate-400"
+                )}
               >
-                <X className="w-4 h-4 mr-1" /> Clear
+                <Filter className="w-4 h-4" />
+                Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
               </Button>
-            )}
+              {activeFiltersCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="rounded-xl h-10 px-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                >
+                  <X className="w-4 h-4 mr-1" /> Clear
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

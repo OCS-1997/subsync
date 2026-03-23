@@ -50,51 +50,49 @@ export default function MobileBottomNav({ toggleSidebar }) {
   const visibleItems = navItems.filter(item => !item.permission || hasAnyPermission(item.permission));
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background/95 backdrop-blur-md border-t border-border z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-      {visibleItems.map((item) => {
-        const active = isActive(item.id);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.id}
-            to={item.path}
-            className="relative flex flex-col items-center justify-center w-full h-full gap-1 p-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {active && (
-              <motion.div
-                layoutId="mobile-nav-indicator"
-                className="absolute inset-0 bg-primary/10 rounded-xl m-1"
-                initial={false}
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              />
-            )}
-            <Icon 
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-4 pb-safe pt-2 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+      <div className="flex justify-around items-center h-14">
+        {visibleItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.id);
+          return (
+            <Link
+              key={item.id}
+              to={item.path}
               className={cn(
-                "w-5 h-5 transition-transform", 
-                active ? "text-primary scale-110 shadow-primary drop-shadow-md" : "text-muted-foreground/70"
-              )} 
-              strokeWidth={active ? 2.5 : 2} 
-            />
-            <span className={cn(
-              "text-[10px] font-bold tracking-tight transition-colors",
-              active ? "text-primary" : "text-muted-foreground/70"
-            )}>
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
-      
-      {/* More Button (opens Sidebar) */}
-      <button
-        onClick={toggleSidebar}
-        className="relative flex flex-col items-center justify-center w-full h-full gap-1 p-1 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <MoreHorizontal className="w-5 h-5 text-muted-foreground/70" strokeWidth={2} />
-        <span className="text-[10px] font-bold tracking-tight text-muted-foreground/70">
-          Menu
-        </span>
-      </button>
-    </div>
+                "flex flex-col items-center justify-center flex-1 transition-all duration-300 gap-1",
+                active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              )}
+            >
+              <div className={cn(
+                "p-1 rounded-xl transition-all",
+                active && "bg-blue-50 dark:bg-blue-900/20"
+              )}>
+                <Icon className={cn("w-5 h-5", active ? "stroke-[2.5px]" : "stroke-[2px]")} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-widest transition-opacity",
+                active ? "opacity-100" : "opacity-60"
+              )}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+        
+        {/* More Button (opens Sidebar) */}
+        <button
+          onClick={toggleSidebar}
+          className="flex flex-col items-center justify-center flex-1 transition-all duration-300 gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+        >
+          <div className="p-1 rounded-xl">
+            <MoreHorizontal className="w-5 h-5 stroke-[2px]" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+            Menu
+          </span>
+        </button>
+      </div>
+    </nav>
   );
 }

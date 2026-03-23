@@ -15,8 +15,10 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
   };
 
   return (
-    <div className="w-full overflow-hidden rounded-[2rem] border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500">
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent">
+    <div className="w-full overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-500">
+      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-slate-800 scrollbar-track-transparent relative shadow-inner">
+        {/* Horizontal Scroll Gradient Indicator */}
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/80 to-transparent dark:from-slate-900/80 pointer-events-none z-10 md:hidden" />
         <Table className="w-full border-collapse">
           <TableHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
             <TableRow className="hover:bg-transparent border-none">
@@ -31,7 +33,7 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                     key={header.key}
                     className={cn(
                       cellPadding,
-                      "py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 select-none whitespace-nowrap",
+                      "py-4 sm:py-5 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-300 select-none whitespace-nowrap",
                       isCenter ? "text-center" : "text-left",
                       isSorting
                         ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10"
@@ -97,9 +99,9 @@ function GenericTable({ headers, data, primaryKey = "id", sortBy, sortOrder, onS
                         key={`${item[primaryKey] || rowIndex}-${header.key}`}
                         className={cn(
                           cellPadding,
-                          "py-5 transition-all duration-300",
+                          "py-4 sm:py-5 transition-all duration-300",
                           isCenter ? "text-center" : "text-left",
-                          "text-slate-700 dark:text-slate-300 text-sm font-bold"
+                          "text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold"
                         )}
                       >
                         {isStatus && typeof val === 'string' ? (

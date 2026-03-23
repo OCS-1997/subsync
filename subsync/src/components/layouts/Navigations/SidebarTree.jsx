@@ -21,7 +21,21 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronRight, Folder, FolderOpen, GripVertical, Home, Pencil, Trash2 } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  GripVertical,
+  Home,
+  Pencil,
+  Trash2,
+  MoreVertical,
+  Plus,
+  Edit2,
+  X,
+  PlusCircle,
+} from 'lucide-react';
 
 import { cn } from '@/lib/utils.js';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.jsx';
@@ -68,7 +82,7 @@ function folderContainsPath(node, path) {
 
 function SidebarIcon({ node, active = false }) {
   if (node.icon_type === 'material') {
-    return <span className={cn('material-symbols-outlined text-[22px]', active ? 'fill-1' : 'opacity-80')}>{node.icon}</span>;
+    return <span className={`material-symbols-outlined text-[22px] ${active ? 'fill-1' : 'opacity-80'}`}>{node.icon}</span>;
   }
   return <Home size={22} className={active ? 'fill-white' : 'opacity-80'} />;
 }
@@ -130,6 +144,37 @@ export default function SidebarTree({
     const id = setTimeout(() => clearRestoredHighlights(), 360);
     return () => clearTimeout(id);
   }, [restoredItemIds, clearRestoredHighlights]);
+
+  useEffect(() => {
+    if (!activePath || !nodes.length || !isOpen) return;
+
+    const folderIdsToExpand = [];
+    const findParents = (list, path, parents = []) => {
+      for (const node of list) {
+        if (node.type === 'item' && node.path === path) return parents;
+        if (node.type === 'folder') {
+          const result = findParents(node.children, path, [...parents, node.id]);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+
+    const pathParents = findParents(nodes, activePath);
+    if (pathParents && pathParents.length > 0) {
+      setExpandedFolders((prev) => {
+        let hasChanged = false;
+        const next = { ...prev };
+        pathParents.forEach((id) => {
+          if (!next[id]) {
+            next[id] = true;
+            hasChanged = true;
+          }
+        });
+        return hasChanged ? next : prev;
+      });
+    }
+  }, [activePath, nodes, isOpen]);
 
   useEffect(() => {
     const valid = collectFolderIds(nodes);
@@ -232,12 +277,7 @@ export default function SidebarTree({
               setCollapsedFolderId(null);
               if (window.innerWidth < 1024) toggleSidebar();
             }}
-            className={cn(
-              'flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs transition-colors',
-              isActive(child.path)
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold'
-                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-            )}
+            className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs transition-colors ${isActive(child.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'}`}
             style={{ paddingLeft: `${10 + depth * 12}px` }}
           >
             <SidebarIcon node={child} active={isActive(child.path)} />
@@ -265,7 +305,7 @@ export default function SidebarTree({
     const { setNodeRef, isOver } = useDroppable({ id: containerId });
 
     return (
-      <ul ref={setNodeRef} className={cn('space-y-1', isOver && 'rounded-lg ring-2 ring-blue-500/60 ring-offset-2 ring-offset-sidebar')}>
+      <ul ref={setNodeRef} className={`space-y-1 ${isOver ? 'rounded-lg ring-2 ring-blue-500/60 ring-offset-2 ring-offset-sidebar' : ''}`}>
         <SortableContext items={list.map((node) => node.id)} strategy={verticalListSortingStrategy}>
           {list.map((node) => <NodeRow key={node.id} node={node} parentId={parentId} depth={depth} />)}
         </SortableContext>
@@ -280,7 +320,7 @@ export default function SidebarTree({
     const showIntent = folderIntent?.targetId === node.id;
 
     const handle = (
-      <div {...attributes} {...listeners} className={cn('flex h-7 w-7 items-center justify-center rounded-md', isDragging ? 'cursor-grabbing bg-sidebar-accent/60' : 'cursor-grab hover:bg-sidebar-accent/40')} onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}>
+      <div {...attributes} {...listeners} className={`flex h-7 w-7 items-center justify-center rounded-md ${isDragging ? 'cursor-grabbing bg-sidebar-accent/60' : 'cursor-grab hover:bg-sidebar-accent/40'}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}>
         <GripVertical size={14} className="opacity-70" />
       </div>
     );
@@ -290,7 +330,7 @@ export default function SidebarTree({
         <DropLine id={`drop-before:${node.id}`} isOpen={isOpen} data={{}} />
         <div className="pt-1">
           {node.type === 'item' ? (
-            <Link to={`/${username}/${node.path}`} onClick={() => window.innerWidth < 1024 && toggleSidebar()} className={cn('relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-200', isActive(node.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground', showIntent && 'ring-2 ring-blue-500/70')} style={{ paddingLeft: `${indent}px` }}>
+            <Link to={`/${username}/${node.path}`} onClick={() => window.innerWidth < 1024 && toggleSidebar()} className={`relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-200 ${isActive(node.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'} ${showIntent ? 'ring-2 ring-blue-500/70' : ''}`} style={{ paddingLeft: `${indent}px` }}>
               {handle}
               <div className="flex h-8 w-8 items-center justify-center rounded-lg"><SidebarIcon node={node} active={isActive(node.path)} /></div>
               {isOpen && <span className="truncate text-sm">{node.title}</span>}
@@ -313,11 +353,11 @@ export default function SidebarTree({
                       }
                     }
                   }}
-                  className={cn('flex w-full items-center gap-2 rounded-xl border bg-gradient-to-r px-2 py-1.5 text-left transition-all duration-200', node.color || 'from-slate-500/15 to-slate-500/5 border-slate-400/20', folderContainsPath(node, activePath) ? 'text-sidebar-accent-foreground shadow-md ring-1 ring-sidebar-accent-foreground/30' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40', currentOverId === node.id && 'ring-2 ring-blue-500/70')}
+                  className={`flex w-full items-center gap-2 rounded-xl border bg-gradient-to-r px-2 py-1.5 text-left transition-all duration-200 ${node.color || 'from-slate-500/15 to-slate-500/5 border-slate-400/20'} ${folderContainsPath(node, activePath) ? 'text-sidebar-accent-foreground shadow-md ring-1 ring-sidebar-accent-foreground/30' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40'} ${currentOverId === node.id ? 'ring-2 ring-blue-500/70' : ''}`}
                   style={{ paddingLeft: `${indent}px` }}
                 >
                   {handle}
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-accent/30">{isOpen && expandedFolders[node.id] ? <FolderOpen size={18} /> : <Folder size={18} />}</div>
+                  <div className={`flex h-8 items-center justify-between rounded-lg bg-sidebar-accent/5 px-2 py-1 ${isDragging ? 'opacity-50' : 'opacity-100'}`}>{isOpen && expandedFolders[node.id] ? <FolderOpen size={18} /> : <Folder size={18} />}</div>
                   {isOpen && (
                     <>
                       {editingFolderId === node.id ? (
@@ -331,7 +371,7 @@ export default function SidebarTree({
                         <>
                           <button type="button" className="rounded-md p-1 hover:bg-sidebar-accent/50" onClick={(event) => { event.stopPropagation(); setEditingFolderId(node.id); setFolderNameDraft(node.name || 'New Folder'); }}><Pencil size={14} /></button>
                           <button type="button" className="rounded-md p-1 hover:bg-red-500/20 hover:text-red-600" onClick={(event) => { event.stopPropagation(); deleteFolder(node.id); }}><Trash2 size={14} /></button>
-                          <ChevronRight size={16} className={cn('transition-transform', expandedFolders[node.id] ? 'rotate-90' : 'rotate-0')} />
+                          <ChevronRight size={16} className={`transition-transform ${expandedFolders[node.id] ? 'rotate-90' : 'rotate-0'}`} />
                         </>
                       )}
                     </>

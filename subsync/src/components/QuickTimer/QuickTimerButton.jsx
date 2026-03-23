@@ -242,7 +242,7 @@ const QuickTimerButton = () => {
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="w-full max-w-5xl h-[90vh] p-0 overflow-hidden dark:bg-slate-950 border-none shadow-2xl rounded-[2.5rem] flex flex-col">
+                <DialogContent className="w-full max-w-5xl h-[90vh] p-0 dark:bg-slate-950 border-none shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] flex flex-col">
                     <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/50 backdrop-blur-md shrink-0 z-10">
                             <div>
                                 <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">
@@ -275,7 +275,7 @@ const QuickTimerButton = () => {
                             )}
                         </div>
                         
-                        <div className="flex-1 min-h-0 overflow-y-auto p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
                             {activeTimer ? (
                                 <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

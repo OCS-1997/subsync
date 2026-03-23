@@ -95,12 +95,12 @@ function NavBar({ toggleSidebar }) {
   return (
     <nav className="bg-background dark:bg-background shadow-md rounded-b-l border-b-2 border-border sticky top-0 z-50">
       <div className="max-w-full mx-auto px-2 sm:px-6 lg:px-8 flex  justify-between items-center h-16">
-        <div className="flex flex-1 items-center p-1">
-          <Button variant="ghost" size="icon" className="mr-1 lg:hidden h-10 w-10" onClick={toggleSidebar}>
+        <div className="flex flex-1 items-center p-1 overflow-hidden">
+          <Button variant="ghost" size="icon" className="mr-1 lg:hidden h-10 w-10 shrink-0" onClick={toggleSidebar}>
             <span className="material-symbols-outlined text-2xl">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex items-center p-1 rounded">
-            <img src="/logo.png" alt="Logo" className="h-8 sm:h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100 transition-all" />
+          <div className="flex-shrink-0 flex items-center p-1 rounded overflow-hidden">
+            <img src="/logo.png" alt="Logo" className="h-8 sm:h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100 transition-all object-contain" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -124,50 +124,75 @@ function NavBar({ toggleSidebar }) {
             </motion.div>
           )}
 
-          {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && (
-            <QuickTimerButton />
-          )}
+          {/* On mobile, group secondary tools into a popover */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="flex sm:hidden">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full bg-accent/20">
+                    <LayoutDashboard className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="end">
+                  <div className="grid grid-cols-4 gap-2">
+                    {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && <QuickTimerButton />}
+                    {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && <QuickToolsWidget />}
+                    {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && <BirthdayNavWidget />}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-xl"
+                      onClick={handleCalculatorToggle}
+                    >
+                      <Calculator className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (
-            <QuickToolsWidget />
-          )}
+            {/* Desktop View Widgets */}
+            <div className="hidden sm:flex items-center gap-2 lg:gap-3">
+              {hasPermission(PERMISSIONS.TIME_TRACKING_VIEW) && (
+                <QuickTimerButton />
+              )}
+              {hasPermission(PERMISSIONS.QUICK_TOOLS_VIEW) && (
+                <QuickToolsWidget />
+              )}
+              {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && (
+                <BirthdayNavWidget />
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
+                onClick={handleCalculatorToggle}
+                title="Calculator (Ctrl+Shift+C)"
+              >
+                <Calculator className="h-5 w-5" />
+              </Button>
+            </div>
 
-          
-          {hasPermission(PERMISSIONS.DASHBOARD_VIEW) && (
-            <BirthdayNavWidget />
-          )}
-
-          
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
-            onClick={handleCalculatorToggle}
-            title="Calculator (Ctrl+Shift+C)"
-          >
-            <Calculator className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full hover:bg-accent transition-colors shrink-0"
-            onClick={() => setSettingsOpen(prev => !prev)}
-            title="Settings (Ctrl+Shift+P)"
-          >
-            <Settings className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-accent transition-colors shrink-0"
+              onClick={() => setSettingsOpen(prev => !prev)}
+              title="Settings (Ctrl+Shift+P)"
+            >
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </div>
 
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
                 title="User Menu"
               >
-                <User className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64" align="end">

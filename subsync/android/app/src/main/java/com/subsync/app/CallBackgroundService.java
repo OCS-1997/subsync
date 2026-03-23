@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.pm.ServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -40,8 +41,7 @@ public class CallBackgroundService extends Service {
                 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
             startForeground(1002, notification, 
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | 
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
             startForeground(1002, notification);
         }
@@ -57,7 +57,11 @@ public class CallBackgroundService extends Service {
             filter.addAction(Intent.ACTION_NEW_OUTGOING_CALL);
             
             Log.d(TAG, "Registering dynamic CallReceiver");
-            registerReceiver(callReceiver, filter);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(callReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                registerReceiver(callReceiver, filter);
+            }
         }
     }
 

@@ -237,8 +237,8 @@ const ProjectManagement = ({ customers = [] }) => {
 
     return (
         <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm transition-all duration-300">
-            <CardHeader className="bg-white dark:bg-slate-800/20 border-b border-gray-50 dark:border-slate-800 p-8">
-                <div className="flex items-center justify-between">
+            <CardHeader className="bg-white dark:bg-slate-800/20 border-b border-gray-50 dark:border-slate-800 p-5 sm:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="space-y-1">
                         <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <FolderKanban className="w-5 h-5" />
@@ -247,35 +247,37 @@ const ProjectManagement = ({ customers = [] }) => {
                         <p className="text-sm text-slate-500 dark:text-slate-400">Manage your time tracking projects</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="relative w-64">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                        <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input
                                 placeholder="Search projects..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && fetchProjects(true)}
-                                className="h-10 pl-10 rounded-xl bg-gray-50 dark:bg-slate-950 border-transparent focus:bg-white transition-all shadow-none"
+                                className="h-10 pl-10 w-full rounded-xl bg-gray-50 dark:bg-slate-950 border-transparent focus:bg-white transition-all shadow-none"
                             />
                         </div>
                         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
                             <DialogTrigger asChild>
-                                <Button className="h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm shadow-sm transition-colors">
+                                <Button className="h-10 w-full sm:w-auto px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm shadow-sm transition-colors">
                                     <Plus className="mr-2 h-4 w-4" />
                                     New Project
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-4xl dark:bg-slate-900 dark:border-slate-800 rounded-[2rem]">
-                                <DialogHeader>
-                                    <DialogTitle className="text-xl font-semibold text-slate-900 dark:text-white">
-                                        {editingProject ? 'Edit Project' : 'Create New Project'}
-                                    </DialogTitle>
-                                    <DialogDescription className="text-sm text-slate-500 dark:text-slate-400">
-                                        {editingProject ? 'Update project details' : 'Add a new project for time tracking'}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-4xl dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden p-0">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+                                <div className="p-6 sm:p-10">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-xl font-semibold text-slate-900 dark:text-white">
+                                            {editingProject ? 'Edit Project' : 'Create New Project'}
+                                        </DialogTitle>
+                                        <DialogDescription className="text-sm text-slate-500 dark:text-slate-400">
+                                            {editingProject ? 'Update project details' : 'Add a new project for time tracking'}
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Project Name <span className="text-red-500">*</span></Label>
                                             <Input
@@ -313,7 +315,7 @@ const ProjectManagement = ({ customers = [] }) => {
                                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                     </Button>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-[400px] max-w-[90vw] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                                <PopoverContent className="w-[calc(100vw-4rem)] sm:w-[400px] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
                                                     <Command className="dark:bg-slate-900" shouldFilter={true}>
                                                         <CommandInput placeholder="Search customers..." className="h-9 border-none" />
                                                         <CommandList className="max-h-[300px] overflow-y-auto">
@@ -414,7 +416,8 @@ const ProjectManagement = ({ customers = [] }) => {
                                             {editingProject ? 'Update Project' : 'Create Project'}
                                         </Button>
                                     </DialogFooter>
-                                </form>
+                                    </form>
+                                </div>
                             </DialogContent>
                         </Dialog>
                     </div>

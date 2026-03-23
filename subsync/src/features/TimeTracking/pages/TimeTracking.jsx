@@ -141,58 +141,65 @@ const TimeTracking = () => {
                 ]}
             />
             
-            <div className="mb-10">
-                <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2 flex items-center gap-3">
-                    <Clock className="w-8 h-8 text-blue-500" />
-                    Precision Time Tracking
-                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mt-2">
-                    Measure productivity with millisecond accuracy and automated analytics
-                </p>
+            <div className="mb-6 sm:mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight mt-2 flex items-center gap-3">
+                        <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
+                        Precision Time Tracking
+                        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] mt-2 max-w-2xl">
+                        Measure productivity with millisecond accuracy and automated analytics
+                    </p>
+                </div>
+                <div className="flex sm:hidden">
+                    {/* Placeholder for potential mobile-only quick actions */}
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="bg-white/80 dark:bg-slate-900/50 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)] p-1 rounded-full w-fit border border-slate-200 dark:border-slate-800 backdrop-blur-xl inline-flex">
-                        <TabsList className="bg-transparent border-none h-11 pointer-events-auto gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="bg-white/80 dark:bg-slate-900/50 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)] p-1 rounded-2xl sm:rounded-full w-full sm:w-fit border border-slate-200 dark:border-slate-800 backdrop-blur-xl inline-flex overflow-x-auto no-scrollbar">
+                        <TabsList className="bg-transparent border-none h-11 pointer-events-auto gap-1 flex-nowrap w-full sm:w-auto">
                             <TabsTrigger 
                                 value="track" 
-                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                className="rounded-full px-4 sm:px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200 shrink-0 whitespace-nowrap"
                             >
-                                <Timer className="w-3.5 h-3.5 mr-2.5" />
-                                Track Time
+                                <Timer className="w-3.5 h-3.5 mr-2" />
+                                <span className="hidden xs:inline">Track Time</span>
+                                <span className="xs:hidden">Track</span>
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="logs" 
-                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                className="rounded-full px-4 sm:px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200 shrink-0 whitespace-nowrap"
                             >
-                                <List className="w-3.5 h-3.5 mr-2.5" />
-                                Time Logs
+                                <List className="w-3.5 h-3.5 mr-2" />
+                                <span className="hidden xs:inline">Time Logs</span>
+                                <span className="xs:hidden">Logs</span>
                             </TabsTrigger>
                             <PermissionGate required={PERMISSIONS.TIME_TRACKING_MANAGE}>
                                 <TabsTrigger 
                                     value="projects" 
-                                    className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                    className="rounded-full px-4 sm:px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200 shrink-0 whitespace-nowrap"
                                 >
-                                    <Briefcase className="w-3.5 h-3.5 mr-2.5" />
+                                    <Briefcase className="w-3.5 h-3.5 mr-2" />
                                     Projects
                                 </TabsTrigger>
                             </PermissionGate>
                             <PermissionGate required={PERMISSIONS.TIME_TRACKING_MANAGE}>
                                 <TabsTrigger 
                                     value="categories" 
-                                    className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                    className="rounded-full px-4 sm:px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200 shrink-0 whitespace-nowrap"
                                 >
-                                    <Tag className="w-3.5 h-3.5 mr-2.5" />
+                                    <Tag className="w-3.5 h-3.5 mr-2" />
                                     Categories
                                 </TabsTrigger>
                             </PermissionGate>
                             <TabsTrigger 
                                 value="reports" 
-                                className="rounded-full px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200"
+                                className="rounded-full px-4 sm:px-8 h-full font-black text-[10px] uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 transition-all duration-300 hover:text-slate-900 dark:hover:text-slate-200 shrink-0 whitespace-nowrap"
                             >
-                                <PieChartIcon className="w-3.5 h-3.5 mr-2.5" />
+                                <PieChartIcon className="w-3.5 h-3.5 mr-2" />
                                 Reports
                             </TabsTrigger>
                         </TabsList>

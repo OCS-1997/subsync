@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.pm.ServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -11,6 +12,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -56,7 +58,7 @@ public class CallOverlayService extends Service {
                 .build();
                 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(1001, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            startForeground(1001, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
             startForeground(1001, notification);
         }
@@ -69,7 +71,7 @@ public class CallOverlayService extends Service {
 
             // Refine in background: pull from CallLog after a short delay to be sure it's updated
             new Thread(() -> {
-                Log.d(TAG, "Background refining call log for: " + initialNumber);
+                Log.d(TAG, "Refinement thread started for " + initialNumber);
                 
                 String finalNumber = initialNumber != null ? initialNumber : "";
                 int finalDuration = initialDuration;
@@ -167,12 +169,27 @@ public class CallOverlayService extends Service {
     }
 
     private void showOverlay(String number, int duration, String type, String name, String company, String entityType) {
-        if (overlayView != null)
+        Log.d(TAG, "showOverlay called for: " + number + ", name: " + name);
+        if (overlayView != null) {
+            Log.d(TAG, "Overlay already exists, skipping");
             return;
+        }
 
         try {
-            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+            Context appContext = getApplicationContext();
+            windowManager = (WindowManager) appContext.getSystemService(Context.WINDOW_SERVICE);
+            
+            boolean canDraw = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                canDraw = Settings.canDrawOverlays(appContext);
+                if (!canDraw) {
+                    Log.e(TAG, "CRITICAL: Overlay permission (SYSTEM_ALERT_WINDOW) is NOT granted. Overlay cannot be shown.");
+                } else {
+                    Log.d(TAG, "Overlay permission is granted.");
+                }
+            }
+
+            LayoutInflater inflater = LayoutInflater.from(appContext);
             overlayView = inflater.inflate(R.layout.call_overlay, null);
 
             int layoutFlag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
@@ -180,53 +197,64 @@ public class CallOverlayService extends Service {
                     : WindowManager.LayoutParams.TYPE_PHONE;
 
             WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
+                    (int) (appContext.getResources().getDisplayMetrics().widthPixels * 0.96),
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     layoutFlag,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                            | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE 
+                    | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                    | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                    | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
                     PixelFormat.TRANSLUCENT);
 
-            params.gravity = Gravity.BOTTOM;
+            params.gravity = Gravity.CENTER; 
             params.windowAnimations = R.style.OverlayAnimation;
 
             TextView tvName = overlayView.findViewById(R.id.tv_contact_name);
-            TextView tvCompany = overlayView.findViewById(R.id.tv_company_name);
             TextView tvPhone = overlayView.findViewById(R.id.tv_phone_number);
-            TextView tvDurationType = overlayView.findViewById(R.id.tv_duration_type);
+            TextView tvStatusPill = overlayView.findViewById(R.id.tv_status_pill);
+            TextView tvInitials = overlayView.findViewById(R.id.tv_initials);
+            View btnDismissIcon = overlayView.findViewById(R.id.btn_dismiss_icon);
             Button btnDismiss = overlayView.findViewById(R.id.btn_dismiss);
             Button btnLogCall = overlayView.findViewById(R.id.btn_log_call);
 
             boolean hasName = name != null && !name.trim().isEmpty();
-            boolean hasCompany = company != null && !company.trim().isEmpty();
-
-            if (hasName) {
-                tvName.setText(name);
-                tvPhone.setText(number);
-            } else if (hasCompany) {
-                // If no name but we have a company, show the company as the main name
-                tvName.setText(company);
-                tvPhone.setText(number);
-            } else {
-                tvName.setText(number);
-                tvPhone.setText("Not in contacts");
-            }
-
-            if (hasName && hasCompany) {
-                tvCompany.setVisibility(View.VISIBLE);
-                tvCompany.setText(company + (entityType != null && !entityType.trim().isEmpty() ? " • " + entityType : ""));
-            } else if (entityType != null && !entityType.trim().isEmpty()) {
-                tvCompany.setVisibility(View.VISIBLE);
-                tvCompany.setText(entityType);
-            } else {
-                tvCompany.setVisibility(View.GONE);
+            String displayName = hasName ? name : number;
+            
+            if (tvName != null) tvName.setText(displayName);
+            if (tvPhone != null) tvPhone.setText(number);
+            
+            if (tvInitials != null) {
+                if (hasName) {
+                    tvInitials.setText(name.substring(0, 1).toUpperCase());
+                } else {
+                    tvInitials.setText("U");
+                }
             }
 
             int mins = duration / 60;
             int secs = duration % 60;
             String timeStr = mins > 0 ? mins + "m " + secs + "s" : secs + "s";
-            String typeStr = "unknown".equals(type) ? "Call" : type.substring(0, 1).toUpperCase() + type.substring(1);
-            tvDurationType.setText(typeStr + " • " + timeStr);
+            String safeType = type != null ? type : "unknown";
+            String typeStr = safeType.substring(0, 1).toUpperCase() + safeType.substring(1);
+            
+            if (tvStatusPill != null) {
+                if ("missed".equals(safeType)) {
+                    tvStatusPill.setText("Missed call less than 1m ago");
+                } else {
+                    tvStatusPill.setText(typeStr + " ended • " + timeStr + " ago");
+                }
+            }
+
+            if (btnDismissIcon != null) {
+                btnDismissIcon.setOnClickListener(v -> {
+                    removeOverlay();
+                    stopSelf();
+                });
+            }
 
             btnDismiss.setOnClickListener(v -> {
                 removeOverlay();
@@ -245,8 +273,10 @@ public class CallOverlayService extends Service {
             });
 
             setupSwipeToDismiss(overlayView, params);
+            Log.d(TAG, "Attempting windowManager.addView");
             try {
                 windowManager.addView(overlayView, params);
+                Log.d(TAG, "windowManager.addView successful");
             } catch (WindowManager.BadTokenException e) {
                 Log.e(TAG, "Overlay permission denied or invalid token (BadTokenException)", e);
                 // Gracefully fallback to in-app logging queue if overlay cannot be drawn
@@ -269,10 +299,11 @@ public class CallOverlayService extends Service {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (swipeThreshold == 0)
-                    swipeThreshold = view.getHeight() / 4;
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        if (swipeThreshold == 0) {
+                            swipeThreshold = view.getHeight() > 0 ? view.getHeight() / 4 : 300;
+                        }
                         initialY = params.y;
                         initialTouchY = event.getRawY();
                         return true;

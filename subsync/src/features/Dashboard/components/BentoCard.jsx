@@ -81,7 +81,7 @@ function BentoCard({
 
             {/* Content */}
             <div className={cn(
-                "relative z-10",
+                "relative z-10 touch-pan-y",
                 !noPadding && "px-6 pb-6",
                 title && !noPadding && "pt-2"
             )}>

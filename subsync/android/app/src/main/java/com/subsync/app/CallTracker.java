@@ -50,7 +50,7 @@ public class CallTracker {
         if ("android.intent.action.NEW_OUTGOING_CALL".equals(action)) {
             String number = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
             if (number != null && !number.isEmpty()) {
-                prefs.edit().putString("currentPhoneNumber", number).putString("currentCallType", "outgoing").apply();
+                prefs.edit().putString("currentPhoneNumber", number).putString("currentCallType", "outgoing").commit();
             }
             if (pendingResult != null)
                 pendingResult.finish();
@@ -73,15 +73,15 @@ public class CallTracker {
                 if (incomingNumber != null && !incomingNumber.isEmpty()) {
                     currentPhoneNumber = incomingNumber;
                     prefs.edit().putString("currentPhoneNumber", currentPhoneNumber)
-                            .putString("currentCallType", "incoming").apply();
+                            .putString("currentCallType", "incoming").commit();
                 }
             } else if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
                 if (previousState == TelephonyManager.CALL_STATE_IDLE && !"outgoing".equals(currentCallType)) {
                     currentCallType = "outgoing";
-                    prefs.edit().putString("currentCallType", currentCallType).apply();
+                    prefs.edit().putString("currentCallType", currentCallType).commit();
                 }
                 if (previousState != TelephonyManager.CALL_STATE_OFFHOOK) {
-                    prefs.edit().putLong("callStartMs", System.currentTimeMillis()).apply();
+                    prefs.edit().putLong("callStartMs", System.currentTimeMillis()).commit();
                 }
             } else if (state == TelephonyManager.CALL_STATE_IDLE) {
                 if (previousState != TelephonyManager.CALL_STATE_IDLE) {
@@ -92,7 +92,7 @@ public class CallTracker {
                     final String numberToEmit = currentPhoneNumber;
                     final String typeToEmit = currentCallType;
 
-                    prefs.edit().remove("callStartMs").remove("currentPhoneNumber").remove("currentCallType").apply();
+                    prefs.edit().remove("callStartMs").remove("currentPhoneNumber").remove("currentCallType").commit();
 
                     Intent serviceIntent = new Intent(context, CallOverlayService.class);
                     serviceIntent.putExtra("number", numberToEmit);
@@ -106,7 +106,7 @@ public class CallTracker {
                         context.startService(serviceIntent);
                 }
             }
-            prefs.edit().putInt("previousState", state).apply();
+            prefs.edit().putInt("previousState", state).commit();
             
             // Note: readCallLogAndEmit is no longer called here; the service does it.
             if (pendingResult != null)

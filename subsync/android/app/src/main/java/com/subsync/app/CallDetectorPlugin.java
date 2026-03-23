@@ -31,7 +31,8 @@ import com.getcapacitor.annotation.PermissionCallback;
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALL_LOG,
                 Manifest.permission.READ_CONTACTS,
-                Manifest.permission.PROCESS_OUTGOING_CALLS
+                Manifest.permission.PROCESS_OUTGOING_CALLS,
+                Manifest.permission.POST_NOTIFICATIONS
             }
         )
     }
@@ -50,11 +51,16 @@ public class CallDetectorPlugin extends Plugin {
         boolean callLogGranted = hasPermission(Manifest.permission.READ_CALL_LOG);
         boolean contactsGranted = hasPermission(Manifest.permission.READ_CONTACTS);
         boolean outgoingGranted = hasPermission(Manifest.permission.PROCESS_OUTGOING_CALLS);
+        boolean notificationGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationGranted = hasPermission(Manifest.permission.POST_NOTIFICATIONS);
+        }
 
-        result.put("phone", (phoneGranted && callLogGranted && contactsGranted && outgoingGranted) ? "granted" : "denied");
+        result.put("phone", (phoneGranted && callLogGranted && contactsGranted && outgoingGranted && notificationGranted) ? "granted" : "denied");
         result.put("readPhoneState", phoneGranted ? "granted" : "denied");
         result.put("readCallLog", callLogGranted ? "granted" : "denied");
         result.put("readContacts", contactsGranted ? "granted" : "denied");
+        result.put("notifications", notificationGranted ? "granted" : "denied");
         call.resolve(result);
     }
 
@@ -129,7 +135,7 @@ public class CallDetectorPlugin extends Plugin {
     private void jsArrayToCall(PluginCall call, JSONArray pendingArray) throws JSONException {
         JSObject result = new JSObject();
         if (pendingArray != null) {
-            result.put("calls", new com.getcapacitor.JSArray(pendingArray));
+            result.put("calls", pendingArray);
         } else {
             result.put("calls", new com.getcapacitor.JSArray());
         }

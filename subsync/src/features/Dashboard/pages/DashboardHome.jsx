@@ -122,16 +122,16 @@ function DashboardHome() {
     }
 
     return (
-        <div className="min-h-screen  dark:bg-slate-950 px-6 py-8">
-            <div className="max-w-[1800px] mx-auto space-y-8">
+        <div className="min-h-screen dark:bg-slate-950 px-4 sm:px-6 py-4 sm:py-8">
+            <div className="max-w-[1800px] mx-auto space-y-6 sm:space-y-8">
                 {/* Welcome Header */}
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between mb-2">
                         <div>
-                            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                                 {getGreeting()}, <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">{user?.name || 'User'}</span>
                             </h1>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium mt-1">
                                 Here's what's happening with your business today
                             </p>
                         </div>
@@ -139,17 +139,17 @@ function DashboardHome() {
                             variant="ghost"
                             size="sm"
                             onClick={handleRefresh}
-                            className="h-12 w-12 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+                            className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition-all shrink-0"
                         >
-                            <RefreshCw className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 dark:text-slate-400" />
                         </Button>
                     </div>
                 </div>
 
-                {/* Tab Navigation */}
+                {/* Tab Navigation - Scrollable on mobile */}
                 {dashboardConfig.tabs.length > 0 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-                        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800/50 rounded-2xl w-fit shadow-sm">
+                        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800/50 rounded-2xl w-full sm:w-fit shadow-sm overflow-x-auto no-scrollbar">
                             {dashboardConfig.tabs.map((tab) => {
                                 const Icon = TAB_ICONS[tab.tabKey] || LayoutGrid;
                                 const isActive = activeTab === tab.tabKey;

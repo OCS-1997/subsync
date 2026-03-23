@@ -348,4 +348,30 @@ body {
   .pb-safe {
     padding-bottom: space(env(safe-area-inset-bottom), 1rem);
   }
+
+  /* Mobile-first visibility utilities */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+  .desktop-only {
+    @apply hidden md:block;
+  }
+
+  /* Responsive container padding */
+  .resp-container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Touch target optimization */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

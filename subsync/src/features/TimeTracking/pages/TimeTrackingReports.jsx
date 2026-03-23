@@ -276,7 +276,7 @@ const TimeTrackingReports = () => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Report Controls */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Calendar className="text-white w-6 h-6" />
@@ -289,7 +289,7 @@ const TimeTrackingReports = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                     {dateRange === 'custom' && (
                         <div className="flex items-center gap-2 mr-2 bg-gray-50 dark:bg-slate-950 p-1.5 rounded-xl border border-gray-100 dark:border-slate-800">
                             <div className="flex items-center gap-2 px-2">
@@ -322,7 +322,7 @@ const TimeTrackingReports = () => {
                     )}
                     <div className="bg-gray-50 dark:bg-slate-950 p-1 rounded-xl border border-gray-100 dark:border-slate-800 flex items-center gap-1">
                         <Select value={dateRange} onValueChange={updateDateRange}>
-                            <SelectTrigger className="h-9 w-40 border-none bg-transparent font-black text-[10px] uppercase tracking-widest focus:ring-0">
+                            <SelectTrigger className="h-9 w-full sm:w-40 border-none bg-transparent font-black text-[10px] uppercase tracking-widest focus:ring-0">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl border-gray-100 dark:border-slate-800">
@@ -336,30 +336,32 @@ const TimeTrackingReports = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <Button 
-                        variant="outline"
-                        onClick={() => setShowAdvanced(!showAdvanced)}
-                        className={cn(
-                            "h-11 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest border-gray-100 dark:border-slate-800 transition-all",
-                            showAdvanced ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-slate-900"
-                        )}
-                    >
-                        <Filter className="mr-2 h-4 w-4" />
-                        Filters
-                    </Button>
-                    <Button 
-                        onClick={() => handleExport('csv')}
-                        className="h-11 px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95"
-                    >
-                        <Download className="mr-2 h-4 w-4" />
-                        Export
-                    </Button>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <Button 
+                            variant="outline"
+                            onClick={() => setShowAdvanced(!showAdvanced)}
+                            className={cn(
+                                "h-11 flex-1 sm:flex-none sm:px-6 rounded-xl font-black text-[10px] uppercase tracking-widest border-gray-100 dark:border-slate-800 transition-all",
+                                showAdvanced ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-slate-900"
+                            )}
+                        >
+                            <Filter className="mr-2 h-4 w-4" />
+                            Filters
+                        </Button>
+                        <Button 
+                            onClick={() => handleExport('csv')}
+                            className="h-11 flex-1 sm:flex-none sm:px-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             {/* Advanced Filters Panel */}
             {showAdvanced && (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-top-4 duration-500">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-white dark:bg-slate-900/50 p-6 rounded-[2rem] border border-gray-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-top-4 duration-500">
                     <div className="space-y-2">
                         <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Team Member</Label>
                         <Select value={filterUserId} onValueChange={setFilterUserId}>
@@ -443,7 +445,7 @@ const TimeTrackingReports = () => {
             )}
 
             {/* Quick Stats */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                     { label: 'Total Time', value: formatHours(summary?.total_minutes || 0), sub: `${summary?.total_entries || 0} entries`, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
                     { label: 'Billable Time', value: formatHours(summary?.billable_minutes || 0), sub: `${(summary?.total_minutes || 0) > 0 ? ((summary.billable_minutes / summary.total_minutes) * 100).toFixed(0) : 0}% billable`, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -484,50 +486,52 @@ const TimeTrackingReports = () => {
                             <Badge variant="outline" className="rounded-lg border-gray-100 text-[9px] font-black uppercase tracking-widest px-3">Live Data</Badge>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-8">
-                        {dailyTrend.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={350}>
-                                <AreaChart data={dailyTrend.map(d => ({
-                                    ...d,
-                                    date: format(new Date(d.date), 'MMM d'),
-                                    total_hours: parseFloat((d.total_minutes / 60).toFixed(1)),
-                                    billable_hours: parseFloat((d.billable_minutes / 60).toFixed(1))
-                                }))}>
-                                    <defs>
-                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                        </linearGradient>
-                                        <linearGradient id="colorBillable" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis 
-                                        dataKey="date" 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                        dy={10}
-                                    />
-                                    <YAxis 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                    />
-                                    <Tooltip 
-                                        contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
-                                    />
-                                    <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotal)" name="TOTAL HRS" />
-                                    <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillable)" name="BILLABLE" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-[350px] gap-4 text-slate-300">
-                                <Activity size={48} strokeWidth={1} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
-                            </div>
-                        )}
+                    <CardContent className="p-4 sm:p-8 overflow-x-auto no-scrollbar">
+                        <div className="min-w-[500px] h-[350px]">
+                            {dailyTrend.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={dailyTrend.map(d => ({
+                                        ...d,
+                                        date: format(new Date(d.date), 'MMM d'),
+                                        total_hours: parseFloat((d.total_minutes / 60).toFixed(1)),
+                                        billable_hours: parseFloat((d.billable_minutes / 60).toFixed(1))
+                                    }))}>
+                                        <defs>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                            </linearGradient>
+                                            <linearGradient id="colorBillable" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis 
+                                            dataKey="date" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                            dy={10}
+                                        />
+                                        <YAxis 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                        />
+                                        <Tooltip 
+                                            contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
+                                        />
+                                        <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotal)" name="TOTAL HRS" />
+                                        <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillable)" name="BILLABLE" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
+                                    <Activity size={48} strokeWidth={1} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -687,7 +691,7 @@ const TimeTrackingReports = () => {
 
             {/* User Activity Drill-down Modal */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="max-w-4xl rounded-[3rem] p-0 overflow-hidden border-none dark:bg-slate-950 shadow-2xl">
+                <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-4xl rounded-[3rem] p-0 overflow-hidden border-none dark:bg-slate-950 shadow-2xl">
                     <DialogHeader className="p-10 bg-slate-900 dark:bg-slate-900">
                         <div className="flex items-center gap-6">
                             <div className="h-16 w-16 rounded-3xl bg-blue-600 flex items-center justify-center text-xl font-black text-white shadow-xl shadow-blue-500/20">

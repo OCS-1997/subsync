@@ -236,7 +236,7 @@ const CalendarGrid = ({ currentMonth, entries, onDateSelect, selectedDate }) => 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
-        <div className="p-8 pb-32">
+        <div className="p-4 sm:p-8 pb-32 overflow-x-auto no-scrollbar">
             <div className="grid grid-cols-7 mb-4 min-w-[700px]">
                 {weekDays.map(day => (
                     <div key={day} className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 py-4">
@@ -739,50 +739,54 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                         
                         <div className="h-8 w-[1px] bg-gray-200 dark:bg-slate-800 mx-1" />
 
-                        {isAdmin && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowAllUsers(!showAllUsers)}
-                                className={cn(
-                                    "h-10 px-4 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
-                                    showAllUsers 
-                                        ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white" 
-                                        : "border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-950"
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+                            <div className="flex items-center gap-3">
+                                {isAdmin && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowAllUsers(!showAllUsers)}
+                                        className={cn(
+                                            "h-10 px-4 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
+                                            showAllUsers 
+                                                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white" 
+                                                : "border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-950"
+                                        )}
+                                    >
+                                        <User className={cn("mr-2 h-3.5 w-3.5", showAllUsers ? "text-white" : "text-blue-500")} />
+                                        {showAllUsers ? "Showing All Users" : "Show All Users"}
+                                    </Button>
                                 )}
-                            >
-                                <User className={cn("mr-2 h-3.5 w-3.5", showAllUsers ? "text-white" : "text-blue-500")} />
-                                {showAllUsers ? "Showing All Users" : "Show All Users"}
-                            </Button>
-                        )}
-
-                        <div className="flex items-center gap-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
-                            >
-                                <Filter className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                                {showAdvancedFilters ? 'Hide' : 'Show'} Filters
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleExportCSV}
-                                className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
-                            >
-                                <Download className="mr-2 h-3.5 w-3.5 text-blue-500" />
-                                Export
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={resetFilters}
-                                className="h-10 w-10 p-0 rounded-xl hover:bg-white dark:hover:bg-slate-950 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
-                            >
-                                <RotateCcw className="h-4 w-4 text-slate-400" />
-                            </Button>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
+                                >
+                                    <Filter className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                                    {showAdvancedFilters ? 'Hide' : 'Show'} Filters
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleExportCSV}
+                                    className="h-10 px-4 rounded-xl border-2 border-slate-100 dark:border-slate-800 font-black text-[10px] uppercase tracking-widest hover:bg-white dark:hover:bg-slate-950 transition-all shadow-sm"
+                                >
+                                    <Download className="mr-2 h-3.5 w-3.5 text-blue-500" />
+                                    Export
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={resetFilters}
+                                    className="h-10 w-10 p-0 rounded-xl hover:bg-white dark:hover:bg-slate-950 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
+                                >
+                                    <RotateCcw className="h-4 w-4 text-slate-400" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -792,8 +796,8 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                         <div className={cn(
                             "grid gap-4",
                             viewType === 'table' 
-                                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-                                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                         )}>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Search</label>

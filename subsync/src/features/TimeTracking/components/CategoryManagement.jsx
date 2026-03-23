@@ -124,8 +124,8 @@ const CategoryManagement = () => {
 
     return (
         <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm transition-all duration-300">
-            <CardHeader className="bg-white dark:bg-slate-800/20 border-b border-gray-50 dark:border-slate-800 p-8">
-                <div className="flex items-center justify-between">
+            <CardHeader className="bg-white dark:bg-slate-800/20 border-b border-gray-50 dark:border-slate-800 p-5 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="space-y-1">
                         <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 flex items-center gap-2">
                             <LayoutGrid className="w-4 h-4" />
@@ -136,21 +136,21 @@ const CategoryManagement = () => {
 
                     <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
                         <DialogTrigger asChild>
-                            <Button className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all duration-300 active:scale-95">
+                            <Button className="h-12 w-full sm:w-auto px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all duration-300 active:scale-95">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Create New Category
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl p-0 dark:bg-slate-900 dark:border-slate-800 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+                        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl p-0 dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
                             
-                            <DialogHeader className="p-10 pb-2">
+                            <DialogHeader className="p-6 sm:p-10 pb-2">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                        <Tag className="text-white w-6 h-6" />
+                                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                        <Tag className="text-white w-5 h-5 sm:w-6 sm:h-6" />
                                     </div>
                                     <div>
-                                        <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                                             {editingCategory ? 'Edit Category' : 'New Category'}
                                         </DialogTitle>
                                         <DialogDescription className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pt-1">
@@ -160,8 +160,8 @@ const CategoryManagement = () => {
                                 </div>
                             </DialogHeader>
 
-                            <form onSubmit={handleSubmit} className="px-10 pb-10 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <form onSubmit={handleSubmit} className="px-6 sm:px-10 pb-10 space-y-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                                     {/* Left Column: Core Info */}
                                     <div className="space-y-6">
                                         <div className="space-y-2.5">
@@ -214,7 +214,7 @@ const CategoryManagement = () => {
                                                 Brand Color
                                             </Label>
                                             <div className="p-4 rounded-[1.5rem] bg-gray-50/50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 space-y-4">
-                                                <div className="flex flex-wrap gap-2.5">
+                                                <div className="flex flex-wrap gap-2 sm:gap-2.5">
                                                     {colorPresets.map(presetColor => (
                                                         <button
                                                             key={presetColor}
@@ -299,7 +299,7 @@ const CategoryManagement = () => {
 
                     {/* View Category Detail Dialog */}
                     <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-                        <DialogContent className="max-w-xl p-0 dark:bg-slate-900 dark:border-slate-800 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+                        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-xl p-0 dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
                             {viewingCategory && (
                                 <>
                                     <div 
@@ -326,10 +326,10 @@ const CategoryManagement = () => {
                                         </Button>
                                     </div>
 
-                                    <div className="p-10 pt-16 space-y-8">
+                                    <div className="p-6 sm:p-10 pt-16 space-y-6 sm:space-y-8">
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-3">
-                                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                                                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                                                     {viewingCategory.type_name}
                                                 </h2>
                                                 <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-none font-mono text-[10px] h-6">
@@ -422,8 +422,8 @@ const CategoryManagement = () => {
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent className="p-8">
-                <div className="rounded-2xl border border-gray-50 dark:border-slate-800 overflow-hidden">
+            <CardContent className="p-5 sm:p-8">
+                <div className="rounded-2xl border border-gray-50 dark:border-slate-800 overflow-x-auto no-scrollbar">
                     <Table>
                         <TableHeader className="bg-gray-50/30 dark:bg-slate-800/20">
                             <TableRow className="border-gray-50 dark:border-slate-800">

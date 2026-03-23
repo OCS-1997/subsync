@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useParams, useLocation } from 'react-router-dom';
-import { Command, X, Smartphone } from 'lucide-react';
+import { Command, X, LayoutDashboard, Calculator, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useEffect, useCallback } from 'react';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
@@ -88,21 +89,20 @@ function SideBar({ isOpen, toggleSidebar }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={toggleSidebar}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden"
           />
         )}
       </AnimatePresence>
 
-      <aside
-        ref={sidebarRef}
-        className={`lg:flex lg:flex-col fixed mr-2 top-0 left-0 z-40 min-h-screen bg-sidebar text-sidebar-foreground
-          transition-all duration-300 ease-in-out
-          ${isOpen ? 'w-64' : 'w-20'}
-          lg:relative lg:translate-x-0
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          overflow-y-auto overflow-x-hidden flex flex-col shadow-2xl border-r border-sidebar-border`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-20">
+    <aside
+      ref={sidebarRef}
+      className={`fixed lg:relative top-0 left-0 z-[60] lg:z-40 transition-all duration-300 ease-in-out
+        flex flex-col shadow-2xl border-r border-sidebar-border overflow-hidden
+        bg-sidebar text-sidebar-foreground h-screen lg:h-auto lg:min-h-screen lg:mr-2
+        ${isOpen ? "w-[85vw] lg:w-64 translate-x-0" : "w-20 -translate-x-full lg:translate-x-0"}
+      `}
+    >
+        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16 lg:h-20">
           {isOpen ? (
             <div className="flex items-center justify-between w-full">
               <div
@@ -112,12 +112,12 @@ function SideBar({ isOpen, toggleSidebar }) {
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
               >
-                <div className="w-11 h-11 bg-white shadow-lg rounded-xl flex items-center justify-center p-1 group-hover/header:rotate-6 transition-transform overflow-hidden">
+                <div className="w-9 h-9 lg:w-11 lg:h-11 bg-white shadow-lg rounded-xl flex items-center justify-center p-1 group-hover/header:rotate-6 transition-transform overflow-hidden">
                   <img src="/pwa-192x192.png" alt="Subsync" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter leading-none">OCS</span>
-                  <span className="text-[10px] text-sidebar-foreground/60 mt-1 uppercase tracking-widest font-black">CRM Platform</span>
+                  <span className="text-lg lg:text-xl font-black tracking-tighter leading-none">OCS</span>
+                  <span className="text-[9px] lg:text-[10px] text-sidebar-foreground/60 mt-1 uppercase tracking-widest font-black">CRM Platform</span>
                 </div>
               </div>
 
@@ -138,7 +138,7 @@ function SideBar({ isOpen, toggleSidebar }) {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
             >
-              <div className="w-12 h-12 bg-sidebar-accent/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-sidebar-border p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-sidebar-accent/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-sidebar-border p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
                 <img src="/pwa-192x192.png" alt="S" className="w-full h-full object-contain" />
               </div>
             </div>

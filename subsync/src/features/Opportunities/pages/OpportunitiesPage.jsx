@@ -9,10 +9,11 @@ const OpportunitiesPage = () => {
     const [activeTab, setActiveTab] = useState("all");
 
     return (
-        <div className="min-h-screen bg-slate-50/30 dark:bg-transparent px-8 py-8">
-            <div className="max-w-[1600px] mx-auto space-y-8">
-                {/* Modern Tab Navigation */}
-                <div className="flex items-center justify-between p-1.5 bg-white dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[2rem] w-fit shadow-sm">
+        <div className="min-h-screen bg-slate-50/30 dark:bg-transparent px-4 sm:px-8 py-4 sm:py-8">
+            <div className="max-w-[1600px] mx-auto space-y-6 sm:space-y-8">
+                {/* Modern Tab Navigation - Horizontally scrollable on mobile */}
+                <div className="flex items-center p-1.5 bg-white dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[2rem] w-full sm:w-fit shadow-sm overflow-x-auto no-scrollbar">
+                    <div className="flex items-center min-w-max">
                     <button
                         onClick={() => setActiveTab("all")}
                         className={cn(
@@ -50,6 +51,7 @@ const OpportunitiesPage = () => {
                         Pipeline Analytics
                     </button>
                 </div>
+            </div>
 
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === "all" ? (

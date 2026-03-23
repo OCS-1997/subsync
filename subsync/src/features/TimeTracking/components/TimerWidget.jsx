@@ -123,7 +123,7 @@ const TimerWidget = ({ onTimerUpdate }) => {
     if (!activeTimer) {
         return (
             <Card className="dark:bg-slate-900/50 dark:border-slate-800 rounded-[2rem] border-dashed border-gray-200 shadow-sm overflow-hidden">
-                <CardContent className="pt-10 pb-10">
+                <CardContent className="py-6 sm:py-10">
                     <div className="flex flex-col items-center justify-center text-center">
                         <div className="h-16 w-16 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110 duration-300">
                             <Clock className="h-8 w-8 text-slate-400" />
@@ -137,29 +137,29 @@ const TimerWidget = ({ onTimerUpdate }) => {
     }
 
     return (
-        <Card className="rounded-[2.5rem] overflow-hidden border-none shadow-2xl shadow-blue-500/20 bg-gradient-to-br from-blue-600 to-blue-800 relative group animate-in zoom-in-95 duration-500">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                <Timer size={120} className="text-white" />
+        <Card className="rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border-none shadow-2xl shadow-blue-500/20 bg-gradient-to-br from-blue-600 to-blue-800 relative group animate-in zoom-in-95 duration-500">
+            <div className="absolute top-0 right-0 p-4 sm:p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                <Timer size={80} className="text-white sm:w-[120px] sm:h-[120px]" />
             </div>
             
-            <CardHeader className="pb-0 relative z-10 p-8">
-                <div className="flex items-center justify-between">
+            <CardHeader className="pb-0 relative z-10 p-5 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-100/80">Live Session</span>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-1 border border-white/20">
+                    <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-1 border border-white/20 w-fit">
                         <span className="text-xs font-black text-white font-mono tracking-widest">
                             {formatDuration(elapsedTime)}
                         </span>
                     </div>
                 </div>
-                <CardTitle className="text-2xl font-black text-white mt-4 leading-tight">
+                <CardTitle className="text-xl sm:text-2xl font-black text-white mt-4 leading-tight">
                     {activeTimer.title}
                 </CardTitle>
             </CardHeader>
             
-            <CardContent className="space-y-6 relative z-10 p-8 pt-4">
+            <CardContent className="space-y-6 relative z-10 p-5 sm:p-8 pt-4">
                 <div className="space-y-4">
                     {activeTimer.description && (
                         <p className="text-sm text-blue-100/70 font-medium line-clamp-2 leading-relaxed">

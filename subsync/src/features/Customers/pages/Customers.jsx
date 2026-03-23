@@ -158,9 +158,9 @@ function Customers() {
         description="Unified registry of all clients, stakeholders, and enterprise entities."
         breadcrumbItems={[{ label: "Customers" }]}
         actions={
-          <Link to="add">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
-              <UserPlus className="w-5 h-5 mr-3" />
+          <Link to="add" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-6 sm:px-8 h-11 sm:h-14 font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
+              <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
               Add Customer
             </Button>
           </Link>
@@ -169,18 +169,18 @@ function Customers() {
 
       <div className="space-y-8 mt-12">
         {/* Control Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl h-14 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-5">
+        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 mt-6 sm:mt-12">
+          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl min-h-[3.5rem] flex flex-wrap items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-3 sm:px-5 py-2 sm:py-0">
             <SearchFilterForm
               search={search}
               setSearch={setSearch}
-              placeholder="Search by name, enterprise, email..."
-              className="w-full"
+              placeholder="Search registry..."
+              className="flex-1"
             />
-            <div className="h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
+            <div className="hidden sm:block h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="rounded-xl h-11 px-6 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400">
+                <Button variant="ghost" className="flex-1 sm:flex-none rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-2 sm:mt-0">
                   Operations
                   <ChevronDown className="ml-2 w-4 h-4 opacity-50" />
                 </Button>

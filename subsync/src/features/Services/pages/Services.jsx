@@ -250,15 +250,15 @@ function Services() {
   };
 
   return (
-    <div className="container py-8 max-w mx-auto px-4 md:px-0">
+    <div className="min-h-screen bg-slate-50/30 dark:bg-transparent px-4 sm:px-8 py-4 sm:py-8">
       <PageHeader
         title="Service Inventory"
         description="Manage and index all deliverable services and service level agreements."
         breadcrumbItems={[{ label: "Services" }]}
         actions={
-          <Link to="add">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
-              <Plus className="w-5 h-5 mr-3" />
+          <Link to="add" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-[1.2rem] px-6 sm:px-8 h-11 sm:h-14 font-black uppercase tracking-widest text-[10px] sm:text-[11px] shadow-xl shadow-blue-500/25 active:scale-95 transition-all">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
               Add Service
             </Button>
           </Link>
@@ -267,32 +267,32 @@ function Services() {
 
       <div className="space-y-8 mt-12">
         {/* Control Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-[2rem] p-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-            <div className="pl-4">
-              <Search className="w-5 h-5 text-slate-400" />
+        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 mt-6 sm:mt-12">
+          <div className="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl min-h-[3.5rem] flex flex-wrap items-center shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-3 sm:px-5 py-2 sm:py-0 text-left">
+            <div className="pl-2 pr-2">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
             </div>
             <input
               type="text"
-              placeholder="Search services by identity, SKU, or group..."
-              className="flex-1 bg-transparent border-none focus:ring text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:font-medium"
+              placeholder="Search index..."
+              className="flex-1 bg-transparent border-none outline-none focus:ring-0 text-xs sm:text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-400 placeholder:font-medium"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <div className="h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
+            <div className="hidden sm:block h-10 w-[1px] bg-gray-100 dark:bg-slate-800 mx-2" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="rounded-xl h-11 px-6 font-black uppercase tracking-widest text-[10px] text-slate-500 dark:text-slate-400">
+                <Button variant="ghost" className="flex-1 sm:flex-none rounded-xl h-10 px-4 font-black uppercase tracking-widest text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-2 sm:mt-0">
                   Operations
                   <ChevronDown className="ml-2 w-4 h-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="p-2 dark:bg-slate-900 dark:border-slate-800 rounded-2xl min-w-[200px]">
                 <DropdownMenuItem onClick={handleImportButtonClick} className="rounded-xl p-3 font-bold text-xs gap-3">
-                  <FileDown className="w-4 h-4 text-blue-500" /> Import 
+                  <FileDown className="w-4 h-4 text-blue-500" /> Import
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={fetchServicesAndExport} className="rounded-xl p-3 font-bold text-xs gap-3">
-                  <FileUp className="w-4 h-4 text-emerald-500" /> Export 
+                  <FileUp className="w-4 h-4 text-emerald-500" /> Export
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
