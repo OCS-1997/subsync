@@ -200,9 +200,14 @@ public class CallOverlayService extends Service {
             LayoutInflater inflater = LayoutInflater.from(appContext);
             overlayView = inflater.inflate(R.layout.call_overlay, null);
 
-            int layoutFlag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                    : WindowManager.LayoutParams.TYPE_PHONE;
+            int layoutFlag;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                layoutFlag = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            } else {
+                // Fallback for Android < 8 (Oreo)
+                // Use TYPE_PHONE or TYPE_SYSTEM_ALERT
+                layoutFlag = WindowManager.LayoutParams.TYPE_PHONE;
+            }
 
             WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                     (int) (appContext.getResources().getDisplayMetrics().widthPixels * 0.96),

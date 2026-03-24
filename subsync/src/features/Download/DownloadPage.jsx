@@ -16,11 +16,9 @@ import { Badge } from "@/components/ui/badge.jsx";
 
 export default function DownloadPage() {
     const getDownloadUrl = () => {
-        const viteUrl = import.meta.env.VITE_API_URL || '';
-        const baseUrl = viteUrl.startsWith('http') 
-            ? viteUrl 
-            : `${window.location.origin}${viteUrl || '/api'}`;
-        return `${baseUrl}/download/subsync.apk`;
+        // Point directly to the static file in the public folder (handled by Nginx/static hosting)
+        // rather than hitting the backend API.
+        return `https://ocs365.in/app/subsync.apk`;
     };
 
     const handleDownload = () => {
