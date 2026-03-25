@@ -6,6 +6,7 @@ import { sendDailyDcrReportEmail } from '../services/dcrService.js';
 import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportService.js';
 import { syncBirthdays } from '../models/birthdayModel.js';
 import { syncDirectory } from '../services/directoryService.js';
+import { sendAppraisalReminders } from '../services/appraisalService.js';
 
 const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
 
@@ -197,6 +198,31 @@ export function setupDirectorySyncCron() {
 }
 
 /**
+ * Setup appraisal reminder cron job
+ * Runs daily at 04:00 UTC (09:30 IST)
+ */
+export function setupAppraisalCron() {
+    cron.schedule('0 4 * * *', async () => {
+        console.log('Running appraisal reminder cron job...');
+        try {
+            const result = await sendAppraisalReminders();
+            console.log(JSON.stringify({
+                event: 'appraisal_reminders_completed',
+                sent: result.sent,
+                period: result.period,
+                timestamp: new Date().toISOString(),
+            }));
+        } catch (error) {
+            console.error('Error in appraisal reminder cron:', error);
+        }
+    }, {
+        timezone: 'UTC',
+    });
+
+    console.log('Appraisal reminder cron scheduled for 04:00 UTC daily');
+}
+
+/**
  * Setup all cron jobs
  */
 export function setupCronJobs() {
@@ -207,5 +233,6 @@ export function setupCronJobs() {
     setupDirectorySyncCron();
     setupDcrReportCron();
     setupTimeTrackingReportCron();
+    setupAppraisalCron();
 }
 

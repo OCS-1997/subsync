@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { Command, X, LayoutDashboard, Calculator, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRef, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '@/components/ui/button.jsx';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
+import { getMyActiveAppraisal } from '@/features/Appraisals/appraisalSlice';
 import SidebarTree from './SidebarTree.jsx';
 
 const sidebarItems = [
@@ -27,14 +29,32 @@ const sidebarItems = [
   { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
   { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW },
   { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', icon_type: 'material', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
+  { path: 'dashboard/appraisals', title: 'Self Appraisal', icon: 'assignment', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_SUBMIT },
+  { path: 'dashboard/admin/appraisals', title: 'Appraisal Admin', icon: 'admin_panel_settings', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_MANAGE },
   { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE },
 ];
 
 function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
   const location = useLocation();
+  const dispatch = useDispatch();
   const { hasAnyPermission } = usePermissions();
   const sidebarRef = useRef(null);
+
+  const { activeAppraisalInfo } = useSelector((state) => state.appraisals);
+
+  useEffect(() => {
+    if (hasAnyPermission(PERMISSIONS.APPRAISALS_SUBMIT)) {
+      dispatch(getMyActiveAppraisal());
+    }
+  }, [dispatch, hasAnyPermission]);
+
+  const badgeCounts = {};
+  if (activeAppraisalInfo?.active && 
+      activeAppraisalInfo?.appraisal?.status !== 'Submitted' && 
+      activeAppraisalInfo?.appraisal?.status !== 'Reviewed') {
+    badgeCounts['dashboard/appraisals'] = 1;
+  }
 
   const permissionFilter = useCallback(
     (item) => !item.permission || hasAnyPermission(item.permission),
@@ -161,6 +181,7 @@ function SideBar({ isOpen, toggleSidebar }) {
                 createFolderFromDrop={createFolderFromDrop}
                 renameFolder={renameFolder}
                 deleteFolder={deleteFolder}
+                badgeCounts={badgeCounts}
               />
             </TooltipProvider>
           </div>

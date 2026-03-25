@@ -196,6 +196,22 @@ import {
     lookupNumberController,
     syncDirectoryController
 } from '../controllers/directoryController.js';
+import {
+    getTemplates,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    getPeriods,
+    createPeriod,
+    activatePeriod,
+    closePeriod,
+    getMyActiveAppraisal,
+    saveMyAppraisal,
+    getTeamAppraisals,
+    reviewAppraisal,
+    deleteAppraisal,
+    deletePeriod
+} from '../controllers/appraisalController.js';
 // Reports 360 removed
 
 const router = express.Router();
@@ -603,6 +619,22 @@ router.get('/directory', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_VIEW),
 router.get('/directory/lookup', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_VIEW), lookupNumberController);
 router.post('/directory/sync', isAuthenticated, authorize(PERMISSIONS.DIRECTORY_MANAGE), syncDirectoryController);
 
+// Self Appraisals - Admin
+router.get('/appraisals/templates', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), getTemplates);
+router.post('/appraisals/templates', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), createTemplate);
+router.put('/appraisals/templates/:id', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), updateTemplate);
+router.delete('/appraisals/templates/:id', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), deleteTemplate);
+router.get('/appraisals/periods', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), getPeriods);
+router.post('/appraisals/periods', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), createPeriod);
+router.put('/appraisals/periods/:id/activate', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), activatePeriod);
+router.put('/appraisals/periods/:id/close', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), closePeriod);
+router.get('/appraisals/period/:period_id/submissions', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_VIEW_TEAM), getTeamAppraisals);
+router.put('/appraisals/submissions/:id/review', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_VIEW_TEAM), reviewAppraisal);
+router.delete('/appraisals/submissions/:id', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), deleteAppraisal);
+router.delete('/appraisals/periods/:id', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_MANAGE), deletePeriod);
 
+// Self Appraisals - User
+router.get('/my/appraisal/active', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_SUBMIT), getMyActiveAppraisal);
+router.post('/my/appraisal/save', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_SUBMIT), saveMyAppraisal);
 
 export default router;

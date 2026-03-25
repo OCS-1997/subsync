@@ -71,6 +71,9 @@ import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
 import PhoneDirectory from '@/features/PhoneDirectory/pages/PhoneDirectory.jsx';
 import DownloadPage from '@/features/Download/DownloadPage.jsx';
+import AppraisalForm from '@/features/Appraisals/pages/AppraisalForm.jsx';
+import AdminAppraisalManager from '@/features/Appraisals/pages/AdminAppraisalManager.jsx';
+import AdminAppraisalSubmissions from '@/features/Appraisals/pages/AdminAppraisalSubmissions.jsx';
 // Reports 360 removed
 
 const router = createBrowserRouter([
@@ -152,6 +155,11 @@ const router = createBrowserRouter([
       
       // Phone Directory
       { path: "phone-directory", element: <PermissionGate required={PERMISSIONS.DIRECTORY_VIEW}><PhoneDirectory /></PermissionGate> },
+      
+      // Appraisals
+      { path: "appraisals", element: <PermissionGate required={PERMISSIONS.APPRAISALS_SUBMIT}><AppraisalForm /></PermissionGate> },
+      { path: "admin/appraisals", element: <PermissionGate required={PERMISSIONS.APPRAISALS_MANAGE}><AdminAppraisalManager /></PermissionGate> },
+      { path: "admin/appraisals/period/:periodId", element: <PermissionGate required={PERMISSIONS.APPRAISALS_VIEW_TEAM}><AdminAppraisalSubmissions /></PermissionGate> },
 
       // Reports 360
       // Reports 360 routes removed

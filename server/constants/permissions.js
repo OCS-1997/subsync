@@ -101,6 +101,10 @@ export const PERMISSIONS = Object.freeze({
     // Phone Directory
     DIRECTORY_VIEW: 'directory.view',
     DIRECTORY_MANAGE: 'directory.manage',
+    // Appraisals
+    APPRAISALS_MANAGE: 'appraisals.manage',
+    APPRAISALS_SUBMIT: 'appraisals.submit',
+    APPRAISALS_VIEW_TEAM: 'appraisals.view_team',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -206,6 +210,10 @@ export const PERMISSION_DEFINITIONS = [
     // Phone Directory
     { key: PERMISSIONS.DIRECTORY_VIEW, resource: 'directory', action: 'view', description: 'View the centralized phone directory' },
     { key: PERMISSIONS.DIRECTORY_MANAGE, resource: 'directory', action: 'manage', description: 'Manage directory synchronization and settings' },
+    // Appraisals
+    { key: PERMISSIONS.APPRAISALS_MANAGE, resource: 'appraisals', action: 'manage', description: 'Full management of appraisal templates and periods' },
+    { key: PERMISSIONS.APPRAISALS_SUBMIT, resource: 'appraisals', action: 'submit', description: 'Fill and submit own appraisals' },
+    { key: PERMISSIONS.APPRAISALS_VIEW_TEAM, resource: 'appraisals', action: 'view_team', description: 'View and review team appraisals' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -260,6 +268,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TIME_TRACKING_MANAGE,
         PERMISSIONS.DIRECTORY_VIEW,
         PERMISSIONS.DIRECTORY_MANAGE,
+        PERMISSIONS.APPRAISALS_SUBMIT,
+        PERMISSIONS.APPRAISALS_VIEW_TEAM,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -285,6 +295,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TIME_TRACKING_VIEW,
         PERMISSIONS.TIME_TRACKING_USE,
         PERMISSIONS.DIRECTORY_VIEW,
+        PERMISSIONS.APPRAISALS_SUBMIT,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -304,6 +315,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         // Time Tracking
         PERMISSIONS.TIME_TRACKING_VIEW,
         PERMISSIONS.TIME_TRACKING_USE,
+        PERMISSIONS.APPRAISALS_SUBMIT,
     ],
     viewer: [
         PERMISSIONS.DASHBOARD_VIEW,

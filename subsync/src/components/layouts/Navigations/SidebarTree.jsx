@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils.js';
+import { Badge } from '@/components/ui/badge.jsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.jsx';
 
 const HOVER_TO_FOLDER_DELAY = 420;
@@ -114,6 +115,7 @@ export default function SidebarTree({
   createFolderFromDrop,
   renameFolder,
   deleteFolder,
+  badgeCounts = {},
 }) {
   const [activeDragId, setActiveDragId] = useState(null);
   const [collapsedFolderId, setCollapsedFolderId] = useState(null);
@@ -318,6 +320,7 @@ export default function SidebarTree({
     const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 60 : 'auto', opacity: isDragging ? 0.5 : 1 };
     const indent = isOpen ? 8 + depth * 14 : 0;
     const showIntent = folderIntent?.targetId === node.id;
+    const badgeCount = badgeCounts[node.path];
 
     const handle = (
       <div {...attributes} {...listeners} className={`flex h-7 w-7 items-center justify-center rounded-md ${isDragging ? 'cursor-grabbing bg-sidebar-accent/60' : 'cursor-grab hover:bg-sidebar-accent/40'}`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}>
@@ -332,8 +335,20 @@ export default function SidebarTree({
           {node.type === 'item' ? (
             <Link to={`/${username}/${node.path}`} onClick={() => window.innerWidth < 1024 && toggleSidebar()} className={`relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-200 ${isActive(node.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'} ${showIntent ? 'ring-2 ring-blue-500/70' : ''}`} style={{ paddingLeft: `${indent}px` }}>
               {handle}
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg"><SidebarIcon node={node} active={isActive(node.path)} /></div>
-              {isOpen && <span className="truncate text-sm">{node.title}</span>}
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg relative">
+                <SidebarIcon node={node} active={isActive(node.path)} />
+                {!isOpen && badgeCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-lg ring-1 ring-white/20">
+                    {badgeCount}
+                  </span>
+                )}
+              </div>
+              {isOpen && <span className="truncate text-sm flex-1">{node.title}</span>}
+              {isOpen && badgeCount > 0 && (
+                <Badge variant="destructive" className="ml-auto h-5 min-w-[20px] justify-center px-1 text-[10px] font-black border-none shadow-sm animate-pulse">
+                  {badgeCount}
+                </Badge>
+              )}
               {showIntent && isOpen && <span className="ml-auto rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">{folderIntent?.ready ? 'Release to folder' : 'Hold to folder'}</span>}
             </Link>
           ) : (

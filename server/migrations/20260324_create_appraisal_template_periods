@@ -1,0 +1,71 @@
+-- 1. Create Tables
+CREATE TABLE IF NOT EXISTS appraisal_templates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    questions JSON NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS appraisal_periods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    template_id INT NOT NULL,
+    quarter ENUM('Q1', 'Q2', 'Q3', 'Q4') NOT NULL,
+    year INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status ENUM('Planned', 'Active', 'Closed') DEFAULT 'Planned',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (template_id) REFERENCES appraisal_templates(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_appraisals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    period_id INT NOT NULL,
+    username VARCHAR(32) NOT NULL,
+    responses JSON NOT NULL,
+    status ENUM('Draft', 'Submitted', 'Reviewed') DEFAULT 'Draft',
+    submitted_at TIMESTAMP NULL,
+    reviewed_by VARCHAR(32) NULL,
+    reviewer_comments TEXT,
+    reviewer_date TIMESTAMP NULL,
+    reviewer_signature VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (period_id) REFERENCES appraisal_periods(id) ON DELETE CASCADE,
+    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE,
+    UNIQUE KEY uq_user_period (username, period_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Insert Permissions
+INSERT INTO permissions (permission_key, resource, action, description) VALUES
+('appraisals.manage', 'appraisals', 'manage', 'Full management of appraisal templates and periods'),
+('appraisals.submit', 'appraisals', 'submit', 'Fill and submit own appraisals'),
+('appraisals.view_team', 'appraisals', 'view_team', 'View and review team appraisals')
+ON DUPLICATE KEY UPDATE description = VALUES(description);
+
+-- 3. Assign to Admin
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT r.id, p.id FROM roles r CROSS JOIN permissions p 
+WHERE r.role_key = 'admin' AND p.permission_key IN ('appraisals.manage', 'appraisals.submit', 'appraisals.view_team')
+ON DUPLICATE KEY UPDATE role_id = role_id;
+
+-- 4. Initial Template
+INSERT INTO appraisal_templates (name, description, questions) VALUES
+('Standard Self-Appraisal', 'Official quarterly self-evaluation form.', 
+'[{"id": "working_days", "label": "Working Days", "type": "number", "required": true}, {"id": "days_present", "label": "Days Present", "type": "number", "required": true}, {"id": "effective_hours", "label": "Effective Hours Put in", "type": "number", "required": true}, {"id": "new_skills", "label": "New Skills Acquired", "type": "textarea", "required": true}, {"id": "team_contribution", "label": "Team Contribution", "type": "textarea", "required": true}, {"id": "customer_contribution", "label": "Customer Contribution", "type": "textarea", "required": true}, {"id": "company_contribution", "label": "Company Contribution", "type": "textarea", "required": true}, {"id": "improvement_areas", "label": "Improvement Areas", "type": "textarea", "required": true}, {"id": "future_goals", "label": "Future Goals", "type": "textarea", "required": true}]')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- SQL Migration: Appraisal System (DOWN)
+-- Description: Reverts changes made by the appraisal system migration.
+
+-- 1. Remove Permissions
+DELETE FROM permissions WHERE permission_key IN ('appraisals.manage', 'appraisals.submit', 'appraisals.view_team');
+
+-- 2. Drop Tables
+DROP TABLE IF EXISTS user_appraisals;
+DROP TABLE IF EXISTS appraisal_periods;
+DROP TABLE IF EXISTS appraisal_templates;

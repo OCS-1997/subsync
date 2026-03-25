@@ -10,6 +10,7 @@ import dcrReducer from '@/features/DCR/dcrSlice';
 import contactsReducer from '@/features/Contacts/contactsSlice';
 import opportunityReducer from '@/features/Opportunities/opportunitySlice';
 import directoryReducer from '@/features/PhoneDirectory/directorySlice';
+import appraisalReducer from '@/features/Appraisals/appraisalSlice';
 
 export const store = configureStore({
   reducer: {
@@ -23,5 +24,6 @@ export const store = configureStore({
     contacts: contactsReducer,
     opportunities: opportunityReducer,
     directory: directoryReducer,
+    appraisals: appraisalReducer,
   },
 });
