@@ -30,17 +30,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button.jsx";
 
 const MODULES = [
-    { title: "Pipeline & Opportunities", icon: Target, desc: "Sales tracking and lead management", color: "blue" },
-    { title: "Knowledge Base", icon: BookOpen, desc: "Internal documentation and guides", color: "violet" },
-    { title: "Billing & Subscriptions", icon: FileText, desc: "Recurring billing and reminders", color: "indigo" },
-    { title: "Domain CRM", icon: Globe, desc: "Domain registration and renewals", color: "cyan" },
-    { title: "Customer Portal", icon: Users, desc: "Client relationship management", color: "green" },
-    { title: "Phone Directory", icon: Phone, desc: "Caller identification records", color: "amber" },
-    { title: "Time Tracking", icon: Clock, desc: "Billable hours and timer management", color: "emerald" },
-    { title: "Resource Management", icon: Package, desc: "Service and vendor catalogs", color: "orange" },
-    { title: "Backup & Recovery", icon: Database, desc: "Automated daily system backups", color: "red" },
-    { title: "Asset Management", icon: Monitor, desc: "Inventory and warranty tracking", color: "purple" },
-    { title: "System Settings", icon: Settings, desc: "User roles and customizations", color: "slate" },
+    { title: "CRM Module", icon: Users, desc: "Customers, Domains, Services, Vendors, Subscriptions, Assets, Contacts, and Opportunities", color: "blue" },
+    { title: "Operations Module", icon: Zap, desc: "Time Tracking, Daily Call Reports, Phone Directory, Birthdays, and Knowledge Base", color: "indigo" },
+    { title: "Self Service", icon: Target, desc: "Manage your own Leaves, Permissions, and Quarterly Appraisals", color: "emerald" },
+    { title: "Administration", icon: Settings, desc: "Manage Appraisal periods, Leave types, and Global system configurations", color: "slate" },
+    { title: "Backup & Recovery", icon: Database, desc: "Automated daily system backups and data persistence", color: "red" },
 ];
 
 const SHORTCUTS = [
@@ -158,6 +152,41 @@ export default function HelpPage() {
                             </CardContent>
                         </Card>
                     </section>
+
+                    {/* Releases Section */}
+                    <section id="releases" className="space-y-6 pt-12 border-t border-slate-100 dark:border-slate-800">
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                            <div className="h-8 w-1.5 bg-emerald-600 rounded-full" />
+                            Latest Releases
+                        </h2>
+                        <Card className="border-slate-200 dark:border-slate-800 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
+                                <Zap size={80} className="text-emerald-600" />
+                            </div>
+                            <CardContent className="p-8 space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <Badge className="bg-emerald-600 text-white border-none py-1.5 px-4 font-black">v2.2.0</Badge>
+                                    <span className="text-sm font-bold text-slate-500 italic">March 26, 2026</span>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Smart Sidebar & Module Grouping</h3>
+                                    <ul className="space-y-3">
+                                        {[
+                                            "Completely overhauled navigation with 4 core preemptive modules.",
+                                            "Added premium tooltips and flyout menus for collapsed sidebar items.",
+                                            "Synchronized Command Palette (Ctrl+K) with the new module structure.",
+                                            "Implemented preference-versioned state migration for all users."
+                                        ].map((item, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-[0.95rem] text-slate-600 dark:text-slate-400">
+                                                <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
                 </div>
 
                 {/* Sidebar */}
@@ -241,7 +270,7 @@ export default function HelpPage() {
                     <div className="flex flex-col items-center gap-2 pt-4">
                         <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 py-1 text-[10px] items-center gap-1.5 font-bold">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Stable Build 2.1.0
+                            Stable Build 2.2.0
                         </Badge>
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">&copy; 2026 OCS Platform</span>
                     </div>

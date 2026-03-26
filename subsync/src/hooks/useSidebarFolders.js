@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '@/lib/axiosInstance.js';
 
-const PREF_KEY = 'sidebar_folders_v1';
+const PREF_KEY = 'sidebar_folders_v3';
 const LEGACY_PREF_KEY = 'sidebar_order';
 const FOLDER_NAME = 'New Folder';
 
@@ -28,12 +28,13 @@ function createItemNode(item) {
   };
 }
 
-function createFolderNode(children = [], name = FOLDER_NAME, color = null) {
+function createFolderNode(children = [], name = FOLDER_NAME, color = null, icon = null) {
   return {
     type: 'folder',
     id: buildId('folder'),
     name,
     color,
+    icon,
     children,
   };
 }
@@ -100,6 +101,7 @@ function serializeNode(node) {
       id: node.id,
       name: node.name,
       color: node.color || null,
+      icon: node.icon || null,
       children: node.children.map(serializeNode),
     };
   }
@@ -432,6 +434,40 @@ function fromLegacyOrder(defaultItems, legacyOrder) {
   return ordered;
 }
 
+function groupByFolder(items) {
+  const root = [];
+  const folderMap = new Map();
+  let folderCount = 0;
+
+  const folderIcons = {
+    'CRM Module': 'users',
+    'Operations Module': 'zap',
+    'Self Service': 'target',
+    'Administration': 'settings',
+  };
+
+  items.forEach((item) => {
+    if (item.folder) {
+      if (!folderMap.has(item.folder)) {
+        const folder = createFolderNode(
+          [],
+          item.folder,
+          getFolderColor(folderCount),
+          folderIcons[item.folder] || null
+        );
+        folderMap.set(item.folder, folder);
+        root.push(folder);
+        folderCount += 1;
+      }
+      folderMap.get(item.folder).children.push(createItemNode(item));
+    } else {
+      root.push(createItemNode(item));
+    }
+  });
+
+  return root;
+}
+
 export function useSidebarFolders(defaultItems, filterFn) {
   const { username } = useParams();
 
@@ -487,7 +523,7 @@ export function useSidebarFolders(defaultItems, filterFn) {
         return migrated;
       }
 
-      return filteredDefaults.map(createItemNode);
+      return groupByFolder(filteredDefaults);
     };
 
     setNodes(seedFromLocal());
