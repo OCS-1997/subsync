@@ -74,6 +74,8 @@ import DownloadPage from '@/features/Download/DownloadPage.jsx';
 import AppraisalForm from '@/features/Appraisals/pages/AppraisalForm.jsx';
 import AdminAppraisalManager from '@/features/Appraisals/pages/AdminAppraisalManager.jsx';
 import AdminAppraisalSubmissions from '@/features/Appraisals/pages/AdminAppraisalSubmissions.jsx';
+import LeavesPage from '@/features/Leaves/pages/LeavesPage.jsx';
+import AdminLeavesPage from '@/features/Leaves/pages/AdminLeavesPage.jsx';
 // Reports 360 removed
 
 const router = createBrowserRouter([
@@ -160,6 +162,10 @@ const router = createBrowserRouter([
       { path: "appraisals", element: <PermissionGate required={PERMISSIONS.APPRAISALS_SUBMIT}><AppraisalForm /></PermissionGate> },
       { path: "admin/appraisals", element: <PermissionGate required={PERMISSIONS.APPRAISALS_MANAGE}><AdminAppraisalManager /></PermissionGate> },
       { path: "admin/appraisals/period/:periodId", element: <PermissionGate required={PERMISSIONS.APPRAISALS_VIEW_TEAM}><AdminAppraisalSubmissions /></PermissionGate> },
+
+      // Leaves & Permissions
+      { path: "leaves", element: <PermissionGate required={PERMISSIONS.LEAVES_VIEW}><LeavesPage /></PermissionGate> },
+      { path: "admin/leaves", element: <PermissionGate required={PERMISSIONS.LEAVES_MANAGE_TYPES}><AdminLeavesPage /></PermissionGate> },
 
       // Reports 360
       // Reports 360 routes removed

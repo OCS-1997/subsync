@@ -212,6 +212,28 @@ import {
     deleteAppraisal,
     deletePeriod
 } from '../controllers/appraisalController.js';
+import {
+    getLeaveTypesController,
+    applyLeaveController,
+    getMyLeavesController,
+    getAllLeavesController,
+    actionLeaveController,
+    getMyBalancesController,
+    getHolidaysController,
+    createLeaveTypeController,
+    updateLeaveTypeController,
+    deleteLeaveTypeController,
+    createHolidayController,
+    updateHolidayController,
+    deleteHolidayController,
+    getPendingCountsController
+} from '../controllers/leaveController.js';
+import {
+    applyPermissionController,
+    getMyPermissionsController,
+    getAllPermissionsController,
+    actionPermissionController
+} from '../controllers/permissionRequestController.js';
 // Reports 360 removed
 
 const router = express.Router();
@@ -636,5 +658,31 @@ router.delete('/appraisals/periods/:id', isAuthenticated, authorize(PERMISSIONS.
 // Self Appraisals - User
 router.get('/my/appraisal/active', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_SUBMIT), getMyActiveAppraisal);
 router.post('/my/appraisal/save', isAuthenticated, authorize(PERMISSIONS.APPRAISALS_SUBMIT), saveMyAppraisal);
+
+// Leaves
+router.get('/leaves/types', isAuthenticated, getLeaveTypesController);
+router.post('/leaves/apply', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPLY), applyLeaveController);
+router.get('/leaves/my', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyLeavesController);
+router.get('/leaves/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW_ALL), getAllLeavesController);
+router.put('/leaves/action/:requestId', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), actionLeaveController);
+router.get('/leaves/balances', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyBalancesController);
+router.get('/leaves/stats/pending-counts', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), getPendingCountsController);
+
+// Admin: Leave Types
+router.post('/leaves/types', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createLeaveTypeController);
+router.put('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateLeaveTypeController);
+router.delete('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteLeaveTypeController);
+
+// Permissions (Short duration)
+router.post('/permissions/apply', isAuthenticated, authorize(PERMISSIONS.PERMISSIONS_APPLY), applyPermissionController);
+router.get('/permissions/my', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyPermissionsController);
+router.get('/permissions/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), getAllPermissionsController);
+router.put('/permissions/action/:requestId', isAuthenticated, authorize(PERMISSIONS.PERMISSIONS_APPROVE), actionPermissionController);
+
+// Holidays
+router.get('/holidays', isAuthenticated, getHolidaysController);
+router.post('/holidays', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createHolidayController);
+router.put('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateHolidayController);
+router.delete('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteHolidayController);
 
 export default router;

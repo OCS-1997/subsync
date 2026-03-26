@@ -98,6 +98,14 @@ export const PERMISSIONS = Object.freeze({
   PERFORMANCE_REPORTS_VIEW: 'performance_reports.view',
   PERFORMANCE_REPORTS_VIEW_TEAM: 'performance_reports.view_team',
   PERFORMANCE_REPORTS_VIEW_ALL: 'performance_reports.view_all',
+  // Leaves & Permissions
+  LEAVES_VIEW: 'leaves.view',
+  LEAVES_APPLY: 'leaves.apply',
+  LEAVES_APPROVE: 'leaves.approve',
+  LEAVES_VIEW_ALL: 'leaves.view_all',
+  LEAVES_MANAGE_TYPES: 'leaves.manage_types',
+  PERMISSIONS_APPLY: 'permissions.apply',
+  PERMISSIONS_APPROVE: 'permissions.approve',
 });
 
 export const PAGE_PERMISSIONS = {

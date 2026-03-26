@@ -12,6 +12,7 @@ import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
 import { getMyActiveAppraisal } from '@/features/Appraisals/appraisalSlice';
+import { fetchPendingCounts } from '@/features/Leaves/leavesSlice';
 import SidebarTree from './SidebarTree.jsx';
 
 const sidebarItems = [
@@ -27,10 +28,12 @@ const sidebarItems = [
   { path: 'dashboard/phone-directory', title: 'Phone Directory', icon: 'contact_phone', icon_type: 'material', permission: PERMISSIONS.DIRECTORY_VIEW },
   { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW },
   { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW },
+  { path: 'dashboard/leaves', title: 'Leaves & Permissions', icon: 'event_available', icon_type: 'material', permission: PERMISSIONS.LEAVES_VIEW },
   { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW },
   { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', icon_type: 'material', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW },
   { path: 'dashboard/appraisals', title: 'Self Appraisal', icon: 'assignment', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_SUBMIT },
   { path: 'dashboard/admin/appraisals', title: 'Appraisal Admin', icon: 'admin_panel_settings', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_MANAGE },
+  { path: 'dashboard/admin/leaves', title: 'Leave Admin', icon: 'settings_accessibility', icon_type: 'material', permission: PERMISSIONS.LEAVES_MANAGE_TYPES },
   { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE },
 ];
 
@@ -47,13 +50,22 @@ function SideBar({ isOpen, toggleSidebar }) {
     if (hasAnyPermission(PERMISSIONS.APPRAISALS_SUBMIT)) {
       dispatch(getMyActiveAppraisal());
     }
+    if (hasAnyPermission([PERMISSIONS.LEAVES_APPROVE, PERMISSIONS.PERMISSIONS_APPROVE])) {
+      dispatch(fetchPendingCounts());
+    }
   }, [dispatch, hasAnyPermission]);
+
+  const { pendingCounts } = useSelector((state) => state.leaves);
 
   const badgeCounts = {};
   if (activeAppraisalInfo?.active && 
       activeAppraisalInfo?.appraisal?.status !== 'Submitted' && 
       activeAppraisalInfo?.appraisal?.status !== 'Reviewed') {
     badgeCounts['dashboard/appraisals'] = 1;
+  }
+
+  if (pendingCounts?.total > 0) {
+    badgeCounts['dashboard/leaves'] = pendingCounts.total;
   }
 
   const permissionFilter = useCallback(

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { 
     Plus, Calendar, Clock, Play, Power, ChevronRight, FileJson, 
     Trash2, ListChecks, LayoutGrid, Edit, MoreVertical, Copy, 
-    Eye, AlertCircle, CheckCircle2, GripVertical
+    Eye, AlertCircle, CheckCircle2, GripVertical, CheckSquare, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -81,6 +81,16 @@ export default function AdminAppraisalManager() {
     }, [dispatch]);
 
     const handleCreatePeriod = async () => {
+        if (!newPeriod.template_id || !newPeriod.start_date || !newPeriod.end_date) {
+            toast.error("All planning fields are required.");
+            return;
+        }
+
+        if (new Date(newPeriod.start_date) > new Date(newPeriod.end_date)) {
+            toast.error("Start date cannot be after end date.");
+            return;
+        }
+
         try {
             await appraisalAPI.createPeriod(newPeriod);
             toast.success("Appraisal period planned successfully!");
@@ -202,7 +212,7 @@ export default function AdminAppraisalManager() {
 
                     <Button 
                         onClick={() => setIsCreateOpen(true)}
-                        className="bg-primary hover:shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all duration-300"
+                        className="bg-blue-600 hover:bg-blue-700 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all duration-300 text-white"
                     >
                         <Calendar className="h-4 w-4 mr-2" />
                         Plan Cycle
@@ -290,7 +300,7 @@ export default function AdminAppraisalManager() {
                                                             onClick={() => handleAction(period.id, 'close')}
                                                         >
                                                             <Power className="h-4 w-4 mr-2" />
-                                                            End Cycle
+                                                            Close Appraisal Forms
                                                         </Button>
                                                     )}
 
@@ -404,13 +414,13 @@ export default function AdminAppraisalManager() {
                                         <div className="p-4 pt-0">
                                             <Button 
                                                 variant="outline" 
-                                                className="w-full rounded-xl border-dashed hover:border-solid hover:bg-primary hover:text-white transition-all duration-300 gap-2"
+                                                className="w-full rounded-xl border-dashed hover:border-solid hover:bg-blue-600 hover:text-white transition-all duration-300 gap-2"
                                                 onClick={() => {
                                                     setNewPeriod(p => ({ ...p, template_id: template.id.toString() }));
                                                     setIsCreateOpen(true);
                                                 }}
                                             >
-                                                <Play className="h-3.5 w-3.5" /> Use to Plan Cycle
+                                                <Play className="h-3.5 w-3.5 " /> Use to Plan Cycle
                                             </Button>
                                         </div>
                                     </Card>
@@ -526,12 +536,27 @@ export default function AdminAppraisalManager() {
                                                                         </SelectTrigger>
                                                                         <SelectContent className="rounded-xl overflow-hidden shadow-2xl">
                                                                             <SelectItem value="text">Single Line Text</SelectItem>
-                                                                            <SelectItem value="textarea">Multi-line Essay</SelectItem>
+                                                                            <SelectItem value="textarea" className="p-2">Multi-line Essay</SelectItem>
                                                                             <SelectItem value="number">Numeric Metrics</SelectItem>
                                                                         </SelectContent>
                                                                     </Select>
                                                                 </div>
-                                                                <div className="col-span-6 md:col-span-1 flex items-center justify-end mt-6">
+                                                                <div className="col-span-12 md:col-span-3 flex items-center gap-3 mt-6 ml-4">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className={`rounded-full px-4 border transition-all ${q.required ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-muted/20 border-border text-muted-foreground'}`}
+                                                                        onClick={() => {
+                                                                            const qs = [...templateForm.questions];
+                                                                            qs[idx].required = !qs[idx].required;
+                                                                            setTemplateForm(p => ({ ...p, questions: qs }));
+                                                                        }}
+                                                                    >
+                                                                        {q.required ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
+                                                                        Required
+                                                                    </Button>
+                                                                </div>
+                                                                <div className="col-span-12 md:col-span-1 flex items-center justify-end mt-6">
                                                                     <Button 
                                                                         variant="ghost" 
                                                                         size="icon" 
@@ -571,7 +596,7 @@ export default function AdminAppraisalManager() {
             {/* Cycle Planning Dialog */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogContent className="rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl max-w-md">
-                    <div className="bg-gradient-to-br from-primary via-primary to-primary-foreground/20 p-8 text-white relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-500 p-8 text-white relative overflow-hidden">
                         <div className="relative z-10">
                             <DialogHeader>
                                 <DialogTitle className="text-2xl font-black">Plan Appraisal Cycle</DialogTitle>

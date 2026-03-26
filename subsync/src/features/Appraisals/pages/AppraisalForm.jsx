@@ -19,6 +19,10 @@ export default function AppraisalForm() {
     const [responses, setResponses] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
+    const { period, appraisal } = activeAppraisalInfo || {};
+    const questions = period?.questions || [];
+    const isSubmitted = appraisal?.status === 'Submitted' || appraisal?.status === 'Reviewed';
+
     useEffect(() => {
         dispatch(getMyActiveAppraisal());
     }, [dispatch]);
@@ -26,8 +30,34 @@ export default function AppraisalForm() {
     useEffect(() => {
         if (activeAppraisalInfo?.appraisal?.responses) {
             setResponses(activeAppraisalInfo.appraisal.responses);
+        } else if (activeAppraisalInfo?.autoStats) {
+            // Pre-fill with auto-calculated stats for new appraisals
+            setResponses({
+                working_days: activeAppraisalInfo.autoStats.working_days.toString(),
+                days_present: activeAppraisalInfo.autoStats.days_present.toString(),
+                effective_hours: activeAppraisalInfo.autoStats.effective_hours.toString()
+            });
         }
     }, [activeAppraisalInfo]);
+
+    // Handle updates to autoStats if responses are already partially filled but missing these
+    useEffect(() => {
+        if (activeAppraisalInfo?.autoStats && !isSubmitted) {
+            setResponses(prev => {
+                const next = { ...prev };
+                let changed = false;
+                
+                ['working_days', 'days_present', 'effective_hours'].forEach(key => {
+                    if (activeAppraisalInfo.autoStats[key] !== undefined && (next[key] === undefined || next[key] === "")) {
+                        next[key] = activeAppraisalInfo.autoStats[key].toString();
+                        changed = true;
+                    }
+                });
+                
+                return changed ? next : prev;
+            });
+        }
+    }, [activeAppraisalInfo?.autoStats, isSubmitted]);
 
     const handleInputChange = (id, value) => {
         setResponses(prev => ({
@@ -38,6 +68,15 @@ export default function AppraisalForm() {
 
     const handleSave = async (status = 'Draft') => {
         if (!activeAppraisalInfo?.period?.id) return;
+
+        // Validation for final submission
+        if (status === 'Submitted') {
+            const missingRequired = questions.filter(q => q.required && (!responses[q.id] || responses[q.id].trim() === ""));
+            if (missingRequired.length > 0) {
+                toast.error(`Please answer all required questions: ${missingRequired[0].label}`);
+                return;
+            }
+        }
 
         setSubmitting(true);
         try {
@@ -57,6 +96,9 @@ export default function AppraisalForm() {
             setSubmitting(false);
         }
     };
+
+    const answeredCount = questions.filter(q => responses[q.id] && responses[q.id].trim() !== "").length;
+    const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
 
     if (loading && !activeAppraisalInfo) {
         return (
@@ -82,13 +124,6 @@ export default function AppraisalForm() {
             </div>
         );
     }
-
-    const { period, appraisal } = activeAppraisalInfo;
-    const questions = period.questions || [];
-    const isSubmitted = appraisal?.status === 'Submitted' || appraisal?.status === 'Reviewed';
-
-    const answeredCount = questions.filter(q => responses[q.id] && responses[q.id].trim() !== "").length;
-    const progress = (answeredCount / questions.length) * 100;
 
     return (
         <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700">
@@ -200,6 +235,12 @@ export default function AppraisalForm() {
                                             <span className="text-xs font-black uppercase tracking-widest text-blue-600 bg-blue-500/10 px-2.5 py-1 rounded-md">
                                                 Question {index + 1}
                                             </span>
+                                            {['working_days', 'days_present', 'effective_hours'].includes(q.id) && (
+                                                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-500/10 px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-sm border border-indigo-500/10">
+                                                    <Clock className="h-3 w-3" />
+                                                    Auto-calculated
+                                                </span>
+                                            )}
                                             {q.required && (
                                                 <span className="text-[10px] font-bold uppercase tracking-tighter text-destructive bg-destructive/10 px-2 py-0.5 rounded-md">
                                                     Required

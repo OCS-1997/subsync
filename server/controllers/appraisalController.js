@@ -1,6 +1,6 @@
 import appraisalModel from "../models/appraisalModel.js";
 import { logActivity } from "../models/activityLogModel.js";
-import { triggerAppraisalActivationEmails } from "../services/appraisalService.js";
+import { triggerAppraisalActivationEmails, calculateUserAppraisalStats } from "../services/appraisalService.js";
 
 /**
  * ADMIN: Template Management
@@ -172,11 +172,20 @@ export const getMyActiveAppraisal = async (req, res) => {
             return res.status(200).json({ active: false, message: "No active appraisal period." });
         }
 
+        const stats = await calculateUserAppraisalStats(
+            req.user.username, 
+            activePeriod.start_date, 
+            activePeriod.end_date,
+            activePeriod.quarter,
+            activePeriod.year
+        );
+
         const myAppraisal = await appraisalModel.getUserAppraisal(req.user.username, activePeriod.id);
         res.status(200).json({ 
             active: true, 
             period: activePeriod, 
-            appraisal: myAppraisal 
+            appraisal: myAppraisal,
+            autoStats: stats
         });
     } catch (error) {
         console.error("Error fetching active appraisal:", error);
@@ -195,6 +204,16 @@ export const saveMyAppraisal = async (req, res) => {
         const activePeriod = await appraisalModel.getActivePeriod();
         if (!activePeriod || activePeriod.id !== parseInt(period_id)) {
             return res.status(403).json({ error: "This appraisal period is not active or does not exist." });
+        }
+
+        // Backend Validation for Submission
+        if (status === 'Submitted') {
+            const templateQuestions = activePeriod.questions || [];
+            const missingRequired = templateQuestions.find(q => q.required && (!responses[q.id] || responses[q.id].trim() === ""));
+            
+            if (missingRequired) {
+                return res.status(400).json({ error: `Required question missing: ${missingRequired.label}` });
+            }
         }
 
         await appraisalModel.saveUserAppraisal({

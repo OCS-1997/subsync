@@ -105,6 +105,15 @@ export const PERMISSIONS = Object.freeze({
     APPRAISALS_MANAGE: 'appraisals.manage',
     APPRAISALS_SUBMIT: 'appraisals.submit',
     APPRAISALS_VIEW_TEAM: 'appraisals.view_team',
+    // Leaves and Permissions
+    LEAVES_VIEW: 'leaves.view',
+    LEAVES_APPLY: 'leaves.apply',
+    LEAVES_APPROVE: 'leaves.approve',
+    LEAVES_MANAGE_TYPES: 'leaves.manage_types',
+    PERMISSIONS_APPLY: 'permissions.apply',
+    PERMISSIONS_APPROVE: 'permissions.approve',
+    HOLIDAYS_MANAGE: 'holidays.manage',
+    LEAVES_VIEW_ALL: 'leaves.view_all',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -214,6 +223,15 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.APPRAISALS_MANAGE, resource: 'appraisals', action: 'manage', description: 'Full management of appraisal templates and periods' },
     { key: PERMISSIONS.APPRAISALS_SUBMIT, resource: 'appraisals', action: 'submit', description: 'Fill and submit own appraisals' },
     { key: PERMISSIONS.APPRAISALS_VIEW_TEAM, resource: 'appraisals', action: 'view_team', description: 'View and review team appraisals' },
+    // Leaves and Permissions
+    { key: PERMISSIONS.LEAVES_VIEW, resource: 'leaves', action: 'view', description: 'View own leave requests' },
+    { key: PERMISSIONS.LEAVES_APPLY, resource: 'leaves', action: 'apply', description: 'Apply for leaves' },
+    { key: PERMISSIONS.LEAVES_APPROVE, resource: 'leaves', action: 'approve', description: 'Approve or reject leave requests' },
+    { key: PERMISSIONS.LEAVES_MANAGE_TYPES, resource: 'leaves', action: 'manage_types', description: 'Configure leave types and global policy' },
+    { key: PERMISSIONS.PERMISSIONS_APPLY, resource: 'permissions', action: 'apply', description: 'Apply for short-duration permissions' },
+    { key: PERMISSIONS.PERMISSIONS_APPROVE, resource: 'permissions', action: 'approve', description: 'Approve or reject short-duration permissions' },
+    { key: PERMISSIONS.HOLIDAYS_MANAGE, resource: 'holidays', action: 'manage', description: 'Manage the public holiday calendar' },
+    { key: PERMISSIONS.LEAVES_VIEW_ALL, resource: 'leaves', action: 'view_all', description: 'View all employee leave requests' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {
@@ -270,6 +288,12 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.DIRECTORY_MANAGE,
         PERMISSIONS.APPRAISALS_SUBMIT,
         PERMISSIONS.APPRAISALS_VIEW_TEAM,
+        PERMISSIONS.LEAVES_VIEW,
+        PERMISSIONS.LEAVES_APPLY,
+        PERMISSIONS.LEAVES_APPROVE,
+        PERMISSIONS.LEAVES_VIEW_ALL,
+        PERMISSIONS.PERMISSIONS_APPLY,
+        PERMISSIONS.PERMISSIONS_APPROVE,
     ],
     sales: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -296,6 +320,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.TIME_TRACKING_USE,
         PERMISSIONS.DIRECTORY_VIEW,
         PERMISSIONS.APPRAISALS_SUBMIT,
+        PERMISSIONS.LEAVES_VIEW,
+        PERMISSIONS.LEAVES_APPLY,
+        PERMISSIONS.PERMISSIONS_APPLY,
     ],
     support: [
         PERMISSIONS.DASHBOARD_VIEW,
@@ -334,6 +361,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
         PERMISSIONS.ASSETS_VIEW,
         // Time Tracking
         PERMISSIONS.TIME_TRACKING_VIEW,
+        PERMISSIONS.LEAVES_VIEW,
     ],
 };
 
