@@ -198,7 +198,7 @@ export const clearAuthAsync = async () => {
  */
 export const setRememberMe = (enabled) => {
   if (enabled) {
-    localStorage.setItem(REMEMBER_ME_KEY) === 'true';
+    localStorage.setItem(REMEMBER_ME_KEY, 'true');
   } else {
     localStorage.removeItem(REMEMBER_ME_KEY);
   }

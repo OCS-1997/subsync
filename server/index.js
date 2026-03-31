@@ -26,7 +26,8 @@ const app = express();
 
 // Diagnostic logging middleware
 app.use((req, res, next) => {
-    const log = `[${new Date().toISOString()}] ${req.method} ${req.url}\n`;
+    const origin = req.headers.origin || 'No Origin';
+    const log = `[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${origin}\n`;
     fs.appendFileSync('server_reqs.log', log);
     next();
 });
@@ -63,6 +64,8 @@ const allowedOrigins = [
     `http://127.0.0.1`,
     `http://ocs365.in`,
     `https://ocs365.in`,
+    `http://dev.ocs365.in`,
+    `https://dev.ocs365.in`,
     `capacitor://localhost`,
     `ionic://localhost`,
     /^chrome-extension:\/\/.*/,
