@@ -829,3 +829,231 @@
 [2026-03-26T08:23:32.848Z] GET /api/time-tracking/timer/active
 [2026-03-26T08:24:32.843Z] OPTIONS /api/time-tracking/timer/active
 [2026-03-26T08:24:32.846Z] GET /api/time-tracking/timer/active
+[2026-03-31T08:25:51.214Z] OPTIONS /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:25:51.222Z] POST /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:25:51.503Z] OPTIONS /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.505Z] OPTIONS /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:25:51.508Z] OPTIONS /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:25:51.510Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.512Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.524Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:25:51.529Z] OPTIONS /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:25:51.532Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:25:51.536Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.539Z] OPTIONS /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:25:51.542Z] OPTIONS /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:25:51.547Z] OPTIONS /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:25:51.549Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:25:51.557Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:25:51.590Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:25:51.599Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:25:51.603Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:25:51.627Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.630Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:25:51.643Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:25:51.785Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:25:51.789Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:25:51.790Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:25:51.791Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:25:51.793Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:25:51.795Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:25:51.797Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:25:51.799Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:25:51.801Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:25:51.836Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:25:51.843Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:25:51.857Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:25:56.747Z] OPTIONS /api/logout - Origin: http://localhost:5173
+[2026-03-31T08:25:56.749Z] POST /api/logout - Origin: http://localhost:5173
+[2026-03-31T08:26:03.919Z] OPTIONS /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:26:03.921Z] POST /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:26:04.068Z] OPTIONS /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.070Z] OPTIONS /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:26:04.072Z] OPTIONS /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:26:04.073Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.075Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.078Z] OPTIONS /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:26:04.079Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:26:04.081Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:26:04.083Z] OPTIONS /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:26:04.085Z] OPTIONS /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:26:04.087Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.089Z] OPTIONS /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:26:04.090Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:26:04.095Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:26:04.105Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:26:04.108Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:26:04.112Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.116Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:26:04.119Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:26:04.126Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:26:04.223Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:26:04.225Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:26:04.226Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:26:04.227Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:26:04.228Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:26:04.229Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:26:04.230Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:26:04.232Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:26:04.233Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:26:04.249Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:26:04.251Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:26:04.252Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:26:34.070Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:26:34.072Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:27:04.069Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:27:04.071Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:27:34.068Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:27:34.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:28:04.069Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:28:04.071Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:28:34.069Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:28:34.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:29:04.068Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:29:04.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:29:34.068Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:29:34.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:30:04.068Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:30:04.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:30:34.068Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:30:34.070Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:04.067Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:04.069Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:24.198Z] OPTIONS /api/logout - Origin: http://localhost:5173
+[2026-03-31T08:31:24.200Z] POST /api/logout - Origin: http://localhost:5173
+[2026-03-31T08:31:31.646Z] OPTIONS /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:31:31.647Z] POST /api/login/user - Origin: http://localhost:5173
+[2026-03-31T08:31:31.812Z] OPTIONS /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:31:31.814Z] OPTIONS /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:31:31.816Z] OPTIONS /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:31:31.819Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:31.821Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:31:31.824Z] OPTIONS /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:31:31.825Z] OPTIONS /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:31:31.827Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:31:31.829Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:31:31.831Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:31.834Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:31:31.836Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:31:31.854Z] GET /api/preferences/admin/sidebar_folders_v3 - Origin: http://localhost:5173
+[2026-03-31T08:31:31.858Z] GET /api/leaves/stats/pending-counts - Origin: http://localhost:5173
+[2026-03-31T08:31:31.866Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:31:31.870Z] GET /api/dashboard/config - Origin: http://localhost:5173
+[2026-03-31T08:31:31.872Z] GET /api/dashboard/birthdays - Origin: http://localhost:5173
+[2026-03-31T08:31:31.875Z] GET /api/my/appraisal/active - Origin: http://localhost:5173
+[2026-03-31T08:31:32.037Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:31:32.038Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:31:32.040Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:31:32.041Z] OPTIONS /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:31:32.042Z] OPTIONS /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:31:32.043Z] OPTIONS /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:31:32.044Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:31:32.046Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:31:32.047Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:31:32.061Z] GET /api/dashboard - Origin: http://localhost:5173
+[2026-03-31T08:31:32.063Z] GET /api/dashboard/renewals?filterType=today - Origin: http://localhost:5173
+[2026-03-31T08:31:32.065Z] GET /api/dashboard/revenue-trend - Origin: http://localhost:5173
+[2026-03-31T08:32:02.190Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:32:02.192Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:32:32.628Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:32:32.631Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:33:02.625Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:33:02.627Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:33:32.615Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:33:32.617Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:34:02.619Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:34:02.621Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:34:32.616Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:34:32.619Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:35:49.630Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:35:49.639Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:35:54.370Z] GET / - Origin: No Origin
+[2026-03-31T08:35:54.552Z] GET /favicon.ico - Origin: No Origin
+[2026-03-31T08:35:58.230Z] GET /admin/queues - Origin: No Origin
+[2026-03-31T08:35:58.251Z] GET /admin/queues/ - Origin: No Origin
+[2026-03-31T08:36:01.068Z] GET /admin/queues/ - Origin: No Origin
+[2026-03-31T08:36:01.135Z] GET /admin/queues/static/main.b6a63a86d7.css - Origin: No Origin
+[2026-03-31T08:36:01.151Z] GET /admin/queues/static/vendor.3e53d99c43.js - Origin: No Origin
+[2026-03-31T08:36:01.153Z] GET /admin/queues/static/main.842a2e2e42.js - Origin: No Origin
+[2026-03-31T08:36:01.251Z] GET /admin/queues/static/c3fb6ba503.chunk.js - Origin: No Origin
+[2026-03-31T08:36:01.275Z] GET /admin/queues/static/locales/en-US/messages.json - Origin: No Origin
+[2026-03-31T08:36:01.283Z] GET /admin/queues/static/images/logo.svg - Origin: No Origin
+[2026-03-31T08:36:01.295Z] GET /admin/queues/static/fa78d32e99.chunk.css - Origin: No Origin
+[2026-03-31T08:36:01.296Z] GET /admin/queues/static/f9d16d826d.chunk.js - Origin: No Origin
+[2026-03-31T08:36:01.313Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:01.318Z] GET /admin/queues/static/images/logo.svg - Origin: No Origin
+[2026-03-31T08:36:01.326Z] GET /admin/queues/static/favicon-32x32.png - Origin: No Origin
+[2026-03-31T08:36:01.333Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:06.336Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:11.622Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:16.628Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:21.627Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:26.617Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:36:49.634Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:36:49.640Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:37:49.627Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:37:49.631Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:38:02.790Z] GET /admin/queues/ - Origin: No Origin
+[2026-03-31T08:38:02.842Z] GET /admin/queues/static/main.b6a63a86d7.css - Origin: No Origin
+[2026-03-31T08:38:02.869Z] GET /admin/queues/static/vendor.3e53d99c43.js - Origin: No Origin
+[2026-03-31T08:38:02.870Z] GET /admin/queues/static/main.842a2e2e42.js - Origin: No Origin
+[2026-03-31T08:38:03.051Z] GET /admin/queues/static/c3fb6ba503.chunk.js - Origin: No Origin
+[2026-03-31T08:38:03.151Z] GET /admin/queues/static/locales/en-US/messages.json - Origin: No Origin
+[2026-03-31T08:38:03.177Z] GET /admin/queues/static/fa78d32e99.chunk.css - Origin: No Origin
+[2026-03-31T08:38:03.179Z] GET /admin/queues/static/f9d16d826d.chunk.js - Origin: No Origin
+[2026-03-31T08:38:03.193Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:03.197Z] GET /admin/queues/static/images/logo.svg - Origin: No Origin
+[2026-03-31T08:38:03.204Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:08.206Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:08.932Z] GET /admin/queues/static/0e22ed55ca.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.936Z] GET /admin/queues/static/a8275711ae.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.939Z] GET /admin/queues/static/566e305244.chunk.css - Origin: No Origin
+[2026-03-31T08:38:08.941Z] GET /admin/queues/static/f5c8d451f0.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.942Z] GET /admin/queues/static/848add5714.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.944Z] GET /admin/queues/static/6527cce678.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.958Z] GET /admin/queues/static/c34b3e5127.chunk.js - Origin: No Origin
+[2026-03-31T08:38:08.980Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:08.989Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:09.035Z] GET /admin/queues/static/07a1e5864f.chunk.js - Origin: No Origin
+[2026-03-31T08:38:09.060Z] GET /admin/queues/static/f5c8d451f0.chunk.js - Origin: No Origin
+[2026-03-31T08:38:13.998Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:18.817Z] PUT /admin/queues/api/queues/scheduledTasks/pause - Origin: http://localhost:3000
+[2026-03-31T08:38:18.825Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:18.984Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:23.976Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:28.977Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:33.988Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:47.313Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:38:47.316Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:38:52.272Z] GET /admin/queues/ - Origin: No Origin
+[2026-03-31T08:38:52.325Z] GET /admin/queues/static/main.b6a63a86d7.css - Origin: No Origin
+[2026-03-31T08:38:52.342Z] GET /admin/queues/static/vendor.3e53d99c43.js - Origin: No Origin
+[2026-03-31T08:38:52.344Z] GET /admin/queues/static/main.842a2e2e42.js - Origin: No Origin
+[2026-03-31T08:38:52.374Z] GET /admin/queues/static/c3fb6ba503.chunk.js - Origin: No Origin
+[2026-03-31T08:38:52.516Z] GET /admin/queues/static/locales/en-US/messages.json - Origin: No Origin
+[2026-03-31T08:38:52.621Z] GET /admin/queues/static/fa78d32e99.chunk.css - Origin: No Origin
+[2026-03-31T08:38:52.622Z] GET /admin/queues/static/f9d16d826d.chunk.js - Origin: No Origin
+[2026-03-31T08:38:52.634Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:52.636Z] GET /admin/queues/static/images/logo.svg - Origin: No Origin
+[2026-03-31T08:38:52.675Z] GET /admin/queues/api/queues?page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:56.816Z] GET /admin/queues/static/0e22ed55ca.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.820Z] GET /admin/queues/static/a8275711ae.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.822Z] GET /admin/queues/static/848add5714.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.823Z] GET /admin/queues/static/566e305244.chunk.css - Origin: No Origin
+[2026-03-31T08:38:56.825Z] GET /admin/queues/static/f5c8d451f0.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.827Z] GET /admin/queues/static/c34b3e5127.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.828Z] GET /admin/queues/static/6527cce678.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.852Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:56.859Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:38:56.906Z] GET /admin/queues/static/07a1e5864f.chunk.js - Origin: No Origin
+[2026-03-31T08:38:56.936Z] GET /admin/queues/static/f5c8d451f0.chunk.js - Origin: No Origin
+[2026-03-31T08:39:01.859Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:39:02.615Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:39:02.617Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:39:06.764Z] GET /admin/queues/api/queues/scheduledTasks/repeat%3Af77032c14c04e6fdd43509063578c60b%3A1774962000000/logs - Origin: No Origin
+[2026-03-31T08:39:06.770Z] GET /admin/queues/api/queues/scheduledTasks/repeat%3Af77032c14c04e6fdd43509063578c60b%3A1774962000000/logs - Origin: No Origin
+[2026-03-31T08:39:06.860Z] GET /admin/queues/api/queues?activeQueue=scheduledTasks&status=latest&page=1&jobsPerPage=10 - Origin: No Origin
+[2026-03-31T08:39:31.815Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:39:31.817Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:40:02.625Z] OPTIONS /api/time-tracking/timer/active - Origin: http://localhost:5173
+[2026-03-31T08:40:02.627Z] GET /api/time-tracking/timer/active - Origin: http://localhost:5173

@@ -1,238 +1,105 @@
-import cron from 'node-cron';
-import { reconciliationCron } from '../services/reminderService.js';
-import { archiveOldSubscriptions } from '../services/reminderService.js';
-import { sendTodayBirthdayEmails } from '../services/birthdayService.js';
-import { sendDailyDcrReportEmail } from '../services/dcrService.js';
-import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportService.js';
-import { syncBirthdays } from '../models/birthdayModel.js';
-import { syncDirectory } from '../services/directoryService.js';
-import { sendAppraisalReminders } from '../services/appraisalService.js';
-
-const ARCHIVAL_DELAY_DAYS = parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10);
+import { scheduledTasksQueue } from '../queues/queueConfig.js';
 
 /**
- * Setup reconciliation cron job
- * Runs daily at 01:00 UTC (06:30 IST)
+ * Sync all scheduled (cron) tasks to BullMQ as repeatable jobs.
+ * This replaces node-cron with BullMQ's built-in scheduling, allowing
+ * monitoring and manual triggering from the Bull Board dashboard.
  */
-export function setupReconciliationCron() {
-    // Run at 01:00 UTC daily (06:30 IST)
-    cron.schedule('0 1 * * *', async () => {
-        console.log('Running reconciliation cron job...');
-        try {
-            const result = await reconciliationCron();
-            console.log(JSON.stringify({
-                event: 'reconciliation_completed',
-                checked: result.checked,
-                enqueued: result.enqueued,
-                timestamp: new Date().toISOString(),
-            }));
-        } catch (error) {
-            console.error('Error in reconciliation cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log('Reconciliation cron scheduled for 01:00 UTC daily');
-}
-
-/**
- * Setup archival cron job
- * Runs daily at 02:00 UTC (07:30 IST)
- */
-export function setupArchivalCron() {
-    // Run at 02:00 UTC daily (07:30 IST)
-    cron.schedule('0 2 * * *', async () => {
-        console.log('Running archival cron job...');
-        try {
-            const result = await archiveOldSubscriptions(ARCHIVAL_DELAY_DAYS);
-            console.log(JSON.stringify({
-                event: 'archival_completed',
-                archived: result.archived,
-                timestamp: new Date().toISOString(),
-            }));
-        } catch (error) {
-            console.error('Error in archival cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log(`Archival cron scheduled for 02:00 UTC daily (archives subscriptions older than ${ARCHIVAL_DELAY_DAYS} days)`);
-}
-
-/**
- * Setup birthday email cron job
- * Runs daily at 09:00 UTC (14:30 IST) to send birthday wishes
- */
-export function setupBirthdayCron() {
-    // Run at 09:00 UTC daily (14:30 IST)
-    cron.schedule('0 9 * * *', async () => {
-        console.log('Running birthday email cron job...');
-        try {
-            const result = await sendTodayBirthdayEmails();
-            console.log(JSON.stringify({
-                event: 'birthday_emails_sent',
-                sent: result.sent,
-                failed: result.failed,
-                timestamp: new Date().toISOString(),
-            }));
-            if (result.errors.length > 0) {
-                console.error('Birthday email errors:', result.errors);
+export async function syncScheduledTasks() {
+    try {
+        // 1. Reconciliation Cron (Daily at 06:30 IST / 01:00 UTC)
+        await scheduledTasksQueue.add(
+            'reconciliation',
+            { taskName: 'reconciliation' },
+            {
+                repeat: { pattern: '0 1 * * *', tz: 'UTC' },
+                jobId: 'scheduled_reconciliation'
             }
-        } catch (error) {
-            console.error('Error in birthday cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
+        );
 
-    console.log('Birthday email cron scheduled for 09:00 UTC daily');
-}
-
-/**
- * Setup DCR daily email report cron job
- * Runs daily at 13:00 UTC (18:30 IST)
- */
-export function setupDcrReportCron() {
-    // Run at 13:00 UTC daily (18:30 IST)
-    cron.schedule('0 13 * * *', async () => {
-        console.log('Running DCR daily report cron job...');
-        try {
-            const result = await sendDailyDcrReportEmail();
-            console.log(JSON.stringify({
-                event: 'dcr_daily_report_sent',
-                success: result.success,
-                error: result.error,
-                timestamp: new Date().toISOString(),
-            }));
-            if (!result.success) {
-                console.error('DCR report error:', result.error);
+        // 2. Archival Cron (Daily at 07:30 IST / 02:00 UTC)
+        await scheduledTasksQueue.add(
+            'archival',
+            { 
+                taskName: 'archival', 
+                params: { delayDays: parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10) } 
+            },
+            {
+                repeat: { pattern: '0 2 * * *', tz: 'UTC' },
+                jobId: 'scheduled_archival'
             }
-        } catch (error) {
-            console.error('Error in DCR report cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
+        );
 
-    console.log('DCR daily report cron scheduled for 13:00 UTC daily (18:30 IST)');
+        // 3. Birthday Email Cron (Daily at 14:30 IST / 09:00 UTC)
+        await scheduledTasksQueue.add(
+            'birthday_emails',
+            { taskName: 'birthday_emails' },
+            {
+                repeat: { pattern: '0 9 * * *', tz: 'UTC' },
+                jobId: 'scheduled_birthday_emails'
+            }
+        );
+
+        // 4. DCR Daily Report Cron (Daily at 18:30 IST / 13:00 UTC)
+        await scheduledTasksQueue.add(
+            'dcr_daily_report',
+            { taskName: 'dcr_daily_report' },
+            {
+                repeat: { pattern: '0 13 * * *', tz: 'UTC' },
+                jobId: 'scheduled_dcr_report'
+            }
+        );
+
+        // 5. Daily Time Tracking Report (Daily at 00:00 IST / 18:30 UTC)
+        await scheduledTasksQueue.add(
+            'time_tracking_report',
+            { taskName: 'time_tracking_report' },
+            {
+                repeat: { pattern: '30 18 * * *', tz: 'UTC' },
+                jobId: 'scheduled_time_tracking_report'
+            }
+        );
+
+        // 6. Birthday Sync (Every 6 hours)
+        await scheduledTasksQueue.add(
+            'birthday_sync',
+            { taskName: 'birthday_sync' },
+            {
+                repeat: { pattern: '0 0,6,12,18 * * *', tz: 'UTC' },
+                jobId: 'scheduled_birthday_sync'
+            }
+        );
+
+        // 7. Directory Sync (Every 4 hours)
+        await scheduledTasksQueue.add(
+            'directory_sync',
+            { taskName: 'directory_sync' },
+            {
+                repeat: { pattern: '0 0,4,8,12,16,20 * * *', tz: 'UTC' },
+                jobId: 'scheduled_directory_sync'
+            }
+        );
+
+        // 8. Appraisal Reminders (Daily at 09:30 IST / 04:00 UTC)
+        await scheduledTasksQueue.add(
+            'appraisal_reminders',
+            { taskName: 'appraisal_reminders' },
+            {
+                repeat: { pattern: '0 4 * * *', tz: 'UTC' },
+                jobId: 'scheduled_appraisal_reminders'
+            }
+        );
+
+        console.log('✅ All scheduled tasks synced to BullMQ');
+    } catch (error) {
+        console.error('❌ Error syncing scheduled tasks to BullMQ:', error);
+    }
 }
 
 /**
- * Setup daily time tracking report cron job
- * Runs daily at 18:30 UTC (00:00 IST next calendar day).
- * At that moment, new Date() in UTC is still "today", and the service
- * subtracts 1 IST calendar day to produce "yesterday IST" — which is
- * exactly the day whose logs we want to report on.
- */
-export function setupTimeTrackingReportCron() {
-    // Run at 18:30 UTC daily (= 00:00 IST — start of the next IST calendar day)
-    cron.schedule('30 18 * * *', async () => {
-        console.log('Running daily time tracking report cron job...');
-        try {
-            // Pass the current UTC time directly — the service's own IST offset
-            // logic will resolve this to the correct previous calendar day in IST.
-            await sendDailyTimeTrackingReports(new Date());
-        } catch (error) {
-            console.error('Error in time tracking report cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log('Time tracking report cron scheduled for 18:30 UTC daily (00:00 IST)');
-}
-
-/**
- * Setup birthday sync cron job
- * Runs every 6 hours to sync birthdays from users, customers, and contact persons
- * WITHOUT deleting manually-added birthday records.
- */
-export function setupBirthdaySyncCron() {
-    // Run at 00:00, 06:00, 12:00, and 18:00 UTC every day
-    cron.schedule('0 0,6,12,18 * * *', async () => {
-        console.log('Running automatic birthday sync cron job...');
-        try {
-            const result = await syncBirthdays();
-            console.log(JSON.stringify({
-                event: 'birthday_sync_completed',
-                success: result.success,
-                message: result.message,
-                timestamp: new Date().toISOString(),
-            }));
-        } catch (error) {
-            console.error('Error in birthday sync cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log('Birthday sync cron scheduled for 00:00, 06:00, 12:00, 18:00 UTC daily');
-}
-
-/**
- * Setup phone directory sync cron job
- * Runs every 4 hours to aggregate contacts from customers, vendors, and contacts
- */
-export function setupDirectorySyncCron() {
-    // Run at 00:00, 04:00, 08:00, 12:00, 16:00, and 20:00 UTC every day
-    cron.schedule('0 0,4,8,12,16,20 * * *', async () => {
-        console.log('Running automatic phone directory sync cron job...');
-        try {
-            const result = await syncDirectory();
-            console.log(JSON.stringify({
-                event: 'directory_sync_completed',
-                success: result.success,
-                count: result.count,
-                timestamp: new Date().toISOString(),
-            }));
-        } catch (error) {
-            console.error('Error in directory sync cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log('Phone directory sync cron scheduled for every 4 hours (UTC)');
-}
-
-/**
- * Setup appraisal reminder cron job
- * Runs daily at 04:00 UTC (09:30 IST)
- */
-export function setupAppraisalCron() {
-    cron.schedule('0 4 * * *', async () => {
-        console.log('Running appraisal reminder cron job...');
-        try {
-            const result = await sendAppraisalReminders();
-            console.log(JSON.stringify({
-                event: 'appraisal_reminders_completed',
-                sent: result.sent,
-                period: result.period,
-                timestamp: new Date().toISOString(),
-            }));
-        } catch (error) {
-            console.error('Error in appraisal reminder cron:', error);
-        }
-    }, {
-        timezone: 'UTC',
-    });
-
-    console.log('Appraisal reminder cron scheduled for 04:00 UTC daily');
-}
-
-/**
- * Setup all cron jobs
+ * Setup all cron jobs (legacy wrapper for index.js)
  */
 export function setupCronJobs() {
-    setupReconciliationCron();
-    setupArchivalCron();
-    setupBirthdayCron();
-    setupBirthdaySyncCron();
-    setupDirectorySyncCron();
-    setupDcrReportCron();
-    setupTimeTrackingReportCron();
-    setupAppraisalCron();
+    syncScheduledTasks();
 }
 

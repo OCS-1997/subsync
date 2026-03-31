@@ -11,6 +11,7 @@ import morgan from 'morgan';
 import { setupBullBoard } from './queues/bullBoard.js';
 import { createReminderWorker } from './workers/reminderWorker.js';
 import { createBackupWorker } from './workers/backupWorker.js';
+import { createScheduledTaskWorker } from './workers/scheduledTaskWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
 import { syncAllBackupSchedules } from './services/backupService.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
@@ -137,11 +138,19 @@ setupBullBoard(app);
 // Start BullMQ workers
 let reminderWorker = null;
 let backupWorker = null;
+let scheduledTaskWorker = null;
 try {
     reminderWorker = createReminderWorker();
     console.log('Reminder worker started successfully'.bgGreen.white);
 } catch (error) {
     console.error('Failed to start reminder worker:'.bgRed.white, error);
+}
+
+try {
+    scheduledTaskWorker = createScheduledTaskWorker();
+    console.log('Scheduled task worker started successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to start scheduled task worker:'.bgRed.white, error);
 }
 
 try {
@@ -202,6 +211,9 @@ process.on('SIGTERM', async () => {
     if (backupWorker) {
         await backupWorker.close();
     }
+    if (scheduledTaskWorker) {
+        await scheduledTaskWorker.close();
+    }
     await closeQueues();
     server.close(() => {
         console.log('Server closed');
@@ -213,6 +225,9 @@ process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully...');
     if (reminderWorker) {
         await reminderWorker.close();
+    }
+    if (scheduledTaskWorker) {
+        await scheduledTaskWorker.close();
     }
     await closeQueues();
     server.close(() => {

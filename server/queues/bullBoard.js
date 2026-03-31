@@ -1,7 +1,7 @@
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js';
 import { ExpressAdapter } from '@bull-board/express';
-import { subscriptionRemindersQueue, pdfGenerationQueue, backupTasksQueue } from './queueConfig.js';
+import { subscriptionRemindersQueue, pdfGenerationQueue, backupTasksQueue, scheduledTasksQueue } from './queueConfig.js';
 
 /**
  * Setup Bull Board for queue monitoring
@@ -17,6 +17,7 @@ export function setupBullBoard(app) {
             new BullMQAdapter(subscriptionRemindersQueue),
             new BullMQAdapter(pdfGenerationQueue),
             new BullMQAdapter(backupTasksQueue),
+            new BullMQAdapter(scheduledTasksQueue),
         ],
         serverAdapter,
     });

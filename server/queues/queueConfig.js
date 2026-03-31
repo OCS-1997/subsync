@@ -48,6 +48,7 @@ export const QUEUE_NAMES = {
     SUBSCRIPTION_REMINDERS: 'subscriptionReminders',
     PDF_GENERATION: 'pdfGeneration',
     BACKUP_TASKS: 'backupTasks',
+    SCHEDULED_TASKS: 'scheduledTasks',
 };
 
 // Create queues
@@ -100,6 +101,24 @@ export const backupTasksQueue = new Queue(QUEUE_NAMES.BACKUP_TASKS, {
     },
 });
 
+export const scheduledTasksQueue = new Queue(QUEUE_NAMES.SCHEDULED_TASKS, {
+    connection: redisConnection,
+    defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+            type: 'exponential',
+            delay: 60000,
+        },
+        removeOnComplete: {
+            age: 7 * 24 * 3600,
+            count: 500,
+        },
+        removeOnFail: {
+            age: 30 * 24 * 3600,
+        },
+    },
+});
+
 // Queue events for monitoring
 export const subscriptionRemindersQueueEvents = new QueueEvents(QUEUE_NAMES.SUBSCRIPTION_REMINDERS, {
     connection: redisConnection,
@@ -115,6 +134,8 @@ export function getQueueByName(queueName) {
             return pdfGenerationQueue;
         case QUEUE_NAMES.BACKUP_TASKS:
             return backupTasksQueue;
+        case QUEUE_NAMES.SCHEDULED_TASKS:
+            return scheduledTasksQueue;
         default:
             throw new Error(`Unknown queue name: ${queueName}`);
     }
@@ -126,6 +147,7 @@ export async function closeQueues() {
         subscriptionRemindersQueue.close(),
         pdfGenerationQueue.close(),
         backupTasksQueue.close(),
+        scheduledTasksQueue.close(),
         subscriptionRemindersQueueEvents.close(),
         redisClient.quit(),
     ]);
