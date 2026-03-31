@@ -25,18 +25,35 @@ export const CallDetectorManager = () => {
     }
   }, [isNative, isActive, checkPermissions, startDetection]);
 
-  // Handle Overlay Permission Prompt
+  // Handle Permissions and Battery Optimization Prompts
   useEffect(() => {
     if (isNative) {
+      // Check Overlay/Appear-on-top Permission
       checkOverlayPermission().then(granted => {
         if (!granted) {
-          // Automatically request the overlay permission to ensure Truecaller-style popups work
           requestOverlayPermission();
           toast.info("Please enable 'Appear on top' permission to allow call logging from the home screen.", {
             autoClose: 10000,
           });
         }
       });
+
+      // Check Battery Optimization (Crucial for 2-day background reliability)
+      const checkBattery = async () => {
+        try {
+          const { isIgnoring } = await CallDetector.checkBatteryOptimization();
+          if (!isIgnoring) {
+            toast.warn("Subsync needs battery exemption to reliably track calls 24/7. Tap here to allow.", {
+              autoClose: false,
+              onClick: () => CallDetector.requestIgnoreBatteryOptimization()
+            });
+          }
+        } catch (err) {
+          console.error("Battery check failed:", err);
+        }
+      };
+      
+      checkBattery();
     }
   }, [isNative, checkOverlayPermission, requestOverlayPermission]);
 

@@ -21,6 +21,23 @@ export function setupBullBoard(app) {
         serverAdapter,
     });
 
+    // Relax CSP for Bull Board (needed for its dashboard UI)
+    const bullBoardSecurityHeaders = (req, res, next) => {
+        // Bull Board needs 'unsafe-inline' for its scripts and styles
+        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; img-src * data:;");
+        next();
+    };
+
+    // Trailing slash redirect middleware
+    const ensureTrailingSlash = (req, res, next) => {
+        if (!req.path || req.path === '/') {
+            if (!req.originalUrl.endsWith('/')) {
+                return res.redirect(301, req.originalUrl + '/');
+            }
+        }
+        next();
+    };
+
     // Basic auth middleware (simple implementation - use proper auth in production)
     const basicAuth = (req, res, next) => {
         const auth = req.headers.authorization;
@@ -40,7 +57,7 @@ export function setupBullBoard(app) {
         next();
     };
 
-    app.use('/admin/queues', basicAuth, serverAdapter.getRouter());
+    app.use('/admin/queues', ensureTrailingSlash, bullBoardSecurityHeaders, basicAuth, serverAdapter.getRouter());
 
     console.log('Bull Board mounted at /admin/queues');
     return serverAdapter;

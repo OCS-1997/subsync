@@ -226,4 +226,34 @@ public class CallDetectorPlugin extends Plugin {
     public void emitPendingCallsAvailable() {
         notifyListeners("pendingCallsAdded", new JSObject());
     }
+
+    @PluginMethod
+    public void checkBatteryOptimization(PluginCall call) {
+        JSObject result = new JSObject();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String packageName = getContext().getPackageName();
+            android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+            result.put("isIgnoring", pm.isIgnoringBatteryOptimizations(packageName));
+        } else {
+            result.put("isIgnoring", true);
+        }
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void requestIgnoreBatteryOptimization(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+                call.resolve();
+            } catch (Exception e) {
+                call.reject("Failed to request battery optimization exemption", e);
+            }
+        } else {
+            call.resolve();
+        }
+    }
 }

@@ -50,7 +50,7 @@ public class CallOverlayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Start foreground notification IMPROREDIATELY on Android 14+ to avoid crash/blocking
+        // Start foreground notification IMMEDIATELY on Android 14+ to avoid crash/blocking
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Subsync Call Tracker")
                 .setContentText("Processing call details...")
@@ -59,7 +59,7 @@ public class CallOverlayService extends Service {
                 .build();
                 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(1001, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            startForeground(1001, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
             startForeground(1001, notification);
         }
@@ -154,11 +154,17 @@ public class CallOverlayService extends Service {
                         plugin.emitCallEnded(resultNumber, resultDuration, resultType, finalCallId);
                     }
                     showOverlay(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType, finalCallId);
+                    
+                    // Auto-dismiss after 60 seconds to prevent blocking future calls
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        removeOverlay();
+                        stopSelf();
+                    }, 60000);
                 });
             }).start();
         }
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     private String mapCallType(int type) {
@@ -179,7 +185,8 @@ public class CallOverlayService extends Service {
     private void showOverlay(String number, int duration, String type, String name, String company, String entityType, String callId) {
         Log.d(TAG, "showOverlay called for: " + number + ", name: " + name);
         if (overlayView != null) {
-            Log.d(TAG, "Overlay already exists, skipping");
+            Log.d(TAG, "Overlay already exists, updating content instead of skipping");
+            updateOverlayContent(number, duration, type, name, company, entityType, callId);
             return;
         }
 
@@ -204,8 +211,6 @@ public class CallOverlayService extends Service {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 layoutFlag = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
             } else {
-                // Fallback for Android < 8 (Oreo)
-                // Use TYPE_PHONE or TYPE_SYSTEM_ALERT
                 layoutFlag = WindowManager.LayoutParams.TYPE_PHONE;
             }
 
@@ -256,7 +261,7 @@ public class CallOverlayService extends Service {
             
             if (tvStatusPill != null) {
                 if ("missed".equals(safeType)) {
-                    tvStatusPill.setText("Missed call less than 1m ago");
+                    tvStatusPill.setText("Missed call just now");
                 } else {
                     tvStatusPill.setText(typeStr + " ended • " + timeStr + " ago");
                 }
@@ -286,13 +291,10 @@ public class CallOverlayService extends Service {
             });
 
             setupSwipeToDismiss(overlayView, params);
-            Log.d(TAG, "Attempting windowManager.addView");
             try {
                 windowManager.addView(overlayView, params);
-                Log.d(TAG, "windowManager.addView successful");
             } catch (WindowManager.BadTokenException e) {
-                Log.e(TAG, "Overlay permission denied or invalid token (BadTokenException)", e);
-                // Gracefully fallback to in-app logging queue if overlay cannot be drawn
+                Log.e(TAG, "Overlay permission denied or invalid token", e);
                 CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
                 forceAppToForeground(number, duration, type, name, callId);
                 stopSelf();
@@ -305,10 +307,62 @@ public class CallOverlayService extends Service {
         }
     }
 
+    private void updateOverlayContent(String number, int duration, String type, String name, String company, String entityType, String callId) {
+        try {
+            TextView tvName = overlayView.findViewById(R.id.tv_contact_name);
+            TextView tvPhone = overlayView.findViewById(R.id.tv_phone_number);
+            TextView tvStatusPill = overlayView.findViewById(R.id.tv_status_pill);
+            TextView tvInitials = overlayView.findViewById(R.id.tv_initials);
+            Button btnLogCall = overlayView.findViewById(R.id.btn_log_call);
+
+            boolean hasName = name != null && !name.trim().isEmpty();
+            String displayName = hasName ? name : number;
+            
+            if (tvName != null) tvName.setText(displayName);
+            if (tvPhone != null) tvPhone.setText(number);
+            
+            if (tvInitials != null) {
+                if (hasName) {
+                    tvInitials.setText(name.substring(0, 1).toUpperCase());
+                } else {
+                    tvInitials.setText("U");
+                }
+            }
+
+            int mins = duration / 60;
+            int secs = duration % 60;
+            String timeStr = mins > 0 ? mins + "m " + secs + "s" : secs + "s";
+            String safeType = type != null ? type : "unknown";
+            String typeStr = safeType.substring(0, 1).toUpperCase() + safeType.substring(1);
+            
+            if (tvStatusPill != null) {
+                if ("missed".equals(safeType)) {
+                    tvStatusPill.setText("Missed call just now");
+                } else {
+                    tvStatusPill.setText(typeStr + " ended • " + timeStr + " ago");
+                }
+            }
+
+            btnLogCall.setOnClickListener(v -> {
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
+                forceAppToForeground(number, duration, type, name, callId);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
+                    if (plugin != null)
+                        plugin.emitPendingCallsAvailable();
+                    removeOverlay();
+                    stopSelf();
+                }, 1000);
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Update overlay error", e);
+        }
+    }
+
     private void setupSwipeToDismiss(View view, WindowManager.LayoutParams params) {
         view.setOnTouchListener(new View.OnTouchListener() {
             private float initialY, initialTouchY;
-            private int swipeThreshold = 0;
+            private int swipeThreshold = 50;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -316,7 +370,7 @@ public class CallOverlayService extends Service {
                     case MotionEvent.ACTION_DOWN:
                         initialY = params.y;
                         initialTouchY = event.getRawY();
-                        return false; // let children have a chance to handle clicks initially
+                        return false; 
                     case MotionEvent.ACTION_MOVE:
                         params.y = (int) (initialY + (initialTouchY - event.getRawY()));
                         windowManager.updateViewLayout(overlayView, params);
@@ -334,7 +388,7 @@ public class CallOverlayService extends Service {
     }
 
     private void dismissWithAnimation(WindowManager.LayoutParams params, boolean toUp) {
-        float targetY = toUp ? getResources().getDisplayMetrics().heightPixels : -500;
+        float targetY = toUp ? getResources().getDisplayMetrics().heightPixels : -getResources().getDisplayMetrics().heightPixels;
         ObjectAnimator animator = ObjectAnimator.ofInt(params, "y", params.y, (int) targetY);
         animator.setDuration(300);
         animator.addUpdateListener(animation -> {
@@ -364,8 +418,11 @@ public class CallOverlayService extends Service {
     private void forceAppToForeground(String number, int duration, String type, String name, String callId) {
         try {
             Intent launchIntent = new Intent(this, MainActivity.class);
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK 
+                    | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             if (number != null)
                 launchIntent.putExtra(EXTRA_CALL_PHONE, number);
             if (name != null)

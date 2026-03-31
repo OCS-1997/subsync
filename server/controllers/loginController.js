@@ -22,7 +22,7 @@ const validateLogin = async (req, res) => {
                 throw new Error("JWT_SECRET not configured");
             }
             //console.log(`[LOGIN] Signing token with secret length: ${secret.length}`);
-            const token = jwt.sign({ username: user.username, roleId: user.roleId }, secret, { expiresIn: '1d' });
+            const token = jwt.sign({ username: user.username, roleId: user.roleId }, secret, { expiresIn: '30d' });
             const authContext = await buildUserContext(user.username);
             const loginTime = new Date().toISOString();
             // Log successful login
