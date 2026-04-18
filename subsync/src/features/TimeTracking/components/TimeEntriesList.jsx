@@ -317,7 +317,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
-        user_id: currentUser?.user_id || '',
+        user_id: currentUser?.username || '',
         team_id: '',
         customer_id: '',
         project_id: '',
@@ -349,17 +349,24 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
 
     useEffect(() => {
         if (viewType === 'calendar') {
-            // Only auto-set dates if no custom date range is set
-            if (!filters.startDate && !filters.endDate) {
-                const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-                const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
-                setFilters(prev => ({ ...prev, startDate: start, endDate: end, limit: 1000 }));
-            } else {
-                setFilters(prev => ({ ...prev, limit: 1000 }));
+            // Always set to the start and end of the current month when in calendar view
+            const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+            
+            // Only update if values actually changed to prevent unnecessary re-renders
+            if (filters.startDate !== start || filters.endDate !== end || filters.limit !== 1000) {
+                setFilters(prev => ({ 
+                    ...prev, 
+                    startDate: start, 
+                    endDate: end, 
+                    limit: 1000 
+                }));
             }
         } else {
-            if (!filters.startDate && !filters.endDate) {
-                setFilters(prev => ({ ...prev, limit: 20 }));
+            // When switching back to table view, if the limit was set to 1000 (calendar mode),
+            // reset it to 20 to restore pagination
+            if (filters.limit === 1000) {
+                setFilters(prev => ({ ...prev, limit: 20, page: 1 }));
             }
         }
     }, [viewType, currentMonth]);
@@ -745,7 +752,16 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setShowAllUsers(!showAllUsers)}
+                                        onClick={() => {
+                                            const nextState = !showAllUsers;
+                                            setShowAllUsers(nextState);
+                                            // Reset to current user when showing only self, reset to empty when showing all
+                                            setFilters(prev => ({ 
+                                                ...prev, 
+                                                user_id: nextState ? '' : (currentUser?.username || ''),
+                                                page: 1 
+                                            }));
+                                        }}
                                         className={cn(
                                             "h-10 px-4 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-sm",
                                             showAllUsers 
@@ -823,7 +839,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                         >
                                             <span className="truncate">
                                                 {filters.user_id
-                                                    ? (users.find((u) => String(u.user_id) === String(filters.user_id))?.display_name || users.find((u) => String(u.user_id) === String(filters.user_id))?.name || "Selected Resource")
+                                                    ? (users.find((u) => String(u.username) === String(filters.user_id))?.display_name || users.find((u) => String(u.username) === String(filters.user_id))?.name || "Selected Resource")
                                                     : "All Resources..."}
                                             </span>
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -847,15 +863,15 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                                 </CommandItem>
                                                 {users.map((u) => (
                                                     <CommandItem
-                                                        key={u.user_id}
+                                                        key={u.username}
                                                         value={u.display_name || u.name}
                                                         onSelect={() => {
-                                                            setFilters(prev => ({ ...prev, user_id: u.user_id }));
+                                                            setFilters(prev => ({ ...prev, user_id: u.username }));
                                                             setUserPopoverOpen(false);
                                                         }}
                                                         className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
                                                     >
-                                                        <Check className={cn("mr-2 h-4 w-4", String(filters.user_id) === String(u.user_id) ? "opacity-100" : "opacity-0")} />
+                                                        <Check className={cn("mr-2 h-4 w-4", String(filters.user_id) === String(u.username) ? "opacity-100" : "opacity-0")} />
                                                         <span className="font-bold text-sm tracking-tight">{u.display_name || u.name}</span>
                                                     </CommandItem>
                                                 ))}
