@@ -318,13 +318,8 @@ export function useCallDetector() {
   }, [getCallFingerprint, handleCallData, normalizeCallPayload, toCallsArray]);
 
   // ------------------------------------------------------------------
-  // Cleanup on unmount
+  // Cleanup on unmount (Note: stopDetection is not called here to keep the foreground service running 24/7 in the background)
   // ------------------------------------------------------------------
-  useEffect(() => {
-    return () => {
-      stopDetection();
-    };
-  }, [stopDetection]);
 
   return {
     isNative,

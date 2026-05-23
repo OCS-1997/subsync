@@ -102,6 +102,9 @@ public class CallDetectorPlugin extends Plugin {
 
     @PluginMethod
     public void startListening(PluginCall call) {
+        android.content.SharedPreferences prefs = getContext().getSharedPreferences("CallTrackerPrefs", android.content.Context.MODE_PRIVATE);
+        prefs.edit().putBoolean("shouldListen", true).commit();
+
         Intent serviceIntent = new Intent(getContext(), CallBackgroundService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getContext().startForegroundService(serviceIntent);
@@ -115,6 +118,9 @@ public class CallDetectorPlugin extends Plugin {
 
     @PluginMethod
     public void stopListening(PluginCall call) {
+        android.content.SharedPreferences prefs = getContext().getSharedPreferences("CallTrackerPrefs", android.content.Context.MODE_PRIVATE);
+        prefs.edit().putBoolean("shouldListen", false).commit();
+
         Intent serviceIntent = new Intent(getContext(), CallBackgroundService.class);
         getContext().stopService(serviceIntent);
         JSObject result = new JSObject();

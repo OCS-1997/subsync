@@ -19,13 +19,11 @@ import androidx.core.app.NotificationCompat;
 public class CallBackgroundService extends Service {
     private static final String TAG = "CallBackgroundService";
     private static final String CHANNEL_ID = "CallDetectionChannel";
-    private CallReceiver callReceiver;
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-        registerCallReceiver();
     }
 
     @Override
@@ -46,41 +44,32 @@ public class CallBackgroundService extends Service {
             startForeground(1002, notification);
         }
 
+        // Schedule/refresh keep-alive alarm
+        CallTracker.scheduleKeepAlive(this);
+
         return START_STICKY; // Restart if killed by OS
     }
 
-    private void registerCallReceiver() {
-        if (callReceiver == null) {
-            callReceiver = new CallReceiver();
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
-            filter.addAction(Intent.ACTION_NEW_OUTGOING_CALL);
-            
-            Log.d(TAG, "Registering dynamic CallReceiver");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(callReceiver, filter, Context.RECEIVER_EXPORTED);
-            } else {
-                registerReceiver(callReceiver, filter);
-            }
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.d(TAG, "onTaskRemoved called. App swiped away.");
+        boolean shouldListen = getSharedPreferences("CallTrackerPrefs", MODE_PRIVATE).getBoolean("shouldListen", true);
+        if (shouldListen) {
+            Log.d(TAG, "shouldListen is true. Scheduling fast keep-alive restart...");
+            CallTracker.scheduleKeepAlive(this, 5000); // 5 seconds restart delay
         }
-    }
-
-    private void unregisterCallReceiver() {
-        if (callReceiver != null) {
-            Log.d(TAG, "Unregistering dynamic CallReceiver");
-            try {
-                unregisterReceiver(callReceiver);
-            } catch (Exception e) {
-                Log.e(TAG, "Error unregistering receiver", e);
-            }
-            callReceiver = null;
-        }
+        super.onTaskRemoved(rootIntent);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterCallReceiver();
+        Log.d(TAG, "onDestroy called");
+        boolean shouldListen = getSharedPreferences("CallTrackerPrefs", MODE_PRIVATE).getBoolean("shouldListen", true);
+        if (shouldListen) {
+            Log.d(TAG, "shouldListen is true. Scheduling fast keep-alive restart...");
+            CallTracker.scheduleKeepAlive(this, 5000); // 5 seconds restart delay
+        }
     }
 
     @Nullable

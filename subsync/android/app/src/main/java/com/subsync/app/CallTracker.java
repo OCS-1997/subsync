@@ -103,10 +103,18 @@ public class CallTracker {
                     serviceIntent.putExtra("callId", callId);
 
                     Log.i(TAG, "Starting OverlayService for " + numberToEmit);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                        context.startForegroundService(serviceIntent);
-                    else
-                        context.startService(serviceIntent);
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                            context.startForegroundService(serviceIntent);
+                        else
+                            context.startService(serviceIntent);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to start OverlayService due to background limits. Queueing call immediately.", e);
+                        addPendingCallToQueue(numberToEmit, (int)(durationMs / 1000), typeToEmit, null, callId);
+                        if (plugin != null) {
+                            plugin.emitPendingCallsAvailable();
+                        }
+                    }
                 }
             }
             prefs.edit().putInt("previousState", state).commit();
@@ -214,6 +222,70 @@ public class CallTracker {
                 return "missed";
             default:
                 return "unknown";
+        }
+    }
+
+    public static boolean isServiceRunning(Context context, Class<?> serviceClass) {
+        android.app.ActivityManager manager = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager != null) {
+            try {
+                // Returns only caller's own services on Android 8.0+
+                java.util.List<android.app.ActivityManager.RunningServiceInfo> services = manager.getRunningServices(Integer.MAX_VALUE);
+                if (services != null) {
+                    for (android.app.ActivityManager.RunningServiceInfo service : services) {
+                        if (serviceClass.getName().equals(service.service.getClassName())) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error checking if service is running", e);
+            }
+        }
+        return false;
+    }
+
+    public static void scheduleKeepAlive(Context context) {
+        scheduleKeepAlive(context, 15 * 60 * 1000); // 15 minutes default
+    }
+
+    public static void scheduleKeepAlive(Context context, long delayMs) {
+        try {
+            Intent intent = new Intent(context, BootReceiver.class);
+            intent.setAction("com.subsync.app.ACTION_KEEP_ALIVE");
+            
+            int flags = android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= android.app.PendingIntent.FLAG_IMMUTABLE;
+            }
+            
+            android.app.PendingIntent pendingIntent = android.app.PendingIntent.getBroadcast(
+                context, 
+                1003, 
+                intent, 
+                flags
+            );
+            
+            android.app.AlarmManager alarmManager = (android.app.AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null) {
+                long triggerAtMillis = System.currentTimeMillis() + delayMs;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(
+                        android.app.AlarmManager.RTC_WAKEUP, 
+                        triggerAtMillis, 
+                        pendingIntent
+                    );
+                } else {
+                    alarmManager.set(
+                        android.app.AlarmManager.RTC_WAKEUP, 
+                        triggerAtMillis, 
+                        pendingIntent
+                    );
+                }
+                Log.d(TAG, "Scheduled keep-alive alarm in " + (delayMs / 1000) + " seconds");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to schedule keep-alive alarm", e);
         }
     }
 }
