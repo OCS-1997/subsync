@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Lock, User, LayoutDashboard, ShieldCheck, BarChart3, Globe, Zap, Calendar } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast, Bounce } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
 import { loginUser } from "../authSlice";
@@ -18,6 +18,8 @@ function LoginPage() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const { error, isLoading, isAuthenticated, user } = useSelector((state) => state.auth);
 
   // Check for active festival on component mount
@@ -47,10 +49,15 @@ function LoginPage() {
           transition: Bounce,
         });
       }
-      navigate(`/${user.username}/dashboard`);
+      if (redirect) {
+        const cleanRedirect = redirect.startsWith('/') ? redirect.slice(1) : redirect;
+        navigate(`/${user.username}/${cleanRedirect}`);
+      } else {
+        navigate(`/${user.username}/dashboard`);
+      }
     }
     isInitialMount.current = false;
-  }, [isAuthenticated, isLoading, error, user, navigate]);
+  }, [isAuthenticated, isLoading, error, user, navigate, redirect]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

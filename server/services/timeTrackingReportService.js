@@ -335,6 +335,9 @@ async function sendNoTimeLoggedEmail(user, targetDate) {
         ? (process.env.APP_BASE_URL || `http://localhost:${clientPort}`)
         : `http://localhost:${clientPort}`;
 
+    const normalizedAppUrl = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl;
+    const ctaUrl = `${normalizedAppUrl}/?redirect=dashboard/time-tracking`;
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -363,11 +366,16 @@ async function sendNoTimeLoggedEmail(user, targetDate) {
             Timely updates help maintain accurate project tracking and reporting.
         </p>
 
+        <!-- CTA Button -->
+        <div style="margin-top: 30px; margin-bottom: 30px; text-align: center;">
+            <a href="${ctaUrl}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-weight: 600; font-size: 16px; padding: 14px 28px; text-decoration: none; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2), 0 2px 4px -1px rgba(220, 38, 38, 0.1);">
+                Log Your Time Now
+            </a>
+        </div>
+
         <p style="color: #4b5563; margin-top: 20px; line-height: 1.6;">
             Thank you for your cooperation.
         </p>
-
-        
     </div>
 
     <!-- Footer -->
