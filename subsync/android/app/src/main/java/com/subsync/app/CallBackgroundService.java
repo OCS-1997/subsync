@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.pm.ServiceInfo;
 import android.content.Context;
 import android.content.Intent;
@@ -15,15 +16,37 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 public class CallBackgroundService extends Service {
     private static final String TAG = "CallBackgroundService";
     private static final String CHANNEL_ID = "CallDetectionChannel";
+    private BroadcastReceiver dynamicCallReceiver;
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
+        registerDynamicReceiver();
+    }
+
+    private void registerDynamicReceiver() {
+        dynamicCallReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                CallTracker.getInstance(context).handleIntent(context, intent, null);
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+        filter.addAction(Intent.ACTION_NEW_OUTGOING_CALL);
+
+        try {
+            ContextCompat.registerReceiver(this, dynamicCallReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
+            Log.i(TAG, "Dynamic CallReceiver registered successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to register dynamic CallReceiver", e);
+        }
     }
 
     @Override
@@ -63,6 +86,15 @@ public class CallBackgroundService extends Service {
 
     @Override
     public void onDestroy() {
+        if (dynamicCallReceiver != null) {
+            try {
+                unregisterReceiver(dynamicCallReceiver);
+                Log.i(TAG, "Dynamic CallReceiver unregistered");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to unregister dynamic CallReceiver", e);
+            }
+            dynamicCallReceiver = null;
+        }
         super.onDestroy();
         Log.d(TAG, "onDestroy called");
         boolean shouldListen = getSharedPreferences("CallTrackerPrefs", MODE_PRIVATE).getBoolean("shouldListen", true);

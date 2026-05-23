@@ -17,7 +17,10 @@ public class BootReceiver extends BroadcastReceiver {
 
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
                 || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
-                || "com.subsync.app.ACTION_KEEP_ALIVE".equals(action)) {
+                || "com.subsync.app.ACTION_KEEP_ALIVE".equals(action)
+                || Intent.ACTION_USER_PRESENT.equals(action)
+                || Intent.ACTION_POWER_CONNECTED.equals(action)
+                || Intent.ACTION_POWER_DISCONNECTED.equals(action)) {
 
             // Check if user has disabled the service explicitly
             boolean shouldListen = context.getSharedPreferences("CallTrackerPrefs", Context.MODE_PRIVATE)

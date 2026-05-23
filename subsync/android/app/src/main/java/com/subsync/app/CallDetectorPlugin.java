@@ -31,7 +31,12 @@ import com.getcapacitor.annotation.PermissionCallback;
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALL_LOG,
                 Manifest.permission.READ_CONTACTS,
-                Manifest.permission.PROCESS_OUTGOING_CALLS,
+                Manifest.permission.PROCESS_OUTGOING_CALLS
+            }
+        ),
+        @Permission(
+            alias = "notifications",
+            strings = {
                 Manifest.permission.POST_NOTIFICATIONS
             }
         )
@@ -66,14 +71,27 @@ public class CallDetectorPlugin extends Plugin {
 
     @PluginMethod
     public void requestPermissions(PluginCall call) {
-        requestPermissionForAlias("phone", call, "permissionsCallback");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionForAliases(new String[]{"phone", "notifications"}, call, "permissionsCallback");
+        } else {
+            requestPermissionForAlias("phone", call, "permissionsCallback");
+        }
     }
 
     @PermissionCallback
     private void permissionsCallback(PluginCall call) {
         JSObject result = new JSObject();
         boolean phoneGranted = getPermissionState("phone") == PermissionState.GRANTED;
-        result.put("phone", phoneGranted ? "granted" : "denied");
+        boolean notificationGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationGranted = getPermissionState("notifications") == PermissionState.GRANTED;
+        }
+
+        result.put("phone", (phoneGranted && notificationGranted) ? "granted" : "denied");
+        result.put("readPhoneState", hasPermission(Manifest.permission.READ_PHONE_STATE) ? "granted" : "denied");
+        result.put("readCallLog", hasPermission(Manifest.permission.READ_CALL_LOG) ? "granted" : "denied");
+        result.put("readContacts", hasPermission(Manifest.permission.READ_CONTACTS) ? "granted" : "denied");
+        result.put("notifications", notificationGranted ? "granted" : "denied");
         call.resolve(result);
     }
 

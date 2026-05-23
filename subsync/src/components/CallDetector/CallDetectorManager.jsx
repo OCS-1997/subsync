@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useCallDetector } from '@/hooks/useCallDetector';
+import { CallDetector } from '@/plugins/CallDetectorPlugin';
 import PostCallDialog from './PostCallDialog';
 
 export const CallDetectorManager = () => {
