@@ -408,9 +408,13 @@ function getFolderCacheKey(username) {
   return `pref_order_${username}_${PREF_KEY}`;
 }
 
+function hasFolders(nodes) {
+  return Array.isArray(nodes) && nodes.some((node) => node && node.type === 'folder');
+}
+
 function fromLegacyOrder(defaultItems, legacyOrder) {
   if (!Array.isArray(legacyOrder)) {
-    return defaultItems.map(createItemNode);
+    return groupByFolder(defaultItems);
   }
 
   const byPath = new Map(defaultItems.map((item) => [item.path, item]));
@@ -419,19 +423,19 @@ function fromLegacyOrder(defaultItems, legacyOrder) {
 
   legacyOrder.forEach((path) => {
     if (typeof path === 'string' && byPath.has(path) && !used.has(path)) {
-      ordered.push(createItemNode(byPath.get(path)));
+      ordered.push(byPath.get(path));
       used.add(path);
     }
   });
 
   defaultItems.forEach((item) => {
     if (!used.has(item.path)) {
-      ordered.push(createItemNode(item));
+      ordered.push(item);
       used.add(item.path);
     }
   });
 
-  return ordered;
+  return groupByFolder(ordered);
 }
 
 function groupByFolder(items) {
@@ -513,7 +517,13 @@ export function useSidebarFolders(defaultItems, filterFn) {
     const seedFromLocal = () => {
       const folderCached = parseMaybeJson(localStorage.getItem(folderCacheKey));
       if (Array.isArray(folderCached)) {
-        return mergeWithDefaults(filteredDefaults, folderCached);
+        const merged = mergeWithDefaults(filteredDefaults, folderCached);
+        if (!hasFolders(merged)) {
+          const grouped = groupByFolder(merged);
+          localStorage.setItem(folderCacheKey, JSON.stringify(serializeNodes(grouped)));
+          return grouped;
+        }
+        return merged;
       }
 
       const legacyCached = parseMaybeJson(localStorage.getItem(legacyCacheKey));
@@ -536,8 +546,14 @@ export function useSidebarFolders(defaultItems, filterFn) {
         if (Array.isArray(value)) {
           if (!cancelled) {
             const merged = mergeWithDefaults(filteredDefaults, value);
-            setNodes(merged);
-            localStorage.setItem(folderCacheKey, JSON.stringify(serializeNodes(merged)));
+            const hasExistingFolders = hasFolders(merged);
+            const finalNodes = hasExistingFolders ? merged : groupByFolder(merged);
+            setNodes(finalNodes);
+            localStorage.setItem(folderCacheKey, JSON.stringify(serializeNodes(finalNodes)));
+            if (!hasExistingFolders) {
+              api.put(`/preferences/${username}/${PREF_KEY}`, { value: serializeNodes(finalNodes) })
+                .catch((err) => console.error('sidebar folders auto-group save error:', err));
+            }
           }
           return;
         }
