@@ -189,7 +189,7 @@ export async function getDashboardStats() {
             FROM opportunities o 
             JOIN opportunity_statuses s ON o.status_id = s.id 
             WHERE o.is_deleted = 0 
-            AND s.status_name NOT IN ('Won', 'Lost', 'Closed Won', 'Closed Lost')
+            AND s.status_name NOT IN ('Closed / Won', 'Closed / Lost', 'Completed', 'Dropped')
         `),
         // KB Articles (may not exist)
         safeQuery('SELECT COUNT(*) as count FROM knowledge_articles WHERE is_published = 1')

@@ -63,7 +63,7 @@ function OpportunitiesTab({ visibleWidgets }) {
         try {
             setLoading(true);
 
-            const response = await api.get('/opportunities');
+            const response = await api.get('/opportunities', { params: { limit: 'all' } });
             const opportunities = response.data.opportunities || [];
 
             // Calculate stats - use status_name field from API

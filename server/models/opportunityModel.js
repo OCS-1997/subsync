@@ -118,9 +118,10 @@ export const getAllOpportunities = async ({
     const finalSort = validSortFields.includes(sort) ? sort : 'opportunity_date';
     const finalOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-    const offset = (pageNum - 1) * limitNum;
+    const isAll = limit === 'all';
+    const pageNum = isAll ? 1 : (parseInt(page) || 1);
+    const limitNum = isAll ? 0 : (parseInt(limit) || 10);
+    const offset = isAll ? 0 : (pageNum - 1) * limitNum;
 
     const values = [];
     let whereClauses = ["o.is_deleted = 0"];
@@ -158,7 +159,7 @@ export const getAllOpportunities = async ({
     // We use .query here as well for consistency
     const [countRows] = await appDB.query(countQuery, values);
     const totalRecords = countRows[0].total;
-    const totalPages = Math.ceil(totalRecords / limitNum);
+    const totalPages = Math.ceil(totalRecords / (isAll ? 1 : limitNum));
 
     // Get data - Using .query instead of .execute to avoid LIMIT placeholder issues with binary protocol
     const query = `
@@ -174,10 +175,10 @@ export const getAllOpportunities = async ({
         LEFT JOIN users u ON o.owner = u.username
         ${whereSql}
         ORDER BY ${finalSort} ${finalOrder}
-        LIMIT ? OFFSET ?
+        ${isAll ? "" : "LIMIT ? OFFSET ?"}
     `;
 
-    const [opportunities] = await appDB.query(query, [...values, limitNum, offset]);
+    const [opportunities] = await appDB.query(query, isAll ? values : [...values, limitNum, offset]);
 
     // Parse customer_details JSON for each opportunity if it's a string
     opportunities.forEach(opp => {

@@ -57,9 +57,10 @@ const OpportunityList = () => {
             status: statusFilter === "all" ? null : statusFilter,
             page: page,
             sort: sortBy,
-            order: sortOrder
+            order: sortOrder,
+            limit: viewMode === 'pipeline' ? 'all' : 10
         }));
-    }, [dispatch, searchTerm, statusFilter, page, sortBy, sortOrder]);
+    }, [dispatch, searchTerm, statusFilter, page, sortBy, sortOrder, viewMode]);
 
     const handleSort = (key) => {
         if (sortBy === key) {
@@ -96,7 +97,8 @@ const OpportunityList = () => {
                 status: statusFilter === "all" ? null : statusFilter,
                 page: page,
                 sort: sortBy,
-                order: sortOrder
+                order: sortOrder,
+                limit: viewMode === 'pipeline' ? 'all' : 10
             }));
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to delete opportunity');
@@ -172,7 +174,8 @@ const OpportunityList = () => {
             status: statusFilter === "all" ? null : statusFilter,
             page: page,
             sort: sortBy,
-            order: sortOrder
+            order: sortOrder,
+            limit: viewMode === 'pipeline' ? 'all' : 10
         }));
     };
 

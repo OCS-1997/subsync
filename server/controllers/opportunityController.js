@@ -67,7 +67,7 @@ export const getAllOpportunitiesController = async (req, res) => {
             sort: req.query.sort || "opportunity_date",
             order: req.query.order || "desc",
             page: parseInt(req.query.page) || 1,
-            limit: parseInt(req.query.limit) || 10,
+            limit: req.query.limit === 'all' ? 'all' : (parseInt(req.query.limit) || 10),
             status: req.query.status || null,
             owner: req.query.owner || null,
             customer_id: req.query.customer_id || null
@@ -239,8 +239,8 @@ export const getOpportunityDetailedReport = async (req, res) => {
             SELECT 
                 COUNT(*) as total_count, 
                 SUM(o.opportunity_value) as total_value,
-                SUM(CASE WHEN LOWER(s.status_name) LIKE '%won%' OR LOWER(s.status_name) LIKE '%close%' THEN 1 ELSE 0 END) as won_count,
-                SUM(CASE WHEN LOWER(s.status_name) LIKE '%won%' OR LOWER(s.status_name) LIKE '%close%' THEN o.opportunity_value ELSE 0 END) as won_value
+                SUM(CASE WHEN s.status_name IN ('Closed / Won', 'Completed') THEN 1 ELSE 0 END) as won_count,
+                SUM(CASE WHEN s.status_name IN ('Closed / Won', 'Completed') THEN o.opportunity_value ELSE 0 END) as won_value
             FROM opportunities o
             JOIN opportunity_statuses s ON o.status_id = s.id
             WHERE ${whereClause}
