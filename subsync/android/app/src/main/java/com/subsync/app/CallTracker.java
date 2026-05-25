@@ -110,7 +110,7 @@ public class CallTracker {
                             context.startService(serviceIntent);
                     } catch (Exception e) {
                         Log.e(TAG, "Failed to start OverlayService due to background limits. Queueing call immediately.", e);
-                        addPendingCallToQueue(numberToEmit, (int)(durationMs / 1000), typeToEmit, null, callId);
+                        addPendingCallToQueue(numberToEmit, (int)(durationMs / 1000), typeToEmit, null, null, null, callId);
                         if (plugin != null) {
                             plugin.emitPendingCallsAvailable();
                         }
@@ -135,10 +135,16 @@ public class CallTracker {
     public JSONObject queryContactInfo(Context context, String phoneNumber) {
         if (phoneNumber == null || phoneNumber.isEmpty())
             return null;
+        
+        // 1. Try local cache first
         JSONObject syncedContact = lookupSyncedContact(phoneNumber);
-        if (syncedContact != null)
+        if (syncedContact != null) {
+            Log.i(TAG, "Found contact in local cache: " + syncedContact.toString());
             return syncedContact;
-        return null;
+        }
+        
+        // 2. Fallback to server query
+        return queryContactInfoFromServer(context, phoneNumber);
     }
 
     private JSONObject lookupSyncedContact(String phoneNumber) {
@@ -161,6 +167,75 @@ public class CallTracker {
         return null;
     }
 
+    public JSONObject queryContactInfoFromServer(Context context, String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty())
+            return null;
+
+        String apiUrl = prefs.getString("apiUrl", null);
+        String token = prefs.getString("token", null);
+
+        if (apiUrl == null || token == null) {
+            Log.w(TAG, "API URL or Token not available in prefs. Skipping server lookup.");
+            return null;
+        }
+
+        java.net.HttpURLConnection conn = null;
+        java.io.BufferedReader reader = null;
+        try {
+            String urlStr = apiUrl;
+            if (!urlStr.endsWith("/")) {
+                urlStr += "/";
+            }
+            urlStr += "directory?search=" + java.net.URLEncoder.encode(phoneNumber, "UTF-8") + "&limit=1";
+
+            Log.i(TAG, "Querying server directory: " + urlStr);
+            java.net.URL url = new java.net.URL(urlStr);
+            conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                java.io.InputStream in = conn.getInputStream();
+                reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                
+                JSONObject responseJson = new JSONObject(response.toString());
+                JSONArray entries = responseJson.optJSONArray("entries");
+                if (entries != null && entries.length() > 0) {
+                    JSONObject entry = entries.getJSONObject(0);
+                    JSONObject contactObj = new JSONObject();
+                    contactObj.put("name", entry.optString("name", ""));
+                    contactObj.put("company", entry.optString("company_name", ""));
+                    contactObj.put("type", entry.optString("entity_type", ""));
+                    contactObj.put("phoneNumber", entry.optString("phone_number", phoneNumber));
+                    contactObj.put("id", entry.optString("id", ""));
+                    Log.i(TAG, "Found contact on server: " + contactObj.toString());
+                    return contactObj;
+                }
+            } else {
+                Log.e(TAG, "Server query failed with response code: " + responseCode);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error querying contact from server", e);
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (Exception e) {}
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+        return null;
+    }
+
     public JSONArray getPendingCalls() {
         String pendingStr = prefs.getString("pendingCalls", null);
         if (pendingStr != null) {
@@ -177,13 +252,15 @@ public class CallTracker {
         prefs.edit().remove("pendingCalls").commit();
     }
 
-    public void addPendingCallToQueue(String phoneNumber, int duration, String callType, String name, String callId) {
+    public void addPendingCallToQueue(String phoneNumber, int duration, String callType, String name, String company, String entityType, String callId) {
         try {
             JSONObject callObj = new JSONObject();
             callObj.put("phoneNumber", phoneNumber);
             callObj.put("duration", duration);
             callObj.put("callType", callType);
             callObj.put("name", name);
+            callObj.put("company", company);
+            callObj.put("entityType", entityType);
             callObj.put("callId", callId != null ? callId : UUID.randomUUID().toString());
             callObj.put("timestamp", System.currentTimeMillis());
             String pendingStr = prefs.getString("pendingCalls", "[]");

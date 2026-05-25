@@ -179,6 +179,32 @@ public class CallDetectorPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void setApiConfig(PluginCall call) {
+        try {
+            String apiUrl = call.getString("apiUrl");
+            String token = call.getString("token");
+            android.content.SharedPreferences prefs = getContext().getSharedPreferences("CallTrackerPrefs", android.content.Context.MODE_PRIVATE);
+            android.content.SharedPreferences.Editor editor = prefs.edit();
+            if (apiUrl != null) {
+                editor.putString("apiUrl", apiUrl);
+            } else {
+                editor.remove("apiUrl");
+            }
+            if (token != null) {
+                editor.putString("token", token);
+            } else {
+                editor.remove("token");
+            }
+            editor.apply();
+            JSObject result = new JSObject();
+            result.put("status", "success");
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("Failed to set API config", e);
+        }
+    }
+
+    @PluginMethod
     public void getLaunchCallData(PluginCall call) {
         try {
             JSObject result = new JSObject();
@@ -191,6 +217,8 @@ public class CallDetectorPlugin extends Plugin {
             JSObject callObj = new JSObject();
             callObj.put("phoneNumber", intent.getStringExtra(CallOverlayService.EXTRA_CALL_PHONE));
             callObj.put("name", intent.getStringExtra(CallOverlayService.EXTRA_CALL_NAME));
+            callObj.put("company", intent.getStringExtra("subsync_call_company"));
+            callObj.put("entityType", intent.getStringExtra("subsync_call_entity_type"));
             callObj.put("duration", intent.getIntExtra(CallOverlayService.EXTRA_CALL_DURATION, 0));
             callObj.put("callType", intent.getStringExtra(CallOverlayService.EXTRA_CALL_TYPE));
             callObj.put("callId", intent.getStringExtra(CallOverlayService.EXTRA_CALL_ID));
@@ -207,6 +235,9 @@ public class CallDetectorPlugin extends Plugin {
             Intent intent = getActivity() != null ? getActivity().getIntent() : null;
             if (intent != null) {
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_PHONE);
+                intent.removeExtra(CallOverlayService.EXTRA_CALL_NAME);
+                intent.removeExtra("subsync_call_company");
+                intent.removeExtra("subsync_call_entity_type");
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_DURATION);
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_TYPE);
                 intent.removeExtra(CallOverlayService.EXTRA_CALL_ID);
@@ -238,11 +269,14 @@ public class CallDetectorPlugin extends Plugin {
         }
     }
 
-    public void emitCallEnded(String phoneNumber, int duration, String callType, String callId) {
+    public void emitCallEnded(String phoneNumber, int duration, String callType, String name, String company, String entityType, String callId) {
         JSObject data = new JSObject();
         data.put("phoneNumber", phoneNumber);
         data.put("duration", duration);
         data.put("callType", callType);
+        data.put("name", name);
+        data.put("company", company);
+        data.put("entityType", entityType);
         data.put("callId", callId);
         notifyListeners("callEnded", data);
     }

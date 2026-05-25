@@ -87,6 +87,19 @@
             android:alpha="0.85"
             android:letterSpacing="0.05"
             android:gravity="center" />
+            
+        <TextView
+            android:id="@+id/tv_company_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Company Name"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:alpha="0.80"
+            android:gravity="center"
+            android:layout_marginTop="6dp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- Action Section (White Overlay) -->
@@ -143,7 +156,6 @@
             android:stateListAnimator="@null"/>
     </LinearLayout>
 
-    <TextView android:id="@+id/tv_company_name" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
     <TextView android:id="@+id/tv_duration_type" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
 </LinearLayout>

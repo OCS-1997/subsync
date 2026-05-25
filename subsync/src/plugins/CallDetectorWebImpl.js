@@ -9,6 +9,17 @@
  *     detail: { phoneNumber: '9843012769', duration: 120, callType: 'incoming' }
  *   }));
  */
+/**
+ * CallDetectorWebImpl — Web fallback for the CallDetector plugin.
+ *
+ * On browsers (during development), the native plugin doesn't exist.
+ * This stub makes it safe to import and use the plugin without crashing.
+ *
+ * To test the popup during web development, dispatch a custom event:
+ *   window.dispatchEvent(new CustomEvent('dev:callEnded', {
+ *     detail: { phoneNumber: '9843012769', duration: 120, callType: 'incoming' }
+ *   }));
+ */
 export class CallDetectorWebImpl {
   async startListening() {
     console.debug('[CallDetector] Web stub: startListening (no-op on web)');
@@ -17,6 +28,16 @@ export class CallDetectorWebImpl {
 
   async stopListening() {
     console.debug('[CallDetector] Web stub: stopListening (no-op on web)');
+    return { status: 'web_stub' };
+  }
+
+  async setApiConfig(options) {
+    console.debug('[CallDetector] Web stub: setApiConfig (no-op on web)', options);
+    return { status: 'web_stub' };
+  }
+
+  async syncContacts(options) {
+    console.debug('[CallDetector] Web stub: syncContacts (no-op on web)', options);
     return { status: 'web_stub' };
   }
 

@@ -29,9 +29,11 @@ export function useCallDetector() {
     const safeData = data || {};
     const phoneNumber = safeData.phoneNumber || safeData.number || '';
     const name = safeData.name || '';
+    const company = safeData.company || '';
+    const entityType = safeData.entityType || '';
     const duration = Number(safeData.duration ?? safeData.callDuration ?? 0) || 0;
     const callType = safeData.callType || safeData.type || 'incoming';
-    return { phoneNumber, duration, callType, name };
+    return { phoneNumber, duration, callType, name, company, entityType };
   }, []);
 
   const toCallsArray = useCallback((pending) => {
@@ -107,7 +109,7 @@ export function useCallDetector() {
   // Handle Call Data (Resolve Number + Set State)
   // ------------------------------------------------------------------
   const handleCallData = useCallback(async (data) => {
-    const { phoneNumber, duration, callType, name } = normalizeCallPayload(data);
+    const { phoneNumber, duration, callType, name, company, entityType } = normalizeCallPayload(data);
     // Stable ID for this specific call event — used by PostCallDialog
     // to distinguish a new call (reset UI) from a resolve-update (refresh name only)
     const callId = data.callId || `${phoneNumber}|${Date.now()}`;
@@ -120,9 +122,10 @@ export function useCallDetector() {
       callType,
       timestamp: new Date().toISOString(),
       resolved: { 
-        type: 'unknown', 
+        type: entityType || 'unknown', 
         loading: true,
         name: name || null,
+        company: company || null,
         phone: phoneNumber
       }, 
     });
@@ -146,8 +149,8 @@ export function useCallDetector() {
 
     if (!resolved) {
       resolved = {
-        type: 'unknown', id: null,
-        name: name || null, company: null, phone: phoneNumber,
+        type: entityType || 'unknown', id: null,
+        name: name || null, company: company || null, phone: phoneNumber,
       };
     }
 
@@ -162,6 +165,7 @@ export function useCallDetector() {
         name: (resolved?.name && resolved.name !== 'Unknown Number' && resolved.name !== 'Unknown Contact')
           ? resolved.name
           : (name && name.trim() ? name.trim() : null),
+        company: resolved?.company || company || null,
       },
     }));
   }, [normalizeCallPayload]);

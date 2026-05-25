@@ -151,7 +151,7 @@ public class CallOverlayService extends Service {
                     // Emit event to app immediately for in-app prompt
                     CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
                     if (plugin != null) {
-                        plugin.emitCallEnded(resultNumber, resultDuration, resultType, finalCallId);
+                        plugin.emitCallEnded(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType, finalCallId);
                     }
                     showOverlay(resultNumber, resultDuration, resultType, resultName, resultCompany, resultEntityType, finalCallId);
                     
@@ -278,9 +278,31 @@ public class CallOverlayService extends Service {
                 removeOverlay();
                 stopSelf();
             });
+            TextView tvCompany = overlayView.findViewById(R.id.tv_company_name);
+            if (tvCompany != null) {
+                StringBuilder companyBuilder = new StringBuilder();
+                if (company != null && !company.trim().isEmpty()) {
+                    companyBuilder.append(company.trim());
+                }
+                if (entityType != null && !entityType.trim().isEmpty() && !entityType.equalsIgnoreCase("unknown")) {
+                    String capitalizedType = entityType.substring(0, 1).toUpperCase() + entityType.substring(1);
+                    if (companyBuilder.length() > 0) {
+                        companyBuilder.append(" (").append(capitalizedType).append(")");
+                    } else {
+                        companyBuilder.append(capitalizedType);
+                    }
+                }
+                if (companyBuilder.length() > 0) {
+                    tvCompany.setText(companyBuilder.toString());
+                    tvCompany.setVisibility(View.VISIBLE);
+                } else {
+                    tvCompany.setVisibility(View.GONE);
+                }
+            }
+
             btnLogCall.setOnClickListener(v -> {
-                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
-                forceAppToForeground(number, duration, type, name, callId);
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, company, entityType, callId);
+                forceAppToForeground(number, duration, type, name, company, entityType, callId);
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
                     if (plugin != null)
@@ -295,14 +317,14 @@ public class CallOverlayService extends Service {
                 windowManager.addView(overlayView, params);
             } catch (WindowManager.BadTokenException e) {
                 Log.e(TAG, "Overlay permission denied or invalid token", e);
-                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
-                forceAppToForeground(number, duration, type, name, callId);
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, company, entityType, callId);
+                forceAppToForeground(number, duration, type, name, company, entityType, callId);
                 stopSelf();
             }
         } catch (Exception e) {
             Log.e(TAG, "Overlay error", e);
-            CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
-            forceAppToForeground(number, duration, type, name, callId);
+            CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, company, entityType, callId);
+            forceAppToForeground(number, duration, type, name, company, entityType, callId);
             stopSelf();
         }
     }
@@ -343,9 +365,31 @@ public class CallOverlayService extends Service {
                 }
             }
 
+            TextView tvCompany = overlayView.findViewById(R.id.tv_company_name);
+            if (tvCompany != null) {
+                StringBuilder companyBuilder = new StringBuilder();
+                if (company != null && !company.trim().isEmpty()) {
+                    companyBuilder.append(company.trim());
+                }
+                if (entityType != null && !entityType.trim().isEmpty() && !entityType.equalsIgnoreCase("unknown")) {
+                    String capitalizedType = entityType.substring(0, 1).toUpperCase() + entityType.substring(1);
+                    if (companyBuilder.length() > 0) {
+                        companyBuilder.append(" (").append(capitalizedType).append(")");
+                    } else {
+                        companyBuilder.append(capitalizedType);
+                    }
+                }
+                if (companyBuilder.length() > 0) {
+                    tvCompany.setText(companyBuilder.toString());
+                    tvCompany.setVisibility(View.VISIBLE);
+                } else {
+                    tvCompany.setVisibility(View.GONE);
+                }
+            }
+
             btnLogCall.setOnClickListener(v -> {
-                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, callId);
-                forceAppToForeground(number, duration, type, name, callId);
+                CallTracker.getInstance(getApplicationContext()).addPendingCallToQueue(number, duration, type, name, company, entityType, callId);
+                forceAppToForeground(number, duration, type, name, company, entityType, callId);
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     CallDetectorPlugin plugin = CallTracker.getInstance(getApplicationContext()).getPlugin();
                     if (plugin != null)
@@ -415,7 +459,7 @@ public class CallOverlayService extends Service {
         animator.start();
     }
 
-    private void forceAppToForeground(String number, int duration, String type, String name, String callId) {
+    private void forceAppToForeground(String number, int duration, String type, String name, String company, String entityType, String callId) {
         try {
             Intent launchIntent = new Intent(this, MainActivity.class);
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK 
@@ -427,6 +471,10 @@ public class CallOverlayService extends Service {
                 launchIntent.putExtra(EXTRA_CALL_PHONE, number);
             if (name != null)
                 launchIntent.putExtra(EXTRA_CALL_NAME, name);
+            if (company != null)
+                launchIntent.putExtra("subsync_call_company", company);
+            if (entityType != null)
+                launchIntent.putExtra("subsync_call_entity_type", entityType);
             if (callId != null)
                 launchIntent.putExtra(EXTRA_CALL_ID, callId);
             launchIntent.putExtra(EXTRA_CALL_DURATION, duration);
