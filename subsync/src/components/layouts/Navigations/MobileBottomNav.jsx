@@ -61,12 +61,12 @@ export default function MobileBottomNav({ toggleSidebar }) {
               to={item.path}
               className={cn(
                 "flex flex-col items-center justify-center flex-1 transition-all duration-300 gap-1",
-                active ? "text-blue-600 dark:text-blue-400" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                active ? "text-primary" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
               )}
             >
               <div className={cn(
                 "p-1 rounded-xl transition-all",
-                active && "bg-blue-50 dark:bg-blue-900/20"
+                active && "bg-primary/10"
               )}>
                 <Icon className={cn("w-5 h-5", active ? "stroke-[2.5px]" : "stroke-[2px]")} />
               </div>

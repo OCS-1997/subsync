@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import { 
     User, 
     Users, 
@@ -20,7 +21,8 @@ import {
     X,
     LayoutGrid,
     Navigation,
-    Palette
+    Palette,
+    ShieldAlert
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +36,30 @@ const SettingsIndex = () => {
     const { username } = useParams();
     const navigate = useNavigate();
     const { hasPermission } = usePermissions();
+    const currentUser = useSelector((state) => state.auth.user);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
+    const [clickCount, setClickCount] = useState(0);
+    const [showDevControls, setShowDevControls] = useState(() => {
+        return localStorage.getItem('subsync_show_dev_controls') === 'true';
+    });
+
+    const handleHeaderClick = () => {
+        if (currentUser?.roleKey !== 'admin') return;
+        const nextCount = clickCount + 1;
+        setClickCount(nextCount);
+        if (nextCount >= 5) {
+            const nextState = !showDevControls;
+            setShowDevControls(nextState);
+            localStorage.setItem('subsync_show_dev_controls', nextState ? 'true' : 'false');
+            setClickCount(0);
+            if (nextState) {
+                toast.success("Developer controls unlocked!");
+            } else {
+                toast.info("Developer controls hidden.");
+            }
+        }
+    };
 
     const settingGroups = useMemo(() => [
         {
@@ -175,10 +199,19 @@ const SettingsIndex = () => {
                     path: "quick-tools",
                     color: "text-pink-500",
                     permission: PERMISSIONS.QUICK_TOOLS_MANAGE
-                }
+                },
+                ...(showDevControls ? [{
+                    id: 'developer-controls',
+                    title: "Developer Controls",
+                    description: "Trigger system tasks",
+                    icon: ShieldAlert,
+                    path: "developer-controls",
+                    color: "text-red-500",
+                    permission: PERMISSIONS.DEVELOPER_CONTROLS
+                }] : [])
             ]
         }
-    ], []);
+    ], [showDevControls]);
 
     const filteredGroups = useMemo(() => {
         return settingGroups.map(group => {
@@ -197,8 +230,11 @@ const SettingsIndex = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                 <div className="text-left">
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900">
+                    <h1 
+                        onClick={handleHeaderClick}
+                        className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3 cursor-pointer select-none"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground hover:scale-105 transition-transform">
                             <SettingsIcon className="w-4 h-4" />
                         </div>
                         Settings
@@ -211,7 +247,7 @@ const SettingsIndex = () => {
                         placeholder="Filter list..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-10 pl-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold focus:ring-0 focus:border-blue-500"
+                        className="h-10 pl-11 rounded-xl border-border bg-card font-bold focus:ring-0 focus:border-primary"
                     />
                 </div>
             </div>
@@ -245,7 +281,7 @@ const SettingsIndex = () => {
                                 >
                                     <div className={cn("w-2 h-2 rounded-full shrink-0 transition-all", item.color.replace('text-', 'bg-'))} />
                                     <div className="min-w-0">
-                                        <div className="text-[13px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-blue-600 transition-colors">
+                                        <div className="text-[13px] font-bold text-foreground group-hover:text-primary transition-colors">
                                             {item.title}
                                         </div>
                                         <div className="text-[10px] text-slate-400 font-medium truncate">
@@ -267,7 +303,7 @@ const SettingsIndex = () => {
                     <h3 className="text-lg font-black text-slate-900 dark:text-white">Nothing matches your search</h3>
                     <button 
                         onClick={() => setSearchTerm('')}
-                        className="mt-4 text-blue-600 text-xs font-black uppercase tracking-widest hover:underline"
+                        className="mt-4 text-primary text-xs font-black uppercase tracking-widest hover:underline"
                     >
                         Show everything
                     </button>

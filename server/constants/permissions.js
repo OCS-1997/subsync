@@ -114,6 +114,7 @@ export const PERMISSIONS = Object.freeze({
     PERMISSIONS_APPROVE: 'permissions.approve',
     HOLIDAYS_MANAGE: 'holidays.manage',
     LEAVES_VIEW_ALL: 'leaves.view_all',
+    DEVELOPER_CONTROLS: 'developer_controls.manage',
 });
 
 export const PERMISSION_DEFINITIONS = [
@@ -232,6 +233,7 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.PERMISSIONS_APPROVE, resource: 'permissions', action: 'approve', description: 'Approve or reject short-duration permissions' },
     { key: PERMISSIONS.HOLIDAYS_MANAGE, resource: 'holidays', action: 'manage', description: 'Manage the public holiday calendar' },
     { key: PERMISSIONS.LEAVES_VIEW_ALL, resource: 'leaves', action: 'view_all', description: 'View all employee leave requests' },
+    { key: PERMISSIONS.DEVELOPER_CONTROLS, resource: 'developer_controls', action: 'manage', description: 'Access developer test controls and system triggers' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {

@@ -127,7 +127,7 @@ function DropLine({ id, data, isOpen }) {
       className={cn(
         'absolute left-2 right-2 rounded-full transition-all duration-150',
         isOpen ? 'h-2' : 'h-1.5',
-        isOver ? 'bg-blue-500/70' : 'bg-transparent'
+        isOver ? 'bg-primary/70' : 'bg-transparent'
       )}
     />
   );
@@ -342,7 +342,7 @@ export default function SidebarTree({
     const { setNodeRef, isOver } = useDroppable({ id: containerId });
 
     return (
-      <ul ref={setNodeRef} className={`space-y-1 ${isOver ? 'rounded-lg ring-2 ring-blue-500/60 ring-offset-2 ring-offset-sidebar' : ''}`}>
+      <ul ref={setNodeRef} className={`space-y-1 ${isOver ? 'rounded-lg ring-2 ring-primary/60 ring-offset-2 ring-offset-sidebar' : ''}`}>
         <SortableContext items={list.map((node) => node.id)} strategy={verticalListSortingStrategy}>
           {list.map((node) => <NodeRow key={node.id} node={node} parentId={parentId} depth={depth} />)}
         </SortableContext>
@@ -364,7 +364,7 @@ export default function SidebarTree({
     );
 
     const link = (
-      <Link to={`/${username}/${node.path}`} onClick={() => window.innerWidth < 1024 && toggleSidebar()} className={`relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-200 ${isActive(node.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'} ${showIntent ? 'ring-2 ring-blue-500/70' : ''}`} style={{ paddingLeft: `${indent}px` }}>
+      <Link to={`/${username}/${node.path}`} onClick={() => window.innerWidth < 1024 && toggleSidebar()} className={`relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all duration-200 ${isActive(node.path) ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold shadow-sm' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'} ${showIntent ? 'ring-2 ring-primary/70' : ''}`} style={{ paddingLeft: `${indent}px` }}>
         {handle}
         <div className="flex h-8 w-8 items-center justify-center rounded-lg relative">
           <SidebarIcon node={node} active={isActive(node.path)} />
@@ -380,7 +380,7 @@ export default function SidebarTree({
             {badgeCount}
           </Badge>
         )}
-        {showIntent && isOpen && <span className="ml-auto rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">{folderIntent?.ready ? 'Release to folder' : 'Hold to folder'}</span>}
+        {showIntent && isOpen && <span className="ml-auto rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">{folderIntent?.ready ? 'Release to folder' : 'Hold to folder'}</span>}
       </Link>
     );
 
@@ -416,7 +416,7 @@ export default function SidebarTree({
                       }
                     }
                   }}
-                  className={`flex w-full items-center gap-2 rounded-xl border bg-gradient-to-r px-2 py-1.5 text-left transition-all duration-200 ${node.color || 'from-slate-500/15 to-slate-500/5 border-slate-400/20'} ${folderContainsPath(node, activePath) ? 'text-sidebar-accent-foreground shadow-md ring-1 ring-sidebar-accent-foreground/30' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40'} ${currentOverId === node.id ? 'ring-2 ring-blue-500/70' : ''}`}
+                  className={`flex w-full items-center gap-2 rounded-xl border bg-gradient-to-r px-2 py-1.5 text-left transition-all duration-200 ${node.color || 'from-slate-500/15 to-slate-500/5 border-slate-400/20'} ${folderContainsPath(node, activePath) ? 'text-sidebar-accent-foreground shadow-md ring-1 ring-sidebar-accent-foreground/30' : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40'} ${currentOverId === node.id ? 'ring-2 ring-primary/70' : ''}`}
                   style={{ paddingLeft: `${indent}px` }}
                 >
                   {handle}

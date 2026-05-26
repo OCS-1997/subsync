@@ -32,7 +32,7 @@ function formatTime(date) {
  * @param {Date} reportDate - Date to generate report for (defaults to today in IST)
  * @returns {Promise<{success: boolean, error: string|null}>}
  */
-export async function sendDailyDcrReportEmail(reportDate = null) {
+export async function sendDailyDcrReportEmail(reportDate = null, overrideRecipient = null) {
     try {
         // Use provided date or get current date in IST
         const istDate = reportDate || new Date();
@@ -98,7 +98,7 @@ export async function sendDailyDcrReportEmail(reportDate = null) {
         });
 
         // Send email
-        const recipient = process.env.DCR_DAILY_REPORT_TO || 'hari@ocsindia.net';
+        const recipient = overrideRecipient || process.env.DCR_DAILY_REPORT_TO || 'hari@ocsindia.net';
         const subject = `Daily DCR Report - ${formatDate(istDate)}`;
 
         const result = await sendEmail({

@@ -82,7 +82,7 @@ const AppearanceSettings = () => {
     <div className="w-full py-8 space-y-12 animate-in fade-in duration-500 px-4 sm:px-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">Appearance</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-foreground">Appearance</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
             Customize your workspace with high-end typography and curated color palettes.
           </p>
@@ -91,15 +91,15 @@ const AppearanceSettings = () => {
           <Button 
             variant="outline" 
             onClick={applyRandomTheme}
-            className="rounded-xl font-bold gap-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all"
+            className="rounded-xl font-bold gap-2 border-border bg-card shadow-sm hover:shadow-md transition-all"
           >
-            <Palette className="w-4 h-4 text-purple-500" />
+            <Palette className="w-4 h-4 text-primary" />
             Surprise Me
           </Button>
           <Button 
             variant="outline" 
             onClick={resetToDefault}
-            className="rounded-xl font-bold gap-2 border-slate-200 dark:border-slate-800"
+            className="rounded-xl font-bold gap-2 border-border bg-card"
           >
             <RotateCcw className="w-4 h-4" />
             Reset
@@ -126,8 +126,8 @@ const AppearanceSettings = () => {
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all",
                   activeTab === tab.id 
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xl shadow-slate-200 dark:shadow-none translate-x-1" 
-                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900 hover:translate-x-1"
+                    ? "bg-primary text-primary-foreground shadow-xl translate-x-1" 
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1"
                 )}
               >
                 <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "opacity-100" : "opacity-50")} />
@@ -155,8 +155,8 @@ const AppearanceSettings = () => {
                     className={cn(
                       "px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all border",
                       filter === f.id 
-                        ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/20" 
-                        : "bg-transparent text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-400"
+                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20" 
+                        : "bg-transparent text-muted-foreground border-border hover:border-muted-foreground"
                     )}
                   >
                     {f.label}
@@ -196,8 +196,8 @@ const AppearanceSettings = () => {
                   className={cn(
                     "group relative cursor-pointer rounded-[2rem] border-2 transition-all duration-500 overflow-hidden",
                     theme === t.id 
-                      ? "border-blue-500 ring-8 ring-blue-500/5 shadow-2xl scale-[1.02] z-10" 
-                      : "border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl hover:translate-y-[-4px]"
+                      ? "border-primary ring-8 ring-primary/5 shadow-2xl scale-[1.02] z-10" 
+                      : "border-border hover:border-muted-foreground hover:shadow-xl hover:translate-y-[-4px]"
                   )}
                   style={t.id === "system" ? {} : {
                     backgroundColor: `hsl(${t.tokens["--background"]})`,
@@ -235,7 +235,7 @@ const AppearanceSettings = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">{t.name}</span>
                       {theme === t.id && (
-                        <div className="bg-blue-500 text-white p-1 rounded-full shadow-lg shadow-blue-500/40">
+                        <div className="bg-primary text-primary-foreground p-1 rounded-full shadow-lg shadow-primary/40">
                           <Check className="w-3.5 h-3.5 stroke-[4px]" />
                         </div>
                       )}
@@ -274,7 +274,7 @@ const AppearanceSettings = () => {
             <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
               <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-dashed">
                 <CardHeader className="p-10 pb-6 text-center">
-                  <div className="w-16 h-16 bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-blue-500">
+                  <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-primary">
                     <Type className="w-8 h-8" />
                   </div>
                   <CardTitle className="text-2xl font-black tracking-tight">Master Typography</CardTitle>
@@ -296,14 +296,14 @@ const AppearanceSettings = () => {
                           className={cn(
                             "p-6 rounded-3xl border-2 transition-all text-left group relative hover:translate-y-[-2px]",
                             fonts.body === f.id 
-                              ? "border-blue-500 bg-white dark:bg-slate-900 shadow-xl shadow-blue-500/10" 
-                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50"
+                              ? "border-primary bg-card shadow-xl shadow-primary/10" 
+                              : "border-border hover:border-muted-foreground bg-accent/30"
                           )}
                           style={{ fontFamily: f.value }}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-black">{f.name}</span>
-                            {fonts.body === f.id && <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+                            {fonts.body === f.id && <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />}
                           </div>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
                             Crafting premium experiences with elegant type.
@@ -328,14 +328,14 @@ const AppearanceSettings = () => {
                           className={cn(
                             "p-6 rounded-3xl border-2 transition-all text-left group relative hover:translate-y-[-2px]",
                             fonts.heading === f.id 
-                              ? "border-emerald-500 bg-white dark:bg-slate-900 shadow-xl shadow-emerald-500/10" 
-                              : "border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50"
+                              ? "border-primary bg-card shadow-xl shadow-primary/10" 
+                              : "border-border hover:border-muted-foreground bg-accent/30"
                           )}
                           style={{ fontFamily: f.value }}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-black">{f.name}</span>
-                            {fonts.heading === f.id && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
+                            {fonts.heading === f.id && <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary))]" />}
                           </div>
                           <span className="text-2xl font-black leading-none tracking-tight">Aa Bb</span>
                         </button>
@@ -372,11 +372,11 @@ const AppearanceSettings = () => {
                         className={cn(
                           "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
                           appearance.radius === opt.value 
-                            ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20" 
+                            ? "border-primary bg-primary/10" 
                             : "border-transparent"
                         )}
                       >
-                        <div className={cn("w-12 h-12 bg-blue-500 shadow-lg shadow-blue-500/30", opt.class)} />
+                        <div className={cn("w-12 h-12 bg-primary shadow-lg shadow-primary/30", opt.class)} />
                         <span className="text-xs font-bold">{opt.label}</span>
                       </button>
                     ))}
@@ -404,8 +404,8 @@ const AppearanceSettings = () => {
                         className={cn(
                           "group p-6 rounded-2xl border-2 transition-all text-left",
                           appearance.shadowDepth === opt.value 
-                            ? "border-blue-500 bg-white dark:bg-slate-800" 
-                            : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50"
+                            ? "border-primary bg-card" 
+                            : "border-border bg-accent/30"
                         )}
                       >
                          <div className="h-16 bg-white dark:bg-slate-700 rounded-lg mb-4 mx-auto w-full transition-shadow duration-300" style={{ boxShadow: opt.shadow }} />
@@ -436,20 +436,20 @@ const AppearanceSettings = () => {
                         key={style.id}
                         onClick={() => handleAppearanceChange("sidebarStyle", style.id)}
                         className={cn(
-                          "relative p-6 rounded-3xl border-2 transition-all text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex flex-col gap-4",
-                          appearance.sidebarStyle === style.id ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10" : "border-slate-200 dark:border-slate-800"
+                          "relative p-6 rounded-3xl border-2 transition-all text-left hover:bg-accent flex flex-col gap-4",
+                          appearance.sidebarStyle === style.id ? "border-primary bg-primary/10" : "border-border"
                         )}
                       >
-                        <div className="h-24 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden relative border border-slate-200 dark:border-slate-800 w-full">
+                        <div className="h-24 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-hidden relative border border-border w-full">
                            {/* Mini Mockup */}
                            <div className={cn(
-                             "absolute top-0 bottom-0 w-8 bg-blue-500 transition-all",
+                             "absolute top-0 bottom-0 w-8 bg-primary transition-all",
                              style.id === "default" && "left-0",
                              style.id === "floating" && "left-2 top-2 bottom-2 rounded-md",
                              style.id === "inset" && "left-2 top-2 bottom-2 rounded-l-md"
                            )} />
                            <div className={cn(
-                             "absolute bg-white dark:bg-slate-800 transition-all",
+                             "absolute bg-card transition-all",
                              style.id === "default" && "left-8 top-0 bottom-0 right-0",
                              style.id === "floating" && "left-12 top-2 bottom-2 right-2 rounded-md",
                              style.id === "inset" && "left-10 top-2 bottom-2 right-2 rounded-r-md"
@@ -481,8 +481,8 @@ const AppearanceSettings = () => {
                            className={cn(
                              "flex-1 py-3 rounded-xl text-sm font-bold transition-all",
                              appearance.density === d 
-                               ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" 
-                               : "text-slate-500 hover:text-slate-700"
+                               ? "bg-card shadow-sm text-primary" 
+                               : "text-muted-foreground hover:text-foreground"
                            )}
                          >
                            {labels[i]}
@@ -517,8 +517,8 @@ const AppearanceSettings = () => {
                              className={cn(
                                "py-4 rounded-2xl border-2 font-bold transition-all",
                                appearance.animationSpeed === s.id 
-                                 ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300" 
-                                 : "border-slate-100 dark:border-slate-800 hover:border-slate-200"
+                                 ? "border-primary bg-primary/10 text-primary" 
+                                 : "border-border hover:border-muted-foreground"
                              )}
                            >
                              {s.label}
@@ -535,7 +535,7 @@ const AppearanceSettings = () => {
             <div className="animate-in slide-in-from-bottom-4 duration-500">
               <Card className="border-slate-100 dark:border-slate-800 rounded-[2.5rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-dashed">
                 <CardHeader className="p-10 pb-6">
-                  <div className="w-16 h-16 bg-purple-500/10 rounded-3xl flex items-center justify-center text-purple-500 mb-6">
+                  <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center text-primary mb-6">
                     <Layout className="w-8 h-8" />
                   </div>
                   <CardTitle className="text-2xl font-black tracking-tight">Custom Studio</CardTitle>
@@ -555,7 +555,7 @@ const AppearanceSettings = () => {
                               type="text" 
                               value={customColors[field.key] || "0 0% 0%"} 
                               onChange={(e) => handleCustomColorChange(field.key, e.target.value)}
-                              className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-xs shadow-inner transition-all focus:border-purple-500 focus:ring-0"
+                              className="w-full h-12 px-4 rounded-xl border border-border bg-card font-mono text-xs shadow-inner transition-all focus:border-primary focus:ring-0"
                               placeholder="H S% L%"
                             />
                             <div className="absolute right-2 top-2 bottom-2">
@@ -582,16 +582,16 @@ const AppearanceSettings = () => {
                     ))}
                   </div>
 
-                  <div className="p-8 rounded-[2rem] bg-gradient-to-br from-purple-500/5 to-blue-500/5 border border-purple-100 dark:border-purple-500/20 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-purple-500/10 transition-all duration-700" />
+                  <div className="p-8 rounded-[2rem] bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-all duration-700" />
                     <div className="relative flex gap-6">
-                      <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
-                        <MousePointer2 className="w-6 h-6 text-purple-500" />
+                      <div className="h-12 w-12 rounded-2xl bg-card flex items-center justify-center shadow-sm">
+                        <MousePointer2 className="w-6 h-6 text-primary" />
                       </div>
                       <div className="space-y-1 flex-1">
-                        <p className="text-base font-black text-purple-900 dark:text-purple-100">Designer Tip</p>
-                        <p className="text-sm text-purple-700/80 dark:text-purple-300/80 leading-relaxed font-medium">
-                          Try <span className="font-mono text-xs font-black bg-purple-100 dark:bg-purple-900/40 px-1 rounded">210 100% 50%</span> for a vibrant Azure or <span className="font-mono text-xs font-black bg-purple-100 dark:bg-purple-900/40 px-1 rounded">0 0% 10%</span> for a deep Coal.
+                        <p className="text-base font-black text-foreground">Designer Tip</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                          Try <span className="font-mono text-xs font-black bg-primary/10 px-1 rounded">210 100% 50%</span> for a vibrant Azure or <span className="font-mono text-xs font-black bg-primary/10 px-1 rounded">0 0% 10%</span> for a deep Coal.
                         </p>
                       </div>
                     </div>
@@ -602,8 +602,8 @@ const AppearanceSettings = () => {
                     className={cn(
                       "w-full h-16 rounded-3xl font-black uppercase tracking-[0.2em] text-xs transition-all duration-500",
                       theme === "custom" 
-                        ? "bg-purple-600 hover:bg-purple-700 shadow-2xl shadow-purple-500/40 ring-4 ring-purple-500/10 text-white" 
-                        : "bg-slate-900 dark:bg-white dark:text-slate-900 hover:shadow-xl"
+                        ? "bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/40 ring-4 ring-primary/10 text-primary-foreground" 
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/90 hover:shadow-xl"
                     )}
                   >
                     {theme === "custom" ? "ACTIVE STUDIO SESSION" : "ACTIVATE STUDIO THEME"}

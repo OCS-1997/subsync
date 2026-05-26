@@ -235,6 +235,12 @@ import {
     actionPermissionController
 } from '../controllers/permissionRequestController.js';
 // Reports 360 removed
+import {
+    triggerTestEmail,
+    triggerDcrReport,
+    triggerTimeTrackingReport,
+    getSystemInfo
+} from '../controllers/developerController.js';
 
 const router = express.Router();
 
@@ -364,6 +370,12 @@ router.delete('/users/:username', isAuthenticated, authorize(PERMISSIONS.USERS_D
 
 // Activity Logs (admin only)
 router.get('/activity-logs', isAuthenticated, authorize(PERMISSIONS.ACTIVITY_LOGS_VIEW), getLogs);
+
+// Developer Controls (Superadmin only)
+router.post('/admin/dev/test-email', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerTestEmail);
+router.post('/admin/dev/trigger-dcr', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerDcrReport);
+router.post('/admin/dev/trigger-time-tracking', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerTimeTrackingReport);
+router.get('/admin/dev/system-info', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), getSystemInfo);
 
 // RBAC Management
 router.get('/rbac/roles', isAuthenticated, authorize(PERMISSIONS.ROLES_VIEW), listRolesController);

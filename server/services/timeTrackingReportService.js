@@ -1,5 +1,5 @@
 import { getUsersWithTimeEntries, getTimeEntries } from "../models/timeTrackingModel.js";
-import { getAllUsers } from "../models/userModel.js";
+import { getAllUsers, getUserByUsername } from "../models/userModel.js";
 import { sendEmail } from "./emailService.js";
 import { generateBarChart, generatePieChart } from "../utils/chartGenerator.js";
 import { minutesToTime } from "../models/dcrModel.js";
@@ -398,5 +398,52 @@ async function sendNoTimeLoggedEmail(user, targetDate) {
     } else {
         console.error(`Failed to send reminder to ${user.email}: ${result.error}`);
     }
+}
+
+/**
+ * Generate and send daily time tracking report for a specific user
+ * @param {string} username - Username of the user to generate report for
+ * @param {Date} reportDate - Date to generate report for (defaults to today, report covers previous day)
+ * @returns {Promise<void>}
+ */
+export async function sendUserDailyTimeTrackingReport(username, reportDate = new Date()) {
+    console.log(`Starting individual daily time tracking report for: ${username}, date: ${reportDate.toISOString()}`);
+    
+    const user = await getUserByUsername(username);
+    if (!user) {
+        throw new Error(`User ${username} not found`);
+    }
+    if (!user.isActive) {
+        throw new Error(`User ${username} is inactive`);
+    }
+
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30
+    const targetDateIST = new Date(reportDate.getTime() - 12 * 60 * 60 * 1000 + IST_OFFSET_MS);
+    const targetYear = targetDateIST.getUTCFullYear();
+    const targetMonth = targetDateIST.getUTCMonth();
+    const targetDay = targetDateIST.getUTCDate();
+
+    const startOfDayUTC = new Date(Date.UTC(
+        targetYear,
+        targetMonth,
+        targetDay,
+        0, 0, 0, 0
+    ) - IST_OFFSET_MS);
+
+    const endOfDayUTC = new Date(Date.UTC(
+        targetYear,
+        targetMonth,
+        targetDay,
+        23, 59, 59, 999
+    ) - IST_OFFSET_MS);
+
+    const targetDate = new Date(Date.UTC(
+        targetYear,
+        targetMonth,
+        targetDay
+    ));
+
+    const userForReport = { ...user, user_id: user.username };
+    await processUserReport(userForReport, startOfDayUTC, endOfDayUTC, targetDate);
 }
 

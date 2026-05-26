@@ -106,6 +106,7 @@ export const PERMISSIONS = Object.freeze({
   LEAVES_MANAGE_TYPES: 'leaves.manage_types',
   PERMISSIONS_APPLY: 'permissions.apply',
   PERMISSIONS_APPROVE: 'permissions.approve',
+  DEVELOPER_CONTROLS: 'developer_controls.manage',
 });
 
 export const PAGE_PERMISSIONS = {

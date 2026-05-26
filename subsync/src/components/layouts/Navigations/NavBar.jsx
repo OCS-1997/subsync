@@ -263,9 +263,16 @@ function NavBar({ toggleSidebar }) {
             >
               {/* Header */}
               <div className="flex justify-between  items-center mb-6 border-b border-border pb-3">
-                <div className="flex items-center gap-2">
+                 <div 
+                  className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors select-none"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    navigate(`/${user?.username}/dashboard/settings`);
+                  }}
+                  role="button"
+                >
                   <Settings className="h-6 w-6" />
-                  <h2 className="text-xl font-bold text-foreground"> Settings</h2>
+                  <h2 className="text-xl font-bold"> Settings</h2>
                 </div>
 
                 <Button
@@ -437,7 +444,7 @@ function NavBar({ toggleSidebar }) {
                         onClick={() => setTheme(t.id)}
                         className={cn(
                           "h-8 rounded-lg border-2 transition-all hover:scale-110",
-                          theme === t.id ? "border-blue-500 shadow-lg" : "border-border hover:border-muted-foreground"
+                          theme === t.id ? "border-primary shadow-lg" : "border-border hover:border-muted-foreground"
                         )}
                         style={{ backgroundColor: t.id === 'system' ? 'transparent' : `hsl(${t.tokens["--background"]})` }}
                         title={t.name}
