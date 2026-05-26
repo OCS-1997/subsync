@@ -20,7 +20,11 @@ import {
     Users,
     FileText,
     Package,
-    Database
+    Database,
+    RefreshCw,
+    MousePointerClick,
+    Sliders,
+    Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -45,10 +49,296 @@ const SHORTCUTS = [
 ];
 
 const FAQS = [
-    { q: "How do I create an opportunity for a 'Prospective' customer?", a: "In the Opportunities module, click 'Create' and select 'New Customer Entry'. You can enter details directly without an existing record." },
-    { q: "How do automated reminders work?", a: "They are governed by 'Reminder Policies' in Settings. Define your schedule (e.g., 7 days before expiry) and the system handles the rest." },
-    { q: "Is there a faster way to find data?", a: "Yes! Use the Command Palette (Ctrl + K) to search for customers, subscription IDs, domains, or settings pages instantly." },
-    { q: "How do I use the Phone Directory?", a: "The Phone Directory logs incoming call records and identifies callers from your database. You can view all synchronized records in the Phone Directory module." },
+    { 
+        q: "How do I customize the sidebar and reset it back to defaults?", 
+        a: (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                        <Zap size={16} />
+                        <span>Sidebar Gestures</span>
+                    </div>
+                    <div className="space-y-2.5 text-xs">
+                        <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-700 dark:text-slate-350">Reordering</span>
+                            <span className="px-2 py-1 bg-indigo-500/10 text-indigo-550 dark:text-indigo-400 rounded font-mono text-[10px]">Drag Grip Handle ⠿</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-700 dark:text-slate-350">Folders</span>
+                            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-555 dark:text-emerald-400 rounded font-mono text-[10px]">Drop item on item</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-700 dark:text-slate-350">Manage Folder</span>
+                            <span className="px-2 py-1 bg-amber-500/10 text-amber-555 dark:text-amber-400 rounded font-mono text-[10px]">Options ⋯</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="bg-red-500/5 dark:bg-red-950/20 p-4 rounded-xl border border-red-500/15 dark:border-red-500/30 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm mb-2">
+                            <RefreshCw size={16} />
+                            <span>Quick Reset Steps</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                            <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-bold">Settings</span>
+                            <ChevronRight size={12} className="text-slate-400" />
+                            <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-bold">Appearance</span>
+                            <ChevronRight size={12} className="text-slate-400" />
+                            <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-bold">Layout</span>
+                        </div>
+                    </div>
+                    <div className="mt-3">
+                        <span className="inline-block text-[11px] font-bold text-red-500 dark:text-red-400 border border-red-500/30 bg-red-500/10 px-2.5 py-1 rounded-lg">
+                            Click "Reset Sidebar Layout"
+                        </span>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "How do I access hidden developer diagnostics and controls?", 
+        a: (
+            <div className="mt-2 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-8 h-8 bg-amber-500/10 rounded-bl-full flex items-center justify-center text-[10px] font-bold text-amber-500">1</div>
+                        <Settings size={20} className="mx-auto mb-2 text-slate-400 dark:text-slate-500" />
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">Go to Settings</span>
+                        <span className="text-[10px] text-slate-500">Open active settings dashboard</span>
+                    </div>
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-8 h-8 bg-amber-500/10 rounded-bl-full flex items-center justify-center text-[10px] font-bold text-amber-500">2</div>
+                        <MousePointerClick size={20} className="mx-auto mb-2 text-amber-500 animate-bounce" />
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">Click Gear 5x</span>
+                        <span className="text-[10px] text-slate-500">Click settings header gear icon 5 times</span>
+                    </div>
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-8 h-8 bg-amber-500/10 rounded-bl-full flex items-center justify-center text-[10px] font-bold text-amber-500">3</div>
+                        <Zap size={20} className="mx-auto mb-2 text-emerald-500" />
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">Access Utilities</span>
+                        <span className="text-[10px] text-slate-500">Find 'Developer Controls' in list</span>
+                    </div>
+                </div>
+                <div className="p-3 bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/10 dark:border-amber-500/20 rounded-xl flex items-center justify-between text-xs">
+                    <span className="text-amber-750 dark:text-amber-400 font-semibold">Requirement Level:</span>
+                    <span className="px-2.5 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full font-bold uppercase text-[9px] tracking-wider">Admin Permissions Only</span>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "How do I create an opportunity for a 'Prospective' customer?", 
+        a: (
+            <div className="mt-2 space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Create new deals or leads without requiring a pre-existing customer profile:</p>
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                    <div className="flex-1 bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                        <div>
+                            <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Opportunities</p>
+                            <p className="text-[10px] text-slate-500">Go to Opportunities tab</p>
+                        </div>
+                    </div>
+                    <ChevronRight className="hidden md:block text-slate-400 shrink-0" size={16} />
+                    <div className="flex-1 bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                        <div>
+                            <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Click + Create</p>
+                            <p className="text-[10px] text-slate-500">Select Create button</p>
+                        </div>
+                    </div>
+                    <ChevronRight className="hidden md:block text-slate-400 shrink-0" size={16} />
+                    <div className="flex-1 bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+                        <div>
+                            <p className="font-bold text-xs text-slate-800 dark:text-slate-200">New Customer</p>
+                            <p className="text-[10px] text-slate-500">Toggle Customer Entry</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "How do automated reminders work?", 
+        a: (
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-indigo-500 font-bold text-xs mb-2">
+                            <Clock size={14} />
+                            <span>Frequency</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">Trigger Policy</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Expiries and follow-ups are evaluated automatically daily.</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[9px] font-bold">Daily at 6:30 PM IST</span>
+                </div>
+                
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-blue-500 font-bold text-xs mb-2">
+                            <Sliders size={14} />
+                            <span>Configuration</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">Templates & Setup</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Define email templates & alerts (e.g. 7 days prior).</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded text-[9px] font-bold">Settings &gt; Reminders</span>
+                </div>
+                
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-emerald-500 font-bold text-xs mb-2">
+                            <FileText size={14} />
+                            <span>Audit Trail</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">Campaign Logs</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">View running campaigns and delivery status details.</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-bold">Notification Logs</span>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "Is there a faster way to find data?", 
+        a: (
+            <div className="mt-2 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/5 to-amber-500/0 border border-amber-500/10">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
+                            <Search size={16} />
+                            <span>Command Palette</span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">Search customers, domains, routes, or forms instantly.</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <kbd className="px-2 py-1 bg-background border border-b-2 rounded-lg shadow-sm text-xs font-bold font-mono">Ctrl</kbd>
+                        <span className="text-slate-400 text-xs">+</span>
+                        <kbd className="px-2 py-1 bg-background border border-b-2 rounded-lg shadow-sm text-xs font-bold font-mono">K</kbd>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                    <div className="flex items-center gap-2 p-2 bg-slate-100/40 dark:bg-slate-800/30 rounded-lg">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">Instant Navigation across modules</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-slate-100/40 dark:bg-slate-800/30 rounded-lg">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">Quick-launch system action items</span>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "How do I use the Phone Directory?", 
+        a: (
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="text-blue-500 font-bold text-xs mb-2 flex items-center gap-1.5">
+                            <Users size={14} />
+                            <span>Caller Lookup</span>
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mb-1">Auto Identity</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Matches incoming numbers with customer records.</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded text-[9px] font-bold">Auto-matching</span>
+                </div>
+
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="text-indigo-500 font-bold text-xs mb-2 flex items-center gap-1.5">
+                            <Clock size={14} />
+                            <span>Time Logs</span>
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mb-1">Call Logs</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Browse and audit previous incoming/outgoing calls.</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded text-[9px] font-bold">Directory Logs</span>
+                </div>
+
+                <div className="bg-slate-100/50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div className="text-emerald-500 font-bold text-xs mb-2 flex items-center gap-1.5">
+                            <Sparkles size={14} />
+                            <span>Actions</span>
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mb-1">Inline Notes</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Assign tags, add quick comments, and link to CRM.</p>
+                    </div>
+                    <span className="mt-3 w-fit px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-bold">Interactive Notes</span>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "How does PWA offline synchronization operate?", 
+        a: (
+            <div className="mt-2 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <div className="mx-auto w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mb-2.5">
+                            <Download size={16} />
+                        </div>
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">1. Asset Caching</span>
+                        <span className="text-[10px] text-slate-500 leading-normal">Loads instantly via local service worker.</span>
+                    </div>
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <div className="mx-auto w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2.5">
+                            <Database size={16} />
+                        </div>
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">2. Offline Mode</span>
+                        <span className="text-[10px] text-slate-500 leading-normal">Read details & queue edits offline.</span>
+                    </div>
+                    <div className="bg-slate-100/50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <div className="mx-auto w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-2.5 animate-pulse">
+                            <Globe size={16} />
+                        </div>
+                        <span className="block font-bold text-xs text-slate-800 dark:text-slate-200 mb-1">3. Auto Sync</span>
+                        <span className="text-[10px] text-slate-500 leading-normal">Pushes queue online once reconnected.</span>
+                    </div>
+                </div>
+            </div>
+        )
+    },
+    { 
+        q: "Where do I configure automated email templates?", 
+        a: (
+            <div className="mt-2 space-y-4">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                    <div className="flex-1 bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                        <div>
+                            <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Email Templates</p>
+                            <p className="text-[10px] text-slate-500">Go to Settings &gt; Email Templates</p>
+                        </div>
+                    </div>
+                    <ChevronRight className="hidden md:block text-slate-400 shrink-0" size={16} />
+                    <div className="flex-1 bg-slate-100/50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                        <div>
+                            <p className="font-bold text-xs text-slate-800 dark:text-slate-200">Select Template</p>
+                            <p className="text-[10px] text-slate-500">Choose template, e.g. DCR Report</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-3 bg-purple-500/5 dark:bg-purple-950/20 border border-purple-500/10 dark:border-purple-500/20 rounded-xl space-y-2">
+                    <p className="text-xs font-bold text-purple-600 dark:text-purple-400">Available Bind Placeholders:</p>
+                    <div className="flex flex-wrap gap-2">
+                        <code className="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{"{{customer_name}}"}</code>
+                        <code className="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{"{{due_date}}"}</code>
+                        <code className="text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">{"{{amount}}"}</code>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 ];
 
 import { useNavigate, useParams } from "react-router-dom";

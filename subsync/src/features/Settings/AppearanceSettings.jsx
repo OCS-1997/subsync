@@ -1,8 +1,21 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
+import api from "@/lib/axiosInstance";
 import { useTheme } from "@/context/ThemeContext";
 import { THEMES, FONT_PRESETS } from "@/constants/themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Check, 
   RotateCcw, 
@@ -39,6 +52,7 @@ const AppearanceSettings = () => {
 
   const [activeTab, setActiveTab] = useState("themes");
   const [filter, setFilter] = useState("all");
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   const handleFontChange = (type, value) => {
     setFonts({ [type]: value });
@@ -50,6 +64,25 @@ const AppearanceSettings = () => {
 
   const handleAppearanceChange = (key, value) => {
     setAppearance({ [key]: value });
+  };
+
+  const handleResetSidebar = async () => {
+    setIsResetConfirmOpen(false);
+    const username = localStorage.getItem("username") || window.location.pathname.split("/")[1];
+    if (username) {
+      localStorage.removeItem(`pref_order_${username}_sidebar_folders_v3`);
+      localStorage.removeItem(`pref_order_${username}_sidebar_order`);
+      try {
+        await api.put(`/preferences/${username}/sidebar_folders_v3`, { value: null });
+        await api.put(`/preferences/${username}/sidebar_order`, { value: null });
+        toast.success("Sidebar layout reset successful! Reloading page to apply...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (err) {
+        toast.error("Failed to reset sidebar preferences on server. Please try again.");
+      }
+    }
   };
 
   const applyRandomTheme = () => {
@@ -490,6 +523,46 @@ const AppearanceSettings = () => {
                        );
                      })}
                    </div>
+                </CardContent>
+              </Card>
+
+              {/* Reset Sidebar Layout */}
+              <Card className="border-border rounded-[2.5rem] overflow-hidden bg-card/50 backdrop-blur-xl">
+                <CardHeader className="p-10 pb-6">
+                  <CardTitle className="text-xl font-black">Reset Sidebar Structure</CardTitle>
+                  <CardDescription>Restore the sidebar's folders and ordering back to the default group layouts.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-10 pt-0">
+                  <AlertDialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-2xl h-12 px-6 shadow-md transition-all active:scale-[0.98]"
+                      >
+                        Reset Sidebar Layout
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="rounded-[2rem] border border-border bg-card text-foreground shadow-2xl p-6 max-w-sm">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-lg font-black tracking-tight text-destructive">
+                          Reset Sidebar Layout
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-sm mt-2 text-muted-foreground">
+                          Are you sure you want to reset the sidebar menu folders and ordering back to how they originally were? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="gap-2 mt-4 flex flex-row justify-end">
+                        <AlertDialogCancel className="rounded-xl border border-border hover:bg-accent hover:text-accent-foreground transition-colors font-bold text-xs px-4 py-2 mt-0">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleResetSidebar}
+                          className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold text-xs px-4 py-2 transition-colors border-none"
+                        >
+                          Reset
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </div>
