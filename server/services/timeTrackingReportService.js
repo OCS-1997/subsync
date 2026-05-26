@@ -27,35 +27,35 @@ function formatDate(date) {
 export async function sendDailyTimeTrackingReports(reportDate = new Date()) {
     console.log(`Starting daily time tracking reports generation for date: ${reportDate.toISOString()}`);
 
-    // Calculate the TARGET date (previous calendar day in IST).
-    // Server may run in UTC, so we derive IST date explicitly.
+    // Calculate the TARGET date (yesterday in IST relative to the trigger time).
+    // We subtract 12 hours from the trigger time to get a timestamp safely in the middle of the target day.
+    // This prevents boundary jitter issues (e.g., if the job triggers 1ms early or late around midnight).
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30
-    const nowIST = new Date(reportDate.getTime() + IST_OFFSET_MS);
-    // Go back one calendar day in IST
-    const yesterdayIST = new Date(nowIST);
-    yesterdayIST.setUTCDate(yesterdayIST.getUTCDate() - 1);
+    const targetDateIST = new Date(reportDate.getTime() - 12 * 60 * 60 * 1000 + IST_OFFSET_MS);
+    const targetYear = targetDateIST.getUTCFullYear();
+    const targetMonth = targetDateIST.getUTCMonth();
+    const targetDay = targetDateIST.getUTCDate();
 
     // Build start/end of that IST calendar day in UTC equivalents
-    // Start = Yesterday 00:00 IST = Yesterday 00:00 IST - 5h30m UTC
     const startOfDayUTC = new Date(Date.UTC(
-        yesterdayIST.getUTCFullYear(),
-        yesterdayIST.getUTCMonth(),
-        yesterdayIST.getUTCDate(),
+        targetYear,
+        targetMonth,
+        targetDay,
         0, 0, 0, 0
     ) - IST_OFFSET_MS);
 
     const endOfDayUTC = new Date(Date.UTC(
-        yesterdayIST.getUTCFullYear(),
-        yesterdayIST.getUTCMonth(),
-        yesterdayIST.getUTCDate(),
+        targetYear,
+        targetMonth,
+        targetDay,
         23, 59, 59, 999
     ) - IST_OFFSET_MS);
 
-    // targetDate: a Date object representing "yesterday in IST" for display
+    // targetDate: a Date object representing the target day for display and Sunday check
     const targetDate = new Date(Date.UTC(
-        yesterdayIST.getUTCFullYear(),
-        yesterdayIST.getUTCMonth(),
-        yesterdayIST.getUTCDate()
+        targetYear,
+        targetMonth,
+        targetDay
     ));
 
     console.log(`Generating report for: ${formatDate(targetDate)}`);
