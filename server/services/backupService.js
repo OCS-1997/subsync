@@ -501,8 +501,7 @@ export async function updateScheduledBackupJob(configId) {
                     repeat: {
                         pattern: cron,
                         tz: config.timezone || 'Asia/Kolkata'
-                    },
-                    jobId: `backup-config-${configId}`
+                    }
                 }
             );
             console.log(`Scheduled backup for config ${configId} with cron: ${cron}`);

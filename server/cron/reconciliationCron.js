@@ -7,13 +7,18 @@ import { scheduledTasksQueue } from '../queues/queueConfig.js';
  */
 export async function syncScheduledTasks() {
     try {
+        // Clear existing repeatable jobs first to avoid duplicates or pattern mismatches
+        const repeatableJobs = await scheduledTasksQueue.getRepeatableJobs();
+        for (const job of repeatableJobs) {
+            await scheduledTasksQueue.removeRepeatableByKey(job.key);
+        }
+
         // 1. Reconciliation Cron (Daily at 06:30 IST / 01:00 UTC)
         await scheduledTasksQueue.add(
             'reconciliation',
             { taskName: 'reconciliation' },
             {
-                repeat: { pattern: '0 1 * * *', tz: 'UTC' },
-                jobId: 'scheduled_reconciliation'
+                repeat: { pattern: '0 1 * * *', tz: 'UTC' }
             }
         );
 
@@ -25,8 +30,7 @@ export async function syncScheduledTasks() {
                 params: { delayDays: parseInt(process.env.ARCHIVAL_DELAY_DAYS || '30', 10) } 
             },
             {
-                repeat: { pattern: '0 2 * * *', tz: 'UTC' },
-                jobId: 'scheduled_archival'
+                repeat: { pattern: '0 2 * * *', tz: 'UTC' }
             }
         );
 
@@ -35,8 +39,7 @@ export async function syncScheduledTasks() {
             'birthday_emails',
             { taskName: 'birthday_emails' },
             {
-                repeat: { pattern: '0 9 * * *', tz: 'UTC' },
-                jobId: 'scheduled_birthday_emails'
+                repeat: { pattern: '0 9 * * *', tz: 'UTC' }
             }
         );
 
@@ -45,8 +48,7 @@ export async function syncScheduledTasks() {
             'dcr_daily_report',
             { taskName: 'dcr_daily_report' },
             {
-                repeat: { pattern: '0 13 * * *', tz: 'UTC' },
-                jobId: 'scheduled_dcr_report'
+                repeat: { pattern: '0 13 * * *', tz: 'UTC' }
             }
         );
 
@@ -55,8 +57,7 @@ export async function syncScheduledTasks() {
             'time_tracking_report',
             { taskName: 'time_tracking_report' },
             {
-                repeat: { pattern: '30 18 * * *', tz: 'UTC' },
-                jobId: 'scheduled_time_tracking_report'
+                repeat: { pattern: '30 18 * * *', tz: 'UTC' }
             }
         );
 
@@ -65,8 +66,7 @@ export async function syncScheduledTasks() {
             'birthday_sync',
             { taskName: 'birthday_sync' },
             {
-                repeat: { pattern: '0 0,6,12,18 * * *', tz: 'UTC' },
-                jobId: 'scheduled_birthday_sync'
+                repeat: { pattern: '0 0,6,12,18 * * *', tz: 'UTC' }
             }
         );
 
@@ -75,8 +75,7 @@ export async function syncScheduledTasks() {
             'directory_sync',
             { taskName: 'directory_sync' },
             {
-                repeat: { pattern: '0 0,4,8,12,16,20 * * *', tz: 'UTC' },
-                jobId: 'scheduled_directory_sync'
+                repeat: { pattern: '0 0,4,8,12,16,20 * * *', tz: 'UTC' }
             }
         );
 
@@ -85,8 +84,7 @@ export async function syncScheduledTasks() {
             'appraisal_reminders',
             { taskName: 'appraisal_reminders' },
             {
-                repeat: { pattern: '0 4 * * *', tz: 'UTC' },
-                jobId: 'scheduled_appraisal_reminders'
+                repeat: { pattern: '0 4 * * *', tz: 'UTC' }
             }
         );
 
