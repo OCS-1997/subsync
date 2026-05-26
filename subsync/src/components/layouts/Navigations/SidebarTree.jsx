@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   DndContext,
@@ -45,6 +46,16 @@ import { cn } from '@/lib/utils.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.jsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.jsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog.jsx';
 
 const HOVER_TO_FOLDER_DELAY = 420;
 
@@ -144,6 +155,9 @@ export default function SidebarTree({
   const [folderNameDraft, setFolderNameDraft] = useState('');
   const [folderIntent, setFolderIntent] = useState(null);
   const [currentOverId, setCurrentOverId] = useState(null);
+  const [deleteFolderId, setDeleteFolderId] = useState(null);
+  const [deleteFolderName, setDeleteFolderName] = useState('');
+  const isCancelledRef = useRef(false);
 
   const timerRef = useRef(null);
   const nodeMetaMap = useMemo(() => indexTree(nodes), [nodes]);
@@ -412,7 +426,37 @@ export default function SidebarTree({
                   {isOpen && (
                     <>
                       {editingFolderId === node.id ? (
-                        <input autoFocus value={folderNameDraft} onChange={(event) => setFolderNameDraft(event.target.value)} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Enter') { event.preventDefault(); renameFolder(node.id, folderNameDraft); setEditingFolderId(null); setFolderNameDraft(''); } if (event.key === 'Escape') { event.preventDefault(); setEditingFolderId(null); setFolderNameDraft(''); } }} className="h-7 flex-1 rounded-md border border-sidebar-border bg-sidebar px-2 text-sm outline-none" />
+                        <input
+                          autoFocus
+                          value={folderNameDraft}
+                          onChange={(event) => setFolderNameDraft(event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onTouchStart={(event) => event.stopPropagation()}
+                          onBlur={() => {
+                            if (!isCancelledRef.current) {
+                              renameFolder(node.id, folderNameDraft);
+                            }
+                            setEditingFolderId(null);
+                            setFolderNameDraft('');
+                          }}
+                          onKeyDown={(event) => {
+                            event.stopPropagation();
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              renameFolder(node.id, folderNameDraft);
+                              setEditingFolderId(null);
+                              setFolderNameDraft('');
+                            }
+                            if (event.key === 'Escape') {
+                              event.preventDefault();
+                              isCancelledRef.current = true;
+                              setEditingFolderId(null);
+                              setFolderNameDraft('');
+                            }
+                          }}
+                          className="h-7 flex-1 min-w-0 w-0 rounded-md border border-sidebar-border bg-sidebar px-2 text-sm outline-none"
+                        />
                       ) : (
                         <span className="flex-1 truncate text-sm font-semibold">{node.name}</span>
                       )}
@@ -420,8 +464,54 @@ export default function SidebarTree({
                         <button type="button" className="rounded-md p-1 hover:bg-sidebar-accent/50" onClick={(event) => { event.stopPropagation(); renameFolder(node.id, folderNameDraft); setEditingFolderId(null); setFolderNameDraft(''); }}><Check size={14} /></button>
                       ) : (
                         <>
-                          <button type="button" className="rounded-md p-1 hover:bg-sidebar-accent/50" onClick={(event) => { event.stopPropagation(); setEditingFolderId(node.id); setFolderNameDraft(node.name || 'New Folder'); }}><Pencil size={14} /></button>
-                          <button type="button" className="rounded-md p-1 hover:bg-red-500/20 hover:text-red-600" onClick={(event) => { event.stopPropagation(); deleteFolder(node.id); }}><Trash2 size={14} /></button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="rounded-md p-1 hover:bg-sidebar-accent/50 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-200"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                }}
+                              >
+                                <MoreVertical size={14} />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              side="bottom"
+                              align="end"
+                              sideOffset={4}
+                              className="w-32 rounded-xl border border-sidebar-border bg-sidebar p-1 text-sidebar-foreground shadow-lg z-[70]"
+                              onClick={(event) => event.stopPropagation()}
+                              onMouseDown={(event) => event.stopPropagation()}
+                              onTouchStart={(event) => event.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent/60 transition-colors"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  isCancelledRef.current = false;
+                                  setEditingFolderId(node.id);
+                                  setFolderNameDraft(node.name || 'New Folder');
+                                }}
+                              >
+                                <Pencil size={12} />
+                                <span>Rename</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setDeleteFolderId(node.id);
+                                  setDeleteFolderName(node.name || 'New Folder');
+                                }}
+                              >
+                                <Trash2 size={12} />
+                                <span>Delete</span>
+                              </button>
+                            </PopoverContent>
+                          </Popover>
                           <ChevronRight size={16} className={`transition-transform ${expandedFolders[node.id] ? 'rotate-90' : 'rotate-0'}`} />
                         </>
                       )}
@@ -432,22 +522,22 @@ export default function SidebarTree({
 
               if (!isOpen) {
                 return (
-                  <Tooltip delayDuration={0}>
-                    <TooltipTrigger asChild>
-                      <Popover open={collapsedFolderId === node.id} onOpenChange={(open) => setCollapsedFolderId(open ? node.id : null)}>
+                  <Popover open={collapsedFolderId === node.id} onOpenChange={(open) => setCollapsedFolderId(open ? node.id : null)}>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
                         <PopoverTrigger asChild>{row}</PopoverTrigger>
-                        <PopoverContent side="right" align="start" sideOffset={10} className="w-72 rounded-2xl border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
-                          <div className="mb-2 border-b border-sidebar-border px-2 pb-2 text-xs font-black uppercase tracking-widest text-sidebar-foreground/70">{node.name}</div>
-                          <div className="max-h-[360px] space-y-1 overflow-y-auto pr-1">
-                            {renderFlyoutNodes(node.children)}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
-                      {node.name}
-                    </TooltipContent>
-                  </Tooltip>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
+                        {node.name}
+                      </TooltipContent>
+                    </Tooltip>
+                    <PopoverContent side="right" align="start" sideOffset={10} className="w-72 rounded-2xl border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+                      <div className="mb-2 border-b border-sidebar-border px-2 pb-2 text-xs font-black uppercase tracking-widest text-sidebar-foreground/70">{node.name}</div>
+                      <div className="max-h-[360px] space-y-1 overflow-y-auto pr-1">
+                        {renderFlyoutNodes(node.children)}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 );
               }
 
@@ -487,13 +577,44 @@ export default function SidebarTree({
       )}
 
       <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
-        {activeNode ? (
+        {activeNode ? createPortal(
           <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 shadow-xl">
             {activeNode.type === 'folder' ? <Folder size={16} /> : <SidebarIcon node={activeNode} />}
             <span className="text-xs font-bold">{activeNode.type === 'folder' ? activeNode.name : activeNode.title}</span>
-          </div>
+          </div>,
+          document.body
         ) : null}
       </DragOverlay>
+
+      <AlertDialog open={deleteFolderId !== null} onOpenChange={(open) => !open && setDeleteFolderId(null)}>
+        <AlertDialogContent className="rounded-[2rem] border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl p-6 max-w-sm z-[80]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-black tracking-tight text-red-500">
+              Delete Folder
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-sidebar-foreground/75 mt-2">
+              Are you sure you want to delete the folder <span className="font-bold text-sidebar-foreground">&quot;{deleteFolderName}&quot;</span>? The items inside will be moved back to the main list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-4 flex flex-row justify-end">
+            <AlertDialogCancel className="rounded-xl border border-sidebar-border hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors font-bold text-xs px-4 py-2 mt-0">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteFolderId) {
+                  deleteFolder(deleteFolderId);
+                  setDeleteFolderId(null);
+                  setDeleteFolderName('');
+                }
+              }}
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2 transition-colors border-none"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndContext>
   );
 }

@@ -47,11 +47,17 @@ function DashboardHome() {
             try {
                 setLoading(true);
                 const response = await api.get('/dashboard/config');
-                setDashboardConfig(response.data || { tabs: [], widgets: [] });
+                const config = response.data && typeof response.data === 'object' ? response.data : {};
+                
+                const finalConfig = {
+                    tabs: Array.isArray(config.tabs) ? config.tabs : [],
+                    widgets: Array.isArray(config.widgets) ? config.widgets : (config.widgets === null ? null : [])
+                };
+                setDashboardConfig(finalConfig);
 
                 // Set active tab to first visible tab or saved preference
                 const savedTab = localStorage.getItem('dashboard_active_tab');
-                const visibleTabs = response.data?.tabs || [];
+                const visibleTabs = finalConfig.tabs;
 
                 if (savedTab && visibleTabs.some(t => t.tabKey === savedTab)) {
                     setActiveTab(savedTab);
@@ -147,7 +153,7 @@ function DashboardHome() {
                 </div>
 
                 {/* Tab Navigation - Scrollable on mobile */}
-                {dashboardConfig.tabs.length > 0 && (
+                {Array.isArray(dashboardConfig?.tabs) && dashboardConfig.tabs.length > 0 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
                         <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800/50 rounded-2xl w-full sm:w-fit shadow-sm overflow-x-auto no-scrollbar">
                             {dashboardConfig.tabs.map((tab) => {

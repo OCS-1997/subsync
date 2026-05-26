@@ -103,6 +103,14 @@ function SideBar({ isOpen, toggleSidebar }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        // If click/touch is inside a Radix UI portal, popover content, or dialog, do not close the sidebar
+        if (
+          event.target.closest('[data-radix-portal]') ||
+          event.target.closest('[data-radix-popper-content-wrapper]') ||
+          event.target.closest('[role="dialog"]')
+        ) {
+          return;
+        }
         const isNavBarToggle = event.target.closest('button')?.className?.includes('menu');
         if (!isNavBarToggle) toggleSidebar();
       }
