@@ -45,6 +45,7 @@ process.on('unhandledRejection', (reason) => {
 });
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
+    process.exit(1);
 });
 
 // To get the real client IP in your routes/middleware:
