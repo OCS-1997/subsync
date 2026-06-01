@@ -158,19 +158,33 @@ export const getSystemInfo = async (req, res) => {
         const [[activeUsersCount]] = await appDB.query("SELECT COUNT(*) as count FROM users WHERE is_active = 1");
         const [[dcrCount]] = await appDB.query("SELECT COUNT(*) as count FROM dcr_entries");
 
-        const mailProvider = process.env.EMAIL_PROVIDER || 'sendgrid';
+        const rawMailProvider = process.env.EMAIL_PROVIDER || 'sendgrid';
+        const mailProvider = typeof rawMailProvider === 'string' ? rawMailProvider.split('#')[0].trim() : rawMailProvider;
         let mailConfigDetails = {
             provider: mailProvider,
         };
 
         if (mailProvider === 'sendgrid') {
+            const rawFromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@ocsindia.net';
             mailConfigDetails.configured = !!process.env.SENDGRID_API_KEY;
-            mailConfigDetails.fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@ocsindia.net';
+            mailConfigDetails.fromEmail = typeof rawFromEmail === 'string' ? rawFromEmail.split('#')[0].trim() : rawFromEmail;
         } else if (mailProvider === 'smtp') {
-            mailConfigDetails.host = process.env.SMTP_HOST || 'Not Configured';
-            mailConfigDetails.port = process.env.SMTP_PORT || 'N/A';
-            mailConfigDetails.secure = process.env.SMTP_SECURE === 'true';
-            mailConfigDetails.configured = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+            const rawHost = process.env.SMTP_HOST;
+            const rawPort = process.env.SMTP_PORT;
+            const rawSecure = process.env.SMTP_SECURE;
+            const rawUser = process.env.SMTP_USER;
+            const rawPass = process.env.SMTP_PASS;
+
+            const cleanHost = typeof rawHost === 'string' ? rawHost.split('#')[0].trim() : rawHost;
+            const cleanPort = typeof rawPort === 'string' ? rawPort.split('#')[0].trim() : rawPort;
+            const cleanSecure = typeof rawSecure === 'string' ? rawSecure.split('#')[0].trim() : rawSecure;
+            const cleanUser = typeof rawUser === 'string' ? rawUser.split('#')[0].trim() : rawUser;
+            const cleanPass = typeof rawPass === 'string' ? rawPass.split('#')[0].trim() : rawPass;
+
+            mailConfigDetails.host = cleanHost || 'Not Configured';
+            mailConfigDetails.port = cleanPort || 'N/A';
+            mailConfigDetails.secure = cleanSecure === 'true';
+            mailConfigDetails.configured = !!(cleanHost && cleanUser && cleanPass);
         }
 
         res.json({

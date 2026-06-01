@@ -183,12 +183,12 @@ async function getTimeEntries({
 
     if (startDate) {
       whereConditions.push("te.start_time >= ?");
-      params.push(startDate);
+      params.push(formatDateTimeForMySQL(startDate));
     }
 
     if (endDate) {
       whereConditions.push("te.start_time <= ?");
-      params.push(endDate);
+      params.push(formatDateTimeForMySQL(endDate));
     }
 
     if (customerId) {

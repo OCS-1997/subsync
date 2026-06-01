@@ -6,13 +6,21 @@ import { getSubscriptionById } from '../models/subscriptionModel.js';
 import { getCustomerById } from '../models/customerModel.js';
 import appDB from '../db/subsyncDB.js';
 
+// Helper to strip inline comments from environment variables
+const cleanEnv = (val, defaultValue = '') => {
+    if (val === undefined || val === null) return defaultValue;
+    if (typeof val !== 'string') return val;
+    return val.split('#')[0].trim();
+};
+
 // Initialize email provider based on env
 let emailProvider = null;
-const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'sendgrid';
+const EMAIL_PROVIDER = cleanEnv(process.env.EMAIL_PROVIDER, 'sendgrid');
 
 if (EMAIL_PROVIDER === 'sendgrid') {
-    if (process.env.SENDGRID_API_KEY) {
-        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const sgApiKey = cleanEnv(process.env.SENDGRID_API_KEY);
+    if (sgApiKey) {
+        sgMail.setApiKey(sgApiKey);
         emailProvider = 'sendgrid';
     } else {
         console.warn('SENDGRID_API_KEY not set, email sending will fail');
@@ -226,10 +234,10 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
         invoice_html: invoiceHtml,
         // Deprecated but kept for backward compatibility
         items_table_html: invoiceHtml,
-        renewal_link: `${process.env.APP_BASE_URL || 'http://localhost'}/subscriptions/${subscription.sub_id}/renew`,
+        renewal_link: `${cleanEnv(process.env.APP_BASE_URL, 'http://localhost')}/subscriptions/${subscription.sub_id}/renew`,
         current_year: new Date().getFullYear(),
-        company_name: process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)',
-        support_email: process.env.SUPPORT_EMAIL || 'support@subsync.example.com',
+        company_name: cleanEnv(process.env.COMPANY_NAME, 'Online Consultancy Services (OCS)'),
+        support_email: cleanEnv(process.env.SUPPORT_EMAIL, 'support@subsync.example.com'),
         subscription: subscription,
         customer: customer,
     };
@@ -250,14 +258,22 @@ export async function sendEmail({ to, subject, html, attachment_url = null, atta
         throw new Error('Email provider not configured');
     }
 
-    const recipients = Array.isArray(to) ? to : [to];
+    let recipients = [];
+    if (Array.isArray(to)) {
+        recipients = to.flatMap(t => typeof t === 'string' ? t.split(',') : [t])
+            .map(email => typeof email === 'string' ? email.split('#')[0].trim() : email)
+            .filter(Boolean);
+    } else if (typeof to === 'string') {
+        recipients = to.split(',').map(email => email.split('#')[0].trim()).filter(Boolean);
+    }
 
     try {
         if (emailProvider === 'sendgrid') {
+            const sendgridFrom = cleanEnv(process.env.SENDGRID_FROM_EMAIL, 'noreply@ocsindia.net');
             const msg = {
                 to: recipients,
                 from: {
-                    email: process.env.SENDGRID_FROM_EMAIL || 'noreply@ocsindia.net',
+                    email: sendgridFrom,
                     name: 'Online Consultancy Services (OCS)'
                 },
                 subject,
@@ -282,18 +298,28 @@ export async function sendEmail({ to, subject, html, attachment_url = null, atta
                 error: null,
             };
         } else if (emailProvider === 'smtp') {
+            const smtpHost = cleanEnv(process.env.SMTP_HOST);
+            const smtpPort = parseInt(cleanEnv(process.env.SMTP_PORT, '587'), 10);
+            const smtpSecure = cleanEnv(process.env.SMTP_SECURE) === 'true';
+            const smtpUser = cleanEnv(process.env.SMTP_USER);
+            const smtpPass = cleanEnv(process.env.SMTP_PASS);
+            const smtpFrom = cleanEnv(process.env.SMTP_FROM || process.env.SMTP_USER);
+
             const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: parseInt(process.env.SMTP_PORT || '587', 10),
-                secure: process.env.SMTP_SECURE === 'true',
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpSecure,
                 auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
+                    user: smtpUser,
+                    pass: smtpPass,
                 },
+                tls: {
+                    rejectUnauthorized: false
+                }
             });
 
             const mailOptions = {
-                from: `"Online Consultancy Services (OCS)" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+                from: `"Online Consultancy Services (OCS)" <${smtpFrom}>`,
                 to: recipients.join(', '),
                 subject,
                 html,

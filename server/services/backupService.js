@@ -182,10 +182,10 @@ async function executeBackup(configId, configName) {
     try {
         await ensureBackupDirectory();
 
-        // Generate backup filename: backup_<config_name>_<timestamp>.sql[.gz]
+        // Generate backup filename: backup_<config_name>_<timestamp>_h<history_id>.sql[.gz]
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         const sanitizedName = configName.replace(/[^a-zA-Z0-9]/g, '_');
-        const backupFileName = `backup_${sanitizedName}_${timestamp}.sql`;
+        const backupFileName = `backup_${sanitizedName}_${timestamp}_h${historyId}.sql`;
         const backupFilePath = path.join(BACKUP_DIR, backupFileName);
 
         // Build mysqldump command (without compression)
@@ -211,7 +211,11 @@ async function executeBackup(configId, configName) {
             await pipeline(source, gzip, destination);
 
             // Delete the uncompressed file
-            await fs.unlink(backupFilePath);
+            try {
+                await fs.unlink(backupFilePath);
+            } catch (err) {
+                console.warn(`Temporary SQL file cleanup failed: ${err.message}`);
+            }
 
             finalFilePath = gzipFilePath;
         }
@@ -480,12 +484,12 @@ export async function updateScheduledBackupJob(configId) {
     try {
         const config = await getBackupConfigurationById(configId);
 
-        // Remove existing repeatable job for this config
+        // Remove existing repeatable jobs for this config (handling potential duplicates)
         const repeatableJobs = await backupTasksQueue.getRepeatableJobs();
-        const existingJob = repeatableJobs.find(job => job.key.includes(`backup-config-${configId}`));
+        const existingJobs = repeatableJobs.filter(job => job.key.includes(`backup-config-${configId}`));
 
-        if (existingJob) {
-            await backupTasksQueue.removeRepeatableByKey(existingJob.key);
+        for (const job of existingJobs) {
+            await backupTasksQueue.removeRepeatableByKey(job.key);
         }
 
         if (!config || !config.enabled || config.schedule_type === 'manual') {
@@ -518,11 +522,13 @@ export async function updateScheduledBackupJob(configId) {
 export async function deleteScheduledBackupJob(configId) {
     try {
         const repeatableJobs = await backupTasksQueue.getRepeatableJobs();
-        const existingJob = repeatableJobs.find(job => job.key.includes(`backup-config-${configId}`));
+        const existingJobs = repeatableJobs.filter(job => job.key.includes(`backup-config-${configId}`));
 
-        if (existingJob) {
-            await backupTasksQueue.removeRepeatableByKey(existingJob.key);
-            console.log(`Removed scheduled backup for config ${configId}`);
+        for (const job of existingJobs) {
+            await backupTasksQueue.removeRepeatableByKey(job.key);
+        }
+        if (existingJobs.length > 0) {
+            console.log(`Removed scheduled backup jobs for config ${configId}`);
         }
     } catch (error) {
         console.error(`Error deleting scheduled backup for config ${configId}:`, error);

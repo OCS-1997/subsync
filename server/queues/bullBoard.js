@@ -42,7 +42,8 @@ export function setupBullBoard(app) {
     // Basic auth middleware (simple implementation - use proper auth in production)
     const basicAuth = (req, res, next) => {
         const auth = req.headers.authorization;
-        const expectedAuth = process.env.BULL_BOARD_AUTH || 'admin:admin'; // Default credentials
+        const rawExpectedAuth = process.env.BULL_BOARD_AUTH || 'admin:admin';
+        const expectedAuth = typeof rawExpectedAuth === 'string' ? rawExpectedAuth.split('#')[0].trim() : rawExpectedAuth;
 
         if (!auth || !auth.startsWith('Basic ')) {
             res.setHeader('WWW-Authenticate', 'Basic realm="Bull Board"');
