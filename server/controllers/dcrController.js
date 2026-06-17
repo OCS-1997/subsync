@@ -601,35 +601,42 @@ async function getDcrDetailedReport(req, res) {
 
         const whereClause = whereConditions.join(' AND ');
 
-        // Daily trend
-        const [dailyTrend] = await appDB.query(`
+        // Execute independent queries in parallel for better performance
+        const [
+            [dailyTrend],
+            [callTypes],
+            [userBreakdown],
+            [[summary]]
+        ] = await Promise.all([
+            // Daily trend
+            appDB.query(`
             SELECT DATE(de.timestamp) as date, COUNT(*) as count, SUM(de.time_spent_minutes) as minutes
             FROM dcr_entries de
             WHERE ${whereClause}
             GROUP BY DATE(de.timestamp)
             ORDER BY date ASC
-        `, params);
+        `, params),
 
-        // Call type distribution
-        const [callTypes] = await appDB.query(`
+            // Call type distribution
+            appDB.query(`
             SELECT de.call_type as name, COUNT(*) as value
             FROM dcr_entries de
             WHERE ${whereClause}
             GROUP BY de.call_type
-        `, params);
+        `, params),
 
-        // User breakdown
-        const [userBreakdown] = await appDB.query(`
+            // User breakdown
+            appDB.query(`
             SELECT u.name, COUNT(*) as calls, SUM(de.time_spent_minutes) as minutes
             FROM dcr_entries de
             JOIN users u ON de.user_id = u.username
             WHERE ${whereClause}
             GROUP BY u.username, u.name
             ORDER BY calls DESC
-        `, params);
+        `, params),
 
-        // Summary
-        const [[summary]] = await appDB.query(`
+            // Summary
+            appDB.query(`
             SELECT 
                 COUNT(*) as total_calls, 
                 SUM(de.time_spent_minutes) as total_minutes, 
@@ -637,7 +644,8 @@ async function getDcrDetailedReport(req, res) {
                 COUNT(DISTINCT de.contact_name) as unique_contacts
             FROM dcr_entries de
             WHERE ${whereClause}
-        `, params);
+        `, params)
+        ]);
 
         res.status(200).json({ 
             success: true, 
