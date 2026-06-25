@@ -49,6 +49,7 @@ export const QUEUE_NAMES = {
     PDF_GENERATION: 'pdfGeneration',
     BACKUP_TASKS: 'backupTasks',
     SCHEDULED_TASKS: 'scheduledTasks',
+    WEBHOOK_DELIVERY: 'webhookDelivery',
 };
 
 // Create queues
@@ -119,6 +120,24 @@ export const scheduledTasksQueue = new Queue(QUEUE_NAMES.SCHEDULED_TASKS, {
     },
 });
 
+export const webhookDeliveryQueue = new Queue(QUEUE_NAMES.WEBHOOK_DELIVERY, {
+    connection: redisConnection,
+    defaultJobOptions: {
+        attempts: 5,
+        backoff: {
+            type: 'exponential',
+            delay: 5000, // 5s initial delay
+        },
+        removeOnComplete: {
+            age: 7 * 24 * 3600,
+            count: 1000,
+        },
+        removeOnFail: {
+            age: 30 * 24 * 3600,
+        },
+    },
+});
+
 // Queue events for monitoring
 export const subscriptionRemindersQueueEvents = new QueueEvents(QUEUE_NAMES.SUBSCRIPTION_REMINDERS, {
     connection: redisConnection,
@@ -136,6 +155,8 @@ export function getQueueByName(queueName) {
             return backupTasksQueue;
         case QUEUE_NAMES.SCHEDULED_TASKS:
             return scheduledTasksQueue;
+        case QUEUE_NAMES.WEBHOOK_DELIVERY:
+            return webhookDeliveryQueue;
         default:
             throw new Error(`Unknown queue name: ${queueName}`);
     }
@@ -148,6 +169,7 @@ export async function closeQueues() {
         pdfGenerationQueue.close(),
         backupTasksQueue.close(),
         scheduledTasksQueue.close(),
+        webhookDeliveryQueue.close(),
         subscriptionRemindersQueueEvents.close(),
         redisClient.quit(),
     ]);

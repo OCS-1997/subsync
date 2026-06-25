@@ -164,6 +164,15 @@ const SettingsIndex = () => {
                     path: "dashboard-settings",
                     color: "text-orange-500",
                     permission: PERMISSIONS.DASHBOARD_CONFIGURE
+                },
+                {
+                    id: 'helpdesk',
+                    title: "Helpdesk Integration",
+                    description: "Real-time webhook sync",
+                    icon: Navigation,
+                    path: "helpdesk",
+                    color: "text-indigo-600",
+                    permission: PERMISSIONS.SETTINGS_MANAGE
                 }
             ]
         },

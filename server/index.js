@@ -12,6 +12,7 @@ import { setupBullBoard } from './queues/bullBoard.js';
 import { createReminderWorker } from './workers/reminderWorker.js';
 import { createBackupWorker } from './workers/backupWorker.js';
 import { createScheduledTaskWorker } from './workers/scheduledTaskWorker.js';
+import { createWebhookWorker } from './workers/webhookWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
 import { syncAllBackupSchedules } from './services/backupService.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
@@ -140,11 +141,19 @@ setupBullBoard(app);
 let reminderWorker = null;
 let backupWorker = null;
 let scheduledTaskWorker = null;
+let webhookWorker = null;
 try {
     reminderWorker = createReminderWorker();
     console.log('Reminder worker started successfully'.bgGreen.white);
 } catch (error) {
     console.error('Failed to start reminder worker:'.bgRed.white, error);
+}
+
+try {
+    webhookWorker = createWebhookWorker();
+    console.log('Webhook worker started successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to start webhook worker:'.bgRed.white, error);
 }
 
 try {
@@ -215,6 +224,9 @@ process.on('SIGTERM', async () => {
     if (scheduledTaskWorker) {
         await scheduledTaskWorker.close();
     }
+    if (webhookWorker) {
+        await webhookWorker.close();
+    }
     await closeQueues();
     server.close(() => {
         console.log('Server closed');
@@ -229,6 +241,9 @@ process.on('SIGINT', async () => {
     }
     if (scheduledTaskWorker) {
         await scheduledTaskWorker.close();
+    }
+    if (webhookWorker) {
+        await webhookWorker.close();
     }
     await closeQueues();
     server.close(() => {

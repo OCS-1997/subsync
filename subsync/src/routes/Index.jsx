@@ -66,6 +66,7 @@ import TimeTracking from '@/features/TimeTracking';
 import SettingsIndex from '@/features/Settings/SettingsIndex.jsx';
 import AppearanceSettings from '@/features/Settings/AppearanceSettings.jsx';
 import DeveloperControls from '@/features/Settings/DeveloperControls.jsx';
+import HelpdeskSettings from '@/features/Settings/HelpdeskSettings.jsx';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -220,6 +221,7 @@ const router = createBrowserRouter([
           { path: "dashboard-settings", element: <PermissionGate required={PERMISSIONS.DASHBOARD_CONFIGURE}><DashboardSettings /></PermissionGate> },
           { path: "teams", element: <PermissionGate required={PERMISSIONS.TEAMS_MANAGE}><TeamsSettings /></PermissionGate> },
           { path: "appearance", element: <AppearanceSettings /> },
+          { path: "helpdesk", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><HelpdeskSettings /></PermissionGate> },
           { path: "developer-controls", element: <PermissionGate required={PERMISSIONS.DEVELOPER_CONTROLS}><DeveloperControls /></PermissionGate> },
         ]
       },

@@ -3,6 +3,9 @@ import { isAuthenticated, authorize } from '../middlewares/auth.js';
 import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController, searchByPhoneController } from '../controllers/customerController.js';
+import { helpdeskAuth } from '../middlewares/helpdeskAuth.js';
+import { getCustomers, getCustomerDetails, getCustomerDomains, getCustomerSubscriptions, getCustomerServices, getCustomerSummary } from '../controllers/helpdeskController.js';
+import { getSettings as getHelpdeskSettings, updateSettings as updateHelpdeskSettings, testConnection as testHelpdeskConnection, getWebhookHistory, getWebhookEventLogs } from '../controllers/helpdeskSettingsController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
 import { createDcr, getDcrList, getDcrById, updateDcr, deleteDcr, getWeekMeta, getDcrStats, getUserDcrStats, getDcrUsers, getDcrDetailedReport } from '../controllers/dcrController.js';
@@ -262,6 +265,34 @@ router.put('/update-customer/:cid', isAuthenticated, authorize(PERMISSIONS.CUSTO
 router.post('/import-customers', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_CREATE), importCustomers);
 router.post('/customer/:cid/contacts', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_UPDATE), addCustomerContactController);
 router.get('/customers/search-by-phone', isAuthenticated, authorize(PERMISSIONS.CUSTOMERS_VIEW), searchByPhoneController);
+
+// Helpdesk Integration Core APIs (Secured by API Key/HMAC Signature Middleware)
+router.get('/helpdesk/customers', helpdeskAuth, getCustomers);
+router.get('/helpdesk/customers/:customerId', helpdeskAuth, getCustomerDetails);
+router.get('/helpdesk/customers/:customerId/domains', helpdeskAuth, getCustomerDomains);
+router.get('/helpdesk/customers/:customerId/subscriptions', helpdeskAuth, getCustomerSubscriptions);
+router.get('/helpdesk/customers/:customerId/services', helpdeskAuth, getCustomerServices);
+router.get('/helpdesk/customers/:customerId/summary', helpdeskAuth, getCustomerSummary);
+
+// Helpdesk Admin Integration Settings APIs (Secured by Session Authentication)
+router.get('/admin/helpdesk/settings', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getHelpdeskSettings);
+router.put('/admin/helpdesk/settings', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), updateHelpdeskSettings);
+router.post('/admin/helpdesk/settings/test-connection', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), testHelpdeskConnection);
+router.get('/admin/helpdesk/events', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getWebhookHistory);
+router.get('/admin/helpdesk/events/:eventId/logs', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getWebhookEventLogs);
+
+// Mock Helpdesk Endpoints (For Local Integration Verification)
+router.post('/integrations/crm/customer-event', async (req, res) => {
+    try {
+        console.log("=== [Mock Helpdesk] Received Webhook Event ===");
+        console.log("Headers:", req.headers);
+        console.log("Payload:", JSON.stringify(req.body, null, 2));
+        return res.status(200).json({ success: true, message: "Mock Helpdesk received event successfully!" });
+    } catch (e) {
+        console.error("Mock Helpdesk error:", e);
+        return res.status(500).json({ success: false, error: e.message });
+    }
+});
 
 // Payment Terms
 router.get('/payment-terms', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getPaymentTerms);

@@ -2,6 +2,7 @@ import appDB from "../db/subsyncDB.js";
 import { getCurrentTime } from "../middlewares/time.js";
 import { generateID } from "../middlewares/generateID.js";
 import { isValidGSTIN, isValidEmail, isValidPhoneNumber, normalizePhoneNumber } from "../middlewares/validations.js";
+import { publishCustomerEvent } from "../services/webhookService.js";
 
 const sanitizePhoneNumber = (value) => normalizePhoneNumber(value);
 
@@ -106,7 +107,10 @@ async function addCustomer(customer) {
 
         // Check result
         if (result.affectedRows > 0) {
-            return result.insertId;
+            publishCustomerEvent(cid, 'customer.created').catch(err => {
+                console.error("Failed to publish customer.created event:", err);
+            });
+            return cid;
         } else {
             throw new Error("Failed to add customer. No rows affected.");
         }
@@ -172,6 +176,10 @@ async function updateCustomer(customerId, updatedData) {
     try {
         const currentTime = getCurrentTime();
 
+        // Fetch current status to detect status transitions
+        const [currentRows] = await appDB.query("SELECT customer_status FROM customers WHERE customer_id = ?", [customerId]);
+        const oldStatus = currentRows.length > 0 ? currentRows[0].customer_status : null;
+
         // Serialize JSON fields
         const serializedAddress = JSON.stringify(normalizedAddress);
         const serializedContacts = JSON.stringify(sanitizedContacts);
@@ -197,6 +205,20 @@ async function updateCustomer(customerId, updatedData) {
         if (result.affectedRows === 0) {
             throw new Error("Customer not found or no changes made.");
         }
+
+        // Trigger webhook depending on status transition
+        let eventType = 'customer.updated';
+        if (oldStatus && oldStatus !== customer_status) {
+            if (customer_status === 'Active') {
+                eventType = 'customer.activated';
+            } else if (customer_status === 'Inactive') {
+                eventType = 'customer.deactivated';
+            }
+        }
+        
+        publishCustomerEvent(customerId, eventType).catch(err => {
+            console.error(`Failed to publish ${eventType} event:`, err);
+        });
 
         return result;
     } catch (error) {
