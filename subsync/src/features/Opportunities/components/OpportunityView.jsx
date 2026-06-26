@@ -261,8 +261,53 @@ export default function OpportunityView() {
                             Products / Services
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-6">
-                        <div className="text-base whitespace-pre-wrap">{currentOpportunity.product_services}</div>
+                    <CardContent className="pt-6 space-y-4">
+                        <div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px]">Involved Products / Services Description</div>
+                            <div className="text-base whitespace-pre-wrap mt-1 font-medium">{currentOpportunity.product_services}</div>
+                        </div>
+
+                        {currentOpportunity.planned_items && currentOpportunity.planned_items.length > 0 && (
+                            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <div className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider text-[10px] mb-3">Planned Subscription Items</div>
+                                <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 font-black uppercase text-slate-400">
+                                                <th className="p-3">Service Name</th>
+                                                <th className="p-3 w-24">Rate</th>
+                                                <th className="p-3 w-16">Qty</th>
+                                                <th className="p-3 w-28 text-right">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            {currentOpportunity.planned_items.map((item, idx) => (
+                                                <tr key={idx} className="font-semibold text-slate-700 dark:text-slate-300">
+                                                    <td className="p-3">{item.service_name}</td>
+                                                    <td className="p-3">
+                                                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(item.rate)}
+                                                    </td>
+                                                    <td className="p-3">{item.quantity}</td>
+                                                    <td className="p-3 text-right">
+                                                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(item.amount)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr className="bg-slate-50/50 dark:bg-slate-900/30 font-bold text-slate-800 dark:text-slate-200">
+                                                <td colSpan={3} className="p-3 text-right font-black uppercase text-[10px] text-slate-400">Total Subscription Est:</td>
+                                                <td className="p-3 text-right text-purple-600 dark:text-purple-400 font-black">
+                                                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
+                                                        currentOpportunity.planned_items.reduce((sum, item) => sum + (parseFloat(item.amount || 0)), 0)
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

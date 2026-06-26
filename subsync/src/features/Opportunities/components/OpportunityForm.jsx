@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Save, X, UserPlus, Building2, User, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, Save, X, UserPlus, Building2, User, Check, ChevronsUpDown, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,8 +37,10 @@ const OpportunityForm = () => {
     const [customers, setCustomers] = useState([]);
     const [customerContacts, setCustomerContacts] = useState([]);
     const [users, setUsers] = useState([]);
+    const [servicesList, setServicesList] = useState([]);
     const [ownerPopoverOpen, setOwnerPopoverOpen] = useState(false);
     const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
+    const [servicePopoverOpen, setServicePopoverOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         opportunity_date: new Date().toISOString().split("T")[0],
@@ -57,6 +59,7 @@ const OpportunityForm = () => {
         domain: "",
         owner: "",
         product_services: "",
+        planned_items: [],
         last_contacted_at: new Date().toISOString().split("T")[0],
         status_id: "",
         remarks: "",
@@ -65,10 +68,20 @@ const OpportunityForm = () => {
 
 
 
+    const fetchServices = async () => {
+        try {
+            const res = await api.get("/all-services?limit=1000");
+            setServicesList(res.data.services || []);
+        } catch (error) {
+            console.error("Error fetching services:", error);
+        }
+    };
+
     useEffect(() => {
         dispatch(fetchStatuses());
         fetchCustomers();
         fetchUsers();
+        fetchServices();
     }, [dispatch]);
 
     useEffect(() => {
@@ -98,6 +111,7 @@ const OpportunityForm = () => {
                 domain: currentOpportunity.domain || "",
                 owner: currentOpportunity.owner || "",
                 product_services: currentOpportunity.product_services || "",
+                planned_items: currentOpportunity.planned_items || [],
                 last_contacted_at: currentOpportunity.last_contacted_at?.split("T")[0] || "",
                 status_id: currentOpportunity.status_id?.toString() || "",
                 remarks: currentOpportunity.remarks || "",
@@ -143,6 +157,66 @@ const OpportunityForm = () => {
         } catch (error) {
             console.error("Error fetching customer contacts:", error);
         }
+    };
+
+    const addPlannedItem = (service) => {
+        const existingItemIndex = (formData.planned_items || []).findIndex(item => item.service_id === service.service_id);
+        let updatedItems = [...(formData.planned_items || [])];
+        if (existingItemIndex > -1) {
+            const updatedItem = { ...updatedItems[existingItemIndex] };
+            updatedItem.quantity = parseFloat(updatedItem.quantity || 0) + 1;
+            updatedItem.amount = updatedItem.quantity * parseFloat(updatedItem.rate || 0);
+            updatedItems[existingItemIndex] = updatedItem;
+        } else {
+            const rate = parseFloat(service.selling_price) || 0;
+            updatedItems.push({
+                service_id: service.service_id,
+                service_name: service.service_name,
+                quantity: 1,
+                rate: rate,
+                amount: rate
+            });
+        }
+        
+        const newTotal = updatedItems.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)), 0);
+        
+        setFormData(prev => ({
+            ...prev,
+            planned_items: updatedItems,
+            opportunity_value: newTotal
+        }));
+    };
+
+    const updatePlannedItem = (index, key, value) => {
+        let updatedItems = [...(formData.planned_items || [])];
+        const item = { ...updatedItems[index] };
+        
+        item[key] = value;
+        
+        const qty = parseFloat(item.quantity) || 0;
+        const rate = parseFloat(item.rate) || 0;
+        item.amount = qty * rate;
+        
+        updatedItems[index] = item;
+        
+        const newTotal = updatedItems.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0)), 0);
+        
+        setFormData(prev => ({
+            ...prev,
+            planned_items: updatedItems,
+            opportunity_value: newTotal
+        }));
+    };
+
+    const removePlannedItem = (index) => {
+        const updatedItems = (formData.planned_items || []).filter((_, i) => i !== index);
+        const newTotal = updatedItems.reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)), 0);
+        
+        setFormData(prev => ({
+            ...prev,
+            planned_items: updatedItems,
+            opportunity_value: newTotal
+        }));
     };
 
     const handleCustomerChange = (customerId) => {
@@ -206,6 +280,7 @@ const OpportunityForm = () => {
                 contact_person_id: formData.contact_person_id === "" ? null : formData.contact_person_id,
                 referred_by: formData.referred_by === "" ? null : formData.referred_by,
                 domain: formData.domain === "" ? null : formData.domain,
+                planned_items: formData.planned_items || [],
                 last_contacted_at: formData.last_contacted_at === "" ? null : formData.last_contacted_at,
                 status_id: formData.status_id === "" ? null : parseInt(formData.status_id),
                 remarks: formData.remarks === "" ? null : formData.remarks,
@@ -437,6 +512,124 @@ const OpportunityForm = () => {
                     </CardContent>
                 </Card>
 
+                {/* Section: Planned Services / Subscriptions */}
+                <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
+                    <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
+                        <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 dark:text-purple-400">
+                            Planned Services (Subscription Estimation)
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-8 space-y-6">
+                        {(!formData.planned_items || formData.planned_items.length === 0) ? (
+                            <div className="text-center py-8 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs">
+                                No services selected. Use the search tool below to add planned subscription items.
+                            </div>
+                        ) : (
+                            <div className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            <th className="p-4">Service Name</th>
+                                            <th className="p-4 w-32">Rate (₹)</th>
+                                            <th className="p-4 w-28">Quantity</th>
+                                            <th className="p-4 w-32 text-right">Amount</th>
+                                            <th className="p-4 w-16 text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {(formData.planned_items || []).map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 font-bold text-sm text-slate-800 dark:text-slate-200">
+                                                <td className="p-4">{item.service_name}</td>
+                                                <td className="p-4">
+                                                    <Input
+                                                        type="number"
+                                                        className="h-9 px-3 rounded-lg font-bold text-xs bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 w-full"
+                                                        value={item.rate}
+                                                        onChange={(e) => updatePlannedItem(idx, 'rate', e.target.value)}
+                                                    />
+                                                </td>
+                                                <td className="p-4">
+                                                    <Input
+                                                        type="number"
+                                                        className="h-9 px-3 rounded-lg font-bold text-xs bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 w-full"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updatePlannedItem(idx, 'quantity', e.target.value)}
+                                                    />
+                                                </td>
+                                                <td className="p-4 text-right pr-6">
+                                                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(item.amount || 0)}
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => removePlannedItem(idx)}
+                                                        className="h-8 w-8 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <div className="space-y-1 w-full md:max-w-sm">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">Search & Add Service</Label>
+                                <Popover open={servicePopoverOpen} onOpenChange={setServicePopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-11 w-full justify-between px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-white"
+                                        >
+                                            Select service to add...
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                        <Command className="dark:bg-slate-900">
+                                            <CommandInput placeholder="Search services..." className="font-bold border-none focus:ring-0 text-xs" />
+                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No service found.</CommandEmpty>
+                                            <CommandGroup className="max-h-60 overflow-auto p-2">
+                                                {(servicesList || []).map((s) => (
+                                                    <CommandItem
+                                                        key={s.service_id}
+                                                        value={`${s.service_name} ${s.stock_keepers_unit || ''}`}
+                                                        onSelect={() => {
+                                                            addPlannedItem(s);
+                                                            setServicePopoverOpen(false);
+                                                        }}
+                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-50 dark:data-[selected=true]:bg-blue-900/20 data-[selected=true]:text-blue-600 dark:data-[selected=true]:text-blue-400 cursor-pointer text-xs font-semibold"
+                                                    >
+                                                        <div className="flex flex-col">
+                                                            <span>{s.service_name}</span>
+                                                            {s.selling_price && <span className="text-[9px] font-bold opacity-60 text-slate-500">Price: ₹{s.selling_price}</span>}
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl flex items-center justify-between gap-8 border border-slate-100 dark:border-slate-800 min-w-[240px]">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Est. Subscription Cost:</span>
+                                <span className="text-lg font-black text-purple-600 dark:text-purple-400">
+                                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
+                                        (formData.planned_items || []).reduce((sum, item) => sum + (parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)), 0)
+                                    )}
+                                </span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Section 2: Sale Specifics */}
                 <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                     <CardHeader className="bg-gray-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800">
@@ -478,7 +671,7 @@ const OpportunityForm = () => {
                                     required
                                     placeholder="0.00"
                                     value={formData.opportunity_value}
-                                    onChange={(e) => setFormData({ ...formData, opportunity_value: parseFloat(e.target.value) || 0 })}
+                                    onChange={(e) => setFormData({ ...formData, opportunity_value: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -592,7 +785,7 @@ const OpportunityForm = () => {
                                     onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
                                 />
                             </div>
-                            <div className="space-y-2">
+                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Related Domain Identity</Label>
                                 <Input
                                     className="h-11 px-4 rounded-xl font-bold text-sm md:font-mono bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
@@ -638,7 +831,7 @@ const OpportunityForm = () => {
                         ) : (
                             <>
                                 <Save className="w-4 h-4 mr-2" />
-                                {isEdit ? "Update Opportunity" : "Launch Opportunity"}
+                                {isEdit ? "Update Opportunity" : "Save Opportunity"}
                             </>
                         )}
                     </Button>

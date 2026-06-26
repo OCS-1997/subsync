@@ -34,7 +34,7 @@ const getSubscriptionsController = async (req, res) => {
   try {
     const { searchType, search, sort, order, page = 1, statusFilter, soonDays, archivedOnly } = req.query;
 
-    const limit = 10;
+    const limit = req.query.limit === 'all' ? 10000 : (parseInt(req.query.limit, 10) || 10);
     const { dataArray, totalCount } = await getSubscriptions({
       searchType,
       search,

@@ -17,6 +17,7 @@ export const createOpportunity = async (opportunityData) => {
         domain,
         owner,
         product_services,
+        planned_items,
         last_contacted_at,
         status_id,
         remarks,
@@ -38,8 +39,9 @@ export const createOpportunity = async (opportunityData) => {
         INSERT INTO opportunities (
             opportunity_id, opportunity_date, customer_id, customer_details, contact_person_id,
             opportunity_type, referred_by, domain, owner,
-            product_services, last_contacted_at, status_id, remarks, opportunity_value
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            product_services, planned_items,
+            last_contacted_at, status_id, remarks, opportunity_value
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -53,6 +55,7 @@ export const createOpportunity = async (opportunityData) => {
         domain || null,
         owner,
         product_services,
+        planned_items ? JSON.stringify(planned_items) : null,
         last_contacted_at || null,
         status_id || null,
         remarks || null,
@@ -73,13 +76,13 @@ export const updateOpportunity = async (opportunityId, updatedData) => {
     for (const [key, value] of Object.entries(updatedData)) {
         if ([
             'opportunity_date', 'customer_id', 'customer_details', 'contact_person_id', 'opportunity_type',
-            'referred_by', 'domain', 'owner', 'product_services',
+            'referred_by', 'domain', 'owner', 'product_services', 'planned_items',
             'last_contacted_at', 'status_id', 'remarks', 'opportunity_value', 'is_deleted'
         ].includes(key)) {
             fields.push(`${key} = ?`);
             
             let finalValue = value;
-            if (key === 'customer_details' && value !== null && typeof value === 'object') {
+            if ((key === 'customer_details' || key === 'planned_items') && value !== null && typeof value === 'object') {
                 finalValue = JSON.stringify(value);
             } else if (key === 'opportunity_value') {
                 finalValue = parseFloat(value) || 0;
@@ -180,13 +183,20 @@ export const getAllOpportunities = async ({
 
     const [opportunities] = await appDB.query(query, isAll ? values : [...values, limitNum, offset]);
 
-    // Parse customer_details JSON for each opportunity if it's a string
+    // Parse JSON fields for each opportunity if they are strings
     opportunities.forEach(opp => {
         if (opp.customer_details && typeof opp.customer_details === 'string') {
             try {
                 opp.customer_details = JSON.parse(opp.customer_details);
             } catch (e) {
                 console.error('Error parsing customer_details JSON in list:', e);
+            }
+        }
+        if (opp.planned_items && typeof opp.planned_items === 'string') {
+            try {
+                opp.planned_items = JSON.parse(opp.planned_items);
+            } catch (e) {
+                console.error('Error parsing planned_items JSON in list:', e);
             }
         }
     });
@@ -218,12 +228,21 @@ export const getOpportunityById = async (opportunityId) => {
     `;
     const [rows] = await appDB.execute(query, [opportunityId]);
 
-    // Parse customer_details JSON if it exists and is a string
-    if (rows[0] && rows[0].customer_details && typeof rows[0].customer_details === 'string') {
-        try {
-            rows[0].customer_details = JSON.parse(rows[0].customer_details);
-        } catch (e) {
-            console.error('Error parsing customer_details JSON:', e);
+    // Parse JSON fields if they exist and are strings
+    if (rows[0]) {
+        if (rows[0].customer_details && typeof rows[0].customer_details === 'string') {
+            try {
+                rows[0].customer_details = JSON.parse(rows[0].customer_details);
+            } catch (e) {
+                console.error('Error parsing customer_details JSON:', e);
+            }
+        }
+        if (rows[0].planned_items && typeof rows[0].planned_items === 'string') {
+            try {
+                rows[0].planned_items = JSON.parse(rows[0].planned_items);
+            } catch (e) {
+                console.error('Error parsing planned_items JSON:', e);
+            }
         }
     }
 
