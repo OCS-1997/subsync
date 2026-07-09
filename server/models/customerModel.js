@@ -91,8 +91,8 @@ async function addCustomer(customer) {
         const [result] = await appDB.query(
             "INSERT INTO customers (customer_id, salutation, first_name, last_name, primary_email, secondary_email, country_code, primary_phone_number, secondary_phone_number, " +
             "customer_address, other_contacts, company_name, display_name, gst_in, currency_code, gst_treatment, tax_preference, exemption_reason, " +
-            "payment_terms, notes, customer_status, created_at, updated_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            "payment_terms, notes, customer_status, created_at, updated_at, subscribed_services) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             [
                 cid, customer.salutation, customer.firstName, customer.lastName, customer.email,
                 customer.secondary_email || null,
@@ -102,6 +102,7 @@ async function addCustomer(customer) {
                 customerAddress, otherContacts, customer.companyName, customer.displayName, customer.gstin,
                 customer.currencyCode, customer.gst_treatment, customer.tax_preference, customer.exemption_reason || "",
                 paymentTerms, customer.notes || "", customer.customerStatus, currentTime, currentTime,
+                JSON.stringify([])
             ]
         );
 
@@ -265,7 +266,7 @@ const getAllCustomers = async ({ search = "", sort = "updated_at", order = "desc
 
     try {
       const [customers] = await appDB.query(
-            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, country_code, primary_phone_number, primary_email, gst_treatment
+            `SELECT customer_id, salutation, first_name, last_name, display_name, company_name, country_code, primary_phone_number, primary_email, gst_treatment, customer_status, subscribed_services
              FROM customers 
              WHERE (
                 display_name LIKE ? OR
@@ -346,7 +347,7 @@ const getCustomerById = async (customerId) => {
     const query = `
         INSERT INTO customers (salutation, first_name, last_name, primary_email, country_code, primary_phone_number, 
                                customer_address, company_name, display_name, gst_in, currency_code, gst_treatment, 
-                               tax_preference, exemption_reason, notes, other_contacts, customer_status) 
+                               tax_preference, exemption_reason, notes, other_contacts, customer_status, subscribed_services) 
         VALUES ?
     `;
 
@@ -368,6 +369,7 @@ const getCustomerById = async (customerId) => {
         customer.notes,
         JSON.stringify(customer.other_contacts),
         customer.customer_status,
+        JSON.stringify([]),
     ]);
 
     await appDB.query(query, [values]);
@@ -449,4 +451,46 @@ async function searchCustomerByPhone(phoneNumber) {
     }
 }
 
-export { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData, appendCustomerContact, searchCustomerByPhone };
+async function syncCustomerSubscribedServices(customerId, connection = null) {
+    try {
+        const db = connection || appDB;
+        
+        // Query unique services across all subscriptions for this customer
+        const [rows] = await db.query(
+            `SELECT DISTINCT COALESCE(si.service_name, ser.service_name) AS service_name
+             FROM subscription_items si
+             JOIN subscriptions s ON si.sub_id = s.sub_id
+             LEFT JOIN services ser ON si.service_id = ser.service_id
+             WHERE s.customer_id = ?`,
+            [customerId]
+        );
+
+        const services = rows
+            .map(r => r.service_name)
+            .filter(name => name !== null && name !== undefined && name !== '');
+
+        await db.query(
+            "UPDATE customers SET subscribed_services = ? WHERE customer_id = ?",
+            [JSON.stringify(services), customerId]
+        );
+        return services;
+    } catch (error) {
+        console.error(`Error syncing subscribed services for customer ${customerId}:`, error);
+        throw error;
+    }
+}
+
+async function syncAllCustomersSubscribedServices(connection = null) {
+    try {
+        const db = connection || appDB;
+        const [customers] = await db.query("SELECT customer_id FROM customers");
+        for (const customer of customers) {
+            await syncCustomerSubscribedServices(customer.customer_id, db);
+        }
+    } catch (error) {
+        console.error("Error syncing all customers subscribed services:", error);
+        throw error;
+    }
+}
+
+export { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData, appendCustomerContact, searchCustomerByPhone, syncCustomerSubscribedServices, syncAllCustomersSubscribedServices };

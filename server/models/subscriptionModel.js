@@ -292,6 +292,9 @@ async function addSubscription(payload, changedBy = null, ipAddress = null) {
       });
     }
 
+    const { syncCustomerSubscribedServices } = await import('./customerModel.js');
+    await syncCustomerSubscribedServices(customerID, conn);
+
     await conn.commit();
     return { subId };
   } catch (error) {
@@ -522,6 +525,12 @@ async function updateSubscriptionById(subId, payload, changedBy = null, ipAddres
       }
     }
 
+    const { syncCustomerSubscribedServices } = await import('./customerModel.js');
+    if (oldData.customer_id !== newData.customer_id) {
+        await syncCustomerSubscribedServices(oldData.customer_id, conn);
+    }
+    await syncCustomerSubscribedServices(newData.customer_id, conn);
+
     await conn.commit();
     return true;
   } catch (e) {
@@ -536,8 +545,17 @@ async function deleteSubscriptionById(subId) {
   const conn = await appDB.getConnection();
   try {
     await conn.beginTransaction();
+    const [subRows] = await conn.query(`SELECT customer_id FROM subscriptions WHERE sub_id = ?`, [subId]);
+    const customerId = subRows.length > 0 ? subRows[0].customer_id : null;
+
     await conn.query(`DELETE FROM subscription_items WHERE sub_id = ?`, [subId]);
     const [res] = await conn.query(`DELETE FROM subscriptions WHERE sub_id = ?`, [subId]);
+
+    if (customerId) {
+        const { syncCustomerSubscribedServices } = await import('./customerModel.js');
+        await syncCustomerSubscribedServices(customerId, conn);
+    }
+
     await conn.commit();
     return res.affectedRows > 0;
   } catch (e) {

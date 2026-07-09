@@ -190,6 +190,11 @@ import {
     exportEntriesController
 } from '../controllers/reportsController.js';
 import {
+    exportInsightsController,
+    getExportStatusController,
+    downloadExportController
+} from '../controllers/exportController.js';
+import {
     resolveNumberController,
     logCallController,
     getCallLogsController
@@ -670,6 +675,9 @@ router.get('/time-tracking/categories/:id/stats', isAuthenticated, authorize(PER
 router.get('/time-tracking/reports', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getTimeReportsController);
 router.get('/time-tracking/reports/detailed', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getDetailedReportsController);
 router.get('/time-tracking/reports/export', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), exportEntriesController);
+router.post('/time-tracking/reports/export-insights', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), exportInsightsController);
+router.get('/time-tracking/reports/export-insights/status/:taskId', isAuthenticated, authorize(PERMISSIONS.TIME_TRACKING_VIEW), getExportStatusController);
+router.get('/time-tracking/reports/export-insights/download/:taskId', isAuthenticated, downloadExportController);
 
 // Reports 360 routes removed
 

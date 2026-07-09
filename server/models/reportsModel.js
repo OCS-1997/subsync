@@ -176,7 +176,7 @@ async function getDetailedReports({ userId, startDate, endDate, teamId, customer
  * @param {Object} filters - Filter options
  * @returns {Promise<Array>}
  */
-async function getEntriesForExport({ userId, startDate, endDate, customerId, projectId }) {
+async function getEntriesForExport({ userId, startDate, endDate, customerId, projectId, activityTypeId, isBillable }) {
     try {
         let whereConditions = ['te.deleted_at IS NULL', 'te.end_time IS NOT NULL'];
         let params = [];
@@ -204,6 +204,16 @@ async function getEntriesForExport({ userId, startDate, endDate, customerId, pro
         if (projectId) {
             whereConditions.push('te.project_id = ?');
             params.push(projectId);
+        }
+
+        if (activityTypeId) {
+            whereConditions.push('te.activity_type_id = ?');
+            params.push(activityTypeId);
+        }
+
+        if (isBillable !== undefined && isBillable !== null && isBillable !== '') {
+            whereConditions.push('te.is_billable = ?');
+            params.push(isBillable === 'true' || isBillable === true || isBillable === 1 || isBillable === '1');
         }
 
         const whereClause = whereConditions.join(' AND ');

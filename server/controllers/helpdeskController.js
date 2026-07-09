@@ -39,7 +39,9 @@ export const getCustomers = async (req, res) => {
                 secondary_phone_number AS secondaryPhone,
                 company_name AS companyName,
                 display_name AS displayName,
-                customer_status AS status
+                customer_status AS status,
+                subscribed_services AS subscribedServices,
+                updated_at AS updatedAt
             FROM customers
             ${whereSQL}
             ORDER BY created_at DESC
@@ -47,6 +49,19 @@ export const getCustomers = async (req, res) => {
         `;
 
         const [customers] = await appDB.query(selectQuery, [...params, limit, offset]);
+
+        const processedCustomers = customers.map(c => {
+            if (typeof c.subscribedServices === 'string') {
+                try {
+                    c.subscribedServices = JSON.parse(c.subscribedServices);
+                } catch {
+                    c.subscribedServices = [];
+                }
+            } else if (!c.subscribedServices) {
+                c.subscribedServices = [];
+            }
+            return c;
+        });
 
         // Get total count for pagination metadata
         const countQuery = `SELECT COUNT(*) as total FROM customers ${whereSQL}`;
@@ -56,7 +71,7 @@ export const getCustomers = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            customers,
+            customers: processedCustomers,
             pagination: {
                 totalRecords: total,
                 totalPages,
@@ -86,7 +101,9 @@ export const getCustomerDetails = async (req, res) => {
                 secondary_phone_number AS secondaryPhone,
                 company_name AS companyName,
                 display_name AS displayName,
-                customer_status AS status
+                customer_status AS status,
+                subscribed_services AS subscribedServices,
+                updated_at AS updatedAt
             FROM customers
             WHERE customer_id = ?
         `;
@@ -96,9 +113,20 @@ export const getCustomerDetails = async (req, res) => {
             return res.status(404).json({ success: false, error: `Customer with ID ${customerId} not found` });
         }
 
+        const customer = rows[0];
+        if (typeof customer.subscribedServices === 'string') {
+            try {
+                customer.subscribedServices = JSON.parse(customer.subscribedServices);
+            } catch {
+                customer.subscribedServices = [];
+            }
+        } else if (!customer.subscribedServices) {
+            customer.subscribedServices = [];
+        }
+
         return res.status(200).json({
             success: true,
-            customer: rows[0]
+            customer
         });
     } catch (error) {
         console.error('[HelpdeskController] Error in getCustomerDetails:', error);
@@ -218,7 +246,9 @@ export const getCustomerSummary = async (req, res) => {
                 secondary_phone_number AS secondaryPhone,
                 company_name AS companyName,
                 display_name AS displayName,
-                customer_status AS status
+                customer_status AS status,
+                subscribed_services AS subscribedServices,
+                updated_at AS updatedAt
             FROM customers
             WHERE customer_id = ?
         `;
@@ -227,6 +257,15 @@ export const getCustomerSummary = async (req, res) => {
             return res.status(404).json({ success: false, error: `Customer with ID ${customerId} not found` });
         }
         const customer = profileRows[0];
+        if (typeof customer.subscribedServices === 'string') {
+            try {
+                customer.subscribedServices = JSON.parse(customer.subscribedServices);
+            } catch {
+                customer.subscribedServices = [];
+            }
+        } else if (!customer.subscribedServices) {
+            customer.subscribedServices = [];
+        }
 
         // 2. Fetch Domains
         const [domains] = await appDB.query(
@@ -240,12 +279,28 @@ export const getCustomerSummary = async (req, res) => {
             [customerId]
         );
 
-        // 4. Fetch Services
+        // Fetch subscription items for each subscription to get services
+        for (const sub of subscriptions) {
+            const [items] = await appDB.query(
+                `SELECT DISTINCT 
+                    s.service_id AS serviceId,
+                    s.service_name AS serviceName,
+                    s.stock_keepers_unit AS SKU
+                 FROM services s
+                 JOIN subscription_items si ON s.service_id = si.service_id
+                 WHERE si.sub_id = ?`,
+                [sub.subscriptionId]
+            );
+            sub.services = items;
+        }
+
+        // 4. Fetch Services (retaining for compatibility)
         const serviceQuery = `
             SELECT DISTINCT 
                 s.service_id AS serviceId,
                 s.service_name AS serviceName,
-                s.stock_keepers_unit AS SKU
+                s.stock_keepers_unit AS SKU,
+                sub.domain_name AS domainName
             FROM services s
             JOIN subscription_items si ON s.service_id = si.service_id
             JOIN subscriptions sub ON si.sub_id = sub.sub_id

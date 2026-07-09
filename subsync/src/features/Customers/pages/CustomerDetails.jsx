@@ -197,6 +197,32 @@ function CustomerDetails() {
 
         {/* Master Governance Segment */}
         <div className="space-y-8">
+            {/* Subscribed Services */}
+            <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-violet-500">
+                <CardHeader className="p-8 pb-0">
+                    <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                        <Sparkles className="h-6 w-6 text-violet-500" />
+                        Subscribed Services
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-8 pt-6">
+                    {currentCustomer.subscribed_services && currentCustomer.subscribed_services.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {currentCustomer.subscribed_services.map((service, index) => (
+                                <Badge 
+                                    key={index}
+                                    className="rounded-full px-4 py-1.5 text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-all"
+                                >
+                                    {service}
+                                </Badge>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm font-bold text-slate-400 italic">No subscribed services found.</p>
+                    )}
+                </CardContent>
+            </Card>
+
             <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden">
                 <CardHeader className="p-8 pb-0">
                     <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Governance & History</CardTitle>

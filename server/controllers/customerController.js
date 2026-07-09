@@ -141,7 +141,21 @@ const fetchAllCustomers = async (req, res) => {
     try {
         const { search = "", sort = "display_name", order = "asc", page = 1, limit = 10 } = req.query;
         const { customers, totalPages, totalRecords } = await getAllCustomers({ search, sort, order, page: parseInt(page), limit: parseInt(limit) });
-        res.status(200).json({ customers, totalPages, totalRecords });
+        
+        const processedCustomers = customers.map(customer => {
+            if (typeof customer.subscribed_services === "string") {
+                try {
+                    customer.subscribed_services = JSON.parse(customer.subscribed_services);
+                } catch {
+                    customer.subscribed_services = [];
+                }
+            } else if (!customer.subscribed_services) {
+                customer.subscribed_services = [];
+            }
+            return customer;
+        });
+
+        res.status(200).json({ customers: processedCustomers, totalPages, totalRecords });
     } catch (error) {
         console.error("Error fetching customers:", error);
         res.status(500).json({ error: "Failed to fetch customers from the database." });
@@ -157,7 +171,19 @@ const fetchAllCustomers = async (req, res) => {
 const fetchAllCustomerDetails = async (req, res) => {
     try {
         const customers = await getAllCustomersDetails();
-        res.status(200).json({ customers });
+        const processedCustomers = customers.map(customer => {
+            if (typeof customer.subscribed_services === "string") {
+                try {
+                    customer.subscribed_services = JSON.parse(customer.subscribed_services);
+                } catch {
+                    customer.subscribed_services = [];
+                }
+            } else if (!customer.subscribed_services) {
+                customer.subscribed_services = [];
+            }
+            return customer;
+        });
+        res.status(200).json({ customers: processedCustomers });
     } catch (error) {
         console.error("Error fetching all customer details:", error);
         res.status(500).json({ error: "Failed to fetch all customer details." });
@@ -180,6 +206,17 @@ const customerDetailsByID = async (req, res) => {
         // Ensure `other_contacts` is properly handled
         if (typeof customer.other_contacts === "string") {
             customer.other_contacts = JSON.parse(customer.other_contacts); // Parse if it's a string
+        }
+
+        // Ensure `subscribed_services` is properly handled
+        if (typeof customer.subscribed_services === "string") {
+            try {
+                customer.subscribed_services = JSON.parse(customer.subscribed_services);
+            } catch {
+                customer.subscribed_services = [];
+            }
+        } else if (!customer.subscribed_services) {
+            customer.subscribed_services = [];
         }
 
         res.status(200).json({ customer });
