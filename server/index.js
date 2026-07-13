@@ -13,6 +13,7 @@ import { createReminderWorker } from './workers/reminderWorker.js';
 import { createBackupWorker } from './workers/backupWorker.js';
 import { createScheduledTaskWorker } from './workers/scheduledTaskWorker.js';
 import { createWebhookWorker } from './workers/webhookWorker.js';
+import { createCrmEventWorker } from './workers/crmEventWorker.js';
 import { closeQueues } from './queues/queueConfig.js';
 import { syncAllBackupSchedules } from './services/backupService.js';
 import { setupCronJobs } from './cron/reconciliationCron.js';
@@ -142,6 +143,13 @@ let reminderWorker = null;
 let backupWorker = null;
 let scheduledTaskWorker = null;
 let webhookWorker = null;
+let crmEventWorker = null;
+try {
+    crmEventWorker = createCrmEventWorker();
+    console.log('CRM Event worker started successfully'.bgGreen.white);
+} catch (error) {
+    console.error('Failed to start CRM Event worker:'.bgRed.white, error);
+}
 try {
     reminderWorker = createReminderWorker();
     console.log('Reminder worker started successfully'.bgGreen.white);
@@ -227,6 +235,9 @@ process.on('SIGTERM', async () => {
     if (webhookWorker) {
         await webhookWorker.close();
     }
+    if (crmEventWorker) {
+        await crmEventWorker.close();
+    }
     await closeQueues();
     server.close(() => {
         console.log('Server closed');
@@ -244,6 +255,9 @@ process.on('SIGINT', async () => {
     }
     if (webhookWorker) {
         await webhookWorker.close();
+    }
+    if (crmEventWorker) {
+        await crmEventWorker.close();
     }
     await closeQueues();
     server.close(() => {

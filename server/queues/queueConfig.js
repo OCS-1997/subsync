@@ -50,6 +50,7 @@ export const QUEUE_NAMES = {
     BACKUP_TASKS: 'backupTasks',
     SCHEDULED_TASKS: 'scheduledTasks',
     WEBHOOK_DELIVERY: 'webhookDelivery',
+    CRM_EVENTS: 'crmEvents',
 };
 
 // Create queues
@@ -138,6 +139,24 @@ export const webhookDeliveryQueue = new Queue(QUEUE_NAMES.WEBHOOK_DELIVERY, {
     },
 });
 
+export const crmEventsQueue = new Queue(QUEUE_NAMES.CRM_EVENTS, {
+    connection: redisConnection,
+    defaultJobOptions: {
+        attempts: 5,
+        backoff: {
+            type: 'exponential',
+            delay: 5000, // 5s initial delay
+        },
+        removeOnComplete: {
+            age: 7 * 24 * 3600,
+            count: 1000,
+        },
+        removeOnFail: {
+            age: 30 * 24 * 3600,
+        },
+    },
+});
+
 // Queue events for monitoring
 export const subscriptionRemindersQueueEvents = new QueueEvents(QUEUE_NAMES.SUBSCRIPTION_REMINDERS, {
     connection: redisConnection,
@@ -157,6 +176,8 @@ export function getQueueByName(queueName) {
             return scheduledTasksQueue;
         case QUEUE_NAMES.WEBHOOK_DELIVERY:
             return webhookDeliveryQueue;
+        case QUEUE_NAMES.CRM_EVENTS:
+            return crmEventsQueue;
         default:
             throw new Error(`Unknown queue name: ${queueName}`);
     }
@@ -170,6 +191,7 @@ export async function closeQueues() {
         backupTasksQueue.close(),
         scheduledTasksQueue.close(),
         webhookDeliveryQueue.close(),
+        crmEventsQueue.close(),
         subscriptionRemindersQueueEvents.close(),
         redisClient.quit(),
     ]);

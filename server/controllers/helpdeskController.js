@@ -1,4 +1,5 @@
 import appDB from '../db/subsyncDB.js';
+import { getOrFetchDomains, getOrFetchServices, getOrFetchSubscriptions } from '../services/crmCacheService.js';
 
 /**
  * Controller to fetch all customers with support for search, status filtering, and pagination.
@@ -147,10 +148,7 @@ export const getCustomerDomains = async (req, res) => {
             return res.status(404).json({ success: false, error: `Customer with ID ${customerId} not found` });
         }
 
-        const [domains] = await appDB.query(
-            "SELECT domain_id AS domainId, customer_id AS customerId, customer_name AS customerName, domain_name AS domainName, registration_date AS registrationDate, registered_with AS registeredWith, mail_service_provider AS mailServiceProvider, domain_status AS status, created_at AS createdAt FROM domains WHERE customer_id = ?",
-            [customerId]
-        );
+        const domains = await getOrFetchDomains(customerId);
 
         return res.status(200).json({
             success: true,
@@ -175,10 +173,7 @@ export const getCustomerSubscriptions = async (req, res) => {
             return res.status(404).json({ success: false, error: `Customer with ID ${customerId} not found` });
         }
 
-        const [subscriptions] = await appDB.query(
-            "SELECT sub_id AS subscriptionId, customer_id AS customerId, domain_name AS domainName, start_date AS startDate, end_date AS endDate, currency, total, status FROM subscriptions WHERE customer_id = ?",
-            [customerId]
-        );
+        const subscriptions = await getOrFetchSubscriptions(customerId);
 
         return res.status(200).json({
             success: true,
@@ -203,21 +198,7 @@ export const getCustomerServices = async (req, res) => {
             return res.status(404).json({ success: false, error: `Customer with ID ${customerId} not found` });
         }
 
-        // Fetch distinct services from active subscriptions items
-        const serviceQuery = `
-            SELECT DISTINCT 
-                s.service_id AS serviceId,
-                s.service_name AS serviceName,
-                s.stock_keepers_unit AS SKU,
-                s.tax_preference AS taxPreference,
-                s.item_group AS itemGroup
-            FROM services s
-            JOIN subscription_items si ON s.service_id = si.service_id
-            JOIN subscriptions sub ON si.sub_id = sub.sub_id
-            WHERE sub.customer_id = ?
-        `;
-
-        const [services] = await appDB.query(serviceQuery, [customerId]);
+        const services = await getOrFetchServices(customerId);
 
         return res.status(200).json({
             success: true,
@@ -268,16 +249,10 @@ export const getCustomerSummary = async (req, res) => {
         }
 
         // 2. Fetch Domains
-        const [domains] = await appDB.query(
-            "SELECT domain_id AS domainId, domain_name AS domainName, domain_status AS status, registration_date AS registrationDate FROM domains WHERE customer_id = ?",
-            [customerId]
-        );
+        const domains = await getOrFetchDomains(customerId);
 
         // 3. Fetch Subscriptions
-        const [subscriptions] = await appDB.query(
-            "SELECT sub_id AS subscriptionId, domain_name AS domainName, start_date AS startDate, end_date AS endDate, total, status FROM subscriptions WHERE customer_id = ?",
-            [customerId]
-        );
+        const subscriptions = await getOrFetchSubscriptions(customerId);
 
         // Fetch subscription items for each subscription to get services
         for (const sub of subscriptions) {
@@ -289,24 +264,13 @@ export const getCustomerSummary = async (req, res) => {
                  FROM services s
                  JOIN subscription_items si ON s.service_id = si.service_id
                  WHERE si.sub_id = ?`,
-                [sub.subscriptionId]
+                [sub.subscriptionId || sub.subscriptionId]
             );
             sub.services = items;
         }
 
         // 4. Fetch Services (retaining for compatibility)
-        const serviceQuery = `
-            SELECT DISTINCT 
-                s.service_id AS serviceId,
-                s.service_name AS serviceName,
-                s.stock_keepers_unit AS SKU,
-                sub.domain_name AS domainName
-            FROM services s
-            JOIN subscription_items si ON s.service_id = si.service_id
-            JOIN subscriptions sub ON si.sub_id = sub.sub_id
-            WHERE sub.customer_id = ?
-        `;
-        const [services] = await appDB.query(serviceQuery, [customerId]);
+        const services = await getOrFetchServices(customerId);
 
         return res.status(200).json({
             success: true,

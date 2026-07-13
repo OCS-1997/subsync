@@ -58,6 +58,15 @@ function HelpdeskSettings() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
 
+    // CRM logs state
+    const [crmLogs, setCrmLogs] = useState([]);
+    const [crmLoading, setCrmLoading] = useState(false);
+    const [crmPage, setCrmPage] = useState(1);
+    const [crmTotalPages, setCrmTotalPages] = useState(1);
+    const [crmTotalRecords, setCrmTotalRecords] = useState(0);
+    const [selectedCrmLog, setSelectedCrmLog] = useState(null);
+    const [activeTab, setActiveTab] = useState("outbound"); // "outbound" or "inbound"
+
     // Selected event for attempt logs modal
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [eventLogs, setEventLogs] = useState([]);
@@ -66,8 +75,15 @@ function HelpdeskSettings() {
     // Load initial settings and webhook history
     useEffect(() => {
         fetchSettings();
-        fetchWebhookHistory();
-    }, [page]);
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === "outbound") {
+            fetchWebhookHistory();
+        } else {
+            fetchCrmLogs();
+        }
+    }, [page, crmPage, activeTab]);
 
     const fetchSettings = async () => {
         try {
@@ -98,6 +114,24 @@ function HelpdeskSettings() {
             console.error("Failed to fetch webhook events history:", error);
         } finally {
             setEventsLoading(false);
+        }
+    };
+
+    const fetchCrmLogs = async () => {
+        try {
+            setCrmLoading(true);
+            const response = await api.get("/admin/helpdesk/crm-logs", {
+                params: { page: crmPage, limit: 10 }
+            });
+            if (response.data.success) {
+                setCrmLogs(response.data.logs);
+                setCrmTotalRecords(response.data.pagination.totalRecords);
+                setCrmTotalPages(response.data.pagination.totalPages);
+            }
+        } catch (error) {
+            console.error("Failed to fetch CRM sync logs:", error);
+        } finally {
+            setCrmLoading(false);
         }
     };
 
@@ -316,16 +350,16 @@ function HelpdeskSettings() {
                             <div>
                                 <CardTitle className="text-lg font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
                                     <Activity className="w-5 h-5 text-purple-500" />
-                                    Webhook History Log
+                                    Integration Audit Logs
                                 </CardTitle>
                                 <CardDescription className="text-slate-400 text-xs">
-                                    Real-time delivery status of outbound synchronizations.
+                                    Delivery status of outbound sync and processing status of inbound CRM events.
                                 </CardDescription>
                             </div>
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={fetchWebhookHistory} 
+                                onClick={activeTab === "outbound" ? fetchWebhookHistory : fetchCrmLogs} 
                                 className="h-8 rounded-lg text-slate-500 dark:text-slate-400 font-bold"
                             >
                                 <RefreshCw className="w-4 h-4 mr-1.5" /> Refresh
@@ -333,70 +367,162 @@ function HelpdeskSettings() {
                         </CardHeader>
                         
                         <CardContent>
-                            <div className="rounded-xl border border-border overflow-hidden bg-slate-50/50 dark:bg-slate-950/20">
-                                <Table>
-                                    <TableHeader className="bg-slate-100/80 dark:bg-slate-900/80 font-black text-xs">
-                                        <TableRow>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300">Event</TableHead>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300">Customer ID</TableHead>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300">Attempts</TableHead>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300">Status</TableHead>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300">Timestamp</TableHead>
-                                            <TableHead className="font-bold text-slate-700 dark:text-slate-300 text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {eventsLoading && events.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-8">
-                                                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                                                        <RefreshCw className="w-6 h-6 animate-spin" />
-                                                        <span className="text-xs font-bold uppercase tracking-wider">Syncing log list...</span>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : events.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                                    <Database className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                                                    No webhook events enqueued yet.
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            events.map((event) => (
-                                                <TableRow key={event.eventId} className="hover:bg-slate-100/40 dark:hover:bg-slate-900/40 border-b border-border">
-                                                    <TableCell className="font-black text-xs text-slate-700 dark:text-slate-300">
-                                                        {event.eventType}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-xs text-indigo-500 font-bold">
-                                                        {event.customerId}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                                                        {event.attempts}
-                                                    </TableCell>
-                                                    <TableCell>{getStatusBadge(event.status)}</TableCell>
-                                                    <TableCell className="text-xs text-slate-400">
-                                                        {new Date(event.createdAt).toLocaleTimeString()}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => viewLogs(event)}
-                                                            className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-500 rounded-lg"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
+                            {/* Tab Switcher */}
+                            <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl w-fit border border-gray-100 dark:border-slate-800 shadow-inner mb-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab("outbound")}
+                                    className={cn(
+                                        "rounded-lg px-4 py-1.5 text-xs font-black uppercase tracking-wider transition-all",
+                                        activeTab === "outbound"
+                                            ? "bg-white dark:bg-slate-900 text-indigo-600 shadow-sm"
+                                            : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
+                                    )}
+                                >
+                                    Outbound Webhooks
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab("inbound")}
+                                    className={cn(
+                                        "rounded-lg px-4 py-1.5 text-xs font-black uppercase tracking-wider transition-all",
+                                        activeTab === "inbound"
+                                            ? "bg-white dark:bg-slate-900 text-indigo-600 shadow-sm"
+                                            : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
+                                    )}
+                                >
+                                    Inbound CRM Events
+                                </button>
                             </div>
 
+                            {activeTab === "outbound" ? (
+                                <div className="rounded-xl border border-border overflow-hidden bg-slate-50/50 dark:bg-slate-950/20">
+                                    <Table>
+                                        <TableHeader className="bg-slate-100/80 dark:bg-slate-900/80 font-black text-xs">
+                                            <TableRow>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Event</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Customer ID</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Attempts</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Status</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Timestamp</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300 text-right">Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {eventsLoading && events.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8">
+                                                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                                                            <RefreshCw className="w-6 h-6 animate-spin" />
+                                                            <span className="text-xs font-bold uppercase tracking-wider">Syncing log list...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : events.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                                        <Database className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                                        No webhook events enqueued yet.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                events.map((event) => (
+                                                    <TableRow key={event.eventId} className="hover:bg-slate-100/40 dark:hover:bg-slate-900/40 border-b border-border">
+                                                        <TableCell className="font-black text-xs text-slate-700 dark:text-slate-300">
+                                                            {event.eventType}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-xs text-indigo-500 font-bold">
+                                                            {event.customerId}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                            {event.attempts}
+                                                        </TableCell>
+                                                        <TableCell>{getStatusBadge(event.status)}</TableCell>
+                                                        <TableCell className="text-xs text-slate-400">
+                                                            {new Date(event.createdAt).toLocaleTimeString()}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => viewLogs(event)}
+                                                                className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-500 rounded-lg"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-border overflow-hidden bg-slate-50/50 dark:bg-slate-950/20">
+                                    <Table>
+                                        <TableHeader className="bg-slate-100/80 dark:bg-slate-900/80 font-black text-xs">
+                                            <TableRow>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Entity</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Entity ID</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Event ID</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Status</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300">Timestamp</TableHead>
+                                                <TableHead className="font-bold text-slate-700 dark:text-slate-300 text-right">Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {crmLoading && crmLogs.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8">
+                                                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                                                            <RefreshCw className="w-6 h-6 animate-spin" />
+                                                            <span className="text-xs font-bold uppercase tracking-wider">Syncing log list...</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : crmLogs.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                                        <Database className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                                        No inbound CRM events logged yet.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                crmLogs.map((log) => (
+                                                    <TableRow key={log.eventId} className="hover:bg-slate-100/40 dark:hover:bg-slate-900/40 border-b border-border">
+                                                        <TableCell className="font-black text-xs text-slate-700 dark:text-slate-300 capitalize">
+                                                            {log.entity}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-xs text-indigo-500 font-bold">
+                                                            {log.entityId}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs text-slate-500 font-mono">
+                                                            {log.eventId}
+                                                        </TableCell>
+                                                        <TableCell>{getStatusBadge(log.status)}</TableCell>
+                                                        <TableCell className="text-xs text-slate-400">
+                                                            {new Date(log.receivedAt).toLocaleTimeString()}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => setSelectedCrmLog(log)}
+                                                                className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-950 text-slate-500 rounded-lg"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+
                             {/* Pagination */}
-                            {totalPages > 1 && (
+                            {activeTab === "outbound" && totalPages > 1 && (
                                 <div className="flex items-center justify-between pt-5">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                                         Total: {totalRecords} events
@@ -419,6 +545,37 @@ function HelpdeskSettings() {
                                             size="sm"
                                             onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
                                             disabled={page === totalPages}
+                                            className="h-8 px-2.5 rounded-lg border-border"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === "inbound" && crmTotalPages > 1 && (
+                                <div className="flex items-center justify-between pt-5">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                        Total: {crmTotalRecords} events
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCrmPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={crmPage === 1}
+                                            className="h-8 px-2.5 rounded-lg border-border"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </Button>
+                                        <span className="text-xs font-black text-slate-700 dark:text-white">
+                                            {crmPage} / {crmTotalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCrmPage(prev => Math.min(prev + 1, crmTotalPages))}
+                                            disabled={crmPage === crmTotalPages}
                                             className="h-8 px-2.5 rounded-lg border-border"
                                         >
                                             <ChevronRight className="w-4 h-4" />
@@ -507,6 +664,58 @@ function HelpdeskSettings() {
                                     </CardContent>
                                 </Card>
                             ))
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* CRM Event Detail Modal */}
+            <Dialog open={selectedCrmLog !== null} onOpenChange={() => setSelectedCrmLog(null)}>
+                <DialogContent className="max-w-[600px] rounded-2xl border-border shadow-2xl overflow-hidden bg-card text-slate-950 dark:text-white p-0">
+                    <div className="h-[4px] bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 w-full" />
+                    
+                    <DialogHeader className="px-6 pt-5 pb-3 border-b border-border">
+                        <DialogTitle className="text-lg font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
+                            <Info className="w-5 h-5 text-indigo-500" />
+                            CRM Event Processing Audit
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400 text-xs">
+                            Audit entry for Event ID: <span className="font-mono text-indigo-500 font-bold">{selectedCrmLog?.eventId}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="p-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <span className="font-bold text-slate-400 block uppercase text-[10px]">Entity Type</span>
+                                <span className="font-semibold text-slate-700 dark:text-slate-300 capitalize">{selectedCrmLog?.entity}</span>
+                            </div>
+                            <div>
+                                <span className="font-bold text-slate-400 block uppercase text-[10px]">Entity ID</span>
+                                <span className="font-mono text-indigo-500 font-semibold">{selectedCrmLog?.entityId}</span>
+                            </div>
+                            <div>
+                                <span className="font-bold text-slate-400 block uppercase text-[10px]">Received At</span>
+                                <span className="text-slate-600 dark:text-slate-400">{selectedCrmLog?.receivedAt ? new Date(selectedCrmLog.receivedAt).toLocaleString() : '--'}</span>
+                            </div>
+                            <div>
+                                <span className="font-bold text-slate-400 block uppercase text-[10px]">Processed At</span>
+                                <span className="text-slate-600 dark:text-slate-400">{selectedCrmLog?.processedAt ? new Date(selectedCrmLog.processedAt).toLocaleString() : '--'}</span>
+                            </div>
+                        </div>
+
+                        {selectedCrmLog?.errors && (
+                            <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-950/50 rounded-xl text-xs text-red-600 dark:text-red-400 space-y-1">
+                                <span className="font-black uppercase text-[9px] tracking-wider block">Error Message</span>
+                                <p className="font-mono whitespace-pre-wrap">{selectedCrmLog.errors}</p>
+                            </div>
+                        )}
+
+                        {!selectedCrmLog?.errors && (
+                            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-950/50 rounded-xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5" />
+                                <span className="font-semibold">Event processed successfully without errors.</span>
+                            </div>
                         )}
                     </div>
                 </DialogContent>

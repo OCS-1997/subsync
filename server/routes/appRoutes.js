@@ -5,6 +5,8 @@ import { validateLogin, logoutUser } from '../controllers/loginController.js';
 import { createCustomer, updateCustomerDetails, fetchAllCustomers, fetchAllCustomerDetails, customerDetailsByID, importCustomers, addCustomerContactController, searchByPhoneController } from '../controllers/customerController.js';
 import { helpdeskAuth } from '../middlewares/helpdeskAuth.js';
 import { getCustomers, getCustomerDetails, getCustomerDomains, getCustomerSubscriptions, getCustomerServices, getCustomerSummary } from '../controllers/helpdeskController.js';
+import { handleCrmEvent, getCrmSyncLogs } from '../controllers/crmWebhookController.js';
+import { getCrmDomains, getCrmServices, getCrmSubscriptions } from '../controllers/crmMockController.js';
 import { getSettings as getHelpdeskSettings, updateSettings as updateHelpdeskSettings, testConnection as testHelpdeskConnection, getWebhookHistory, getWebhookEventLogs } from '../controllers/helpdeskSettingsController.js';
 import { getPaymentTerms, getPaymentTerm, createPaymentTerm, updatePaymentTermById, deletePaymentTermById, setDefaultPaymentTerm } from '../controllers/paymentTermsController.js';
 import { createDomain, updateDomainDetails, fetchAllDomains, domainDetailsByID, deleteDomainById, importDomains, getDomainDetailsForDcr } from '../controllers/domainController.js';
@@ -285,6 +287,15 @@ router.put('/admin/helpdesk/settings', isAuthenticated, authorize(PERMISSIONS.SE
 router.post('/admin/helpdesk/settings/test-connection', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), testHelpdeskConnection);
 router.get('/admin/helpdesk/events', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getWebhookHistory);
 router.get('/admin/helpdesk/events/:eventId/logs', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getWebhookEventLogs);
+router.get('/admin/helpdesk/crm-logs', isAuthenticated, authorize(PERMISSIONS.SETTINGS_MANAGE), getCrmSyncLogs);
+
+// Real-time CRM Event Consumer endpoint
+router.post('/integrations/crm/events', helpdeskAuth, handleCrmEvent);
+
+// Mock CRM API Endpoints
+router.get('/crm/customers/:customerId/domains', getCrmDomains);
+router.get('/crm/customers/:customerId/services', getCrmServices);
+router.get('/crm/customers/:customerId/subscriptions', getCrmSubscriptions);
 
 // Mock Helpdesk Endpoints (For Local Integration Verification)
 router.post('/integrations/crm/customer-event', async (req, res) => {
