@@ -160,9 +160,6 @@ export const getCustomerDomains = async (req, res) => {
     }
 };
 
-/**
- * Controller to fetch subscriptions associated with a customer.
- */
 export const getCustomerSubscriptions = async (req, res) => {
     try {
         const { customerId } = req.params;
@@ -174,6 +171,23 @@ export const getCustomerSubscriptions = async (req, res) => {
         }
 
         const subscriptions = await getOrFetchSubscriptions(customerId);
+
+        // Fetch subscription items for each subscription to get services
+        for (const sub of subscriptions) {
+            const [items] = await appDB.query(
+                `SELECT DISTINCT 
+                    s.service_id AS serviceId,
+                    s.service_name AS serviceName,
+                    s.stock_keepers_unit AS SKU,
+                    s.service_credit AS serviceCredit,
+                    s.service_credit AS supportCreditHours
+                 FROM services s
+                 JOIN subscription_items si ON s.service_id = si.service_id
+                 WHERE si.sub_id = ?`,
+                [sub.subscriptionId || sub.subscriptionId]
+            );
+            sub.services = items;
+        }
 
         return res.status(200).json({
             success: true,
@@ -260,7 +274,9 @@ export const getCustomerSummary = async (req, res) => {
                 `SELECT DISTINCT 
                     s.service_id AS serviceId,
                     s.service_name AS serviceName,
-                    s.stock_keepers_unit AS SKU
+                    s.stock_keepers_unit AS SKU,
+                    s.service_credit AS serviceCredit,
+                    s.service_credit AS supportCreditHours
                  FROM services s
                  JOIN subscription_items si ON s.service_id = si.service_id
                  WHERE si.sub_id = ?`,
