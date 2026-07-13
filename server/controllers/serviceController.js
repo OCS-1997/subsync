@@ -16,6 +16,7 @@ const createServiceController = async (req, res) => {
       sales_information: req.body.sales_information, // Maps to sales_info in DB
       purchase_information: req.body.purchase_information, // Maps to purchase_info in DB
       preferred_vendor: req.body.purchase_information.vendor, // Assuming this is the vendor ID
+      service_credit: req.body.service_credit,
     };
 
     // Validate required fields (using adjusted field names)
@@ -91,6 +92,7 @@ const updateServiceController = async (req, res) => {
       sales_information: req.body.sales_information, // Maps to sales_info in DB
       purchase_information: req.body.purchase_information, // Maps to purchase_info in DB
       preferred_vendor: req.body.purchase_information.vendor, // Assuming this is the vendor ID
+      service_credit: req.body.service_credit,
     };
 
     // Basic validation for update - ensure required fields are present if they are being updated

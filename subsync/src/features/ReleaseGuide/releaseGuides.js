@@ -63,4 +63,29 @@ export const RELEASE_GUIDES = [
     ],
     autoShow: true,
   },
+
+  {
+    id: '2.3.0-views',
+    version: '2.3.0',
+    title: "What's New in 2.3.0",
+    description: 'Dynamic reporting dashboards, interactive pipeline views, and integrations.',
+    steps: [
+      {
+        id: 'step-opportunities-views',
+        title: '📊 Opportunities Views',
+        body: 'Seamlessly toggle between Pipeline (Kanban) and List views to manage deals. Planned services can now be integrated with autofilled estimated prices.',
+      },
+      {
+        id: 'step-reporting-dashboard',
+        title: '⏱️ Time Tracking Reports',
+        body: 'A powerful new reporting dashboard with advanced calendar filtering, dedicated admin tracking tables, and Excel/PDF data export support.',
+      },
+      {
+        id: 'step-helpdesk-view',
+        title: '🔌 Helpdesk Integrations',
+        body: 'A dedicated settings view to configure webhook endpoints, view logs, and monitor background queues.',
+      },
+    ],
+    autoShow: true,
+  },
 ];

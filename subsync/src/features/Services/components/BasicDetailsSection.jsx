@@ -92,6 +92,18 @@ const BasicDetailsSection = ({ formData, setFormData, serviceError }) => {
             <p className="text-red-500 text-sm mt-1">Failed to load item groups. Please try again.</p>
           )}
         </div>
+        <div>
+          <Label htmlFor="service_credit" className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500 mb-1">Service Credit (Hours)</Label>
+          <Input
+            id="service_credit"
+            type="number"
+            min="0"
+            placeholder="e.g. 5"
+            value={formData.service_credit || ""}
+            onChange={(e) => setFormData({ ...formData, service_credit: e.target.value })}
+            className="h-11 px-4 rounded-xl font-bold text-sm bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 text-gray-900 dark:text-white"
+          />
+        </div>
       </div>
     </div>
   )

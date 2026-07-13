@@ -100,6 +100,7 @@ function ServiceDetails() {
                         <DetailItem icon={Layers} label="SKU" value={currentService.stock_keepers_unit} isMono />
                         <DetailItem icon={Percent} label="Tax Preference" value={currentService.tax_preference} />
                         <DetailItem icon={Briefcase} label="Item Group" value={currentService.item_group_name} />
+                        <DetailItem icon={Clock} label="Service Credit" value={currentService.service_credit ? `${currentService.service_credit} hours` : "—"} />
                     </div>
 
                     {currentService.preferred_vendor_name && currentService.preferred_vendor_name !== "N/A" && (

@@ -123,7 +123,7 @@ async function addCustomer(customer) {
             throw new Error(error.message || "An unexpected error occurred while adding the customer.");
         }
     }
-}
+} 
 
 
 /**

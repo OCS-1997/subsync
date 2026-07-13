@@ -28,8 +28,9 @@ const createService = async (service) => {
       service_name, stock_keepers_unit,
       tax_preference, item_group,
       sales_info, purchase_info,
-      preferred_vendor, default_tax_rates
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      preferred_vendor, default_tax_rates,
+      service_credit
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Optimize tax rates storage - store only IDs and kind
@@ -53,6 +54,7 @@ const createService = async (service) => {
     JSON.stringify(service.purchase_information),
     service.preferred_vendor, // Store vendor_id directly
     JSON.stringify(defaultTaxRates),
+    service.service_credit !== undefined && service.service_credit !== "" ? parseInt(service.service_credit, 10) : null,
   ];
 
   const [result] = await appDB.execute(query, values);
@@ -90,6 +92,7 @@ const getAllServices = async ({ search = "", sort = "updated_at", order = "desc"
         v.display_name AS preferred_vendor_name,
         v.company_name AS preferred_vendor_company,
         s.default_tax_rates,
+        s.service_credit,
         s.created_at,
         s.updated_at,
         CAST(JSON_UNQUOTE(JSON_EXTRACT(s.sales_info, '$.price')) AS DECIMAL(10,2)) AS selling_price
@@ -274,6 +277,7 @@ const getServiceById = async (service_id) => {
         v.display_name AS preferred_vendor_name,
         v.company_name AS preferred_vendor_company,
         s.default_tax_rates,
+        s.service_credit,
         s.created_at,
         s.updated_at
     FROM
@@ -439,6 +443,7 @@ const updateService = async (service_id, updatedData) => {
                       purchase_info = ?,
                       preferred_vendor = ?,
                       default_tax_rates = ?,
+                      service_credit = ?,
                       updated_at = CURRENT_TIMESTAMP
     WHERE service_id = ?
   `;
@@ -464,6 +469,7 @@ const updateService = async (service_id, updatedData) => {
     JSON.stringify(updatedData.purchase_information),
     updatedData.preferred_vendor, // Store vendor_id directly
     JSON.stringify(defaultTaxRates),
+    updatedData.service_credit !== undefined && updatedData.service_credit !== "" ? parseInt(updatedData.service_credit, 10) : null,
     service_id,
   ];
 

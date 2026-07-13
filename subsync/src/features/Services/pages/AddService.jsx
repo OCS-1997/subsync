@@ -46,6 +46,7 @@ const AddService = () => {
     SKU: "",
     tax_preference: "Taxable",
     item_group: "",
+    service_credit: "",
   });
   const [salesInfo, setSalesInfo] = useState({ price: "", account: "Sales", description: "" });
   const [purchaseInfo, setPurchaseInfo] = useState({ price: "", account: "Cost of Goods Sold", description: "", vendor: "" }); // This will hold the vendor ID as a string
@@ -95,6 +96,7 @@ const AddService = () => {
         SKU: currentService.stock_keepers_unit || "",
         tax_preference: currentService.tax_preference || "Taxable",
         item_group: String(currentService.item_group_id || ""),
+        service_credit: currentService.service_credit !== null && currentService.service_credit !== undefined ? String(currentService.service_credit) : "",
       });
 
       setSalesInfo({
@@ -227,6 +229,7 @@ const AddService = () => {
       SKU: "",
       tax_preference: "Taxable",
       item_group: "",
+      service_credit: "",
     });
     setSalesInfo({ price: "", account: "Sales", description: "" });
     setPurchaseInfo({ price: "", account: "Cost of Goods Sold", description: "", vendor: "" });

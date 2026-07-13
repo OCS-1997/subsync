@@ -36,6 +36,7 @@ const headers = [
   { key: 'selling_price', label: 'Retail Price' },
   { key: 'tax_rate', label: 'Tax Index' },
   { key: 'total_amount', label: 'Gross Value' },
+  { key: 'service_credit', label: 'Service Credit' },
   { key: 'preferred_vendor_name', label: 'Procurement' },
   { key: 'actions', label: 'Operations' },
 ];
@@ -175,6 +176,7 @@ function Services() {
         "Service Identity": s.service_name,
         "SKU": s.stock_keepers_unit,
         "Item Category": s.item_group_name || 'N/A',
+        "Service Credit (hrs)": s.service_credit || '—',
         "Vendor Source": s.preferred_vendor_name || 'N/A',
         "Created At": s.created_at,
       }));
@@ -338,14 +340,15 @@ function Services() {
                   ),
                   stock_keepers_unit: <code className="text-[11px] font-black text-slate-500 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">{service.stock_keepers_unit}</code>,
                   item_group_name: service.item_group_name || '—',
+                  selling_price: <span className="text-blue-600 dark:text-blue-400 tabular-nums">{formatCurrency(sellingPrice)}</span>,
+                  tax_rate: <span className="text-slate-400 tabular-nums">{taxRatePercent.toFixed(1)}%</span>,
+                  total_amount: <span className="text-slate-900 dark:text-white tabular-nums">{formatCurrency(totalAmount)}</span>,
+                  service_credit: service.service_credit !== null && service.service_credit !== undefined ? `${service.service_credit} hrs` : '—',
                   preferred_vendor_name: service.preferred_vendor_id ? (
                     <Link to={`/${window.location.pathname.split('/')[1]}/dashboard/vendors/${service.preferred_vendor_id}`} className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       {service.preferred_vendor_name}
                     </Link>
                   ) : (service.preferred_vendor_name || '—'),
-                  selling_price: <span className="text-blue-600 dark:text-blue-400 tabular-nums">{formatCurrency(sellingPrice)}</span>,
-                  tax_rate: <span className="text-slate-400 tabular-nums">{taxRatePercent.toFixed(1)}%</span>,
-                  total_amount: <span className="text-slate-900 dark:text-white tabular-nums">{formatCurrency(totalAmount)}</span>,
                   actions: renderActions(service.service_id),
                 };
               })}
