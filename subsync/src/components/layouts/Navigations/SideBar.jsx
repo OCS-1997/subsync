@@ -1,12 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useParams, useLocation } from 'react-router-dom';
-import { Command, X, LayoutDashboard, Calculator, ChevronRight } from 'lucide-react';
+import { Command } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Button } from '@/components/ui/button.jsx';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/context/PermissionsContext.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';
@@ -14,6 +14,14 @@ import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
 import { getMyActiveAppraisal } from '@/features/Appraisals/appraisalSlice';
 import { fetchPendingCounts } from '@/features/Leaves/leavesSlice';
 import SidebarTree from './SidebarTree.jsx';
+import SidebarHeader from './sidebar/SidebarHeader.jsx';
+import SidebarTooltip from './sidebar/SidebarTooltip.jsx';
+import {
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_EXPANDED_WIDTH,
+  loadCollapsedPreference,
+  saveCollapsedPreference,
+} from './sidebar/sidebarUtils.js';
 
 const sidebarItems = [
   { path: 'dashboard', title: 'Home', icon: 'home', icon_type: 'lucide', permission: PERMISSIONS.DASHBOARD_VIEW },
@@ -41,12 +49,31 @@ const sidebarItems = [
   { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE, folder: 'Administration' },
 ];
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = (event) => setIsDesktop(event.matches);
+    setIsDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  return isDesktop;
+}
+
 function SideBar({ isOpen, toggleSidebar }) {
   const { username } = useParams();
   const location = useLocation();
   const dispatch = useDispatch();
   const { hasAnyPermission } = usePermissions();
   const sidebarRef = useRef(null);
+  const isDesktop = useIsDesktop();
+
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => loadCollapsedPreference());
 
   const { activeAppraisalInfo } = useSelector((state) => state.appraisals);
 
@@ -62,9 +89,11 @@ function SideBar({ isOpen, toggleSidebar }) {
   const { pendingCounts } = useSelector((state) => state.leaves);
 
   const badgeCounts = {};
-  if (activeAppraisalInfo?.active && 
-      activeAppraisalInfo?.appraisal?.status !== 'Submitted' && 
-      activeAppraisalInfo?.appraisal?.status !== 'Reviewed') {
+  if (
+    activeAppraisalInfo?.active &&
+    activeAppraisalInfo?.appraisal?.status !== 'Submitted' &&
+    activeAppraisalInfo?.appraisal?.status !== 'Reviewed'
+  ) {
     badgeCounts['dashboard/appraisals'] = 1;
   }
 
@@ -86,10 +115,7 @@ function SideBar({ isOpen, toggleSidebar }) {
     createFolderFromDrop,
     renameFolder,
     deleteFolder,
-  } = useSidebarFolders(
-    sidebarItems,
-    permissionFilter
-  );
+  } = useSidebarFolders(sidebarItems, permissionFilter);
 
   const handleOpenCommandPalette = () => {
     window.dispatchEvent(new CustomEvent('openCommandPalette'));
@@ -97,13 +123,43 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   const isActive = (path) => {
     const fullPath = `/${username}/${path}`;
-    return location.pathname === fullPath || (path === 'dashboard' && location.pathname === `/${username}/dashboard`);
+    return (
+      location.pathname === fullPath ||
+      (path === 'dashboard' && location.pathname === `/${username}/dashboard`)
+    );
   };
 
+  const navExpanded = isDesktop ? !desktopCollapsed : true;
+  const mobileVisible = isOpen;
+
+  const handleToggleDesktop = useCallback(() => {
+    setDesktopCollapsed((prev) => {
+      const next = !prev;
+      saveCollapsedPreference(next);
+      return next;
+    });
+  }, []);
+
+  // Desktop collapse via the same shortcut NavBar uses for the drawer.
+  // Stop propagation so NavBar does not also flip unused desktop isOpen state.
   useEffect(() => {
+    const onKeyDown = (event) => {
+      if (!(event.ctrlKey && event.shiftKey && (event.key === 'S' || event.key === 's'))) return;
+      if (!window.matchMedia('(min-width: 1024px)').matches) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      handleToggleDesktop();
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [handleToggleDesktop]);
+
+  // Mobile: close on outside click
+  useEffect(() => {
+    if (isDesktop || !isOpen) return undefined;
+
     const handleClickOutside = (event) => {
-      if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        // If click/touch is inside a Radix UI portal, popover content, or dialog, do not close the sidebar
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         if (
           event.target.closest('[data-radix-portal]') ||
           event.target.closest('[data-radix-popper-content-wrapper]') ||
@@ -122,118 +178,108 @@ function SideBar({ isOpen, toggleSidebar }) {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [isOpen, toggleSidebar]);
+  }, [isOpen, isDesktop, toggleSidebar]);
+
+  // ESC closes mobile drawer
+  useEffect(() => {
+    if (isDesktop || !isOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') toggleSidebar();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isDesktop, isOpen, toggleSidebar]);
+
+  const widthPx = navExpanded ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH;
 
   return (
     <>
       <AnimatePresence>
-        {isOpen && (
+        {!isDesktop && mobileVisible && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={toggleSidebar}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden"
+            aria-hidden="true"
+            className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-[2px] lg:hidden"
           />
         )}
       </AnimatePresence>
 
-    <aside
-      ref={sidebarRef}
-      className={`fixed lg:relative top-0 left-0 z-[60] lg:z-40 transition-all duration-300 ease-in-out
-        flex flex-col shadow-2xl border-r border-sidebar-border overflow-hidden
-        bg-sidebar text-sidebar-foreground h-screen lg:h-auto lg:min-h-screen lg:mr-2
-        ${isOpen ? "w-[85vw] lg:w-64 translate-x-0" : "w-20 -translate-x-full lg:translate-x-0"}
-      `}
-    >
-        <div className="flex items-center justify-between p-4 border-b border-sidebar-border h-16 lg:h-20">
-          {isOpen ? (
-            <div className="flex items-center justify-between w-full">
-              <div
-                className="flex items-center gap-3 px-1 cursor-pointer hover:bg-sidebar-accent/30 rounded-xl transition-all duration-200 group/header"
-                onClick={toggleSidebar}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
-              >
-                <div className="w-9 h-9 lg:w-11 lg:h-11 bg-white shadow-lg rounded-xl flex items-center justify-center p-1 group-hover/header:rotate-6 transition-transform overflow-hidden">
-                  <img src="/pwa-192x192.png" alt="Subsync" className="w-full h-full object-contain" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-lg lg:text-xl font-black tracking-tighter leading-none">OCS</span>
-                  <span className="text-[9px] lg:text-[10px] text-sidebar-foreground/60 mt-1 uppercase tracking-widest font-black">CRM Platform</span>
-                </div>
-              </div>
+      <aside
+        ref={sidebarRef}
+        aria-label="Application sidebar"
+        className={cn(
+          'fixed left-0 top-0 z-[60] flex h-screen flex-col overflow-hidden',
+          'border-r border-sidebar-border bg-white text-sidebar-foreground shadow-sm',
+          'dark:bg-sidebar',
+          'transition-[width,transform] duration-[250ms] ease-in-out',
+          'lg:relative lg:z-40 lg:mr-0 lg:h-auto lg:min-h-screen lg:shadow-none',
+          !isDesktop && (mobileVisible ? 'translate-x-0' : '-translate-x-full'),
+          isDesktop && 'translate-x-0'
+        )}
+        style={{
+          width: isDesktop ? widthPx : mobileVisible ? 'min(85vw, 300px)' : widthPx,
+        }}
+      >
+        <TooltipProvider delayDuration={0}>
+          <SidebarHeader
+            expanded={navExpanded}
+            onToggleDesktop={handleToggleDesktop}
+            onCloseMobile={toggleSidebar}
+          />
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSidebar}
-                className="lg:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-full"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          ) : (
-            <div
-              className="w-full flex justify-center py-1 cursor-pointer hover:bg-sidebar-accent/30 rounded-xl transition-all duration-200 group/header"
-              onClick={toggleSidebar}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && toggleSidebar()}
-            >
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-sidebar-accent/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-sidebar-border p-1.5 shadow-inner group-hover/header:scale-110 transition-transform overflow-hidden">
-                <img src="/pwa-192x192.png" alt="S" className="w-full h-full object-contain" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar mt-6">
-          <div className="px-3">
-            <TooltipProvider>
-              <SidebarTree
-                nodes={nodes}
-                isOpen={isOpen}
-                isLoading={isLoading}
-                username={username}
-                isActive={isActive}
-                toggleSidebar={toggleSidebar}
-                restoredItemIds={restoredItemIds}
-                clearRestoredHighlights={clearRestoredHighlights}
-                move={move}
-                createFolderFromDrop={createFolderFromDrop}
-                renameFolder={renameFolder}
-                deleteFolder={deleteFolder}
-                badgeCounts={badgeCounts}
-              />
-            </TooltipProvider>
+          <div
+            className={cn(
+              'flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar',
+              navExpanded ? 'px-3 py-4' : 'px-2 py-3'
+            )}
+          >
+            <SidebarTree
+              nodes={nodes}
+              expanded={navExpanded}
+              isLoading={isLoading}
+              username={username}
+              isActive={isActive}
+              toggleSidebar={toggleSidebar}
+              restoredItemIds={restoredItemIds}
+              clearRestoredHighlights={clearRestoredHighlights}
+              move={move}
+              createFolderFromDrop={createFolderFromDrop}
+              renameFolder={renameFolder}
+              deleteFolder={deleteFolder}
+              badgeCounts={badgeCounts}
+            />
           </div>
-        </nav>
 
-        <div className="mt-auto border-t border-sidebar-border p-4 bg-sidebar-accent/5 backdrop-blur-sm space-y-2">
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`w-full h-12 flex items-center justify-${isOpen ? 'start' : 'center'} gap-3 px-3 rounded-xl text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-300 group`}
-                  onClick={handleOpenCommandPalette}
-                >
-                  <div className="flex items-center justify-center w-10 h-10 shrink-0 rounded-xl group-hover:bg-sidebar-accent/30 transition-colors">
-                    <Command className={`h-5 w-5 ${isOpen ? '' : 'animate-pulse'}`} />
-                  </div>
-                  {isOpen && <span className="font-bold text-[10px] uppercase tracking-wider">Command Palette</span>}
-                </Button>
-              </TooltipTrigger>
-              {!isOpen && (
-                <TooltipContent side="right" className="bg-slate-900 text-white border-slate-700 font-black px-3 py-1.5 text-[10px] uppercase tracking-wider">
-                  Command Palette (Ctrl+K)
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+          <div
+            className={cn(
+              'mt-auto shrink-0 border-t border-sidebar-border',
+              navExpanded ? 'p-3' : 'p-2'
+            )}
+          >
+            <SidebarTooltip label="Command Palette (Ctrl+K)" disabled={navExpanded}>
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label="Open command palette"
+                className={cn(
+                  'h-10 w-full gap-2.5 rounded-md text-slate-500 transition-colors duration-200',
+                  'hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800',
+                  navExpanded ? 'justify-start px-2.5' : 'justify-center px-0'
+                )}
+                onClick={handleOpenCommandPalette}
+              >
+                <Command className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                {navExpanded && (
+                  <span className="text-[12px] font-medium">Command Palette</span>
+                )}
+              </Button>
+            </SidebarTooltip>
+          </div>
+        </TooltipProvider>
       </aside>
     </>
   );
