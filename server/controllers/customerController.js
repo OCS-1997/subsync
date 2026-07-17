@@ -1,4 +1,5 @@
 import { addCustomer, updateCustomer, getAllCustomers, getCustomerById, getAllCustomersDetails, importCustomerData } from "../models/customerModel.js";
+import { publishHelpdeskEvent } from '../services/webhookService.js';
 import { logActivity } from "../models/activityLogModel.js";
 
 /**
@@ -16,6 +17,18 @@ const createCustomer = async (req, res) => {
             await logActivity({ username: req.user.username, action: 'CREATE_CUSTOMER', resourceType: 'Customer', ipAddress: req.ip, details: req.body });
         }
         res.status(201).json({ message: 'Customer created successfully!' });
+
+        // Publish domain event AFTER response (non-blocking, post-commit)
+        const customerId = req.body.customerId || req.body.customer_id;
+        if (customerId) {
+            publishHelpdeskEvent('customer', 'customer.created', customerId, customerId, {
+                displayName: req.body.displayName || req.body.display_name,
+                companyName: req.body.companyName || req.body.company_name,
+                primaryEmail: req.body.email || req.body.primary_email,
+                primaryPhone: req.body.phoneNumber || req.body.primary_phone_number,
+                status: req.body.customerStatus || 'Active',
+            });
+        }
     } catch (error) {
         console.error("Customer creation error:", error);
 
@@ -107,6 +120,22 @@ const updateCustomerDetails = async (req, res) => {
             await logActivity({ username: req.user.username, action: 'UPDATE_CUSTOMER', resourceType: 'Customer', resourceId: cid, ipAddress: req.ip, details: updatedData });
         }
         res.status(200).json({ message: "Customer updated successfully!" });
+
+        // Publish domain event AFTER response (non-blocking, post-commit)
+        const statusUpper = (updatedData.customer_status || '').toUpperCase();
+        const isDeactivating = statusUpper === 'INACTIVE' || statusUpper === 'SUSPENDED' || statusUpper === 'DEACTIVATED';
+        const isActivating = statusUpper === 'ACTIVE';
+        const eventType = isDeactivating ? 'customer.deactivated' : isActivating ? 'customer.activated' : 'customer.updated';
+        publishHelpdeskEvent('customer', eventType, cid, cid, {
+            displayName: updatedData.display_name,
+            companyName: updatedData.company_name,
+            primaryEmail: updatedData.primary_email,
+            secondaryEmail: updatedData.secondary_phone_number || null,
+            primaryPhone: updatedData.primary_phone_number,
+            secondaryPhone: updatedData.secondary_phone_number || null,
+            status: updatedData.customer_status,
+            updatedAt: new Date().toISOString(),
+        });
     } catch (error) {
         console.error("Customer update error:", error);
 

@@ -1,6 +1,7 @@
 import { addDomain, updateDomain, getAllDomains, getDomainById, deleteDomain, importDomainData } from "../models/domainModel.js";
 import { getCustomerById } from "../models/customerModel.js";
 import { logActivity } from "../models/activityLogModel.js";
+import { publishHelpdeskEvent } from '../services/webhookService.js';
 import appDB from "../db/subsyncDB.js";
 
 /**
@@ -15,6 +16,17 @@ const createDomain = async (req, res) => {
             await logActivity({ username: req.user.username, action: 'CREATE_DOMAIN', resourceType: 'Domain', ipAddress: req.ip, details: req.body });
         }
         res.status(201).json({ message: 'Domain created successfully!' });
+
+        // Publish domain event AFTER response (non-blocking, post-commit)
+        const crmCustomerId = req.body.customer_id || req.body.customerId;
+        const domainId = req.body.domain_id || req.body.domainId;
+        if (crmCustomerId) {
+            publishHelpdeskEvent('domain', 'domain.created', crmCustomerId, domainId || crmCustomerId, {
+                crmDomainId: String(domainId || ''),
+                domainName: req.body.domain_name || req.body.domainName || '',
+                registeredWith: req.body.registered_with || req.body.registeredWith || 'Others',
+            });
+        }
     } catch (error) {
         console.error("Domain creation error:", error);
         res.status(500).json({ error: error.message });
@@ -35,6 +47,18 @@ const updateDomainDetails = async (req, res) => {
             await logActivity({ username: req.user.username, action: 'UPDATE_DOMAIN', resourceType: 'Domain', resourceId: did, ipAddress: req.ip, details: req.body });
         }
         res.json(updatedDomain);
+
+        // Publish domain.updated event AFTER response (non-blocking, post-commit)
+        if (updatedDomain) {
+            const crmCustomerId = updatedDomain.customer_id || req.body.customer_id;
+            if (crmCustomerId) {
+                publishHelpdeskEvent('domain', 'domain.updated', String(crmCustomerId), String(did), {
+                    crmDomainId: String(did),
+                    domainName: updatedDomain.domain_name || req.body.domain_name || '',
+                    registeredWith: updatedDomain.registered_with || req.body.registered_with || 'Others',
+                });
+            }
+        }
     } catch (error) {
         console.error("Domain update error:", error);
         res.status(500).json({ error: error.message });
@@ -107,6 +131,8 @@ const importDomains = async (req, res) => {
 const deleteDomainById = async (req, res) => {
     try {
         const { did } = req.params;
+        // Fetch domain info BEFORE deleting (so we still have the crmCustomerId)
+        const domainBefore = await getDomainById(did).catch(() => null);
         await deleteDomain(did);
         
         // Log activity
@@ -121,6 +147,15 @@ const deleteDomainById = async (req, res) => {
         }
         
         res.status(200).json({ message: "Domain deleted successfully" });
+
+        // Publish domain.deleted event AFTER response (non-blocking, post-commit)
+        const crmCustomerId = domainBefore?.customer_id;
+        if (crmCustomerId) {
+            publishHelpdeskEvent('domain', 'domain.deleted', String(crmCustomerId), String(did), {
+                crmDomainId: String(did),
+                domainName: domainBefore?.domain_name || '',
+            });
+        }
     } catch (error) {
         console.error("Error deleting domain:", error);
         res.status(500).json({ error: error.message || "Failed to delete domain." });

@@ -1,6 +1,7 @@
 // serviceController.js
 import { createService, getAllServices, getServiceById, updateService, deleteService } from '../models/serviceModel.js';
 import { logActivity } from '../models/activityLogModel.js';
+import { publishHelpdeskEvent } from '../services/webhookService.js';
 // generateID is not needed here as service_id is AUTO_INCREMENT
 
 // CREATE Service
@@ -9,17 +10,13 @@ const createServiceController = async (req, res) => {
     // console.log(req.body);
     const serviceData = {
       ...req.body,
-      // The database schema indicates service_id is AUTO_INCREMENT,
-      // so we should not provide it here.
-      // Adjust field names to match model and DB:
-      SKU: req.body.SKU, // Maps to stock_keepers_unit in DB
-      sales_information: req.body.sales_information, // Maps to sales_info in DB
-      purchase_information: req.body.purchase_information, // Maps to purchase_info in DB
-      preferred_vendor: req.body.purchase_information.vendor, // Assuming this is the vendor ID
+      SKU: req.body.SKU,
+      sales_information: req.body.sales_information,
+      purchase_information: req.body.purchase_information,
+      preferred_vendor: req.body.purchase_information.vendor,
       service_credit: req.body.service_credit,
     };
 
-    // Validate required fields (using adjusted field names)
     if (!serviceData.service_name || !serviceData.SKU || !serviceData.item_group ||
         !serviceData.sales_information || !serviceData.purchase_information || !serviceData.preferred_vendor ||
         !serviceData.default_tax_rates) {
@@ -27,15 +24,25 @@ const createServiceController = async (req, res) => {
     }
 
     const result = await createService(serviceData);
-    // Log activity
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'CREATE_SERVICE', resourceType: 'Service', resourceId: result.insertId, ipAddress: req.ip, details: serviceData });
     }
-    // The newly created ID is in result.insertId
-    return res.status(201).json({ message: "Service created successfully", service_id: result.insertId });
+    const responseJson = { message: "Service created successfully", service_id: result.insertId };
+    res.status(201).json(responseJson);
+
+    // Publish service.created event AFTER response (non-blocking, post-commit)
+    // Note: service definitions don't belong to a specific customer — broadcast with a sentinel crmCustomerId
+    publishHelpdeskEvent('service', 'service.created', 'GLOBAL', String(result.insertId), {
+      crmServiceId: String(result.insertId),
+      name: serviceData.service_name,
+      SKU: serviceData.SKU,
+      serviceCredit: serviceData.service_credit || 0,
+      status: 'ACTIVE',
+    });
+
+    return;
   } catch (error) {
     console.error("Error creating service:", error);
-    // Handle specific database errors
     if (error.code === 'SKU_EXISTS') {
       return res.status(409).json({ error: error.message });
     }
@@ -78,7 +85,7 @@ const getServiceByIdController = async (req, res) => {
 // UPDATE Service
 const updateServiceController = async (req, res) => {
   try {
-    const { id } = req.params; // service_id
+    const { id } = req.params;
     const existing = await getServiceById(id);
 
     if (!existing) {
@@ -87,15 +94,13 @@ const updateServiceController = async (req, res) => {
 
     const updatedData = {
       ...req.body,
-      // Adjust field names to match model and DB:
-      SKU: req.body.SKU, // Maps to stock_keepers_unit in DB
-      sales_information: req.body.sales_information, // Maps to sales_info in DB
-      purchase_information: req.body.purchase_information, // Maps to purchase_info in DB
-      preferred_vendor: req.body.purchase_information.vendor, // Assuming this is the vendor ID
+      SKU: req.body.SKU,
+      sales_information: req.body.sales_information,
+      purchase_information: req.body.purchase_information,
+      preferred_vendor: req.body.purchase_information.vendor,
       service_credit: req.body.service_credit,
     };
 
-    // Basic validation for update - ensure required fields are present if they are being updated
     if (!updatedData.service_name || !updatedData.SKU || !updatedData.item_group ||
         !updatedData.sales_information || !updatedData.purchase_information || !updatedData.preferred_vendor ||
         !updatedData.default_tax_rates) {
@@ -103,7 +108,6 @@ const updateServiceController = async (req, res) => {
     }
 
     const result = await updateService(id, updatedData);
-    // Log activity
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'UPDATE_SERVICE', resourceType: 'Service', resourceId: id, ipAddress: req.ip, details: updatedData });
     }
@@ -112,7 +116,18 @@ const updateServiceController = async (req, res) => {
       return res.status(200).json({ message: "Service found, but no changes applied (data might be the same)." });
     }
 
-    return res.status(200).json({ message: "Service updated successfully" });
+    res.status(200).json({ message: "Service updated successfully" });
+
+    // Publish service.updated event AFTER response (non-blocking, post-commit)
+    publishHelpdeskEvent('service', 'service.updated', 'GLOBAL', String(id), {
+      crmServiceId: String(id),
+      name: updatedData.service_name,
+      SKU: updatedData.SKU,
+      serviceCredit: updatedData.service_credit || 0,
+      status: 'ACTIVE',
+    });
+
+    return;
   } catch (error) {
     console.error("Error updating service:", error);
     if (error.code === 'SKU_EXISTS') {
@@ -128,7 +143,7 @@ const updateServiceController = async (req, res) => {
 // DELETE Service
 const deleteServiceController = async (req, res) => {
   try {
-    const { id } = req.params; // service_id
+    const { id } = req.params;
     const existing = await getServiceById(id);
 
     if (!existing) {
@@ -136,7 +151,6 @@ const deleteServiceController = async (req, res) => {
     }
 
     const result = await deleteService(id);
-    // Log activity
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'DELETE_SERVICE', resourceType: 'Service', ipAddress: req.ip, resourceId: id });
     }
@@ -145,7 +159,15 @@ const deleteServiceController = async (req, res) => {
       return res.status(404).json({ error: "Service not found or already deleted." });
     }
 
-    return res.status(200).json({ message: "Service deleted successfully" });
+    res.status(200).json({ message: "Service deleted successfully" });
+
+    // Publish service.deleted event AFTER response (non-blocking, post-commit)
+    publishHelpdeskEvent('service', 'service.deleted', 'GLOBAL', String(id), {
+      crmServiceId: String(id),
+      name: existing.service_name,
+    });
+
+    return;
   } catch (error) {
     console.error("Error deleting service:", error);
     return res.status(500).json({ error: "Internal Server Error" });

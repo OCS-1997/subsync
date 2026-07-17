@@ -3,6 +3,7 @@ import { getSubscriptionHistory, getSubscriptionHistoryCount } from "../models/s
 import { logActivity } from "../models/activityLogModel.js";
 import { enqueueReminders, cancelPendingReminderJobs } from "../services/reminderService.js";
 import { sendReminderEmail } from "../services/emailService.js";
+import { publishHelpdeskEvent } from '../services/webhookService.js';
 
 // RESTful: POST /subscriptions
 const createSubscription = async (req, res) => {
@@ -24,6 +25,22 @@ const createSubscription = async (req, res) => {
       await logActivity({ username: req.user.username, action: 'CREATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: result.subId, ipAddress: req.ip, details: req.body });
     }
     res.status(201).json({ message: "Subscription added successfully!", subId: result.subId });
+
+    // Publish subscription.created event AFTER response (non-blocking, post-commit)
+    const crmCustomerId = req.body.customer_id || req.body.customerId;
+    if (crmCustomerId && result.subId) {
+      // Fetch full subscription after creation to get all fields including services
+      const newSub = await getSubscriptionById(result.subId).catch(() => null);
+      publishHelpdeskEvent('subscription', 'subscription.created', String(crmCustomerId), String(result.subId), {
+        crmSubscriptionId: String(result.subId),
+        planName: req.body.domain_name || req.body.planName || 'Subscription Plan',
+        status: req.body.status || 'ACTIVE',
+        startDate: req.body.start_date || req.body.startDate || new Date().toISOString(),
+        endDate: req.body.end_date || req.body.endDate || null,
+        domainName: req.body.domain_name || req.body.domainName || null,
+        services: newSub?.services || [],
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message || "An unexpected error occurred." });
   }
@@ -88,6 +105,9 @@ const updateSubscriptionController = async (req, res) => {
     // Check if end_date or reminder_policy_id is being updated
     const needsRequeue = req.body.end_date !== undefined || req.body.reminder_policy_id !== undefined;
 
+    // Fetch subscription BEFORE update for customer ID
+    const subBefore = await getSubscriptionById(id).catch(() => null);
+
     if (needsRequeue) {
       // Cancel existing pending jobs
       try {
@@ -113,6 +133,24 @@ const updateSubscriptionController = async (req, res) => {
       await logActivity({ username: req.user.username, action: 'UPDATE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip, details: req.body });
     }
     res.status(200).json({ message: 'Subscription updated successfully' });
+
+    // Publish subscription event AFTER response (non-blocking, post-commit)
+    const crmCustomerId = subBefore?.customer_id || req.body.customer_id;
+    if (crmCustomerId) {
+      const statusUpper = (req.body.status || subBefore?.status || '').toUpperCase();
+      const isCancelled = statusUpper === 'CANCELLED' || statusUpper === 'CANCELED';
+      const eventType = isCancelled ? 'subscription.cancelled' : 'subscription.updated';
+      const updatedSub = await getSubscriptionById(id).catch(() => null);
+      publishHelpdeskEvent('subscription', eventType, String(crmCustomerId), String(id), {
+        crmSubscriptionId: String(id),
+        planName: req.body.domain_name || subBefore?.domain_name || 'Subscription Plan',
+        status: req.body.status || subBefore?.status || 'ACTIVE',
+        startDate: req.body.start_date || subBefore?.start_date || new Date().toISOString(),
+        endDate: req.body.end_date !== undefined ? req.body.end_date : (subBefore?.end_date || null),
+        domainName: req.body.domain_name || subBefore?.domain_name || null,
+        services: updatedSub?.services || [],
+      });
+    }
   } catch (e) {
     res.status(500).json({ error: e.message || 'Update failed' });
   }
@@ -122,12 +160,23 @@ const updateSubscriptionController = async (req, res) => {
 const deleteSubscriptionController = async (req, res) => {
   try {
     const { id } = req.params;
+    // Fetch before delete to capture customer ID
+    const subBefore = await getSubscriptionById(id).catch(() => null);
     const ok = await deleteSubscriptionById(id);
     if (!ok) return res.status(404).json({ error: 'Subscription not found' });
     if (req.user && req.user.username) {
       await logActivity({ username: req.user.username, action: 'DELETE_SUBSCRIPTION', resourceType: 'Subscription', resourceId: id, ipAddress: req.ip });
     }
     res.status(200).json({ message: 'Subscription deleted successfully' });
+
+    // Publish subscription.deleted event AFTER response (non-blocking, post-commit)
+    const crmCustomerId = subBefore?.customer_id;
+    if (crmCustomerId) {
+      publishHelpdeskEvent('subscription', 'subscription.deleted', String(crmCustomerId), String(id), {
+        crmSubscriptionId: String(id),
+        domainName: subBefore?.domain_name || null,
+      });
+    }
   } catch (e) {
     res.status(500).json({ error: 'Delete failed' });
   }

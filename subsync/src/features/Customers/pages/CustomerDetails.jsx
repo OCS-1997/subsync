@@ -5,7 +5,7 @@ import {
     ArrowLeft, Edit2, User, Mail, Phone, Building2, MapPin, 
     CreditCard, Receipt, FileText, Globe, Clock, History, 
     AtSign, PhoneCall, ChevronRight, Briefcase, PlusCircle,
-    BadgeAlert, ShieldCheck, Banknote, Sparkles
+    BadgeAlert, ShieldCheck, Banknote, Sparkles, ChevronDown, ChevronUp, Layers, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { cn } from "@/lib/utils";
 
 import { fetchCustomerById, clearCustomerState } from "@/features/Customers/customerSlice.js";
+import api from "@/lib/axiosInstance.js";
 import BentoGrid from "@/features/Dashboard/components/BentoGrid";
 import BentoCard from "@/features/Dashboard/components/BentoCard";
 
@@ -35,6 +36,64 @@ function CustomerDetails() {
       dispatch(clearCustomerState());
     };
   }, [id, dispatch]);
+
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+  const [expandedSubs, setExpandedSubs] = useState({});
+
+  useEffect(() => {
+    async function loadData() {
+      if (id) {
+        setLoadingDetails(true);
+        try {
+          // Fetch subscriptions for this customer ID
+          const subRes = await api.get('/subscriptions', {
+            params: {
+              searchType: 's.customer_id',
+              search: id,
+              limit: 'all'
+            }
+          });
+          setSubscriptions(subRes.data?.dataArray || []);
+
+          // Fetch all services to map credit hours
+          const serviceRes = await api.get('/all-services?limit=1000');
+          setServices(serviceRes.data?.services || serviceRes.data?.dataArray || []);
+        } catch (err) {
+          console.error("Error loading customer subscription details:", err);
+        } finally {
+          setLoadingDetails(false);
+        }
+      }
+    }
+    loadData();
+  }, [id]);
+
+  const toggleSubExpanded = (subId) => {
+    setExpandedSubs(prev => ({
+      ...prev,
+      [subId]: !prev[subId]
+    }));
+  };
+
+  const serviceCreditMap = {};
+  services.forEach(s => {
+    serviceCreditMap[s.service_name] = s.service_credit || 0;
+  });
+
+  const calculateSubCredits = (sub) => {
+    if (!sub.items || !Array.isArray(sub.items)) return 0;
+    return sub.items.reduce((sum, item) => {
+      const baseCredit = serviceCreditMap[item.service_name] || 0;
+      const qty = parseFloat(item.quantity) || 0;
+      return sum + (baseCredit * qty);
+    }, 0);
+  };
+
+  const totalCustomerCredits = subscriptions.reduce((sum, sub) => {
+    return sum + calculateSubCredits(sub);
+  }, 0);
 
   const handleEdit = () => {
     const userSegment = location.pathname.split("/")[1];
@@ -193,32 +252,238 @@ function CustomerDetails() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Active Subscription Portfolio & Service Credits */}
+            <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-blue-500">
+                <CardHeader className="p-8 pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                            <Layers className="h-6 w-6 text-blue-500" />
+                            Active Subscription Portfolio & Service Credits
+                        </CardTitle>
+                        {!loadingDetails && subscriptions.length > 0 && (
+                            <div className="flex items-center gap-3">
+                                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black uppercase tracking-widest text-[9px] px-3 py-1.5 rounded-full border border-blue-500/20">
+                                    {subscriptions.length} Subscriptions
+                                </Badge>
+                                <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-widest text-[9px] px-3 py-1.5 rounded-full border border-emerald-500/20">
+                                    {totalCustomerCredits} Total Credit Hours
+                                </Badge>
+                            </div>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent className="p-8 pt-0 space-y-6">
+                    {loadingDetails ? (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Loading Portfolio details...</p>
+                        </div>
+                    ) : subscriptions.length === 0 ? (
+                        <div className="bg-slate-50/50 dark:bg-slate-800/50 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 text-center">
+                            <p className="text-sm font-bold text-slate-400 italic">No active subscriptions or service credits registered for this customer.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Total entitlement hero panel */}
+                            <div className="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 text-white shadow-xl shadow-blue-500/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-blue-100">Total Support Credit Entitlement</h4>
+                                    <p className="text-sm font-bold text-blue-50 opacity-90 leading-relaxed max-w-md">
+                                        Consolidated entitlement across all active domain subscriptions, mapped from services credit definitions.
+                                    </p>
+                                </div>
+                                <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-[1.5rem] border border-white/10 flex flex-col items-center justify-center">
+                                    <span className="text-4xl font-black tracking-tight">{totalCustomerCredits}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-200 mt-1">Total Credit Hours</span>
+                                </div>
+                            </div>
+
+                            {/* Subscriptions Portfolio Grid */}
+                            <div className="space-y-4">
+                                {subscriptions.map((sub) => {
+                                    const subCredits = calculateSubCredits(sub);
+                                    const isExpanded = !!expandedSubs[sub.sub_id];
+                                    const dateStr = sub.end_date ? new Date(sub.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Never Expires';
+                                    
+                                    const statusConfig = {
+                                        'active': { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                                        'paused': { color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+                                        'cancelled': { color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' }
+                                    };
+                                    const subStatus = statusConfig[sub.status.toLowerCase()] || statusConfig['active'];
+
+                                    return (
+                                        <div 
+                                            key={sub.sub_id}
+                                            className="group border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden bg-slate-50/50 dark:bg-slate-900/20 hover:border-slate-200 dark:hover:border-slate-700/50 transition-all duration-300"
+                                        >
+                                            {/* Sub header */}
+                                            <div 
+                                                onClick={() => toggleSubExpanded(sub.sub_id)}
+                                                className="p-6 flex items-center justify-between cursor-pointer select-none gap-4"
+                                            >
+                                                <div className="flex items-center gap-4 flex-1">
+                                                    <div className="h-10 w-10 rounded-[1.2rem] bg-blue-500/10 dark:bg-blue-500/25 flex items-center justify-center text-blue-500 flex-shrink-0">
+                                                        <Globe className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="space-y-1 min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-[14px] font-black text-slate-800 dark:text-slate-200 truncate">
+                                                                {sub.domain_name || 'No Domain Associated'}
+                                                            </span>
+                                                            <Badge className={cn("rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest", subStatus.bg, subStatus.color, subStatus.border)}>
+                                                                {sub.status}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                            ID: <span className="font-mono">{sub.sub_id}</span> • Expires: {dateStr}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4 flex-shrink-0">
+                                                    <div className="text-right hidden sm:block">
+                                                        <span className="text-[13px] font-black text-slate-800 dark:text-slate-200 block">
+                                                            {subCredits} credit hrs
+                                                        </span>
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                            Subscription Total
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-8 w-8 rounded-[1rem] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Sub items expansion */}
+                                            <AnimatePresence initial={false}>
+                                                {isExpanded && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        className="border-t border-slate-100 dark:border-slate-800"
+                                                    >
+                                                        <div className="p-6 bg-white/50 dark:bg-slate-900/30">
+                                                            {sub.items && sub.items.length > 0 ? (
+                                                                <div className="overflow-x-auto">
+                                                                    <table className="w-full text-left border-collapse">
+                                                                        <thead>
+                                                                            <tr className="border-b border-slate-100 dark:border-slate-800/80">
+                                                                                <th className="pb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Service Details</th>
+                                                                                <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Qty</th>
+                                                                                <th className="pb-3 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Base Credit</th>
+                                                                                <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Total Credits</th>
+                                                                                <th className="pb-3 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Rate / Total</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody className="divide-y divide-slate-100/50 dark:divide-slate-800/40">
+                                                                            {sub.items.map((item, idx) => {
+                                                                                const baseCredit = serviceCreditMap[item.service_name] || 0;
+                                                                                const qty = parseFloat(item.quantity) || 0;
+                                                                                const itemCredits = baseCredit * qty;
+                                                                                const rateVal = parseFloat(item.rate) || 0;
+                                                                                const totalCost = rateVal * qty;
+
+                                                                                return (
+                                                                                    <tr key={idx} className="hover:bg-slate-50/20 dark:hover:bg-slate-800/10">
+                                                                                        <td className="py-4 pr-2">
+                                                                                            <span className="text-[12px] font-black text-slate-700 dark:text-slate-300 block leading-tight">
+                                                                                                {item.service_name}
+                                                                                            </span>
+                                                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">
+                                                                                                Service ID: {item.service_id || 'N/A'}
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td className="py-4 text-center">
+                                                                                            <span className="text-[12px] font-bold text-slate-600 dark:text-slate-400">
+                                                                                                {qty}
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td className="py-4 text-center">
+                                                                                            <span className="text-[12px] font-bold text-slate-600 dark:text-slate-400">
+                                                                                                {baseCredit} hrs
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td className="py-4 text-right">
+                                                                                            <span className={cn(
+                                                                                                "text-[12px] font-black",
+                                                                                                itemCredits > 0 ? "text-emerald-500" : "text-slate-400"
+                                                                                            )}>
+                                                                                                {itemCredits} hrs
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td className="py-4 text-right">
+                                                                                            <span className="text-[12px] font-black text-slate-700 dark:text-slate-300 block">
+                                                                                                ₹{totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                                                            </span>
+                                                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                                                @ ₹{rateVal.toLocaleString('en-IN')}/unit
+                                                                                            </span>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                );
+                                                                            })}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-[12px] font-bold text-slate-400 italic">No services registered under this subscription.</p>
+                                                            )}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
 
         {/* Master Governance Segment */}
         <div className="space-y-8">
-            {/* Subscribed Services */}
+            {/* Active Entitlements Summary */}
             <Card className="rounded-[2.5rem] border-slate-100 dark:border-slate-800/50 bg-white dark:bg-slate-900/50 backdrop-blur-xl shadow-sm overflow-hidden border-l-4 border-l-violet-500">
                 <CardHeader className="p-8 pb-0">
                     <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
                         <Sparkles className="h-6 w-6 text-violet-500" />
-                        Subscribed Services
+                        Active Entitlements
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 pt-6">
-                    {currentCustomer.subscribed_services && currentCustomer.subscribed_services.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                            {currentCustomer.subscribed_services.map((service, index) => (
-                                <Badge 
-                                    key={index}
-                                    className="rounded-full px-4 py-1.5 text-xs font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition-all"
-                                >
-                                    {service}
-                                </Badge>
-                            ))}
+                <CardContent className="p-8 pt-6 space-y-6">
+                    {!loadingDetails ? (
+                        <div className="space-y-4">
+                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Entitled Hours</p>
+                                    <p className="text-lg font-black text-slate-800 dark:text-slate-200">{totalCustomerCredits} hrs</p>
+                                </div>
+                                <div className="h-8 w-8 rounded-[0.8rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                    <Clock className="h-4.5 w-4.5" />
+                                </div>
+                            </div>
+                            <div className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Active Subscriptions</p>
+                                    <p className="text-lg font-black text-slate-800 dark:text-slate-200">{subscriptions.length} active</p>
+                                </div>
+                                <div className="h-8 w-8 rounded-[0.8rem] bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <Layers className="h-4.5 w-4.5" />
+                                </div>
+                            </div>
                         </div>
                     ) : (
-                        <p className="text-sm font-bold text-slate-400 italic">No subscribed services found.</p>
+                        <div className="flex items-center gap-2 py-4">
+                            <Loader2 className="h-4 w-4 text-violet-500 animate-spin animate-infinite" />
+                            <span className="text-xs text-slate-400 font-bold">Calculating entitlements...</span>
+                        </div>
                     )}
                 </CardContent>
             </Card>
