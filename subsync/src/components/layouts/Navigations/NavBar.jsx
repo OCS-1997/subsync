@@ -15,6 +15,7 @@ import CommandPalette from "@/components/CommandPalette/CommandPalette.jsx";
 import QuickTimerButton from "@/components/QuickTimer/QuickTimerButton.jsx";
 import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
+import { BirthdayBadge } from "@/modules/birthday";
 
 const navItems = [
   { path: "help", title: "Help", key: "help", icon: HelpCircle },
@@ -186,14 +187,18 @@ function NavBar({ toggleSidebar }) {
 
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
-                title="User Menu"
-              >
-                <User className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              <div>
+                <BirthdayBadge showBadgeLabel={false}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
+                    title="User Menu"
+                  >
+                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </BirthdayBadge>
+              </div>
             </PopoverTrigger>
             <PopoverContent className="w-64" align="end">
               {/* IP Address */}

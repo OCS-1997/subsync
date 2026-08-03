@@ -23,7 +23,8 @@ import {
     Navigation,
     Palette,
     ShieldAlert,
-    Target
+    Target,
+    Cake
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge";
@@ -165,6 +166,15 @@ const SettingsIndex = () => {
                     path: "dashboard-settings",
                     color: "text-orange-500",
                     permission: PERMISSIONS.DASHBOARD_CONFIGURE
+                },
+                {
+                    id: 'birthday-experience',
+                    title: "Birthday Experience",
+                    description: "Celebration engine",
+                    icon: Cake,
+                    path: "birthday-experience",
+                    color: "text-pink-500",
+                    permission: PERMISSIONS.SETTINGS_MANAGE
                 },
                 {
                     id: 'goal-masters',

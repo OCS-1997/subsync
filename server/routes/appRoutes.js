@@ -84,6 +84,11 @@ import {
     searchPeopleController
 } from '../controllers/birthdayController.js';
 import {
+    getAdminSettings as getBirthdayAdminSettings,
+    updateAdminSettings as updateBirthdayAdminSettings,
+    getTodayTeamBirthdays
+} from '../controllers/birthdayExperienceController.js';
+import {
     listToolsController,
     listAllToolsController,
     getToolController,
@@ -813,6 +818,11 @@ router.get('/goal-statuses', isAuthenticated, getGoalStatusesCtrl);
 router.post('/goal-statuses', isAuthenticated, authorize(['goals.configure_status']), postGoalStatusCtrl);
 router.put('/goal-statuses/:id', isAuthenticated, authorize(['goals.configure_status']), putGoalStatusCtrl);
 router.delete('/goal-statuses/:id', isAuthenticated, authorize(['goals.configure_status']), deleteGoalStatusCtrl);
+
+// Birthday Experience Engine Routes
+router.get('/birthday-experience/settings', isAuthenticated, getBirthdayAdminSettings);
+router.put('/birthday-experience/settings', isAuthenticated, authorize([PERMISSIONS.SETTINGS_MANAGE, PERMISSIONS.BIRTHDAYS_MANAGE]), updateBirthdayAdminSettings);
+router.get('/birthday-experience/today-team', isAuthenticated, getTodayTeamBirthdays);
 
 export default router;
 

@@ -4,6 +4,7 @@ import { RefreshCw, LayoutGrid, Package, Phone, Target, BookOpen, HardDrive, Loa
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axiosInstance';
+import { BirthdayDashboardHero, TeamBirthdayNotification } from '@/modules/birthday';
 
 // Tab Components
 import OverviewTab from '../components/tabs/OverviewTab';
@@ -130,6 +131,10 @@ function DashboardHome() {
     return (
         <div className="min-h-screen dark:bg-slate-950 px-4 sm:px-6 py-4 sm:py-8">
             <div className="max-w-[1800px] mx-auto space-y-6 sm:space-y-8">
+                {/* Birthday Celebration Hero & Team Notification */}
+                <BirthdayDashboardHero />
+                <TeamBirthdayNotification />
+
                 {/* Welcome Header */}
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between mb-2">

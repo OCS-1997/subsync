@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { useTheme } from "@/context/ThemeContext.jsx";
 import { Card, CardContent } from "@/components/ui/card.jsx";
+import { BirthdayProfileSettings } from "@/modules/birthday";
 
 export default function Profile() {
     const currentUser = useSelector((state) => state.auth.user);
@@ -130,6 +131,7 @@ export default function Profile() {
             setForm(prev => ({ ...prev, password: "", confirmPassword: "" }));
             const response = await api.get(`/users/${currentUser.username}`);
             setUserData(response.data);
+            window.dispatchEvent(new CustomEvent('userProfileUpdated'));
         } catch (error) {
             toast.error(error?.response?.data?.message || "Update failed");
         } finally {
@@ -332,6 +334,8 @@ export default function Profile() {
                                     className="space-y-6"
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <BirthdayProfileSettings />
+
                                         <Card className="rounded-2xl border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900 shadow-sm">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <Palette className="w-5 h-5 text-blue-600" />

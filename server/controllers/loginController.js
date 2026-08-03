@@ -33,6 +33,8 @@ const validateLogin = async (req, res) => {
                 token,
                 username: authContext.username,
                 name: authContext.name,
+                email: authContext.email,
+                date_of_birth: authContext.date_of_birth,
                 role: authContext.role,
                 roleKey: authContext.roleKey,
                 permissions: authContext.permissions,

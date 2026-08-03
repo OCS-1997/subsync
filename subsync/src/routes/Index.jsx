@@ -52,6 +52,7 @@ import OpportunityForm from '@/features/Opportunities/components/OpportunityForm
 import OpportunityView from '@/features/Opportunities/components/OpportunityView.jsx';
 import OpportunityDetailedReport from '@/features/Opportunities/pages/OpportunityDetailedReport.jsx';
 import BirthdaysPage from '@/features/Birthdays/pages/BirthdaysPage.jsx';
+import { BirthdayAdminSettings } from '@/modules/birthday';
 import BackupConfigurations from '@/features/Backups/pages/BackupConfigurations.jsx';
 import BackupForm from '@/features/Backups/pages/BackupForm.jsx';
 import BackupHistory from '@/features/Backups/pages/BackupHistory.jsx';
@@ -242,6 +243,7 @@ const router = createBrowserRouter([
           { path: "dashboard-settings", element: <PermissionGate required={PERMISSIONS.DASHBOARD_CONFIGURE}><DashboardSettings /></PermissionGate> },
           { path: "teams", element: <PermissionGate required={PERMISSIONS.TEAMS_MANAGE}><TeamsSettings /></PermissionGate> },
           { path: "appearance", element: <AppearanceSettings /> },
+          { path: "birthday-experience", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><BirthdayAdminSettings /></PermissionGate> },
           { path: "helpdesk", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><HelpdeskSettings /></PermissionGate> },
           { path: "developer-controls", element: <PermissionGate required={PERMISSIONS.DEVELOPER_CONTROLS}><DeveloperControls /></PermissionGate> },
           { path: "goal-masters", element: <PermissionGate required={PERMISSIONS.GOALS_CONFIGURE_CATEGORIES}><GoalMastersSettings /></PermissionGate> },
