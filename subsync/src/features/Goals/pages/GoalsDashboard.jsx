@@ -171,7 +171,7 @@ export default function GoalsDashboard() {
                 title="Goals Management"
                 description="Create, track, and align organizational goals on a quarterly and annual basis."
                 breadcrumbItems={[
-                    { label: 'My Work Group' },
+                    { label: 'Operations Module' },
                     { label: 'Goals' }
                 ]}
                 actions={

@@ -74,19 +74,66 @@ function normalizeNode(node, defaultByPath, visitedPaths) {
   return createItemNode(base);
 }
 
+function findFolderByName(nodes, folderName) {
+  for (const node of nodes) {
+    if (
+      node.type === 'folder' &&
+      (node.name === folderName ||
+        (folderName === 'Operations Module' && (node.name === 'Operations Module' || node.name === 'MY WORK')))
+    ) {
+      return node;
+    }
+  }
+  return null;
+}
+
 function mergeWithDefaults(defaultItems, structure) {
   const defaultByPath = new Map(defaultItems.map((item) => [item.path, item]));
   const visitedPaths = new Set();
 
-  const normalized = Array.isArray(structure)
+  let normalized = Array.isArray(structure)
     ? structure
         .map((node) => normalizeNode(node, defaultByPath, visitedPaths))
         .filter(Boolean)
     : [];
 
+  // Migration 1: Move items from legacy 'My Work Group' folder into 'Operations Module'
+  const myWorkFolderIndex = normalized.findIndex((node) => node.type === 'folder' && node.name === 'My Work Group');
+  if (myWorkFolderIndex !== -1) {
+    const myWorkFolder = normalized[myWorkFolderIndex];
+    normalized.splice(myWorkFolderIndex, 1);
+    let opsFolder = findFolderByName(normalized, 'Operations Module');
+    if (opsFolder) {
+      opsFolder.children.push(...myWorkFolder.children);
+    } else {
+      normalized.push(...myWorkFolder.children);
+    }
+  }
+
+  // Migration 2: If Goals is sitting at root level while defaultItem specifies a folder, move it to that folder
+  const goalsIndexAtRoot = normalized.findIndex((node) => node.type === 'item' && node.path === 'dashboard/goals');
+  if (goalsIndexAtRoot !== -1) {
+    const goalsNode = normalized[goalsIndexAtRoot];
+    const defaultGoals = defaultByPath.get('dashboard/goals');
+    const targetFolder = defaultGoals?.folder ? findFolderByName(normalized, defaultGoals.folder) : null;
+    if (targetFolder) {
+      normalized.splice(goalsIndexAtRoot, 1);
+      targetFolder.children.unshift(goalsNode);
+    }
+  }
+
   defaultItems.forEach((item) => {
     if (!visitedPaths.has(item.path)) {
-      normalized.push(createItemNode(item));
+      const itemNode = createItemNode(item);
+      if (item.folder) {
+        const targetFolder = findFolderByName(normalized, item.folder);
+        if (targetFolder) {
+          targetFolder.children.push(itemNode);
+          visitedPaths.add(item.path);
+          return;
+        }
+      }
+      normalized.push(itemNode);
       visitedPaths.add(item.path);
     }
   });
