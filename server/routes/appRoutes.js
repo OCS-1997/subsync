@@ -1,4 +1,36 @@
+import {
+    getCategories as getGoalCategoriesCtrl,
+    postCategory as postGoalCategoryCtrl,
+    putCategory as putGoalCategoryCtrl,
+    removeCategory as deleteGoalCategoryCtrl,
+    getImpacts as getGoalImpactsCtrl,
+    postImpact as postGoalImpactCtrl,
+    putImpact as putGoalImpactCtrl,
+    removeImpact as deleteGoalImpactCtrl,
+    getStatuses as getGoalStatusesCtrl,
+    postStatus as postGoalStatusCtrl,
+    putStatus as putGoalStatusCtrl,
+    removeStatus as deleteGoalStatusCtrl
+} from '../controllers/goalMasterController.js';
+import {
+    getGoalsList,
+    getSingleGoal,
+    postGoal,
+    putGoal,
+    patchProgress,
+    patchStatus,
+    removeGoal,
+    getDashboardStats,
+    getActivityLogs as getGoalActivityLogsCtrl,
+    uploadAttachment as uploadGoalAttachmentCtrl,
+    removeAttachment as deleteGoalAttachmentCtrl,
+    postComment as postGoalCommentCtrl,
+    exportGoalsReport
+} from '../controllers/goalController.js';
+import { uploadGoalAttachmentMiddleware } from '../middlewares/uploadMiddleware.js';
+
 import express from 'express';
+
 import { isAuthenticated, authorize } from '../middlewares/auth.js';
 import { validateLogin, logoutUser } from '../controllers/loginController.js';
 
@@ -747,4 +779,40 @@ router.post('/holidays', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TY
 router.put('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateHolidayController);
 router.delete('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteHolidayController);
 
+// Goals Module Endpoints
+router.get('/goals/dashboard-stats', isAuthenticated, authorize(['goals.view']), getDashboardStats);
+router.get('/goals/export', isAuthenticated, authorize(['goals.export']), exportGoalsReport);
+router.get('/goals', isAuthenticated, authorize(['goals.view']), getGoalsList);
+router.post('/goals', isAuthenticated, authorize(['goals.create']), postGoal);
+router.get('/goals/:id', isAuthenticated, authorize(['goals.view']), getSingleGoal);
+router.put('/goals/:id', isAuthenticated, authorize(['goals.edit']), putGoal);
+router.delete('/goals/:id', isAuthenticated, authorize(['goals.delete']), removeGoal);
+router.patch('/goals/:id/progress', isAuthenticated, authorize(['goals.change_status']), patchProgress);
+router.patch('/goals/:id/status', isAuthenticated, authorize(['goals.change_status']), patchStatus);
+router.get('/goals/:id/activity', isAuthenticated, authorize(['goals.view']), getGoalActivityLogsCtrl);
+
+// Attachments & Comments
+router.post('/goals/:id/attachments', isAuthenticated, authorize(['goals.edit']), uploadGoalAttachmentMiddleware.single('file'), uploadGoalAttachmentCtrl);
+router.delete('/goals/:id/attachments/:attachmentId', isAuthenticated, authorize(['goals.edit']), deleteGoalAttachmentCtrl);
+router.post('/goals/:id/comments', isAuthenticated, authorize(['goals.view']), postGoalCommentCtrl);
+
+// Goal Categories Masters
+router.get('/goal-categories', isAuthenticated, getGoalCategoriesCtrl);
+router.post('/goal-categories', isAuthenticated, authorize(['goals.configure_categories']), postGoalCategoryCtrl);
+router.put('/goal-categories/:id', isAuthenticated, authorize(['goals.configure_categories']), putGoalCategoryCtrl);
+router.delete('/goal-categories/:id', isAuthenticated, authorize(['goals.configure_categories']), deleteGoalCategoryCtrl);
+
+// Business Impact Masters
+router.get('/business-impacts', isAuthenticated, getGoalImpactsCtrl);
+router.post('/business-impacts', isAuthenticated, authorize(['goals.configure_business_impact']), postGoalImpactCtrl);
+router.put('/business-impacts/:id', isAuthenticated, authorize(['goals.configure_business_impact']), putGoalImpactCtrl);
+router.delete('/business-impacts/:id', isAuthenticated, authorize(['goals.configure_business_impact']), deleteGoalImpactCtrl);
+
+// Goal Status Masters
+router.get('/goal-statuses', isAuthenticated, getGoalStatusesCtrl);
+router.post('/goal-statuses', isAuthenticated, authorize(['goals.configure_status']), postGoalStatusCtrl);
+router.put('/goal-statuses/:id', isAuthenticated, authorize(['goals.configure_status']), putGoalStatusCtrl);
+router.delete('/goal-statuses/:id', isAuthenticated, authorize(['goals.configure_status']), deleteGoalStatusCtrl);
+
 export default router;
+

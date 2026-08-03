@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
 
 import AddCustomer from '@/features/Customers/pages/AddCustomer.jsx';
 import AddService from '@/features/Services/pages/AddService.jsx';
@@ -78,12 +78,33 @@ import AdminAppraisalManager from '@/features/Appraisals/pages/AdminAppraisalMan
 import AdminAppraisalSubmissions from '@/features/Appraisals/pages/AdminAppraisalSubmissions.jsx';
 import LeavesPage from '@/features/Leaves/pages/LeavesPage.jsx';
 import AdminLeavesPage from '@/features/Leaves/pages/AdminLeavesPage.jsx';
-// Reports 360 removed
+import GoalsPage from '@/features/Goals/pages/GoalsPage.jsx';
+import GoalsDashboard from '@/features/Goals/pages/GoalsDashboard.jsx';
+import GoalDetails from '@/features/Goals/pages/GoalDetails.jsx';
+import GoalMastersSettings from '@/features/Goals/pages/GoalMastersSettings.jsx';
+import AddGoal from '@/features/Goals/pages/AddGoal.jsx';
+
+
+const DashboardRedirect = () => {
+  const location = useLocation();
+  let username = 'admin';
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user && user.username) username = user.username;
+  } catch (e) {}
+
+  const path = location.pathname.startsWith('/') ? location.pathname : `/${location.pathname}`;
+  const targetPath = `/${username}${path}`;
+  return <Navigate to={targetPath} replace />;
+};
 
 const router = createBrowserRouter([
   { path: "/", element: <LoginPage /> },
   { path: "/kb/p/:slug", element: <ArticleView publicView={true} /> },
   { path: "/app/download", element: <DownloadPage /> },
+  { path: "/dashboard/*", element: <DashboardRedirect /> },
+  { path: "/dashboard", element: <DashboardRedirect /> },
+
   {
     path: "/:username/dashboard",
     element: (
@@ -223,10 +244,19 @@ const router = createBrowserRouter([
           { path: "appearance", element: <AppearanceSettings /> },
           { path: "helpdesk", element: <PermissionGate required={PERMISSIONS.SETTINGS_MANAGE}><HelpdeskSettings /></PermissionGate> },
           { path: "developer-controls", element: <PermissionGate required={PERMISSIONS.DEVELOPER_CONTROLS}><DeveloperControls /></PermissionGate> },
+          { path: "goal-masters", element: <PermissionGate required={PERMISSIONS.GOALS_CONFIGURE_CATEGORIES}><GoalMastersSettings /></PermissionGate> },
         ]
       },
 
+      { path: "goals", element: <PermissionGate required={PERMISSIONS.GOALS_VIEW}><GoalsPage /></PermissionGate> },
+      { path: "goals/add", element: <PermissionGate required={PERMISSIONS.GOALS_CREATE}><AddGoal /></PermissionGate> },
+      { path: "goals/:id", element: <PermissionGate required={PERMISSIONS.GOALS_VIEW}><GoalDetails /></PermissionGate> },
+      { path: "goals/:id/edit", element: <PermissionGate required={PERMISSIONS.GOALS_EDIT}><AddGoal /></PermissionGate> },
+
+
+
       { path: "help", element: <HelpPage /> },
+
 
       // 403 Forbidden
       { path: "forbidden", element: <ForbiddenPage /> },

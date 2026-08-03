@@ -49,7 +49,7 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Multer upload middleware
+// Multer upload middleware for KB
 export const uploadKBImage = multer({
     storage,
     fileFilter,
@@ -57,6 +57,27 @@ export const uploadKBImage = multer({
         fileSize: UPLOAD_CONFIG.KB_IMAGES.maxFileSize
     }
 });
+
+// Multer storage for Goal attachments
+const goalStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = './uploads/goals/attachments';
+        ensureUploadDir(uploadPath);
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname).toLowerCase();
+        const filename = `goal-${uniqueSuffix}${ext}`;
+        cb(null, filename);
+    }
+});
+
+export const uploadGoalAttachmentMiddleware = multer({
+    storage: goalStorage,
+    limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+});
+
 
 /**
  * Get image dimensions using sharp

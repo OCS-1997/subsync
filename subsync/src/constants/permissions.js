@@ -107,6 +107,17 @@ export const PERMISSIONS = Object.freeze({
   PERMISSIONS_APPLY: 'permissions.apply',
   PERMISSIONS_APPROVE: 'permissions.approve',
   DEVELOPER_CONTROLS: 'developer_controls.manage',
+  // Goals Module
+  GOALS_VIEW: 'goals.view',
+  GOALS_CREATE: 'goals.create',
+  GOALS_EDIT: 'goals.edit',
+  GOALS_DELETE: 'goals.delete',
+  GOALS_EXPORT: 'goals.export',
+  GOALS_ASSIGN: 'goals.assign',
+  GOALS_CHANGE_STATUS: 'goals.change_status',
+  GOALS_CONFIGURE_CATEGORIES: 'goals.configure_categories',
+  GOALS_CONFIGURE_STATUS: 'goals.configure_status',
+  GOALS_CONFIGURE_BUSINESS_IMPACT: 'goals.configure_business_impact',
 });
 
 export const PAGE_PERMISSIONS = {
@@ -123,4 +134,6 @@ export const PAGE_PERMISSIONS = {
   roles: PERMISSIONS.ROLES_VIEW,
   assets: PERMISSIONS.ASSETS_VIEW,
   performanceReports: PERMISSIONS.PERFORMANCE_REPORTS_VIEW,
+  goals: PERMISSIONS.GOALS_VIEW,
 };
+

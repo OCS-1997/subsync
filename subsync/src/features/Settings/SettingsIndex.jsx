@@ -22,7 +22,8 @@ import {
     LayoutGrid,
     Navigation,
     Palette,
-    ShieldAlert
+    ShieldAlert,
+    Target
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge";
@@ -164,6 +165,15 @@ const SettingsIndex = () => {
                     path: "dashboard-settings",
                     color: "text-orange-500",
                     permission: PERMISSIONS.DASHBOARD_CONFIGURE
+                },
+                {
+                    id: 'goal-masters',
+                    title: "Goal Masters",
+                    description: "Categories, Impacts & Statuses",
+                    icon: Target,
+                    path: "goal-masters",
+                    color: "text-blue-600",
+                    permission: PERMISSIONS.GOALS_CONFIGURE_CATEGORIES
                 },
                 {
                     id: 'helpdesk',

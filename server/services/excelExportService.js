@@ -399,3 +399,90 @@ export async function generateExcelReport({ insights, dateRangeText, companyName
     const buffer = await workbook.xlsx.writeBuffer();
     return buffer;
 }
+
+/**
+ * Generate Excel Workbook for Goals Module
+ * @param {Array} goals - Array of goal records
+ * @returns {Promise<Buffer>} Excel file buffer
+ */
+export async function generateGoalsExcelReport(goals = []) {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Subsync Goals Management';
+    workbook.lastModifiedBy = 'Subsync';
+    workbook.created = new Date();
+
+    const PRIMARY_COLOR = '1E3A8A';
+    const HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: PRIMARY_COLOR } };
+    const EXCEL_BORDER = {
+        top: { style: 'thin', color: { argb: 'D1D5DB' } },
+        left: { style: 'thin', color: { argb: 'D1D5DB' } },
+        bottom: { style: 'thin', color: { argb: 'D1D5DB' } },
+        right: { style: 'thin', color: { argb: 'D1D5DB' } }
+    };
+
+    const sheet = workbook.addWorksheet('Goals Export');
+    sheet.views = [{ state: 'frozen', ySplit: 2, showGridLines: true }];
+
+    // Title Header
+    sheet.mergeCells('A1:J1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = 'Goals Management Report';
+    titleCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFF' } };
+    titleCell.fill = HEADER_FILL;
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getRow(1).height = 35;
+
+    // Table Column Headers
+    const headers = [
+        'Goal ID', 'Goal Title', 'Category', 'Business Impact',
+        'Quarter', 'Financial Year', 'Owner(s)', 'Target Date',
+        'Status', 'Progress (%)', 'Priority'
+    ];
+
+    sheet.getRow(2).values = headers;
+    sheet.getRow(2).height = 25;
+    sheet.getRow(2).eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFF' }, size: 10 };
+        cell.fill = HEADER_FILL;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = EXCEL_BORDER;
+    });
+
+    // Populate Data
+    goals.forEach((goal) => {
+        const rowValues = [
+            goal.goal_id || '',
+            goal.title || '',
+            goal.category_name || '',
+            goal.business_impact_name || '',
+            goal.quarter || '',
+            goal.financial_year || '',
+            goal.owners_text || '',
+            goal.target_date ? format(new Date(goal.target_date), 'dd-MMM-yyyy') : '',
+            goal.status_name || '',
+            goal.progress !== undefined ? `${goal.progress}%` : '0%',
+            goal.priority || 'Medium'
+        ];
+
+        const row = sheet.addRow(rowValues);
+        row.height = 22;
+        row.eachCell((cell) => {
+            cell.border = EXCEL_BORDER;
+            cell.alignment = { vertical: 'middle' };
+        });
+    });
+
+    // Auto-fit Column Widths
+    sheet.columns.forEach((column) => {
+        let maxLen = 12;
+        column.eachCell({ includeEmpty: true }, (cell, rowIdx) => {
+            if (rowIdx === 1) return;
+            const cellVal = cell.value ? String(cell.value) : '';
+            if (cellVal.length > maxLen) maxLen = cellVal.length;
+        });
+        column.width = Math.min(40, maxLen + 3);
+    });
+
+    return await workbook.xlsx.writeBuffer();
+}
+
