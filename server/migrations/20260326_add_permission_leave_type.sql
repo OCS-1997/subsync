@@ -4,8 +4,8 @@
 START TRANSACTION;
 
 -- Add Permission leave type if it doesn't exist
-INSERT IGNORE INTO leave_types (name, code, description, total_days_per_year, is_encashable, max_carry_forward) 
-VALUES ('Permission', 'PERM', 'Short duration permission (tracked in hours)', 24.00, 0, 0.00);
+INSERT IGNORE INTO leave_types (name, code, description, total_days_per_year, unit, is_encashable, max_carry_forward) 
+VALUES ('Permission', 'PERM', 'Short duration permission (tracked in hours)', 24.00, 'hours', 0, 0.00);
 
 -- Initialize balance for all existing users for 2026
 INSERT IGNORE INTO leave_balances (user_id, leave_type_id, year, allocated)

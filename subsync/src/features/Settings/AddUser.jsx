@@ -49,6 +49,7 @@ const AddUser = () => {
     username: "",
     name: "",
     email: "",
+    gender: "other",
     password: "",
     date_of_birth: "",
     roleKey: "",
@@ -63,6 +64,7 @@ const AddUser = () => {
         username: "",
         name: "",
         email: "",
+        gender: "other",
         password: "",
         date_of_birth: "",
         roleKey: "",
@@ -105,6 +107,7 @@ const AddUser = () => {
         username: user.username,
         name: user.name,
         email: user.email,
+        gender: user.gender || "other",
         password: "",
         date_of_birth: user.date_of_birth || "",
         roleKey: user.roleKey || "",
@@ -119,6 +122,7 @@ const AddUser = () => {
             username: res.data.username,
             name: res.data.name,
             email: res.data.email,
+            gender: res.data.gender || "other",
             password: "",
             date_of_birth: res.data.date_of_birth || "",
             roleKey: res.data.roleKey || res.data.role?.toLowerCase() || "",
@@ -360,7 +364,23 @@ const AddUser = () => {
                           />
                         </div>
                       </div>
-                      <div className="md:col-span-2 space-y-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="gender" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Gender</Label>
+                        <Select
+                          value={form.gender || "other"}
+                          onValueChange={(val) => setForm(f => ({ ...f, gender: val }))}
+                        >
+                          <SelectTrigger className="h-11 border-border/50 bg-background/50 focus:bg-background transition-all">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl shadow-xl">
+                            <SelectItem value="female" className="rounded-lg">Female</SelectItem>
+                            <SelectItem value="male" className="rounded-lg">Male</SelectItem>
+                            <SelectItem value="other" className="rounded-lg">Other / Not Specified</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="date_of_birth" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date of Birth</Label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

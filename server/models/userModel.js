@@ -5,6 +5,7 @@ const userProjection = `
     u.username,
     u.name,
     u.email,
+    u.gender,
     u.date_of_birth AS dateOfBirth,
     u.role_id AS roleId,
     u.role,
@@ -19,6 +20,7 @@ const mapUserRow = (row = {}) => ({
     username: row.username,
     name: row.name,
     email: row.email,
+    gender: row.gender || 'other',
     date_of_birth: formatMySQLDate(row.dateOfBirth),
     roleId: row.roleId,
     role: row.roleName || row.role || null,
@@ -73,6 +75,7 @@ const getUserAuthProfile = async (username) => {
             u.username,
             u.name,
             u.email,
+            u.gender,
             u.date_of_birth AS dateOfBirth,
             u.role_id AS roleId,
             u.role,
@@ -88,11 +91,11 @@ const getUserAuthProfile = async (username) => {
     return rows.length ? mapUserRow(rows[0]) : null;
 };
 
-const createUser = async ({ username, name, email, password, roleName, roleId, is_active, date_of_birth }) => {
+const createUser = async ({ username, name, email, gender = 'other', password, roleName, roleId, is_active, date_of_birth }) => {
     const [result] = await appDB.query(
-        `INSERT INTO users (username, name, email, password, role, role_id, is_active, date_of_birth, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [username, name, email, password, roleName, roleId || null, is_active, formatMySQLDate(date_of_birth)]
+        `INSERT INTO users (username, name, email, gender, password, role, role_id, is_active, date_of_birth, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [username, name, email, gender || 'other', password, roleName, roleId || null, is_active, formatMySQLDate(date_of_birth)]
     );
     return result.insertId;
 };
@@ -114,6 +117,7 @@ const updateUser = async (currentUsername, user) => {
 
         if (user.name !== undefined) { fields.push('name = ?'); values.push(user.name); }
         if (user.email !== undefined) { fields.push('email = ?'); values.push(user.email); }
+        if (user.gender !== undefined) { fields.push('gender = ?'); values.push(user.gender); }
         if (user.password !== undefined) { fields.push('password = ?'); values.push(user.password); }
         if (user.date_of_birth !== undefined) { fields.push('date_of_birth = ?'); values.push(formatMySQLDate(user.date_of_birth)); }
         if (user.roleName !== undefined) { fields.push('role = ?'); values.push(user.roleName); }

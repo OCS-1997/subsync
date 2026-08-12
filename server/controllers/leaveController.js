@@ -14,7 +14,12 @@ import {
     createHoliday,
     updateHoliday,
     deleteHoliday,
-    countPendingLeaveRequests
+    copyHolidaysToNextYear,
+    countPendingLeaveRequests,
+    getPermissionSettings,
+    updatePermissionSettings,
+    getAllUserBalances,
+    adjustUserBalance
 } from "../models/leaveModel.js";
 import { 
     createPermissionRequest, 
@@ -304,6 +309,90 @@ async function getPendingCountsController(req, res) {
     }
 }
 
+async function getPermissionSettingsController(req, res) {
+    try {
+        const settings = await getPermissionSettings();
+        res.status(200).json(settings);
+    } catch (error) {
+        console.error("Error in getPermissionSettingsController:", error);
+        res.status(500).json({ error: "Failed to fetch permission settings" });
+    }
+}
+
+async function updatePermissionSettingsController(req, res) {
+    try {
+        const success = await updatePermissionSettings(req.body);
+        if (success) {
+            await logActivity({
+                username: req.user.username,
+                action: 'UPDATE_PERMISSION_SETTINGS',
+                resourceType: 'PermissionSettings',
+                resourceId: '1',
+                ipAddress: req.ip,
+                details: req.body
+            });
+            return res.status(200).json({ message: "Permission settings updated successfully" });
+        }
+        res.status(400).json({ error: "Failed to update permission settings" });
+    } catch (error) {
+        console.error("Error in updatePermissionSettingsController:", error);
+        res.status(500).json({ error: error.message || "Failed to update permission settings" });
+    }
+}
+
+async function getAllUserBalancesController(req, res) {
+    try {
+        const year = req.query.year || new Date().getFullYear();
+        const balances = await getAllUserBalances(year);
+        res.status(200).json(balances);
+    } catch (error) {
+        console.error("Error in getAllUserBalancesController:", error);
+        res.status(500).json({ error: "Failed to fetch all user balances" });
+    }
+}
+
+async function adjustUserBalanceController(req, res) {
+    try {
+        const { userId, leaveTypeId, year, deltaAmount } = req.body;
+        if (!userId || !leaveTypeId || !year || deltaAmount === undefined) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const success = await adjustUserBalance(userId, leaveTypeId, year, parseFloat(deltaAmount));
+        if (success) {
+            await logActivity({
+                username: req.user.username,
+                action: 'ADJUST_USER_BALANCE',
+                resourceType: 'LeaveBalance',
+                resourceId: `${userId}_${leaveTypeId}_${year}`,
+                ipAddress: req.ip,
+                details: { userId, leaveTypeId, year, deltaAmount }
+            });
+            return res.status(200).json({ message: "User balance adjusted successfully" });
+        }
+        res.status(400).json({ error: "Failed to adjust balance" });
+    } catch (error) {
+        console.error("Error in adjustUserBalanceController:", error);
+        res.status(500).json({ error: "Failed to adjust user balance" });
+    }
+}
+
+async function copyHolidaysNextYearController(req, res) {
+    try {
+        const fromYear = req.body.fromYear || new Date().getFullYear();
+        const toYear = req.body.toYear || (fromYear + 1);
+
+        const count = await copyHolidaysToNextYear(fromYear, toYear);
+        res.status(200).json({ 
+            message: `Copied ${count} non-recurring holidays from ${fromYear} to ${toYear}. Recurring holidays auto-repeat.`,
+            count 
+        });
+    } catch (error) {
+        console.error("Error in copyHolidaysNextYearController:", error);
+        res.status(500).json({ error: "Failed to copy holidays to next year" });
+    }
+}
+
 export {
     getLeaveTypesController,
     applyLeaveController,
@@ -318,5 +407,10 @@ export {
     createHolidayController,
     updateHolidayController,
     deleteHolidayController,
-    getPendingCountsController
+    getPendingCountsController,
+    getPermissionSettingsController,
+    updatePermissionSettingsController,
+    getAllUserBalancesController,
+    adjustUserBalanceController,
+    copyHolidaysNextYearController
 };

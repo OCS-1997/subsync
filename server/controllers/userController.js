@@ -42,7 +42,7 @@ export const getUser = async (req, res) => {
 
 export const createUserController = async (req, res) => {
     try {
-        const { username, name, email, password, roleKey, roleId, is_active = true, date_of_birth } = req.body;
+        const { username, name, email, gender = 'other', password, roleKey, roleId, is_active = true, date_of_birth } = req.body;
         if (!username || !name || !email || !password) {
             return res.status(400).json({ message: "Missing required fields" });
         }
@@ -65,6 +65,7 @@ export const createUserController = async (req, res) => {
             username,
             name,
             email,
+            gender: gender || 'other',
             password: hashedPassword,
             roleName: role.name,
             roleId: role.id,

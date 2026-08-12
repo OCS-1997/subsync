@@ -173,14 +173,14 @@ export async function getDashboardStats() {
         safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) >= DATE(?)', [todayStart]),
         // Expired subscriptions (not archived and end_date < today_midnight)
         safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) < DATE(?)', [todayStart]),
-        // Monthly revenue (sum of subscription totals that are active this month)
+        // Monthly revenue (sum of subscription totals that start/renew this month)
         safeQuery(`
             SELECT COALESCE(SUM(total), 0) as revenue 
             FROM subscriptions 
             WHERE archived_at IS NULL 
-            AND start_date <= ? 
-            AND end_date >= ?
-        `, [monthEnd, monthStart]),
+            AND start_date >= ? 
+            AND start_date <= ?
+        `, [monthStart, monthEnd]),
         // Today's DCRs
         safeQuery('SELECT COUNT(*) as count FROM dcr_entries WHERE DATE(timestamp) = DATE(?)', [now]),
         // Open opportunities (not Won or Lost based on status_name)
@@ -225,7 +225,7 @@ export async function getMonthlyRevenueTrend() {
         });
     }
 
-    // Query revenue for each month
+    // Query revenue for each month based on subscriptions starting/renewing in that month
     const revenueData = await Promise.all(
         months.map(async (m) => {
             try {
@@ -233,9 +233,9 @@ export async function getMonthlyRevenueTrend() {
                     SELECT COALESCE(SUM(total), 0) as revenue
                     FROM subscriptions
                     WHERE archived_at IS NULL
+                    AND start_date >= ?
                     AND start_date <= ?
-                    AND end_date >= ?
-                `, [m.monthEnd, m.monthStart]);
+                `, [m.monthStart, m.monthEnd]);
 
                 return {
                     month: m.label,
@@ -263,6 +263,144 @@ export async function getMonthlyRevenueTrend() {
         lastMonth,
         percentChange,
         isPositive: percentChange >= 0
+    };
+}
+
+/**
+ * Get detailed revenue breakdown for a given year and month
+ * @param {number} [targetYear] 
+ * @param {number} [targetMonth] 0-indexed month
+ */
+export async function getRevenueBreakdown(targetYear, targetMonth) {
+    const now = new Date();
+    const year = targetYear !== undefined && targetYear !== null && targetYear !== '' ? parseInt(targetYear, 10) : now.getFullYear();
+    const month = targetMonth !== undefined && targetMonth !== null && targetMonth !== '' ? parseInt(targetMonth, 10) : now.getMonth();
+
+    const monthStart = new Date(year, month, 1, 0, 0, 0, 0);
+    const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+    // 1. Subscriptions starting or renewing in the selected month (New Bookings / Start Date Revenue)
+    const [newSubscriptions] = await appDB.query(`
+        SELECT 
+            s.sub_id, s.domain_name, s.start_date, s.end_date, s.status, s.total,
+            s.customer_id, c.display_name as customer_name,
+            (
+                SELECT JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'service_name', si.service_name,
+                        'quantity', si.quantity,
+                        'rate', si.rate,
+                        'amount', si.amount
+                    )
+                )
+                FROM subscription_items si
+                WHERE si.sub_id = s.sub_id
+            ) as services
+        FROM subscriptions s
+        LEFT JOIN customers c ON s.customer_id = c.customer_id
+        WHERE s.archived_at IS NULL
+        AND s.start_date >= ? AND s.start_date <= ?
+        ORDER BY s.start_date DESC
+    `, [monthStart, monthEnd]);
+
+    const parsedNewSubs = newSubscriptions.map(s => ({
+        ...s,
+        total: parseFloat(s.total) || 0,
+        services: s.services ? (typeof s.services === 'string' ? JSON.parse(s.services) : s.services) : []
+    }));
+
+    // 2. Active subscriptions during this month (for MRR Calculation)
+    const [activeSubscriptions] = await appDB.query(`
+        SELECT 
+            s.sub_id, s.domain_name, s.start_date, s.end_date, s.status, s.total,
+            s.customer_id, c.display_name as customer_name
+        FROM subscriptions s
+        LEFT JOIN customers c ON s.customer_id = c.customer_id
+        WHERE s.archived_at IS NULL
+        AND s.start_date <= ? AND s.end_date >= ?
+        ORDER BY s.start_date DESC
+    `, [monthEnd, monthStart]);
+
+    let mrrTotal = 0;
+    const mrrList = activeSubscriptions.map(s => {
+        const total = parseFloat(s.total) || 0;
+        const start = new Date(s.start_date);
+        const end = new Date(s.end_date);
+        const diffDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+        const durationMonths = Math.max(1, Math.round(diffDays / 30.44));
+        const monthlyShare = Math.round((total / durationMonths) * 100) / 100;
+        mrrTotal += monthlyShare;
+
+        return {
+            ...s,
+            total,
+            durationMonths,
+            monthlyShare
+        };
+    });
+
+    // 3. Service Breakdown for subscriptions starting/active in the period
+    const [serviceRows] = await appDB.query(`
+        SELECT 
+            si.service_name,
+            SUM(si.amount) as total_amount,
+            COUNT(DISTINCT s.sub_id) as subscription_count
+        FROM subscription_items si
+        JOIN subscriptions s ON si.sub_id = s.sub_id
+        WHERE s.archived_at IS NULL
+        AND s.start_date >= ? AND s.start_date <= ?
+        GROUP BY si.service_name
+        ORDER BY total_amount DESC
+    `, [monthStart, monthEnd]);
+
+    // 4. Customer Breakdown
+    const [customerRows] = await appDB.query(`
+        SELECT 
+            c.customer_id,
+            c.display_name as customer_name,
+            SUM(s.total) as total_revenue,
+            COUNT(s.sub_id) as subscription_count
+        FROM subscriptions s
+        JOIN customers c ON s.customer_id = c.customer_id
+        WHERE s.archived_at IS NULL
+        AND s.start_date >= ? AND s.start_date <= ?
+        GROUP BY c.customer_id, c.display_name
+        ORDER BY total_revenue DESC
+        LIMIT 10
+    `, [monthStart, monthEnd]);
+
+    const newBookingsTotal = parsedNewSubs.reduce((acc, sub) => acc + sub.total, 0);
+
+    const trendData = await getMonthlyRevenueTrend();
+
+    return {
+        selectedPeriod: {
+            year,
+            month,
+            label: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        },
+        summary: {
+            newBookingsRevenue: newBookingsTotal,
+            mrr: Math.round(mrrTotal * 100) / 100,
+            activeContractsCount: activeSubscriptions.length,
+            newSubscriptionsCount: parsedNewSubs.length,
+            percentChange: trendData.percentChange,
+            isPositive: trendData.isPositive
+        },
+        newSubscriptions: parsedNewSubs,
+        mrrSubscriptions: mrrList,
+        serviceBreakdown: serviceRows.map(r => ({
+            serviceName: r.service_name || 'General Service',
+            totalAmount: parseFloat(r.total_amount) || 0,
+            count: r.subscription_count || 0
+        })),
+        customerBreakdown: customerRows.map(r => ({
+            customerId: r.customer_id,
+            customerName: r.customer_name || 'Unknown',
+            totalRevenue: parseFloat(r.total_revenue) || 0,
+            count: r.subscription_count || 0
+        })),
+        trend: trendData.trend
     };
 }
 

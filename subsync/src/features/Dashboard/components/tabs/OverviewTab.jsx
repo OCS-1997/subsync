@@ -4,8 +4,9 @@ import { useSelector } from 'react-redux';
 import {
     Users, Globe, Package, Calendar, TrendingUp, Clock,
     AlertTriangle, ArrowRight, Plus, Phone, Target, RefreshCw,
-    ArrowUpRight, ArrowDownRight, Mail, Loader2
+    ArrowUpRight, ArrowDownRight, Mail, Loader2, Maximize2
 } from 'lucide-react';
+import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { toast } from 'react-toastify';
 import api from '@/lib/axiosInstance';
@@ -29,6 +30,7 @@ function OverviewTab({ visibleWidgets }) {
     const [renewalsLoading, setRenewalsLoading] = useState(true);
     const [revenueLoading, setRevenueLoading] = useState(true);
     const [activityLoading, setActivityLoading] = useState(true);
+    const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
 
     const [stats, setStats] = useState({
         totalCustomers: 0,
@@ -147,6 +149,7 @@ function OverviewTab({ visibleWidgets }) {
     ];
 
     return (
+        <>
         <BentoGrid columns={4}>
             {/* Key Stats Row */}
             {isWidgetVisible('overview_customers') && (
@@ -170,12 +173,30 @@ function OverviewTab({ visibleWidgets }) {
             )}
 
             {isWidgetVisible('overview_revenue') && (
-                <BentoCard size="sm" icon={TrendingUp} title="Revenue" loading={revenueLoading}>
-                    <div className="flex flex-col h-full">
+                <BentoCard 
+                    size="sm" 
+                    icon={TrendingUp} 
+                    title="Revenue" 
+                    loading={revenueLoading}
+                    className="cursor-pointer transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-800/80 hover:shadow-purple-500/10 group/rev"
+                    action={
+                        <button 
+                            onClick={() => setIsRevenueModalOpen(true)}
+                            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                            title="Expand Revenue Breakdown"
+                        >
+                            <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                    }
+                >
+                    <div 
+                        onClick={() => setIsRevenueModalOpen(true)}
+                        className="flex flex-col h-full group/card"
+                    >
                         <div className="flex items-start justify-between">
                             <StatCard
                                 value={formatCurrency(stats.monthlyRevenue)}
-                                label="This Month"
+                                label="This Month (Click for breakdown)"
                                 variant="purple"
                             />
                             <div className={cn(
@@ -436,6 +457,12 @@ function OverviewTab({ visibleWidgets }) {
                 </BentoCard>
             )}
         </BentoGrid>
+
+        <RevenueBreakdownModal 
+            isOpen={isRevenueModalOpen} 
+            onClose={() => setIsRevenueModalOpen(false)} 
+        />
+        </>
     );
 }
 

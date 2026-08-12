@@ -16,8 +16,18 @@ function formatDateForMySQL(dateVal) {
 
 // --- Leave Types ---
 
-async function getAllLeaveTypes() {
-    const [rows] = await appDB.query("SELECT * FROM leave_types WHERE is_active = 1 ORDER BY name");
+async function getAllLeaveTypes(includePermission = false, userGender = null) {
+    let query = "SELECT * FROM leave_types WHERE is_active = 1";
+    if (!includePermission) {
+        query += " AND code != 'PERM'";
+    }
+    if (userGender === 'male') {
+        query += " AND code != 'ML'";
+    } else if (userGender === 'female') {
+        query += " AND code != 'PL'";
+    }
+    query += " ORDER BY name";
+    const [rows] = await appDB.query(query);
     return rows;
 }
 
@@ -28,16 +38,16 @@ async function getLeaveTypeById(id) {
 
 async function createLeaveType(data) {
     const [result] = await appDB.query(
-        "INSERT INTO leave_types (name, code, description, total_days_per_year, is_encashable, max_carry_forward, min_service_months) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [data.name, data.code, data.description, data.total_days_per_year, data.is_encashable, data.max_carry_forward, data.min_service_months]
+        "INSERT INTO leave_types (name, code, description, total_days_per_year, unit, is_encashable, max_carry_forward, min_service_months) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [data.name, data.code, data.description, data.total_days_per_year, data.unit || 'days', data.is_encashable, data.max_carry_forward, data.min_service_months]
     );
     return result.insertId;
 }
 
 async function updateLeaveType(id, data) {
     const [result] = await appDB.query(
-        "UPDATE leave_types SET name = ?, code = ?, description = ?, total_days_per_year = ?, is_encashable = ?, max_carry_forward = ?, min_service_months = ? WHERE id = ?",
-        [data.name, data.code, data.description, data.total_days_per_year, data.is_encashable, data.max_carry_forward, data.min_service_months, id]
+        "UPDATE leave_types SET name = ?, code = ?, description = ?, total_days_per_year = ?, unit = ?, is_encashable = ?, max_carry_forward = ?, min_service_months = ? WHERE id = ?",
+        [data.name, data.code, data.description, data.total_days_per_year, data.unit || 'days', data.is_encashable, data.max_carry_forward, data.min_service_months, id]
     );
     return result.affectedRows > 0;
 }
@@ -186,26 +196,42 @@ async function getLeaveRequestById(requestId) {
 // --- Leave Balances ---
 
 async function getUserLeaveBalances(userId, year) {
-    const [rows] = await appDB.query(
-        `SELECT lb.*, lt.name as leave_type_name, lt.code as leave_type_code
-         FROM leave_balances lb
-         JOIN leave_types lt ON lb.leave_type_id = lt.id
-         WHERE lb.user_id = ? AND lb.year = ?`,
-        [userId, year]
-    );
+    // Fetch user's gender
+    const [userRows] = await appDB.query("SELECT gender FROM users WHERE username = ? LIMIT 1", [userId]);
+    const gender = userRows.length ? userRows[0].gender : 'other';
+
+    let query = `
+        SELECT lb.*, lt.name as leave_type_name, lt.code as leave_type_code, lt.unit as unit
+        FROM leave_balances lb
+        JOIN leave_types lt ON lb.leave_type_id = lt.id
+        WHERE lb.user_id = ? AND lb.year = ?
+    `;
+    const params = [userId, year];
+
+    if (gender === 'male') {
+        query += " AND lt.code != 'ML'";
+    } else if (gender === 'female') {
+        query += " AND lt.code != 'PL'";
+    }
+
+    const [rows] = await appDB.query(query, params);
     return rows;
 }
 
 async function initializeBalancesForUser(userId, year) {
-    const leaveTypes = await getAllLeaveTypes();
+    const leaveTypes = await getAllLeaveTypes(true);
+    const permSettings = await getPermissionSettings().catch(() => null);
+    const permQuota = permSettings?.yearly_hours_quota ? parseFloat(permSettings.yearly_hours_quota) : 24.00;
+
     const connection = await appDB.getConnection();
     try {
         await connection.beginTransaction();
         for (const type of leaveTypes) {
+            const alloc = type.code === 'PERM' ? permQuota : type.total_days_per_year;
             await connection.query(
                 `INSERT IGNORE INTO leave_balances (user_id, leave_type_id, year, allocated)
                  VALUES (?, ?, ?, ?)`,
-                [userId, type.id, year, type.total_days_per_year]
+                [userId, type.id, year, alloc]
             );
         }
         await connection.commit();
@@ -220,35 +246,142 @@ async function initializeBalancesForUser(userId, year) {
 // --- Holidays ---
 
 async function getAllHolidays(year = null) {
-    let query = "SELECT * FROM holidays WHERE is_active = 1";
-    const params = [];
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+    let query = `
+        SELECT id, name, description, is_optional, is_active, is_recurring, holiday_date,
+        CASE 
+            WHEN is_recurring = 1 THEN STR_TO_DATE(CONCAT(?, '-', DATE_FORMAT(holiday_date, '%m-%d')), '%Y-%m-%d')
+            ELSE holiday_date
+        END as effective_holiday_date
+        FROM holidays 
+        WHERE is_active = 1
+    `;
+    const params = [targetYear];
     if (year) {
-        query += " AND YEAR(holiday_date) = ?";
-        params.push(year);
+        query += " AND (YEAR(holiday_date) = ? OR is_recurring = 1)";
+        params.push(targetYear);
     }
-    query += " ORDER BY holiday_date ASC";
+    query += " ORDER BY effective_holiday_date ASC";
     const [rows] = await appDB.query(query, params);
-    return rows;
+
+    return rows.map(r => ({
+        ...r,
+        holiday_date: r.effective_holiday_date || r.holiday_date
+    }));
 }
 
 async function createHoliday(data) {
     const [result] = await appDB.query(
-        "INSERT INTO holidays (name, holiday_date, description, is_optional) VALUES (?, ?, ?, ?)",
-        [data.name, formatDateForMySQL(data.holiday_date), data.description, data.is_optional]
+        "INSERT INTO holidays (name, holiday_date, description, is_optional, is_recurring) VALUES (?, ?, ?, ?, ?)",
+        [data.name, formatDateForMySQL(data.holiday_date), data.description, data.is_optional || 0, data.is_recurring ? 1 : 0]
     );
     return result.insertId;
 }
 
 async function updateHoliday(id, data) {
     const [result] = await appDB.query(
-        "UPDATE holidays SET name = ?, holiday_date = ?, description = ?, is_optional = ? WHERE id = ?",
-        [data.name, formatDateForMySQL(data.holiday_date), data.description, data.is_optional, id]
+        "UPDATE holidays SET name = ?, holiday_date = ?, description = ?, is_optional = ?, is_recurring = ? WHERE id = ?",
+        [data.name, formatDateForMySQL(data.holiday_date), data.description, data.is_optional || 0, data.is_recurring ? 1 : 0, id]
     );
     return result.affectedRows > 0;
 }
 
+async function copyHolidaysToNextYear(fromYear, toYear) {
+    const [sourceHolidays] = await appDB.query(
+        "SELECT * FROM holidays WHERE is_active = 1 AND is_recurring = 0 AND YEAR(holiday_date) = ?",
+        [fromYear]
+    );
+
+    let count = 0;
+    for (const hol of sourceHolidays) {
+        const d = new Date(hol.holiday_date);
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const newDate = `${toYear}-${m}-${day}`;
+        try {
+            await appDB.query(
+                "INSERT IGNORE INTO holidays (name, holiday_date, description, is_optional, is_recurring) VALUES (?, ?, ?, ?, 0)",
+                [hol.name, newDate, hol.description, hol.is_optional]
+            );
+            count++;
+        } catch (e) {
+            // Ignore duplicates
+        }
+    }
+    return count;
+}
+
 async function deleteHoliday(id) {
     const [result] = await appDB.query("UPDATE holidays SET is_active = 0 WHERE id = ?", [id]);
+    return result.affectedRows > 0;
+}
+
+// --- Permission Settings ---
+
+async function getPermissionSettings() {
+    const [rows] = await appDB.query("SELECT * FROM permission_settings WHERE id = 1");
+    if (rows.length > 0) return rows[0];
+    return {
+        yearly_hours_quota: 24.00,
+        monthly_hours_quota: 4.00,
+        max_hours_per_request: 2.00,
+        max_requests_per_month: 2,
+        is_active: 1
+    };
+}
+
+async function updatePermissionSettings(data) {
+    const [result] = await appDB.query(
+        `UPDATE permission_settings 
+         SET yearly_hours_quota = ?, monthly_hours_quota = ?, max_hours_per_request = ?, max_requests_per_month = ?, is_active = ?
+         WHERE id = 1`,
+        [data.yearly_hours_quota, data.monthly_hours_quota, data.max_hours_per_request, data.max_requests_per_month, data.is_active ? 1 : 0]
+    );
+    return result.affectedRows > 0;
+}
+
+// --- Admin Employee Allocations & Balance Adjustments ---
+
+async function getAllUserBalances(year) {
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
+    // Ensure all active users have balance rows for targetYear
+    try {
+        const [users] = await appDB.query("SELECT username FROM users");
+        for (const u of users) {
+            const [existing] = await appDB.query(
+                "SELECT id FROM leave_balances WHERE user_id = ? AND year = ? LIMIT 1",
+                [u.username, targetYear]
+            );
+            if (existing.length === 0) {
+                await initializeBalancesForUser(u.username, targetYear).catch(() => {});
+            }
+        }
+    } catch (e) {
+        console.error("Error auto-initializing balances in getAllUserBalances:", e.message);
+    }
+
+    const [rows] = await appDB.query(
+        `SELECT lb.*, lt.name as leave_type_name, lt.code as leave_type_code, lt.unit as unit, u.name as user_name, u.email as user_email, u.gender as user_gender
+         FROM leave_balances lb
+         JOIN leave_types lt ON lb.leave_type_id = lt.id
+         JOIN users u ON lb.user_id = u.username
+         WHERE lb.year = ?
+         AND NOT (u.gender = 'male' AND lt.code = 'ML')
+         AND NOT (u.gender = 'female' AND lt.code = 'PL')
+         ORDER BY u.name ASC, lt.name ASC`,
+        [targetYear]
+    );
+    return rows;
+}
+
+async function adjustUserBalance(userId, leaveTypeId, year, deltaAmount) {
+    const [result] = await appDB.query(
+        `UPDATE leave_balances 
+         SET allocated = allocated + ? 
+         WHERE user_id = ? AND leave_type_id = ? AND year = ?`,
+        [deltaAmount, userId, leaveTypeId, year]
+    );
     return result.affectedRows > 0;
 }
 
@@ -268,5 +401,10 @@ export {
     createHoliday,
     updateHoliday,
     deleteHoliday,
-    countPendingLeaveRequests
+    copyHolidaysToNextYear,
+    countPendingLeaveRequests,
+    getPermissionSettings,
+    updatePermissionSettings,
+    getAllUserBalances,
+    adjustUserBalance
 };

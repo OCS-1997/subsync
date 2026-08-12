@@ -37,6 +37,17 @@ const PermissionRequestForm = ({ onSuccess }) => {
         }
     };
 
+    const calculateDuration = () => {
+        if (!formData.start_time || !formData.end_time || !formData.date) return null;
+        const start = new Date(`${formData.date} ${formData.start_time}`);
+        const end = new Date(`${formData.date} ${formData.end_time}`);
+        const mins = Math.round((end - start) / (1000 * 60));
+        if (mins <= 0 || isNaN(mins)) return null;
+        const hours = (mins / 60).toFixed(1).replace(/\.0$/, '');
+        return `${hours} Hour${hours !== '1' ? 's' : ''} (${mins} mins)`;
+    };
+    const calculatedDuration = calculateDuration();
+
     return (
         <Card className="rounded-[2.5rem] border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
             <CardHeader className="bg-indigo-600 p-8">
@@ -80,6 +91,13 @@ const PermissionRequestForm = ({ onSuccess }) => {
                             />
                         </div>
                     </div>
+
+                    {calculatedDuration && (
+                        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800 flex justify-between items-center">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Total Requested Duration:</span>
+                            <span className="text-xs font-black uppercase text-indigo-900 dark:text-indigo-200">{calculatedDuration}</span>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Reason</Label>

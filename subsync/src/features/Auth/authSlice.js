@@ -63,6 +63,12 @@ const authSlice = createSlice({
       state.permissions = [];
       clearAuth();
     },
+    updateAuthUser: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        setStorageItem('subsync_user', JSON.stringify(state.user));
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -98,5 +104,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, updateAuthUser } = authSlice.actions;
 export default authSlice.reducer;

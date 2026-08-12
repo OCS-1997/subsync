@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
     Package, Calendar, TrendingUp, AlertTriangle, Filter,
-    CheckCircle, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2
+    CheckCircle, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2, Maximize2
 } from 'lucide-react';
+import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import { toast } from 'react-toastify';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
@@ -43,6 +44,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     const { user } = useSelector((state) => state.auth);
     const { theme } = useTheme();
     const [loading, setLoading] = useState(true);
+    const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
 
     // Helper to check if widget is visible
     const isWidgetVisible = (widgetKey) => {
@@ -238,6 +240,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     }
 
     return (
+        <>
         <BentoGrid columns={4}>
             {/* Stats Row */}
             <BentoCard size="sm" icon={Package} title="Total">
@@ -545,15 +548,30 @@ function SubscriptionsTab({ visibleWidgets }) {
                     <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mt-1">
                         This Month's Subscription Revenue
                     </p>
-                    <Button
-                        onClick={() => navigate(`/${user.username}/dashboard/subscriptions`)}
-                        className="mt-4 bg-blue-600 hover:bg-blue-700 rounded-2xl px-6 h-10 font-black text-[10px] uppercase tracking-widest w-fit"
-                    >
-                        <Package className="w-4 h-4 mr-2" /> Manage Subscriptions
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2 mt-4">
+                        <Button
+                            onClick={() => setIsRevenueModalOpen(true)}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-2xl px-5 h-10 font-black text-[10px] uppercase tracking-widest text-white shadow-md shadow-blue-500/20"
+                        >
+                            <Maximize2 className="w-4 h-4 mr-2" /> View Detailed Breakdown
+                        </Button>
+                        <Button
+                            onClick={() => navigate(`/${user.username}/dashboard/subscriptions`)}
+                            variant="outline"
+                            className="rounded-2xl px-5 h-10 font-black text-[10px] uppercase tracking-widest"
+                        >
+                            <Package className="w-4 h-4 mr-2" /> Manage Subscriptions
+                        </Button>
+                    </div>
                 </div>
             </BentoCard>
         </BentoGrid>
+
+        <RevenueBreakdownModal 
+            isOpen={isRevenueModalOpen} 
+            onClose={() => setIsRevenueModalOpen(false)} 
+        />
+        </>
     );
 }
 

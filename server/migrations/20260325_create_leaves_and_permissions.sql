@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS leave_types (
     code VARCHAR(10) NOT NULL UNIQUE,
     description TEXT,
     total_days_per_year DECIMAL(5,2) DEFAULT 0.00,
+    unit ENUM('days', 'hours') DEFAULT 'days',
     is_encashable TINYINT(1) DEFAULT 0,
     max_carry_forward DECIMAL(5,2) DEFAULT 0.00,
     min_service_months INT DEFAULT 0,
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS holidays (
     holiday_date DATE NOT NULL,
     description TEXT,
     is_optional TINYINT(1) DEFAULT 0,
+    is_recurring TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     

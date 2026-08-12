@@ -91,8 +91,35 @@ const leavesService = {
         return response.data;
     },
 
+    copyHolidaysToNextYear: async (fromYear, toYear) => {
+        const response = await axiosInstance.post('/holidays/copy-year', { fromYear, toYear });
+        return response.data;
+    },
+
     getPendingCounts: async () => {
         const response = await axiosInstance.get('/leaves/stats/pending-counts');
+        return response.data;
+    },
+
+    // Admin: Permission Rules Settings
+    getPermissionSettings: async () => {
+        const response = await axiosInstance.get('/leaves/permission-settings');
+        return response.data;
+    },
+
+    updatePermissionSettings: async (data) => {
+        const response = await axiosInstance.put('/leaves/permission-settings', data);
+        return response.data;
+    },
+
+    // Admin: Employee Allocations & Balances
+    getAllUserBalances: async (year) => {
+        const response = await axiosInstance.get('/leaves/balances/all', { params: { year } });
+        return response.data;
+    },
+
+    adjustUserBalance: async (data) => {
+        const response = await axiosInstance.post('/leaves/balances/adjust', data);
         return response.data;
     }
 };

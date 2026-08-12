@@ -64,6 +64,7 @@ import {
     getExpiredServicesController,
     getBirthdaysController,
     getRevenueTrendController,
+    getRevenueBreakdownController,
     getDashboardConfigController,
     getAdminTabsController,
     getAdminWidgetsController,
@@ -273,7 +274,12 @@ import {
     createHolidayController,
     updateHolidayController,
     deleteHolidayController,
-    getPendingCountsController
+    getPendingCountsController,
+    getPermissionSettingsController,
+    updatePermissionSettingsController,
+    getAllUserBalancesController,
+    adjustUserBalanceController,
+    copyHolidaysNextYearController
 } from '../controllers/leaveController.js';
 import {
     applyPermissionController,
@@ -485,6 +491,7 @@ router.get('/dashboard/renewals', isAuthenticated, authorize(PERMISSIONS.SUBSCRI
 router.get('/dashboard/expired-services', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getExpiredServicesController);
 router.get('/dashboard/birthdays', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getBirthdaysController);
 router.get('/dashboard/revenue-trend', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getRevenueTrendController);
+router.get('/dashboard/revenue-breakdown', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_VIEW), getRevenueBreakdownController);
 
 // Dashboard Admin (RBAC)
 router.get('/dashboard/admin/tabs', isAuthenticated, authorize(PERMISSIONS.DASHBOARD_CONFIGURE), getAdminTabsController);
@@ -767,10 +774,14 @@ router.put('/leaves/action/:requestId', isAuthenticated, authorize(PERMISSIONS.L
 router.get('/leaves/balances', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyBalancesController);
 router.get('/leaves/stats/pending-counts', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), getPendingCountsController);
 
-// Admin: Leave Types
+// Admin: Leave Types & Admin Balances
 router.post('/leaves/types', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createLeaveTypeController);
 router.put('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateLeaveTypeController);
 router.delete('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteLeaveTypeController);
+router.get('/leaves/permission-settings', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), getPermissionSettingsController);
+router.put('/leaves/permission-settings', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updatePermissionSettingsController);
+router.get('/leaves/balances/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), getAllUserBalancesController);
+router.post('/leaves/balances/adjust', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), adjustUserBalanceController);
 
 // Permissions (Short duration)
 router.post('/permissions/apply', isAuthenticated, authorize(PERMISSIONS.PERMISSIONS_APPLY), applyPermissionController);
@@ -781,6 +792,7 @@ router.put('/permissions/action/:requestId', isAuthenticated, authorize(PERMISSI
 // Holidays
 router.get('/holidays', isAuthenticated, getHolidaysController);
 router.post('/holidays', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createHolidayController);
+router.post('/holidays/copy-year', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), copyHolidaysNextYearController);
 router.put('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateHolidayController);
 router.delete('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteHolidayController);
 

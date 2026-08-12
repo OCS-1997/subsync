@@ -15,7 +15,8 @@ const HolidayForm = ({ holiday = null, onSuccess }) => {
         name: holiday?.name || '',
         holiday_date: holiday?.holiday_date ? holiday.holiday_date.split('T')[0] : '',
         description: holiday?.description || '',
-        is_optional: holiday?.is_optional === 1
+        is_optional: holiday?.is_optional === 1,
+        is_recurring: holiday?.is_recurring === 1
     });
 
     const handleSubmit = async (e) => {
@@ -24,7 +25,8 @@ const HolidayForm = ({ holiday = null, onSuccess }) => {
         try {
             const data = {
                 ...formData,
-                is_optional: formData.is_optional ? 1 : 0
+                is_optional: formData.is_optional ? 1 : 0,
+                is_recurring: formData.is_recurring ? 1 : 0
             };
             if (holiday) {
                 await leavesService.updateHoliday(holiday.id, data);
@@ -36,7 +38,8 @@ const HolidayForm = ({ holiday = null, onSuccess }) => {
                     name: '',
                     holiday_date: '',
                     description: '',
-                    is_optional: false
+                    is_optional: false,
+                    is_recurring: false
                 });
             }
             if (onSuccess) onSuccess();
@@ -85,6 +88,17 @@ const HolidayForm = ({ holiday = null, onSuccess }) => {
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-950 font-medium h-20"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div className="space-y-0.5">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Repeat Annually</Label>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Auto-repeat every year on this month & day</p>
+                        </div>
+                        <Switch 
+                            checked={formData.is_recurring}
+                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_recurring: checked }))}
                         />
                     </div>
 

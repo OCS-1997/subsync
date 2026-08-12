@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
-import { ShieldCheck, Calendar as CalendarIcon } from 'lucide-react';
+import { ShieldCheck, Calendar as CalendarIcon, Repeat } from 'lucide-react';
 
 const HolidayCalendar = ({ holidays }) => {
     return (
@@ -26,8 +27,20 @@ const HolidayCalendar = ({ holidays }) => {
                                 <span className="text-[8px] font-black uppercase tracking-tighter opacity-70 group-hover:opacity-100">{format(new Date(holiday.holiday_date), 'MMM')}</span>
                                 <span className="text-lg font-black leading-none">{format(new Date(holiday.holiday_date), 'dd')}</span>
                             </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">{holiday.name}</span>
+                            <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">{holiday.name}</span>
+                                    {holiday.is_recurring === 1 && (
+                                        <Badge className="bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-950 dark:text-purple-300 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0">
+                                            <Repeat className="w-2.5 h-2.5 mr-0.5 inline" /> Annual
+                                        </Badge>
+                                    )}
+                                    {holiday.is_optional === 1 && (
+                                        <Badge className="bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950 dark:text-amber-300 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0">
+                                            Optional
+                                        </Badge>
+                                    )}
+                                </div>
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
                                     {format(new Date(holiday.holiday_date), 'EEEE')}
                                 </span>

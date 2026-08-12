@@ -9,7 +9,7 @@ import {
     Lock, Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { logoutUser } from "@/features/Auth/authSlice";
+import { logoutUser, updateAuthUser } from "@/features/Auth/authSlice";
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -62,6 +62,7 @@ export default function Profile() {
                     username: userRes.data.username || "",
                     name: userRes.data.name || "",
                     email: userRes.data.email || "",
+                    gender: userRes.data.gender || "other",
                     date_of_birth: userRes.data.date_of_birth || "",
                     password: "",
                     confirmPassword: "",
@@ -115,6 +116,7 @@ export default function Profile() {
             const payload = {
                 name: form.name.trim(),
                 email: form.email.trim(),
+                gender: form.gender || "other",
                 date_of_birth: form.date_of_birth || null
             };
             if (form.password) payload.password = form.password;
@@ -131,6 +133,12 @@ export default function Profile() {
             setForm(prev => ({ ...prev, password: "", confirmPassword: "" }));
             const response = await api.get(`/users/${currentUser.username}`);
             setUserData(response.data);
+            dispatch(updateAuthUser({
+                name: response.data.name,
+                email: response.data.email,
+                gender: response.data.gender || "other",
+                date_of_birth: response.data.date_of_birth
+            }));
             window.dispatchEvent(new CustomEvent('userProfileUpdated'));
         } catch (error) {
             toast.error(error?.response?.data?.message || "Update failed");
@@ -248,6 +256,22 @@ export default function Profile() {
                                                     <div className="relative">
                                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                         <Input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="pl-10 border-slate-200 dark:border-slate-800" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Gender</Label>
+                                                    <div className="relative">
+                                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                        <select
+                                                            name="gender"
+                                                            value={form.gender || "other"}
+                                                            onChange={handleChange}
+                                                            className="pl-10 h-10 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white"
+                                                        >
+                                                            <option value="female">Female</option>
+                                                            <option value="male">Male</option>
+                                                            <option value="other">Other / Not Specified</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">

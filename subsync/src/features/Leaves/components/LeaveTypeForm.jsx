@@ -16,6 +16,7 @@ const LeaveTypeForm = ({ type = null, onSuccess }) => {
         code: type?.code || '',
         description: type?.description || '',
         total_days_per_year: type?.total_days_per_year || 12,
+        unit: type?.unit || 'days',
         is_encashable: type?.is_encashable === 1,
         max_carry_forward: type?.max_carry_forward || 0,
         min_service_months: type?.min_service_months || 0
@@ -40,6 +41,7 @@ const LeaveTypeForm = ({ type = null, onSuccess }) => {
                     code: '',
                     description: '',
                     total_days_per_year: 12,
+                    unit: 'days',
                     is_encashable: false,
                     max_carry_forward: 0,
                     min_service_months: 0
@@ -95,9 +97,22 @@ const LeaveTypeForm = ({ type = null, onSuccess }) => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Days / Year</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Unit</Label>
+                            <select
+                                value={formData.unit}
+                                onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                                className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 font-bold text-xs"
+                            >
+                                <option value="days">Days</option>
+                                <option value="hours">Hours</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                {formData.unit === 'hours' ? 'Hours / Year' : 'Days / Year'}
+                            </Label>
                             <Input 
                                 type="number"
                                 value={formData.total_days_per_year}

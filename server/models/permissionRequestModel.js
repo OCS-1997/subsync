@@ -93,10 +93,18 @@ async function updatePermissionStatus(requestId, status, actionedBy, comments = 
         }
 
         // 2. Adjust balance if there's a 'Permission' leave type
-        const [types] = await connection.query("SELECT id FROM leave_types WHERE code = 'PERM' OR name = 'Permission' LIMIT 1");
+        const [types] = await connection.query("SELECT id, total_days_per_year FROM leave_types WHERE code = 'PERM' OR name = 'Permission' LIMIT 1");
         
         if (types.length > 0) {
             const leaveTypeId = types[0].id;
+            const defaultAllocated = types[0].total_days_per_year || 24.00;
+
+            // Ensure user balance row exists for the year
+            await connection.query(
+                `INSERT IGNORE INTO leave_balances (user_id, leave_type_id, year, allocated, used)
+                 VALUES (?, ?, ?, ?, 0)`,
+                [userId, leaveTypeId, year, defaultAllocated]
+            );
 
             // Case A: Approving
             if (status === 'approved' && oldStatus !== 'approved') {

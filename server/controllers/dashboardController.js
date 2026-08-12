@@ -117,6 +117,22 @@ export const getRevenueTrendController = async (req, res) => {
 };
 
 /**
+ * GET /api/dashboard/revenue-breakdown
+ * Get detailed revenue breakdown including new bookings, MRR, services & customer stats
+ */
+export const getRevenueBreakdownController = async (req, res) => {
+    try {
+        const { getRevenueBreakdown } = await import('../models/dashboardModel.js');
+        const { year, month } = req.query;
+        const breakdown = await getRevenueBreakdown(year, month);
+        res.json(breakdown);
+    } catch (error) {
+        console.error('Error fetching revenue breakdown:', error);
+        res.status(500).json({ error: error.message || 'Failed to fetch revenue breakdown' });
+    }
+};
+
+/**
  * GET /api/dashboard/config
  * Get user's visible tabs and widgets based on their role
  */
