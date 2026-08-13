@@ -11,21 +11,22 @@ export async function syncDirectory() {
     let totalSynced = 0;
 
     try {
+        const allEntries = [];
+
         // ---- 1. Sync Customers ----
         const [customers] = await appDB.query(
             "SELECT customer_id, display_name, company_name, primary_phone_number, secondary_phone_number, other_contacts, primary_email FROM customers WHERE customer_status = 'Active'"
         );
-        const customerEntries = [];
         for (const c of customers) {
             // Primary
             if (c.primary_phone_number) {
                 const norm = normalizePhone(c.primary_phone_number);
-                if (norm) customerEntries.push(formatEntry('customer', c.customer_id, null, c.display_name, c.primary_phone_number, norm, c.company_name, c.primary_email));
+                if (norm) allEntries.push(formatEntry('customer', c.customer_id, null, c.display_name, c.primary_phone_number, norm, c.company_name, c.primary_email));
             }
             // Secondary
             if (c.secondary_phone_number) {
                 const norm = normalizePhone(c.secondary_phone_number);
-                if (norm) customerEntries.push(formatEntry('customer', c.customer_id, null, c.display_name, c.secondary_phone_number, norm, c.company_name, c.primary_email));
+                if (norm) allEntries.push(formatEntry('customer', c.customer_id, null, c.display_name, c.secondary_phone_number, norm, c.company_name, c.primary_email));
             }
             // Other Contacts JSON
             if (c.other_contacts) {
@@ -34,34 +35,32 @@ export async function syncDirectory() {
                     others = typeof c.other_contacts === 'string' ? JSON.parse(c.other_contacts) : (c.other_contacts || []);
                 } catch (e) { others = []; }
 
-                for (const oc of others) {
+                for (let idx = 0; idx < others.length; idx++) {
+                    const oc = others[idx];
                     const ocPhone = oc.phone_number || oc.mobile || oc.phone || '';
                     const norm = normalizePhone(ocPhone);
                     if (norm) {
                         const ocName = `${oc.first_name || ''} ${oc.last_name || ''}`.trim() || oc.contact_name || c.display_name;
-                        customerEntries.push(formatEntry('other_contact', `OC_${syncStartTime.getTime()}_${totalSynced++}`, c.customer_id, ocName, ocPhone, norm, c.company_name, oc.email, oc.designation));
+                        const ocId = oc.id || oc.contact_id || norm || idx;
+                        const entityId = `OC_CUST_${c.customer_id}_${ocId}`;
+                        allEntries.push(formatEntry('other_contact', entityId, c.customer_id, ocName, ocPhone, norm, c.company_name, oc.email, oc.designation));
                     }
                 }
             }
-        }
-        if (customerEntries.length > 0) {
-            await upsertDirectoryEntries(customerEntries);
-            totalSynced += customerEntries.length;
         }
 
         // ---- 2. Sync Vendors ----
         const [vendors] = await appDB.query(
             "SELECT vendor_id, display_name, company_name, primary_phone_number, secondary_phone_number, other_contacts, primary_email FROM vendors WHERE vendor_status = 'Active'"
         );
-        const vendorEntries = [];
         for (const v of vendors) {
             if (v.primary_phone_number) {
                 const norm = normalizePhone(v.primary_phone_number);
-                if (norm) vendorEntries.push(formatEntry('vendor', v.vendor_id, null, v.display_name, v.primary_phone_number, norm, v.company_name, v.primary_email));
+                if (norm) allEntries.push(formatEntry('vendor', v.vendor_id, null, v.display_name, v.primary_phone_number, norm, v.company_name, v.primary_email));
             }
             if (v.secondary_phone_number) {
                 const norm = normalizePhone(v.secondary_phone_number);
-                if (norm) vendorEntries.push(formatEntry('vendor', v.vendor_id, null, v.display_name, v.secondary_phone_number, norm, v.company_name, v.primary_email));
+                if (norm) allEntries.push(formatEntry('vendor', v.vendor_id, null, v.display_name, v.secondary_phone_number, norm, v.company_name, v.primary_email));
             }
             if (v.other_contacts) {
                 let others = [];
@@ -69,60 +68,58 @@ export async function syncDirectory() {
                     others = typeof v.other_contacts === 'string' ? JSON.parse(v.other_contacts) : (v.other_contacts || []);
                 } catch (e) { others = []; }
 
-                for (const oc of others) {
+                for (let idx = 0; idx < others.length; idx++) {
+                    const oc = others[idx];
                     const ocPhone = oc.phone_number || oc.mobile || oc.phone || '';
                     const norm = normalizePhone(ocPhone);
                     if (norm) {
                         const ocName = `${oc.first_name || ''} ${oc.last_name || ''}`.trim() || oc.contact_name || v.display_name;
-                        vendorEntries.push(formatEntry('other_contact', `OV_${syncStartTime.getTime()}_${totalSynced++}`, v.vendor_id, ocName, ocPhone, norm, v.company_name, oc.email));
+                        const ocId = oc.id || oc.contact_id || norm || idx;
+                        const entityId = `OV_VEND_${v.vendor_id}_${ocId}`;
+                        allEntries.push(formatEntry('other_contact', entityId, v.vendor_id, ocName, ocPhone, norm, v.company_name, oc.email));
                     }
                 }
             }
-        }
-        if (vendorEntries.length > 0) {
-            await upsertDirectoryEntries(vendorEntries);
-            totalSynced += vendorEntries.length;
         }
 
         // ---- 3. Sync Personal Contacts ----
         const [pContacts] = await appDB.query(
             "SELECT contact_id, first_name, last_name, company_name, phone_number, email, designation FROM contacts"
         );
-        const pContactEntries = pContacts.map(pc => {
+        for (const pc of pContacts) {
             const norm = normalizePhone(pc.phone_number);
-            if (!norm) return null;
-            return formatEntry('contact', pc.contact_id, null, `${pc.first_name || ''} ${pc.last_name || ''}`.trim(), pc.phone_number, norm, pc.company_name, pc.email, pc.designation);
-        }).filter(Boolean);
-        if (pContactEntries.length > 0) {
-            await upsertDirectoryEntries(pContactEntries);
-            totalSynced += pContactEntries.length;
+            if (norm) {
+                allEntries.push(formatEntry('contact', pc.contact_id, null, `${pc.first_name || ''} ${pc.last_name || ''}`.trim(), pc.phone_number, norm, pc.company_name, pc.email, pc.designation));
+            }
         }
 
-        // ---- 4. Sync Users (Skipped: users table lacks phone_number column) ----
-        /*
-        const [users] = await appDB.query(
-            "SELECT username, name, email, phone_number FROM users"
-        );
-        const userEntries = users.map(u => {
-            const norm = normalizePhone(u.phone_number);
-            if (!norm) return null;
-            return formatEntry('user', u.username, null, u.name, u.phone_number, norm, 'Internal Team', u.email);
-        }).filter(Boolean);
-        if (userEntries.length > 0) {
-            await upsertDirectoryEntries(userEntries);
-            totalSynced += userEntries.length;
+        // Deduplicate in-memory before upserting
+        const uniqueEntries = deduplicateEntries(allEntries);
+
+        if (uniqueEntries.length > 0) {
+            await upsertDirectoryEntries(uniqueEntries);
+            totalSynced = uniqueEntries.length;
         }
-        */
 
-        // ---- 5. Cleanup ----
-        // await cleanupOrphanedEntries(syncStartTime);
+        // ---- 4. Cleanup Orphaned / Stale Entries ----
+        const cleanupThreshold = new Date(syncStartTime.getTime() - 2000);
+        await cleanupOrphanedEntries(cleanupThreshold);
 
-        console.log(`Sync completed. Total entries synced: ${totalSynced}`);
+        console.log(`Sync completed. Total clean entries synced: ${totalSynced}`);
         return { success: true, count: totalSynced };
     } catch (error) {
         console.error("Sync directory service error:", error);
         throw error;
     }
+}
+
+function deduplicateEntries(entries) {
+    const map = new Map();
+    for (const e of entries) {
+        const key = `${e.entity_type}:${e.entity_id}:${e.phone_number}`;
+        map.set(key, e);
+    }
+    return Array.from(map.values());
 }
 
 function formatEntry(type, id, parentId, name, phone, norm, company, email, designation = null) {
