@@ -15,6 +15,12 @@ export const taskService = {
     return response.data;
   },
 
+  // Get task analytics & high level insights
+  getTaskAnalytics: async (params = {}) => {
+    const response = await api.get('/tasks/analytics', { params });
+    return response.data;
+  },
+
   // Get manageable users for assignment dropdowns
   getManageableUsers: async () => {
     const response = await api.get('/tasks/manageable-users');

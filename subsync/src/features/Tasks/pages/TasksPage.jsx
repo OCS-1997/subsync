@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/context/PermissionsContext';
 import { PERMISSIONS } from '@/constants/permissions';
 import { taskService } from '../services/taskService';
@@ -23,13 +24,21 @@ import {
   LayoutGrid,
   List,
   Kanban,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { getLoggedUser } from '@/utils/userUtils';
 
 export default function TasksPage() {
+  const navigate = useNavigate();
   const { hasAnyPermission } = usePermissions();
+
+  const canViewAnalytics = hasAnyPermission([
+    PERMISSIONS.TASKS_VIEW_ANALYTICS,
+    PERMISSIONS.TASKS_VIEW_ALL,
+    PERMISSIONS.TASKS_MANAGE_ALL,
+  ]);
   const canManage = hasAnyPermission([
     PERMISSIONS.TASKS_CREATE_FOR_OTHERS,
     PERMISSIONS.TASKS_ASSIGN,
@@ -181,6 +190,17 @@ export default function TasksPage() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
+
+          {canViewAnalytics && (
+            <Button
+              onClick={() => navigate(`/${getLoggedUser()?.username}/dashboard/tasks/analytics`)}
+              variant="outline"
+              className="rounded-xl px-3.5 py-2.5 flex items-center gap-2 font-semibold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              Analytics
+            </Button>
+          )}
 
           <Button
             onClick={() => setIsCreateModalOpen(true)}

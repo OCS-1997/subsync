@@ -44,6 +44,28 @@ export const getTaskStatsController = async (req, res, next) => {
     }
 };
 
+export const getTaskAnalyticsController = async (req, res, next) => {
+    try {
+        const filters = {
+            dateRange: req.query.dateRange,
+            startDate: req.query.startDate,
+            endDate: req.query.endDate,
+            status: req.query.status,
+            priority: req.query.priority,
+            category: req.query.category,
+            assignedTo: req.query.assignedTo,
+            search: req.query.search
+        };
+        const analytics = await taskService.getTaskAnalytics(req.user, filters);
+        return res.status(200).json({
+            success: true,
+            data: analytics
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getManageableUsersController = async (req, res, next) => {
     try {
         const users = await taskService.getManageableUsers(req.user);

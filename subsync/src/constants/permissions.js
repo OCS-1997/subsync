@@ -133,6 +133,7 @@ export const PERMISSIONS = Object.freeze({
   TASKS_CANCEL: 'tasks.cancel',
   TASKS_COMMENT: 'tasks.comment',
   TASKS_ATTACHMENTS: 'tasks.attachments',
+  TASKS_VIEW_ANALYTICS: 'tasks.view_analytics',
   TASKS_MANAGE_ALL: 'tasks.manage_all',
   TASKS_VIEW_ACTIVITY: 'tasks.view_activity',
 });

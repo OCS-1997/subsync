@@ -130,6 +130,7 @@ export const PERMISSIONS = Object.freeze({
     TASKS_CANCEL: 'tasks.cancel',
     TASKS_COMMENT: 'tasks.comment',
     TASKS_ATTACHMENTS: 'tasks.attachments',
+    TASKS_VIEW_ANALYTICS: 'tasks.view_analytics',
     TASKS_MANAGE_ALL: 'tasks.manage_all',
     TASKS_VIEW_ACTIVITY: 'tasks.view_activity',
 });
@@ -251,6 +252,13 @@ export const PERMISSION_DEFINITIONS = [
     { key: PERMISSIONS.HOLIDAYS_MANAGE, resource: 'holidays', action: 'manage', description: 'Manage the public holiday calendar' },
     { key: PERMISSIONS.LEAVES_VIEW_ALL, resource: 'leaves', action: 'view_all', description: 'View all employee leave requests' },
     { key: PERMISSIONS.DEVELOPER_CONTROLS, resource: 'developer_controls', action: 'manage', description: 'Access developer test controls and system triggers' },
+    // Tasks Module
+    { key: PERMISSIONS.TASKS_VIEW, resource: 'tasks', action: 'view', description: 'View assigned tasks' },
+    { key: PERMISSIONS.TASKS_VIEW_ALL, resource: 'tasks', action: 'view_all', description: 'View all organization tasks' },
+    { key: PERMISSIONS.TASKS_VIEW_ANALYTICS, resource: 'tasks', action: 'view_analytics', description: 'View high-level task analytics dashboard' },
+    { key: PERMISSIONS.TASKS_CREATE, resource: 'tasks', action: 'create', description: 'Create tasks' },
+    { key: PERMISSIONS.TASKS_ASSIGN, resource: 'tasks', action: 'assign', description: 'Assign tasks to others' },
+    { key: PERMISSIONS.TASKS_MANAGE_ALL, resource: 'tasks', action: 'manage_all', description: 'Full task administration' },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS = {

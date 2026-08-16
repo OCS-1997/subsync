@@ -881,3 +881,229 @@ export async function deleteAttachment(actor, taskId, attachmentId) {
     await appDB.query(`DELETE FROM task_attachments WHERE id = ?`, [attachmentId]);
     return getTaskById(actor, taskId);
 }
+
+/**
+ * Fetch comprehensive task analytics & high-level insights for dashboard.
+ */
+export async function getTaskAnalytics(actor, filters = {}) {
+    const { dateRange = '30d', startDate, endDate, status, priority, category, assignedTo, search } = filters;
+    const isGlobalViewer = actor.roleKey === 'admin' || actor.permissions?.includes('tasks.view_analytics') || actor.permissions?.includes('tasks.view_all') || actor.permissions?.includes('tasks.manage_all');
+    if (!isGlobalViewer) {
+        const error = new Error('Forbidden: Only administrators and authorized managers can view task analytics.');
+        error.status = 403;
+        throw error;
+    }
+    
+    const conditions = [];
+    const params = [];
+
+    // Date range filter
+    if (startDate && endDate) {
+        conditions.push(`DATE(t.created_at) >= DATE(?) AND DATE(t.created_at) <= DATE(?)`);
+        params.push(startDate, endDate);
+    } else if (dateRange !== 'all') {
+        let dateInterval = 30;
+        if (dateRange === '7d') dateInterval = 7;
+        else if (dateRange === '30d') dateInterval = 30;
+        else if (dateRange === '90d') dateInterval = 90;
+        else if (dateRange === 'ytd') dateInterval = 365;
+
+        conditions.push(`t.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`);
+        params.push(dateInterval);
+    }
+
+    // Status filter
+    if (status && status !== 'ALL') {
+        conditions.push(`t.status = ?`);
+        params.push(status);
+    }
+
+    // Priority filter
+    if (priority && priority !== 'ALL') {
+        conditions.push(`t.priority = ?`);
+        params.push(priority);
+    }
+
+    // Category filter
+    if (category && category !== 'ALL') {
+        conditions.push(`t.category = ?`);
+        params.push(category);
+    }
+
+    // Assignee filter
+    if (assignedTo && assignedTo !== 'ALL') {
+        conditions.push(`t.assigned_to = ?`);
+        params.push(assignedTo);
+    }
+
+    // Search filter
+    if (search && search.trim()) {
+        conditions.push(`(t.title LIKE ? OR t.description LIKE ? OR t.category LIKE ?)`);
+        const searchPattern = `%${search.trim()}%`;
+        params.push(searchPattern, searchPattern, searchPattern);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // 1. KPI Summary Aggregates
+    const [kpiRows] = await appDB.query(
+        `SELECT 
+            COUNT(*) AS total_tasks,
+            SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) AS todo_count,
+            SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
+            SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) AS blocked_count,
+            SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
+            SUM(CASE WHEN t.status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
+            SUM(CASE WHEN t.priority IN ('URGENT', 'HIGH') AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS high_priority_open_count,
+            SUM(CASE WHEN t.status = 'COMPLETED' AND (t.due_date IS NULL OR DATE(t.updated_at) <= DATE(t.due_date)) THEN 1 ELSE 0 END) AS on_time_completed_count,
+            AVG(CASE WHEN t.status = 'COMPLETED' THEN DATEDIFF(t.updated_at, t.created_at) ELSE NULL END) AS avg_completion_days
+         FROM tasks t
+         ${whereClause}`,
+        params
+    );
+
+    const kpi = kpiRows[0] || {};
+    const totalTasks = Number(kpi.total_tasks || 0);
+    const completedCount = Number(kpi.completed_count || 0);
+    const overdueCount = Number(kpi.overdue_count || 0);
+    const onTimeCompleted = Number(kpi.on_time_completed_count || 0);
+
+    const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+    const overdueRate = totalTasks > 0 ? Math.round((overdueCount / totalTasks) * 100) : 0;
+    const onTimeRate = completedCount > 0 ? Math.round((onTimeCompleted / completedCount) * 100) : 100;
+    const avgCompletionDays = kpi.avg_completion_days ? Number(Number(kpi.avg_completion_days).toFixed(1)) : 0;
+
+    // 2. Priority Breakdown
+    const [priorityRows] = await appDB.query(
+        `SELECT 
+            t.priority,
+            COUNT(*) as count
+         FROM tasks t
+         ${whereClause}
+         GROUP BY t.priority`,
+        params
+    );
+
+    const priorityBreakdown = {
+        URGENT: 0,
+        HIGH: 0,
+        MEDIUM: 0,
+        LOW: 0
+    };
+    priorityRows.forEach(row => {
+        if (priorityBreakdown.hasOwnProperty(row.priority)) {
+            priorityBreakdown[row.priority] = Number(row.count);
+        }
+    });
+
+    // 3. Category Breakdown
+    const [categoryRows] = await appDB.query(
+        `SELECT 
+            COALESCE(t.category, 'General') AS category,
+            COUNT(*) as count
+         FROM tasks t
+         ${whereClause}
+         GROUP BY COALESCE(t.category, 'General')
+         ORDER BY count DESC
+         LIMIT 8`,
+        params
+    );
+
+    // 4. Assignee / Team Workload Table
+    const [assigneeRows] = await appDB.query(
+        `SELECT 
+            t.assigned_to AS username,
+            COALESCE(u.name, t.assigned_to) AS name,
+            COUNT(*) AS total_assigned,
+            SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
+            SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
+            SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) AS todo_count,
+            SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) AS blocked_count,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
+            AVG(CASE WHEN t.status = 'COMPLETED' THEN DATEDIFF(t.updated_at, t.created_at) ELSE NULL END) AS avg_completion_days
+         FROM tasks t
+         LEFT JOIN users u ON t.assigned_to = u.username
+         ${whereClause}
+         GROUP BY t.assigned_to, u.name
+         ORDER BY total_assigned DESC
+         LIMIT 15`,
+        params
+    );
+
+    const assigneeWorkload = assigneeRows.map(row => {
+        const total = Number(row.total_assigned || 0);
+        const comp = Number(row.completed_count || 0);
+        return {
+            username: row.username,
+            name: row.name,
+            totalAssigned: total,
+            completedCount: comp,
+            inProgressCount: Number(row.in_progress_count || 0),
+            todoCount: Number(row.todo_count || 0),
+            blockedCount: Number(row.blocked_count || 0),
+            overdueCount: Number(row.overdue_count || 0),
+            completionRate: total > 0 ? Math.round((comp / total) * 100) : 0,
+            avgCompletionDays: row.avg_completion_days ? Number(Number(row.avg_completion_days).toFixed(1)) : 0
+        };
+    });
+
+    // 5. Completion & Creation Trend (Daily/Weekly points for last 30 days)
+    const [trendRows] = await appDB.query(
+        `SELECT 
+            DATE_FORMAT(t.created_at, '%Y-%m-%d') AS date_str,
+            COUNT(*) AS created_count,
+            SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count
+         FROM tasks t
+         ${whereClause}
+         GROUP BY DATE_FORMAT(t.created_at, '%Y-%m-%d')
+         ORDER BY date_str ASC
+         LIMIT 30`,
+        params
+    );
+
+    // 6. Overdue / At-Risk Watchlist
+    const [overdueWatchlist] = await appDB.query(
+        `SELECT 
+            t.id,
+            t.title,
+            t.priority,
+            t.status,
+            t.due_date,
+            t.assigned_to,
+            t.created_by,
+            u_assignee.name AS assignee_name,
+            DATEDIFF(CURDATE(), t.due_date) AS days_overdue
+         FROM tasks t
+         LEFT JOIN users u_assignee ON t.assigned_to = u_assignee.username
+         ${whereClause} AND t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED')
+         ORDER BY 
+           CASE WHEN t.priority = 'URGENT' THEN 0 WHEN t.priority = 'HIGH' THEN 1 ELSE 2 END ASC,
+           t.due_date ASC
+         LIMIT 10`,
+        params
+    );
+
+    return {
+        kpi: {
+            totalTasks,
+            todoCount: Number(kpi.todo_count || 0),
+            inProgressCount: Number(kpi.in_progress_count || 0),
+            blockedCount: Number(kpi.blocked_count || 0),
+            completedCount,
+            cancelledCount: Number(kpi.cancelled_count || 0),
+            overdueCount,
+            highPriorityOpenCount: Number(kpi.high_priority_open_count || 0),
+            completionRate,
+            overdueRate,
+            onTimeRate,
+            avgCompletionDays
+        },
+        priorityBreakdown,
+        categoryBreakdown: categoryRows,
+        assigneeWorkload,
+        trendTimeline: trendRows,
+        overdueWatchlist
+    };
+}
+

@@ -123,6 +123,16 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             permission: PERMISSIONS.TASKS_VIEW,
         },
         {
+            id: "task-analytics",
+            category: "My Work Group",
+            icon: BarChart3,
+            title: "Task Analytics",
+            subtitle: "High-level task & team operational insights",
+            path: `${baseUrl}/tasks/analytics`,
+            keywords: ["tasks", "analytics", "insights", "charts", "kpi", "reports", "workload", "team", "performance"],
+            permission: [PERMISSIONS.TASKS_VIEW_ANALYTICS, PERMISSIONS.TASKS_VIEW_ALL, PERMISSIONS.TASKS_MANAGE_ALL],
+        },
+        {
             id: "goals",
             category: "Operations",
             icon: Target,
@@ -782,6 +792,9 @@ export default function CommandPalette({ open, onOpenChange }) {
         // Filter items based on permissions
         return items.filter((item) => {
             if (item.permission === null) return true;
+            if (Array.isArray(item.permission)) {
+                return item.permission.some((p) => hasPermission(p));
+            }
             return hasPermission(item.permission);
         });
     }, [user?.username, hasPermission, dispatch, navigate, theme, toggleTheme]);

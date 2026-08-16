@@ -87,6 +87,7 @@ import AddGoal from '@/features/Goals/pages/AddGoal.jsx';
 
 import TasksPage from '@/features/Tasks/pages/TasksPage.jsx';
 import TaskDetailsPage from '@/features/Tasks/pages/TaskDetailsPage.jsx';
+import TaskAnalyticsPage from '@/features/Tasks/pages/TaskAnalyticsPage.jsx';
 
 
 const DashboardRedirect = () => {
@@ -259,6 +260,7 @@ const router = createBrowserRouter([
       { path: "goals/:id/edit", element: <PermissionGate required={PERMISSIONS.GOALS_EDIT}><AddGoal /></PermissionGate> },
 
       { path: "tasks", element: <PermissionGate required={PERMISSIONS.TASKS_VIEW}><TasksPage /></PermissionGate> },
+      { path: "tasks/analytics", element: <PermissionGate any={[PERMISSIONS.TASKS_VIEW_ANALYTICS, PERMISSIONS.TASKS_VIEW_ALL, PERMISSIONS.TASKS_MANAGE_ALL]}><TaskAnalyticsPage /></PermissionGate> },
       { path: "tasks/:id", element: <PermissionGate required={PERMISSIONS.TASKS_VIEW}><TaskDetailsPage /></PermissionGate> },
 
 

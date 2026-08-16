@@ -31,6 +31,7 @@ import { uploadGoalAttachmentMiddleware, uploadTaskAttachmentMiddleware } from '
 import {
     getTasksController,
     getTaskStatsController,
+    getTaskAnalyticsController,
     getManageableUsersController,
     getTaskByIdController,
     createTaskController,
@@ -856,6 +857,7 @@ router.get('/birthday-experience/today-team', isAuthenticated, getTodayTeamBirth
 // Tasks Module Routes
 router.get('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTasksController);
 router.get('/tasks/stats', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskStatsController);
+router.get('/tasks/analytics', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW_ANALYTICS, PERMISSIONS.TASKS_VIEW_ALL, PERMISSIONS.TASKS_MANAGE_ALL], { match: 'any' }), getTaskAnalyticsController);
 router.get('/tasks/manageable-users', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getManageableUsersController);
 router.get('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskByIdController);
 router.post('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_CREATE]), createTaskController);
