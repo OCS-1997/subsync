@@ -85,6 +85,9 @@ import GoalDetails from '@/features/Goals/pages/GoalDetails.jsx';
 import GoalMastersSettings from '@/features/Goals/pages/GoalMastersSettings.jsx';
 import AddGoal from '@/features/Goals/pages/AddGoal.jsx';
 
+import TasksPage from '@/features/Tasks/pages/TasksPage.jsx';
+import TaskDetailsPage from '@/features/Tasks/pages/TaskDetailsPage.jsx';
+
 
 const DashboardRedirect = () => {
   const location = useLocation();
@@ -254,6 +257,9 @@ const router = createBrowserRouter([
       { path: "goals/add", element: <PermissionGate required={PERMISSIONS.GOALS_CREATE}><AddGoal /></PermissionGate> },
       { path: "goals/:id", element: <PermissionGate required={PERMISSIONS.GOALS_VIEW}><GoalDetails /></PermissionGate> },
       { path: "goals/:id/edit", element: <PermissionGate required={PERMISSIONS.GOALS_EDIT}><AddGoal /></PermissionGate> },
+
+      { path: "tasks", element: <PermissionGate required={PERMISSIONS.TASKS_VIEW}><TasksPage /></PermissionGate> },
+      { path: "tasks/:id", element: <PermissionGate required={PERMISSIONS.TASKS_VIEW}><TaskDetailsPage /></PermissionGate> },
 
 
 

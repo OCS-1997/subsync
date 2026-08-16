@@ -27,8 +27,25 @@ import {
     postComment as postGoalCommentCtrl,
     exportGoalsReport
 } from '../controllers/goalController.js';
-import { uploadGoalAttachmentMiddleware } from '../middlewares/uploadMiddleware.js';
-
+import { uploadGoalAttachmentMiddleware, uploadTaskAttachmentMiddleware } from '../middlewares/uploadMiddleware.js';
+import {
+    getTasksController,
+    getTaskStatsController,
+    getManageableUsersController,
+    getTaskByIdController,
+    createTaskController,
+    updateTaskController,
+    changeTaskStatusController,
+    reassignTaskController,
+    deleteTaskController,
+    addChecklistController,
+    updateChecklistController,
+    deleteChecklistController,
+    addCommentController,
+    uploadTaskAttachmentController,
+    downloadTaskAttachmentController,
+    deleteTaskAttachmentController
+} from '../controllers/taskController.js';
 import express from 'express';
 
 import { isAuthenticated, authorize } from '../middlewares/auth.js';
@@ -835,6 +852,28 @@ router.delete('/goal-statuses/:id', isAuthenticated, authorize(['goals.configure
 router.get('/birthday-experience/settings', isAuthenticated, getBirthdayAdminSettings);
 router.put('/birthday-experience/settings', isAuthenticated, authorize([PERMISSIONS.SETTINGS_MANAGE, PERMISSIONS.BIRTHDAYS_MANAGE]), updateBirthdayAdminSettings);
 router.get('/birthday-experience/today-team', isAuthenticated, getTodayTeamBirthdays);
+
+// Tasks Module Routes
+router.get('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTasksController);
+router.get('/tasks/stats', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskStatsController);
+router.get('/tasks/manageable-users', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getManageableUsersController);
+router.get('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskByIdController);
+router.post('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_CREATE]), createTaskController);
+router.patch('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_UPDATE_ASSIGNED], { match: 'any' }), updateTaskController);
+router.patch('/tasks/:id/status', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE_ASSIGNED, PERMISSIONS.TASKS_COMPLETE], { match: 'any' }), changeTaskStatusController);
+router.patch('/tasks/:id/assignee', isAuthenticated, authorize([PERMISSIONS.TASKS_ASSIGN, PERMISSIONS.TASKS_REASSIGN], { match: 'any' }), reassignTaskController);
+router.delete('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_DELETE]), deleteTaskController);
+
+// Checklist items
+router.post('/tasks/:id/checklist', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_UPDATE_ASSIGNED], { match: 'any' }), addChecklistController);
+router.patch('/tasks/:id/checklist/:itemId', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_UPDATE_ASSIGNED], { match: 'any' }), updateChecklistController);
+router.delete('/tasks/:id/checklist/:itemId', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_UPDATE_ASSIGNED], { match: 'any' }), deleteChecklistController);
+
+// Comments & Attachments
+router.post('/tasks/:id/comments', isAuthenticated, authorize([PERMISSIONS.TASKS_COMMENT, PERMISSIONS.TASKS_VIEW], { match: 'any' }), addCommentController);
+router.post('/tasks/:id/attachments', isAuthenticated, authorize([PERMISSIONS.TASKS_ATTACHMENTS]), uploadTaskAttachmentMiddleware.single('file'), uploadTaskAttachmentController);
+router.get('/tasks/:id/attachments/:attachmentId/download', isAuthenticated, authorize([PERMISSIONS.TASKS_ATTACHMENTS, PERMISSIONS.TASKS_VIEW], { match: 'any' }), downloadTaskAttachmentController);
+router.delete('/tasks/:id/attachments/:attachmentId', isAuthenticated, authorize([PERMISSIONS.TASKS_ATTACHMENTS]), deleteTaskAttachmentController);
 
 export default router;
 

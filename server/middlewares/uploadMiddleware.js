@@ -78,6 +78,26 @@ export const uploadGoalAttachmentMiddleware = multer({
     limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
 });
 
+// Multer storage for Task attachments
+const taskStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = './uploads/tasks/attachments';
+        ensureUploadDir(uploadPath);
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname).toLowerCase();
+        const filename = `task-${uniqueSuffix}${ext}`;
+        cb(null, filename);
+    }
+});
+
+export const uploadTaskAttachmentMiddleware = multer({
+    storage: taskStorage,
+    limits: { fileSize: 25 * 1024 * 1024 } // 25MB max
+});
+
 
 /**
  * Get image dimensions using sharp

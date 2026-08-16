@@ -6,14 +6,12 @@ import { logoutUser } from "@/features/Auth/authSlice.js";
 import { toast } from "react-toastify";
 import {
     Command,
-    CommandDialog,
     CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
     CommandSeparator,
-    CommandShortcut,
 } from "@/components/ui/command.jsx";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
@@ -35,7 +33,6 @@ import {
     Mail,
     Link2,
     HelpCircle,
-    Calculator,
     LogOut,
     Cake,
     Contact,
@@ -50,7 +47,15 @@ import {
     Layers,
     Clock,
     Play,
-    Palette
+    Palette,
+    CheckSquare,
+    Target,
+    BarChart3,
+    History,
+    Sliders,
+    Terminal,
+    LifeBuoy,
+    Tag,
 } from "lucide-react";
 
 // Command palette items configuration
@@ -65,6 +70,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             icon: LogOut,
             title: "Logout",
             subtitle: "Sign out of your account",
+            shortcut: ["Ctrl", "Q"],
             action: async () => {
                 try {
                     await dispatch(logoutUser()).unwrap();
@@ -74,7 +80,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
                     console.error("Logout failed:", error);
                 }
             },
-            keywords: ["signout", "exit", "leave", "logout"],
+            keywords: ["signout", "exit", "leave", "logout", "account"],
             permission: null,
         },
 
@@ -85,10 +91,11 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             icon: theme === "dark" ? Sun : Moon,
             title: theme === "dark" ? "Light Mode" : "Dark Mode",
             subtitle: `Switch to ${theme === "dark" ? "light" : "dark"} theme`,
+            shortcut: ["Ctrl", "T"],
             action: () => {
                 toggleTheme();
             },
-            keywords: ["theme", "dark", "light", "mode", "color", "design"],
+            keywords: ["theme", "dark", "light", "mode", "color", "design", "appearance"],
             permission: null,
         },
 
@@ -100,9 +107,34 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Dashboard",
             subtitle: "Go to main dashboard",
             path: baseUrl,
-            keywords: ["home", "main", "overview"],
+            shortcut: ["G", "H"],
+            keywords: ["home", "main", "overview", "dashboard"],
             permission: PERMISSIONS.DASHBOARD_VIEW,
         },
+        {
+            id: "tasks",
+            category: "My Work Group",
+            icon: CheckSquare,
+            title: "Tasks",
+            subtitle: "View and manage assigned tasks",
+            path: `${baseUrl}/tasks`,
+            shortcut: ["G", "T"],
+            keywords: ["tasks", "todo", "work", "my work", "assignment", "action items", "tickets"],
+            permission: PERMISSIONS.TASKS_VIEW,
+        },
+        {
+            id: "goals",
+            category: "Operations",
+            icon: Target,
+            title: "Goals",
+            subtitle: "Manage company & team goals",
+            path: `${baseUrl}/goals`,
+            shortcut: ["G", "G"],
+            keywords: ["goals", "targets", "okr", "kpi", "milestones", "objectives", "ops"],
+            permission: PERMISSIONS.GOALS_VIEW,
+        },
+
+        // CRM Module
         {
             id: "customers",
             category: "CRM",
@@ -110,7 +142,8 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Customers",
             subtitle: "View all customers",
             path: `${baseUrl}/customers`,
-            keywords: ["clients", "accounts", "company", "crm"],
+            shortcut: ["G", "C"],
+            keywords: ["clients", "accounts", "company", "customers", "crm"],
             permission: PERMISSIONS.CUSTOMERS_VIEW,
         },
         {
@@ -120,7 +153,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Domains",
             subtitle: "Manage domain registrations",
             path: `${baseUrl}/domains`,
-            keywords: ["websites", "hostings", "dns", "crm"],
+            keywords: ["websites", "hostings", "dns", "domains", "crm"],
             permission: PERMISSIONS.DOMAINS_VIEW,
         },
         {
@@ -130,7 +163,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Services",
             subtitle: "View service offerings",
             path: `${baseUrl}/services`,
-            keywords: ["products", "plans", "offerings", "crm"],
+            keywords: ["products", "plans", "offerings", "services", "crm"],
             permission: PERMISSIONS.SERVICES_VIEW,
         },
         {
@@ -140,7 +173,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Vendors",
             subtitle: "Manage vendor relationships",
             path: `${baseUrl}/vendors`,
-            keywords: ["suppliers", "partners", "providers", "crm"],
+            keywords: ["suppliers", "partners", "providers", "vendors", "crm"],
             permission: PERMISSIONS.VENDORS_VIEW,
         },
         {
@@ -150,7 +183,17 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Subscriptions",
             subtitle: "Track recurring subscriptions",
             path: `${baseUrl}/subscriptions`,
-            keywords: ["recurring", "billing", "plans", "crm"],
+            keywords: ["recurring", "billing", "plans", "subscriptions", "crm"],
+            permission: PERMISSIONS.SUBSCRIPTIONS_VIEW,
+        },
+        {
+            id: "archived-subscriptions",
+            category: "CRM",
+            icon: History,
+            title: "Archived Subscriptions",
+            subtitle: "View archived or cancelled subscriptions",
+            path: `${baseUrl}/subscriptions/archived`,
+            keywords: ["archived", "old", "cancelled", "history", "subscriptions", "crm"],
             permission: PERMISSIONS.SUBSCRIPTIONS_VIEW,
         },
         {
@@ -160,7 +203,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Contacts",
             subtitle: "Manage contact information",
             path: `${baseUrl}/contacts`,
-            keywords: ["people", "persons", "directory", "crm"],
+            keywords: ["people", "persons", "directory", "contacts", "crm"],
             permission: PERMISSIONS.CONTACTS_VIEW,
         },
         {
@@ -170,19 +213,21 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Opportunities",
             subtitle: "Manage sales opportunities",
             path: `${baseUrl}/opportunities`,
-            keywords: ["sales", "leads", "pipeline", "crm"],
+            keywords: ["sales", "leads", "pipeline", "deals", "opportunities", "crm"],
             permission: PERMISSIONS.OPPORTUNITIES_VIEW,
         },
         {
             id: "assets",
-            category: "CRM", // Assets were put in CRM in the sidebar reorg too
+            category: "CRM",
             icon: Monitor,
             title: "Assets",
-            subtitle: "Manage company assets",
+            subtitle: "Manage company assets & inventory",
             path: `${baseUrl}/assets`,
-            keywords: ["hardware", "software", "inventory", "it", "devices", "crm"],
+            keywords: ["hardware", "software", "inventory", "it", "devices", "assets", "crm"],
             permission: PERMISSIONS.ASSETS_VIEW,
         },
+
+        // Operations Module
         {
             id: "time-tracking",
             category: "Operations",
@@ -190,7 +235,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Time Tracking",
             subtitle: "Track time and manage entries",
             path: `${baseUrl}/time-tracking`,
-            keywords: ["timer", "hours", "timesheet", "billing", "work", "ops"],
+            keywords: ["timer", "hours", "timesheet", "billing", "work", "time-tracking", "ops"],
             permission: PERMISSIONS.TIME_TRACKING_VIEW,
         },
         {
@@ -200,8 +245,28 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "DCR Module",
             subtitle: "Daily call reports",
             path: `${baseUrl}/dcr`,
-            keywords: ["reports", "calls", "daily", "ops"],
+            keywords: ["reports", "calls", "daily", "dcr", "ops"],
             permission: PERMISSIONS.DCR_VIEW,
+        },
+        {
+            id: "dcr-detailed",
+            category: "Operations",
+            icon: BarChart3,
+            title: "DCR Detailed Report",
+            subtitle: "Comprehensive call analytics",
+            path: `${baseUrl}/dcr/detailed`,
+            keywords: ["reports", "calls", "analytics", "detailed", "dcr", "ops"],
+            permission: PERMISSIONS.DCR_VIEW,
+        },
+        {
+            id: "opportunity-detailed",
+            category: "Operations",
+            icon: BarChart3,
+            title: "Opportunity Analytics",
+            subtitle: "Detailed sales pipeline report",
+            path: `${baseUrl}/opportunities/detailed`,
+            keywords: ["sales", "pipeline", "analytics", "detailed", "reports", "ops"],
+            permission: PERMISSIONS.OPPORTUNITIES_VIEW,
         },
         {
             id: "phone-directory",
@@ -210,7 +275,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Phone Directory",
             subtitle: "View caller identification records",
             path: `${baseUrl}/phone-directory`,
-            keywords: ["calls", "caller id", "overlay", "contacts", "directory", "ops"],
+            keywords: ["calls", "caller id", "overlay", "contacts", "directory", "phone", "ops"],
             permission: PERMISSIONS.DIRECTORY_VIEW,
         },
         {
@@ -220,7 +285,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Birthdays",
             subtitle: "View upcoming birthdays",
             path: `${baseUrl}/birthdays`,
-            keywords: ["celebrations", "dates", "anniversary", "ops"],
+            keywords: ["celebrations", "dates", "anniversary", "birthdays", "ops"],
             permission: PERMISSIONS.BIRTHDAYS_VIEW,
         },
         {
@@ -228,11 +293,14 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             category: "Operations",
             icon: FileText,
             title: "Knowledge Base",
-            subtitle: "Browse articles",
+            subtitle: "Browse documentation articles",
             path: `${baseUrl}/kb`,
-            keywords: ["docs", "help", "kb", "knowledge", "ops"],
+            shortcut: ["G", "K"],
+            keywords: ["docs", "help", "kb", "knowledge", "articles", "ops"],
             permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW,
         },
+
+        // Self Service Module
         {
             id: "leaves",
             category: "Self Service",
@@ -240,7 +308,8 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Leaves & Permissions",
             subtitle: "Manage your time off requests",
             path: `${baseUrl}/leaves`,
-            keywords: ["holiday", "vacation", "permission", "hr", "self"],
+            shortcut: ["G", "L"],
+            keywords: ["holiday", "vacation", "permission", "hr", "self", "leaves"],
             permission: PERMISSIONS.LEAVES_VIEW,
         },
         {
@@ -250,17 +319,29 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Self Appraisal",
             subtitle: "Submit your quarterly performance review",
             path: `${baseUrl}/appraisals`,
-            keywords: ["review", "performance", "feedback", "hr", "self"],
+            keywords: ["review", "performance", "feedback", "hr", "self", "appraisal"],
             permission: PERMISSIONS.APPRAISALS_SUBMIT,
         },
+
+        // Administration Module
         {
             id: "backups",
             category: "Administration",
             icon: Database,
             title: "Backups",
-            subtitle: "Manage database backups",
+            subtitle: "Manage database backup configurations",
             path: `${baseUrl}/backups`,
-            keywords: ["database", "restore", "recovery", "export", "admin"],
+            keywords: ["database", "restore", "recovery", "export", "admin", "backups"],
+            permission: PERMISSIONS.BACKUPS_VIEW,
+        },
+        {
+            id: "backup-history",
+            category: "Administration",
+            icon: History,
+            title: "Backup History",
+            subtitle: "View database backup execution history",
+            path: `${baseUrl}/backups/history`,
+            keywords: ["database", "history", "logs", "restore", "admin", "backups"],
             permission: PERMISSIONS.BACKUPS_VIEW,
         },
         {
@@ -270,7 +351,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Appraisal Admin",
             subtitle: "Manage appraisal templates and periods",
             path: `${baseUrl}/admin/appraisals`,
-            keywords: ["management", "hr", "admin", "performance"],
+            keywords: ["management", "hr", "admin", "performance", "appraisal"],
             permission: PERMISSIONS.APPRAISALS_MANAGE,
         },
         {
@@ -280,7 +361,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Leave Admin",
             subtitle: "Manage leave types and approvals",
             path: `${baseUrl}/admin/leaves`,
-            keywords: ["management", "hr", "admin", "vacation"],
+            keywords: ["management", "hr", "admin", "vacation", "leaves"],
             permission: PERMISSIONS.LEAVES_MANAGE_TYPES,
         },
         {
@@ -290,11 +371,32 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Global Settings",
             subtitle: "Configure system preferences",
             path: `${baseUrl}/settings`,
-            keywords: ["config", "admin", "preferences"],
+            shortcut: ["Ctrl", "Shift", "P"],
+            keywords: ["config", "admin", "preferences", "settings"],
             permission: PERMISSIONS.SETTINGS_MANAGE,
         },
 
         // Quick Actions - Add New
+        {
+            id: "add-task",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "Create Task",
+            subtitle: "Create a new task",
+            path: `${baseUrl}/tasks?action=create`,
+            keywords: ["new", "create", "task", "todo", "add"],
+            permission: PERMISSIONS.TASKS_CREATE,
+        },
+        {
+            id: "add-goal",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "Add Goal",
+            subtitle: "Create a new goal",
+            path: `${baseUrl}/goals/add`,
+            keywords: ["new", "create", "goal", "target", "add"],
+            permission: PERMISSIONS.GOALS_CREATE,
+        },
         {
             id: "add-customer",
             category: "Quick Actions",
@@ -302,7 +404,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Customer",
             subtitle: "Create a new customer",
             path: `${baseUrl}/customers/add`,
-            keywords: ["new", "create", "client"],
+            keywords: ["new", "create", "client", "customer", "add"],
             permission: PERMISSIONS.CUSTOMERS_CREATE,
         },
         {
@@ -311,8 +413,8 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             icon: Plus,
             title: "Add Domain",
             subtitle: "Register a new domain",
-            path: `${baseUrl}/domains/new`,
-            keywords: ["new", "create", "register"],
+            path: `${baseUrl}/domains/add`,
+            keywords: ["new", "create", "register", "domain", "add"],
             permission: PERMISSIONS.DOMAINS_CREATE,
         },
         {
@@ -322,7 +424,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Service",
             subtitle: "Create a new service",
             path: `${baseUrl}/services/add`,
-            keywords: ["new", "create", "product"],
+            keywords: ["new", "create", "product", "service", "add"],
             permission: PERMISSIONS.SERVICES_CREATE,
         },
         {
@@ -332,7 +434,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Vendor",
             subtitle: "Add a new vendor",
             path: `${baseUrl}/vendors/add`,
-            keywords: ["new", "create", "supplier"],
+            keywords: ["new", "create", "supplier", "vendor", "add"],
             permission: PERMISSIONS.VENDORS_CREATE,
         },
         {
@@ -342,7 +444,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Subscription",
             subtitle: "Create a new subscription",
             path: `${baseUrl}/subscriptions/add`,
-            keywords: ["new", "create", "recurring"],
+            keywords: ["new", "create", "recurring", "subscription", "add"],
             permission: PERMISSIONS.SUBSCRIPTIONS_CREATE,
         },
         {
@@ -352,7 +454,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "New DCR Entry",
             subtitle: "Create a new DCR entry",
             path: `${baseUrl}/dcr/new`,
-            keywords: ["new", "create", "report"],
+            keywords: ["new", "create", "report", "dcr", "add"],
             permission: PERMISSIONS.DCR_CREATE,
         },
         {
@@ -362,7 +464,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Contact",
             subtitle: "Create a new contact",
             path: `${baseUrl}/contacts/new`,
-            keywords: ["new", "create", "person"],
+            keywords: ["new", "create", "person", "contact", "add"],
             permission: PERMISSIONS.CONTACTS_CREATE,
         },
         {
@@ -372,48 +474,8 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Add Opportunity",
             subtitle: "Create a new sales opportunity",
             path: `${baseUrl}/opportunities/new`,
-            keywords: ["new", "create", "sale", "lead"],
+            keywords: ["new", "create", "sale", "lead", "opportunity", "add"],
             permission: PERMISSIONS.OPPORTUNITIES_CREATE,
-        },
-        {
-            id: "kb-guide",
-            category: "Other",
-            icon: HelpCircle,
-            title: "Releases Guide",
-            subtitle: "View latest version changelog",
-            path: `${baseUrl}/help#releases`,
-            keywords: ["version", "changelog", "new", "features", "release"],
-            permission: null,
-        },
-        {
-            id: "kb-articles",
-            category: "Operations",
-            icon: FileText,
-            title: "Knowledge Base",
-            subtitle: "Browse articles",
-            path: `${baseUrl}/kb`,
-            keywords: ["docs", "help", "kb", "knowledge"],
-            permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW,
-        },
-        {
-            id: "add-kb-article",
-            category: "Quick Actions",
-            icon: Plus,
-            title: "Create Article",
-            subtitle: "Add to Knowledge Base",
-            path: `${baseUrl}/kb/new`,
-            keywords: ["new", "create", "article", "docs"],
-            permission: PERMISSIONS.KNOWLEDGE_BASE_CREATE,
-        },
-        {
-            id: "manage-kb-categories",
-            category: "Settings",
-            icon: Settings,
-            title: "Manage Categories",
-            subtitle: "Organize KB articles",
-            path: `${baseUrl}/kb/categories`,
-            keywords: ["categories", "organize", "kb", "knowledge"],
-            permission: PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES,
         },
         {
             id: "add-asset",
@@ -422,8 +484,38 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Create Asset",
             subtitle: "Register a new company asset",
             path: `${baseUrl}/assets/add`,
-            keywords: ["new", "create", "inventory", "device"],
+            keywords: ["new", "create", "inventory", "device", "asset", "add"],
             permission: PERMISSIONS.ASSETS_CREATE,
+        },
+        {
+            id: "add-kb-article",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "Create Article",
+            subtitle: "Add to Knowledge Base",
+            path: `${baseUrl}/kb/new`,
+            keywords: ["new", "create", "article", "docs", "kb", "add"],
+            permission: PERMISSIONS.KNOWLEDGE_BASE_CREATE,
+        },
+        {
+            id: "add-user",
+            category: "Quick Actions",
+            icon: UserPlus,
+            title: "Add User",
+            subtitle: "Create a new user account",
+            path: `${baseUrl}/settings/user-management/add-user`,
+            keywords: ["new", "create", "user", "account", "add"],
+            permission: PERMISSIONS.USERS_CREATE,
+        },
+        {
+            id: "add-backup-config",
+            category: "Quick Actions",
+            icon: Plus,
+            title: "New Backup Config",
+            subtitle: "Configure new database backup",
+            path: `${baseUrl}/backups/new`,
+            keywords: ["new", "create", "backup", "database", "add"],
+            permission: PERMISSIONS.BACKUPS_CREATE,
         },
         {
             id: "start-timer",
@@ -432,11 +524,11 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Start Timer",
             subtitle: "Begin tracking time",
             path: `${baseUrl}/time-tracking?action=start`,
-            keywords: ["new", "track", "start", "begin"],
+            keywords: ["new", "track", "start", "begin", "timer"],
             permission: PERMISSIONS.TIME_TRACKING_USE,
         },
 
-        // Settings
+        // Settings Sub-Modules
         {
             id: "settings-profile",
             category: "Settings",
@@ -444,8 +536,18 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Profile Settings",
             subtitle: "Update personal information",
             path: `${baseUrl}/settings/profile`,
-            keywords: ["account", "preferences", "user"],
-            permission: null, // Always accessible
+            keywords: ["account", "preferences", "user", "profile", "settings"],
+            permission: null,
+        },
+        {
+            id: "settings-dashboard",
+            category: "Settings",
+            icon: Sliders,
+            title: "Dashboard Settings",
+            subtitle: "Configure dashboard widgets & layout",
+            path: `${baseUrl}/settings/dashboard-settings`,
+            keywords: ["dashboard", "widgets", "configure", "layout", "settings"],
+            permission: PERMISSIONS.DASHBOARD_CONFIGURE,
         },
         {
             id: "settings-taxes",
@@ -454,8 +556,28 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Tax Settings",
             subtitle: "Configure tax rates and groups",
             path: `${baseUrl}/settings/taxes/tax-rates`,
-            keywords: ["gst", "rates", "invoice"],
+            keywords: ["gst", "rates", "invoice", "tax", "settings"],
             permission: PERMISSIONS.TAXES_VIEW,
+        },
+        {
+            id: "settings-default-tax",
+            category: "Settings",
+            icon: Receipt,
+            title: "Default Tax Preferences",
+            subtitle: "Manage global tax defaults",
+            path: `${baseUrl}/settings/taxes/default-tax-pref`,
+            keywords: ["tax", "preference", "default", "gst", "settings"],
+            permission: PERMISSIONS.TAXES_CONFIGURE,
+        },
+        {
+            id: "settings-gst",
+            category: "Settings",
+            icon: Receipt,
+            title: "GST Settings",
+            subtitle: "Configure GST identification numbers",
+            path: `${baseUrl}/settings/taxes/gst-settings`,
+            keywords: ["gst", "tax", "tin", "settings"],
+            permission: PERMISSIONS.TAXES_CONFIGURE,
         },
         {
             id: "settings-users",
@@ -464,7 +586,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "User Management",
             subtitle: "Manage user accounts",
             path: `${baseUrl}/settings/user-management`,
-            keywords: ["accounts", "access", "admin"],
+            keywords: ["accounts", "access", "admin", "users", "settings"],
             permission: PERMISSIONS.USERS_VIEW,
         },
         {
@@ -474,7 +596,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Roles & Permissions",
             subtitle: "Configure roles and access",
             path: `${baseUrl}/settings/roles`,
-            keywords: ["access", "permission", "security"],
+            keywords: ["access", "permission", "security", "roles", "settings"],
             permission: PERMISSIONS.ROLES_VIEW,
         },
         {
@@ -484,7 +606,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Teams Management",
             subtitle: "Manage functional teams",
             path: `${baseUrl}/settings/teams`,
-            keywords: ["groups", "members", "collaboration", "organization"],
+            keywords: ["groups", "members", "collaboration", "organization", "teams", "settings"],
             permission: PERMISSIONS.TEAMS_MANAGE,
         },
         {
@@ -494,7 +616,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Reminder Policies",
             subtitle: "Configure automated reminders",
             path: `${baseUrl}/settings/reminder-policies`,
-            keywords: ["notifications", "alerts", "schedule"],
+            keywords: ["notifications", "alerts", "schedule", "reminders", "settings"],
             permission: PERMISSIONS.REMINDER_POLICIES_VIEW,
         },
         {
@@ -504,7 +626,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Email Templates",
             subtitle: "Customize email templates",
             path: `${baseUrl}/settings/email-templates`,
-            keywords: ["templates", "notifications", "mail"],
+            keywords: ["templates", "notifications", "mail", "email", "settings"],
             permission: PERMISSIONS.EMAIL_TEMPLATES_VIEW,
         },
         {
@@ -514,7 +636,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Notification Logs",
             subtitle: "View notification history",
             path: `${baseUrl}/settings/notification-logs`,
-            keywords: ["history", "emails", "sent"],
+            keywords: ["history", "emails", "sent", "notifications", "settings"],
             permission: PERMISSIONS.NOTIFICATION_LOGS_VIEW,
         },
         {
@@ -524,7 +646,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Activity Logs",
             subtitle: "View system activity",
             path: `${baseUrl}/settings/activity-logs`,
-            keywords: ["audit", "history", "tracking"],
+            keywords: ["audit", "history", "tracking", "activity", "settings"],
             permission: PERMISSIONS.ACTIVITY_LOGS_VIEW,
         },
         {
@@ -534,7 +656,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Quick Tools Admin",
             subtitle: "Manage diagnostic tools",
             path: `${baseUrl}/settings/quick-tools`,
-            keywords: ["dns", "ssl", "whois"],
+            keywords: ["dns", "ssl", "whois", "tools", "settings"],
             permission: PERMISSIONS.QUICK_TOOLS_MANAGE,
         },
         {
@@ -544,7 +666,79 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Appearance Settings",
             subtitle: "Customize themes and fonts",
             path: `${baseUrl}/settings/appearance`,
-            keywords: ["theme", "colors", "fonts", "design", "ui"],
+            keywords: ["theme", "colors", "fonts", "design", "ui", "appearance", "settings"],
+            permission: null,
+        },
+        {
+            id: "settings-birthday-exp",
+            category: "Settings",
+            icon: Cake,
+            title: "Birthday Experience",
+            subtitle: "Configure birthday wishes & templates",
+            path: `${baseUrl}/settings/birthday-experience`,
+            keywords: ["birthday", "wishes", "celebration", "greetings", "settings"],
+            permission: PERMISSIONS.SETTINGS_MANAGE,
+        },
+        {
+            id: "settings-helpdesk",
+            category: "Settings",
+            icon: LifeBuoy,
+            title: "Helpdesk Settings",
+            subtitle: "Configure support & ticketing options",
+            path: `${baseUrl}/settings/helpdesk`,
+            keywords: ["helpdesk", "support", "tickets", "help", "settings"],
+            permission: PERMISSIONS.SETTINGS_MANAGE,
+        },
+        {
+            id: "settings-developer-controls",
+            category: "Settings",
+            icon: Terminal,
+            title: "Developer Controls",
+            subtitle: "System developer options & tools",
+            path: `${baseUrl}/settings/developer-controls`,
+            keywords: ["developer", "dev", "system", "code", "settings"],
+            permission: PERMISSIONS.DEVELOPER_CONTROLS,
+        },
+        {
+            id: "settings-goal-masters",
+            category: "Settings",
+            icon: Target,
+            title: "Goal Masters Settings",
+            subtitle: "Configure goal categories & metrics",
+            path: `${baseUrl}/settings/goal-masters`,
+            keywords: ["goals", "categories", "masters", "configure", "settings"],
+            permission: PERMISSIONS.GOALS_CONFIGURE_CATEGORIES,
+        },
+        {
+            id: "settings-asset",
+            category: "Settings",
+            icon: Tag,
+            title: "Asset Categories & Settings",
+            subtitle: "Manage asset types and categories",
+            path: `${baseUrl}/assets/settings`,
+            keywords: ["asset", "categories", "hardware", "software", "settings"],
+            permission: PERMISSIONS.ASSETS_MANAGE_CATEGORIES,
+        },
+        {
+            id: "manage-kb-categories",
+            category: "Settings",
+            icon: Settings,
+            title: "Manage KB Categories",
+            subtitle: "Organize KB articles",
+            path: `${baseUrl}/kb/categories`,
+            keywords: ["categories", "organize", "kb", "knowledge", "settings"],
+            permission: PERMISSIONS.KNOWLEDGE_BASE_MANAGE_CATEGORIES,
+        },
+
+        // Help & Docs
+        {
+            id: "kb-guide",
+            category: "Other",
+            icon: HelpCircle,
+            title: "Releases Guide",
+            subtitle: "View latest version changelog",
+            path: `${baseUrl}/help#releases`,
+            keywords: ["version", "changelog", "new", "features", "release", "help"],
             permission: null,
         },
         {
@@ -554,7 +748,7 @@ const createCommandItems = (username, hasPermission, dispatch, navigate, theme, 
             title: "Help & Documentation",
             subtitle: "View help and shortcuts",
             path: `${baseUrl}/help`,
-            keywords: ["documentation", "guide", "shortcuts"],
+            keywords: ["documentation", "guide", "shortcuts", "help"],
             permission: null,
         },
     ];
@@ -599,41 +793,97 @@ export default function CommandPalette({ open, onOpenChange }) {
 
     const handleSelect = useCallback(
         (item) => {
-            onOpenChange(false);
+            // Brief 120ms timeout to allow visual feedback (item selection highlight) before closing modal and navigating
+            setTimeout(() => {
+                onOpenChange(false);
 
-            // Handle special actions
-            if (item.action) {
-                item.action();
-                return;
-            }
+                // Handle special actions
+                if (item.action) {
+                    item.action();
+                    return;
+                }
 
-            // Navigate to path
-            if (item.path) {
-                navigate(item.path);
-            }
+                // Navigate to path
+                if (item.path) {
+                    navigate(item.path);
+                }
+            }, 120);
         },
         [navigate, onOpenChange]
     );
 
     // Keyboard shortcut listener
     useEffect(() => {
+        let lastKey = null;
+        let lastKeyTime = 0;
+
         const down = (e) => {
+            // Ignore if typing in an input, textarea, or editable element
+            const target = e.target;
+            const isEditing = target && (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable ||
+                target.getAttribute('role') === 'textbox'
+            );
+
             // Ctrl+Shift+P - Open Settings Menu
             if (e.key === "P" && e.ctrlKey && e.shiftKey) {
                 e.preventDefault();
                 if (open) onOpenChange(false);
                 window.dispatchEvent(new CustomEvent('openSettingsMenu'));
+                return;
             }
             // Ctrl+K - Open Command Palette
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 onOpenChange(!open);
+                return;
+            }
+
+            // Do not trigger G-shortcuts if currently typing in an input or if Command Palette modal is open
+            if (isEditing || open || !user?.username) return;
+
+            const now = Date.now();
+            const key = e.key.toLowerCase();
+
+            // "G" sequence shortcuts (Go To...)
+            if (lastKey === 'g' && now - lastKeyTime < 1000) {
+                const baseUrl = `/${user.username}/dashboard`;
+                if (key === 'h' && hasPermission(PERMISSIONS.DASHBOARD_VIEW)) {
+                    e.preventDefault();
+                    navigate(baseUrl);
+                } else if (key === 't' && hasPermission(PERMISSIONS.TASKS_VIEW)) {
+                    e.preventDefault();
+                    navigate(`${baseUrl}/tasks`);
+                } else if (key === 'g' && hasPermission(PERMISSIONS.GOALS_VIEW)) {
+                    e.preventDefault();
+                    navigate(`${baseUrl}/goals`);
+                } else if (key === 'c' && hasPermission(PERMISSIONS.CUSTOMERS_VIEW)) {
+                    e.preventDefault();
+                    navigate(`${baseUrl}/customers`);
+                } else if (key === 'k' && hasPermission(PERMISSIONS.KNOWLEDGE_BASE_VIEW)) {
+                    e.preventDefault();
+                    navigate(`${baseUrl}/kb`);
+                } else if (key === 'l' && hasPermission(PERMISSIONS.LEAVES_VIEW)) {
+                    e.preventDefault();
+                    navigate(`${baseUrl}/leaves`);
+                }
+                lastKey = null;
+                return;
+            }
+
+            if (key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                lastKey = 'g';
+                lastKeyTime = now;
+            } else {
+                lastKey = null;
             }
         };
 
         document.addEventListener("keydown", down);
         return () => document.removeEventListener("keydown", down);
-    }, [open, onOpenChange]);
+    }, [open, onOpenChange, navigate, user?.username, hasPermission]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -670,7 +920,7 @@ export default function CommandPalette({ open, onOpenChange }) {
                                 {items.map((item) => (
                                     <CommandItem
                                         key={item.id}
-                                        value={`${item.title} ${item.subtitle} ${item.keywords?.join(" ")}`}
+                                        value={`${item.title} ${item.subtitle} ${item.category} ${item.keywords ? item.keywords.join(" ") : ""}`}
                                         onSelect={() => handleSelect(item)}
                                         className={`flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer transition-all duration-150 group
                                             ${item.id === 'logout'
@@ -740,3 +990,4 @@ export default function CommandPalette({ open, onOpenChange }) {
         </Dialog>
     );
 }
+

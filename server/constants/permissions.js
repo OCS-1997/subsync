@@ -115,6 +115,23 @@ export const PERMISSIONS = Object.freeze({
     HOLIDAYS_MANAGE: 'holidays.manage',
     LEAVES_VIEW_ALL: 'leaves.view_all',
     DEVELOPER_CONTROLS: 'developer_controls.manage',
+    // Tasks
+    TASKS_VIEW: 'tasks.view',
+    TASKS_VIEW_ALL: 'tasks.view_all',
+    TASKS_CREATE: 'tasks.create',
+    TASKS_CREATE_FOR_OTHERS: 'tasks.create_for_others',
+    TASKS_ASSIGN: 'tasks.assign',
+    TASKS_REASSIGN: 'tasks.reassign',
+    TASKS_UPDATE: 'tasks.update',
+    TASKS_UPDATE_ASSIGNED: 'tasks.update_assigned',
+    TASKS_DELETE: 'tasks.delete',
+    TASKS_COMPLETE: 'tasks.complete',
+    TASKS_REOPEN: 'tasks.reopen',
+    TASKS_CANCEL: 'tasks.cancel',
+    TASKS_COMMENT: 'tasks.comment',
+    TASKS_ATTACHMENTS: 'tasks.attachments',
+    TASKS_MANAGE_ALL: 'tasks.manage_all',
+    TASKS_VIEW_ACTIVITY: 'tasks.view_activity',
 });
 
 export const PERMISSION_DEFINITIONS = [

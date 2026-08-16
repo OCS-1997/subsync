@@ -118,6 +118,23 @@ export const PERMISSIONS = Object.freeze({
   GOALS_CONFIGURE_CATEGORIES: 'goals.configure_categories',
   GOALS_CONFIGURE_STATUS: 'goals.configure_status',
   GOALS_CONFIGURE_BUSINESS_IMPACT: 'goals.configure_business_impact',
+  // Tasks Module
+  TASKS_VIEW: 'tasks.view',
+  TASKS_VIEW_ALL: 'tasks.view_all',
+  TASKS_CREATE: 'tasks.create',
+  TASKS_CREATE_FOR_OTHERS: 'tasks.create_for_others',
+  TASKS_ASSIGN: 'tasks.assign',
+  TASKS_REASSIGN: 'tasks.reassign',
+  TASKS_UPDATE: 'tasks.update',
+  TASKS_UPDATE_ASSIGNED: 'tasks.update_assigned',
+  TASKS_DELETE: 'tasks.delete',
+  TASKS_COMPLETE: 'tasks.complete',
+  TASKS_REOPEN: 'tasks.reopen',
+  TASKS_CANCEL: 'tasks.cancel',
+  TASKS_COMMENT: 'tasks.comment',
+  TASKS_ATTACHMENTS: 'tasks.attachments',
+  TASKS_MANAGE_ALL: 'tasks.manage_all',
+  TASKS_VIEW_ACTIVITY: 'tasks.view_activity',
 });
 
 export const PAGE_PERMISSIONS = {
@@ -135,5 +152,7 @@ export const PAGE_PERMISSIONS = {
   assets: PERMISSIONS.ASSETS_VIEW,
   performanceReports: PERMISSIONS.PERFORMANCE_REPORTS_VIEW,
   goals: PERMISSIONS.GOALS_VIEW,
+  tasks: PERMISSIONS.TASKS_VIEW,
 };
+
 

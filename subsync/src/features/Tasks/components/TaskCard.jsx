@@ -1,0 +1,155 @@
+/* eslint-disable react/prop-types */
+import { useNavigate } from 'react-router-dom';
+import { Calendar, CheckSquare, Clock, AlertTriangle, User, MoreVertical, MessageSquare, Paperclip, Edit2 } from 'lucide-react';
+
+const priorityColors = {
+  LOW: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  MEDIUM: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+  HIGH: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+  URGENT: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800 font-semibold animate-pulse',
+};
+
+const statusColors = {
+  TODO: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+  IN_PROGRESS: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800',
+  BLOCKED: 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700',
+  COMPLETED: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+  CANCELLED: 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200 line-through',
+};
+
+export default function TaskCard({ task, onEdit }) {
+  const navigate = useNavigate();
+
+  const totalItems = task.checklist_total || 0;
+  const completedItems = task.checklist_completed || 0;
+  const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+  // Due date checks
+  let isOverdue = false;
+  let isDueToday = false;
+  if (task.due_date && task.status !== 'COMPLETED' && task.status !== 'CANCELLED') {
+    const due = parseISO(task.due_date);
+    isDueToday = isToday(due);
+    isOverdue = isBefore(due, new Date()) && !isDueToday;
+  }
+
+  return (
+    <div
+      onClick={() => navigate(`/dashboard/tasks/${task.id}`)}
+      className="group relative flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer overflow-hidden"
+    >
+      {/* Top Bar: Category, Priority, Status */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${priorityColors[task.priority] || priorityColors.MEDIUM}`}>
+              {task.priority}
+            </span>
+            {task.category && (
+              <span className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                {task.category}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(task);
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Edit Task"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${statusColors[task.status] || statusColors.TODO}`}>
+              {task.status.replace('_', ' ')}
+            </span>
+          </div>
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-1.5">
+          {task.title}
+        </h3>
+        {task.description && (
+          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+            {task.description}
+          </p>
+        )}
+      </div>
+
+      {/* Checklist Progress Bar */}
+      <div>
+        {totalItems > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+              <span className="flex items-center gap-1 font-medium">
+                <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
+                Checklist ({completedItems}/{totalItems})
+              </span>
+              <span className="font-semibold">{progressPercent}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  progressPercent === 100 ? 'bg-emerald-500' : 'bg-blue-500'
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Footer: Date, Assignee, Stats */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2">
+            {task.due_date ? (
+              <span
+                className={`flex items-center gap-1 font-medium ${
+                  isOverdue
+                    ? 'text-rose-600 dark:text-rose-400 font-semibold'
+                    : isDueToday
+                    ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                    : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                {isOverdue ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                {isOverdue ? 'Overdue: ' : isDueToday ? 'Due Today: ' : ''}
+                {format(parseISO(task.due_date), 'MMM dd')}
+              </span>
+            ) : (
+              <span className="text-slate-400">No due date</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {task.comment_count > 0 && (
+              <span className="flex items-center gap-1 text-slate-400">
+                <MessageSquare className="w-3.5 h-3.5" />
+                {task.comment_count}
+              </span>
+            )}
+            {task.attachment_count > 0 && (
+              <span className="flex items-center gap-1 text-slate-400">
+                <Paperclip className="w-3.5 h-3.5" />
+                {task.attachment_count}
+              </span>
+            )}
+            <div
+              className="flex items-center gap-1.5 pl-1"
+              title={`Assigned to: ${task.assignee_name || task.assigned_to}`}
+            >
+              <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-[10px] flex items-center justify-center border border-blue-200 dark:border-blue-800">
+                {(task.assignee_name || task.assigned_to || 'U').charAt(0).toUpperCase()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

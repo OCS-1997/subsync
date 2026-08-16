@@ -34,6 +34,8 @@ const sidebarItems = [
   { path: 'dashboard/assets', title: 'Assets', icon: 'devices', icon_type: 'material', permission: PERMISSIONS.ASSETS_VIEW, folder: 'CRM Module' },
   { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW, folder: 'CRM Module' },
   { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW, folder: 'CRM Module' },
+  // My Work Group Module
+  { path: 'dashboard/tasks', title: 'Tasks', icon: 'assignment_turned_in', icon_type: 'material', permission: PERMISSIONS.TASKS_VIEW, folder: 'My Work Group' },
   // Operations Module
   { path: 'dashboard/goals', title: 'Goals', icon: 'flag', icon_type: 'material', permission: PERMISSIONS.GOALS_VIEW, folder: 'Operations Module' },
   // Operations Module
