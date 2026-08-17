@@ -13,6 +13,8 @@ import {
   User,
   Tag,
   AlertCircle,
+  AlertTriangle,
+  Flame,
   CheckCircle2,
   XCircle,
   MessageSquare,
@@ -348,7 +350,14 @@ export default function TaskDetailsPage() {
       {/* Main Task Title & Badges */}
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="px-3 py-1 text-xs font-extrabold rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+          <span className={`px-3 py-1 text-xs font-extrabold rounded-lg uppercase tracking-wider flex items-center gap-1.5 ${
+            task.priority === 'URGENT'
+              ? 'bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 text-white shadow-md shadow-rose-500/25'
+              : task.priority === 'HIGH'
+              ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+              : 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300'
+          }`}>
+            {task.priority === 'URGENT' && <Flame className="w-3.5 h-3.5 fill-white text-white shrink-0" />}
             {task.priority} Priority
           </span>
           <span className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">

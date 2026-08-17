@@ -11,6 +11,7 @@ export const getTasksController = async (req, res, next) => {
             overdue: req.query.overdue,
             category: req.query.category,
             search: req.query.search,
+            clientDate: req.query.clientDate,
             tab: req.query.tab,
             page: req.query.page || 1,
             limit: req.query.limit || 50

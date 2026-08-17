@@ -12,7 +12,7 @@ import {
   useDraggable,
 } from '@dnd-kit/core';
 import { format, isBefore, isToday, parseISO } from 'date-fns';
-import { CheckSquare, Clock, AlertTriangle, MessageSquare, Paperclip, Plus, ArrowRight, Edit2 } from 'lucide-react';
+import { CheckSquare, Clock, AlertTriangle, MessageSquare, Paperclip, Plus, ArrowRight, Edit2, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const COLUMNS = [
@@ -27,7 +27,7 @@ const priorityColors = {
   LOW: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
   MEDIUM: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300',
   HIGH: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
-  URGENT: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold',
+  URGENT: 'bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 text-white font-extrabold shadow-sm shadow-rose-500/30',
 };
 
 // Draggable Task Card Item
@@ -57,6 +57,8 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
     isOverdue = isBefore(due, new Date()) && !isDueToday;
   }
 
+  const isUrgent = task.priority === 'URGENT';
+
   return (
     <div
       ref={setNodeRef}
@@ -65,12 +67,21 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
       {...listeners}
       onClick={() => navigate(`/dashboard/tasks/${task.id}`)}
       className={cn(
-        'p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-grab active:cursor-grabbing space-y-3',
+        'p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-grab active:cursor-grabbing space-y-3 relative overflow-hidden',
+        isUrgent && 'border-rose-400/80 dark:border-rose-600/80 bg-gradient-to-br from-rose-50/50 via-white to-amber-50/30 dark:from-rose-950/40 dark:via-slate-900 dark:to-amber-950/20 shadow-[0_0_15px_rgba(244,63,94,0.18)]',
         isDraggingOverlay && 'shadow-2xl border-blue-500 ring-2 ring-blue-500/20 scale-105'
       )}
     >
+      {isUrgent && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500" />
+      )}
+
       <div className="flex items-center justify-between gap-2">
-        <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-md ${priorityColors[task.priority] || priorityColors.MEDIUM}`}>
+        <span className={cn(
+          'px-2 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1',
+          isUrgent ? priorityColors.URGENT : (priorityColors[task.priority] || priorityColors.MEDIUM)
+        )}>
+          {isUrgent && <Flame className="w-3.5 h-3.5 fill-white text-white shrink-0" />}
           {task.priority}
         </span>
         <div className="flex items-center gap-1">

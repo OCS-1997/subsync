@@ -157,6 +157,7 @@ export async function getTasks(actor, filters = {}) {
         overdue,
         category,
         search,
+        clientDate,
         tab = 'all', // 'my_tasks' | 'assigned_by_me' | 'management' | 'all'
         page = 1,
         limit = 50
@@ -222,9 +223,19 @@ export async function getTasks(actor, filters = {}) {
     // Filter by due date
     if (dueDate) {
         if (dueDate === 'today') {
-            conditions.push(`DATE(t.due_date) = CURDATE()`);
+            if (clientDate) {
+                conditions.push(`(DATE(t.due_date) = CURDATE() OR DATE(t.due_date) = DATE(?))`);
+                params.push(clientDate);
+            } else {
+                conditions.push(`DATE(t.due_date) = CURDATE()`);
+            }
         } else if (dueDate === 'upcoming') {
-            conditions.push(`DATE(t.due_date) > CURDATE() AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+            if (clientDate) {
+                conditions.push(`DATE(t.due_date) > DATE(?) AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+                params.push(clientDate);
+            } else {
+                conditions.push(`DATE(t.due_date) > CURDATE() AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+            }
         } else {
             conditions.push(`DATE(t.due_date) = DATE(?)`);
             params.push(dueDate);
@@ -315,14 +326,35 @@ export async function getTaskStats(actor) {
             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count,
             SUM(CASE WHEN DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS due_today_count,
+            SUM(CASE WHEN assigned_to = ? AND DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_due_today_count,
             SUM(CASE WHEN due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
+            SUM(CASE WHEN assigned_to = ? AND due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_overdue_count,
             SUM(CASE WHEN assigned_to = ? AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_open_tasks
          FROM tasks t
          ${scopeWhere}`,
-        [...params, actor.username]
+        [...params, actor.username, actor.username, actor.username]
     );
 
-    return rows[0] || {
+    const [byAssigneeRows] = await appDB.query(
+        `SELECT 
+            t.assigned_to AS username,
+            COALESCE(u.name, t.assigned_to) AS name,
+            u.email AS email,
+            COUNT(*) AS total,
+            SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) AS todo_count,
+            SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
+            SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) AS blocked_count,
+            SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
+            SUM(CASE WHEN t.status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count
+         FROM tasks t
+         LEFT JOIN users u ON t.assigned_to = u.username
+         ${scopeWhere}
+         GROUP BY t.assigned_to, u.name, u.email
+         ORDER BY total DESC`,
+        params
+    );
+
+    const baseStats = rows[0] || {
         total_tasks: 0,
         todo_count: 0,
         in_progress_count: 0,
@@ -332,6 +364,11 @@ export async function getTaskStats(actor) {
         due_today_count: 0,
         overdue_count: 0,
         my_open_tasks: 0
+    };
+
+    return {
+        ...baseStats,
+        by_assignee: byAssigneeRows || []
     };
 }
 

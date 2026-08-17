@@ -1,12 +1,13 @@
 /* eslint-disable react/prop-types */
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckSquare, Clock, AlertTriangle, User, MoreVertical, MessageSquare, Paperclip, Edit2 } from 'lucide-react';
+import { Calendar, CheckSquare, Clock, AlertTriangle, User, MoreVertical, MessageSquare, Paperclip, Edit2, Flame } from 'lucide-react';
+import { format, isBefore, isToday, parseISO } from 'date-fns';
 
 const priorityColors = {
   LOW: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
   MEDIUM: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
   HIGH: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-  URGENT: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800 font-semibold animate-pulse',
+  URGENT: 'bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 text-white border-transparent font-extrabold shadow-sm shadow-rose-500/30',
 };
 
 const statusColors = {
@@ -28,21 +29,38 @@ export default function TaskCard({ task, onEdit }) {
   let isOverdue = false;
   let isDueToday = false;
   if (task.due_date && task.status !== 'COMPLETED' && task.status !== 'CANCELLED') {
-    const due = parseISO(task.due_date);
-    isDueToday = isToday(due);
-    isOverdue = isBefore(due, new Date()) && !isDueToday;
+    try {
+      const due = typeof task.due_date === 'string' ? parseISO(task.due_date) : new Date(task.due_date);
+      if (due && !isNaN(due.getTime())) {
+        isDueToday = isToday(due);
+        isOverdue = isBefore(due, new Date()) && !isDueToday;
+      }
+    } catch (err) {
+      console.error('Error parsing due date:', err);
+    }
   }
+
+  const isUrgent = task.priority === 'URGENT';
 
   return (
     <div
       onClick={() => navigate(`/dashboard/tasks/${task.id}`)}
-      className="group relative flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer overflow-hidden"
+      className={`group relative flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border transition-all cursor-pointer overflow-hidden ${
+        isUrgent
+          ? 'border-rose-400/80 dark:border-rose-600/80 bg-gradient-to-br from-rose-50/50 via-white to-amber-50/30 dark:from-rose-950/40 dark:via-slate-900 dark:to-amber-950/20 shadow-[0_0_15px_rgba(244,63,94,0.18)] hover:shadow-lg'
+          : 'border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500'
+      }`}
     >
+      {isUrgent && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500" />
+      )}
+
       {/* Top Bar: Category, Priority, Status */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${priorityColors[task.priority] || priorityColors.MEDIUM}`}>
+            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border flex items-center gap-1 ${priorityColors[task.priority] || priorityColors.MEDIUM}`}>
+              {isUrgent && <Flame className="w-3.5 h-3.5 fill-white text-white shrink-0" />}
               {task.priority}
             </span>
             {task.category && (
@@ -119,7 +137,14 @@ export default function TaskCard({ task, onEdit }) {
               >
                 {isOverdue ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
                 {isOverdue ? 'Overdue: ' : isDueToday ? 'Due Today: ' : ''}
-                {format(parseISO(task.due_date), 'MMM dd')}
+                {(() => {
+                  try {
+                    const parsed = typeof task.due_date === 'string' ? parseISO(task.due_date) : new Date(task.due_date);
+                    return !isNaN(parsed.getTime()) ? format(parsed, 'MMM dd') : task.due_date;
+                  } catch (err) {
+                    return String(task.due_date);
+                  }
+                })()}
               </span>
             ) : (
               <span className="text-slate-400">No due date</span>
