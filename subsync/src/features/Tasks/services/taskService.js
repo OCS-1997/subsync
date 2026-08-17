@@ -15,6 +15,12 @@ export const taskService = {
     return response.data;
   },
 
+  // Get distinct task categories
+  getTaskCategories: async () => {
+    const response = await api.get('/tasks/categories');
+    return response.data;
+  },
+
   // Get task analytics & high level insights
   getTaskAnalytics: async (params = {}) => {
     const response = await api.get('/tasks/analytics', { params });

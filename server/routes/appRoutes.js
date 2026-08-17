@@ -45,7 +45,8 @@ import {
     addCommentController,
     uploadTaskAttachmentController,
     downloadTaskAttachmentController,
-    deleteTaskAttachmentController
+    deleteTaskAttachmentController,
+    getTaskCategoriesController
 } from '../controllers/taskController.js';
 import express from 'express';
 
@@ -857,6 +858,7 @@ router.get('/birthday-experience/today-team', isAuthenticated, getTodayTeamBirth
 // Tasks Module Routes
 router.get('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTasksController);
 router.get('/tasks/stats', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskStatsController);
+router.get('/tasks/categories', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskCategoriesController);
 router.get('/tasks/analytics', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW_ANALYTICS, PERMISSIONS.TASKS_VIEW_ALL, PERMISSIONS.TASKS_MANAGE_ALL], { match: 'any' }), getTaskAnalyticsController);
 router.get('/tasks/manageable-users', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getManageableUsersController);
 router.get('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskByIdController);

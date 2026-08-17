@@ -6,6 +6,7 @@ import { taskService } from '../services/taskService';
 import TaskCard from '../components/TaskCard';
 import TaskKanbanView from '../components/TaskKanbanView';
 import CreateTaskModal from '../components/CreateTaskModal';
+import { CategorySelect } from '../components/CategorySelect';
 import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
 import { toast } from 'react-toastify';
 import {
@@ -69,8 +70,10 @@ export default function TasksPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [assignedToFilter, setAssignedToFilter] = useState('ALL');
   const [manageableUsers, setManageableUsers] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSplitupModalOpen, setIsSplitupModalOpen] = useState(false);
@@ -108,6 +111,17 @@ export default function TasksPage() {
     }
   }, [canManage]);
 
+  // Load Categories for filter
+  useEffect(() => {
+    taskService.getTaskCategories()
+      .then((res) => {
+        if (res.success && res.data) {
+          setAvailableCategories(res.data);
+        }
+      })
+      .catch((err) => console.error('Failed to load categories:', err));
+  }, []);
+
   // Load Tasks List
   const fetchTasks = useCallback(async () => {
     try {
@@ -118,6 +132,7 @@ export default function TasksPage() {
         search,
         status: statusFilter !== 'ALL' ? statusFilter : undefined,
         priority: priorityFilter !== 'ALL' ? priorityFilter : undefined,
+        category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
         assignedTo: assignedToFilter !== 'ALL' ? assignedToFilter : undefined,
         clientDate: clientTodayStr,
       };
@@ -136,7 +151,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [viewMode, activeTab, search, statusFilter, priorityFilter, assignedToFilter]);
+  }, [viewMode, activeTab, search, statusFilter, priorityFilter, categoryFilter, assignedToFilter]);
 
   useEffect(() => {
     fetchStats();
@@ -471,6 +486,15 @@ export default function TasksPage() {
             <option value="URGENT">URGENT</option>
           </select>
 
+          {/* Category Filter */}
+          <CategorySelect
+            value={categoryFilter}
+            onChange={(newCat) => setCategoryFilter(newCat)}
+            categories={availableCategories}
+            buttonVariant="filter"
+            allowCustom={true}
+          />
+
           {/* Assignee Filter (for Management View) */}
           {canManage && viewMode === 'management' && (
             <select
@@ -544,7 +568,7 @@ export default function TasksPage() {
 
       {/* Task Splitup Modal */}
       {isSplitupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">

@@ -6,6 +6,7 @@ import { taskService } from '../services/taskService';
 import { toast } from 'react-toastify';
 import { X, Plus, Edit2, Trash2, Calendar, User, Tag, AlertCircle, AlertTriangle, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CategorySelect } from './CategorySelect';
 
 import { getLoggedUser } from '@/utils/userUtils';
 
@@ -26,6 +27,9 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
 
   const [loading, setLoading] = useState(false);
   const [manageableUsers, setManageableUsers] = useState([]);
+  const [categories, setCategories] = useState(['General', 'Finance', 'CRM', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix']);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -41,13 +45,15 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
   useEffect(() => {
     if (isOpen) {
       const todayStr = new Date().toISOString().split('T')[0];
+      const initialCategory = taskToEdit?.category || 'General';
+
       if (isEditMode) {
         setFormData({
           title: taskToEdit.title || '',
           description: taskToEdit.description || '',
           assignedTo: taskToEdit.assigned_to || currentUser?.username || '',
           priority: taskToEdit.priority || 'MEDIUM',
-          category: taskToEdit.category || 'General',
+          category: initialCategory,
           startDate: taskToEdit.start_date ? taskToEdit.start_date.substring(0, 10) : todayStr,
           dueDate: taskToEdit.due_date ? taskToEdit.due_date.substring(0, 10) : '',
         });
@@ -64,6 +70,25 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
         });
         setChecklist(['']);
       }
+
+      // Fetch dynamic categories
+      taskService
+        .getTaskCategories()
+        .then((res) => {
+          if (res.success && res.data && res.data.length > 0) {
+            setCategories(res.data);
+            if (isEditMode && initialCategory && !res.data.includes(initialCategory)) {
+              setIsCustomCategory(true);
+            } else {
+              setIsCustomCategory(false);
+            }
+          }
+        })
+        .catch(() => {
+          if (isEditMode && initialCategory && !categories.includes(initialCategory)) {
+            setIsCustomCategory(true);
+          }
+        });
 
       if (canAssignOthers) {
         taskService
@@ -152,33 +177,34 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-slate-900/65 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-3xl max-h-[88vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 shrink-0">
+          <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
               {isEditMode ? <Edit2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {isEditMode ? 'Edit Task' : 'Create New Task'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isEditMode ? 'Update task metadata, dates, or assignee.' : 'Add task details, assignee, dates, and checklist items.'}
+                {isEditMode ? 'Update task metadata, dates, or assignee.' : 'Add task details, assignee, dates, category, and checklist items.'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[72vh] flex-1 scrollbar-thin">
           {/* Title */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -219,7 +245,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
                 <select
                   value={formData.assignedTo}
                   onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none h-[42px]"
                 >
                   <option value={activeUser?.username || ''}>Assign to Me ({userDisplayName})</option>
                   {manageableUsers
@@ -235,94 +261,43 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
                   type="text"
                   disabled
                   value={userDisplayName !== 'Myself' ? `${userDisplayName} (Myself)` : 'Myself'}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 cursor-not-allowed h-[42px]"
                 />
               )}
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  {formData.priority === 'URGENT' ? (
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                  ) : (
-                    <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
-                  )}
-                  Priority
-                </label>
-                {formData.priority === 'URGENT' && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase tracking-wider">
-                    <span>🚨</span> High Alert
-                  </span>
-                )}
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+                Priority
+              </label>
+
+              <div className="w-full h-[42px] p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-1">
+                {[
+                  { id: 'LOW', label: 'Low', color: 'bg-slate-400', activeClass: 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold border border-slate-200/80 dark:border-slate-600' },
+                  { id: 'MEDIUM', label: 'Medium', color: 'bg-blue-500', activeClass: 'bg-blue-500 text-white shadow-xs font-bold' },
+                  { id: 'HIGH', label: 'High', color: 'bg-amber-500', activeClass: 'bg-amber-500 text-white shadow-xs font-bold' },
+                  { id: 'URGENT', label: 'Urgent', color: 'bg-rose-500', activeClass: 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-xs font-bold' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: item.id })}
+                    className={`flex-1 h-full rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                      formData.priority === item.id
+                        ? item.activeClass
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {item.id === 'URGENT' ? (
+                      <Flame className={`w-3.5 h-3.5 shrink-0 ${formData.priority === 'URGENT' ? 'text-white fill-white' : 'text-rose-500 fill-rose-500'}`} />
+                    ) : (
+                      <span className={`w-2 h-2 rounded-full ${item.color} shrink-0`} />
+                    )}
+                    {item.label}
+                  </button>
+                ))}
               </div>
-
-              <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, priority: 'LOW' })}
-                  className={`py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                    formData.priority === 'LOW'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold border border-slate-200 dark:border-slate-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                  }`}
-                >
-                  Low
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, priority: 'MEDIUM' })}
-                  className={`py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                    formData.priority === 'MEDIUM'
-                      ? 'bg-blue-500 text-white shadow-sm shadow-blue-500/20 font-bold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  Medium
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, priority: 'HIGH' })}
-                  className={`py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${
-                    formData.priority === 'HIGH'
-                      ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20 font-bold'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
-                  }`}
-                >
-                  High
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, priority: 'URGENT' })}
-                  className={`py-2 px-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 relative overflow-hidden ${
-                    formData.priority === 'URGENT'
-                      ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-500/40 scale-[1.02]'
-                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/50'
-                  }`}
-                >
-                  <Flame className={`w-3.5 h-3.5 shrink-0 ${formData.priority === 'URGENT' ? 'text-white fill-white' : 'text-rose-500 fill-rose-500'}`} />
-                  Urgent
-                </button>
-              </div>
-
-              {formData.priority === 'URGENT' && (
-                <div className="mt-2.5 p-3 rounded-xl bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/30 border border-rose-200/80 dark:border-rose-800/80 flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200 shadow-sm">
-                  <div className="p-1 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-                      <span>URGENT ESCALATION</span>
-                    </div>
-                    <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
-                      Urgent tasks feature a high-priority red alert badge on Kanban & dashboard boards for immediate team attention.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -333,12 +308,17 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
                 <Tag className="w-3.5 h-3.5 text-slate-400" />
                 Category
               </label>
-              <input
-                type="text"
-                placeholder="e.g. General, Finance, CRM"
+              <CategorySelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                onChange={(newCat) => {
+                  setFormData({ ...formData, category: newCat });
+                  if (newCat && !categories.includes(newCat)) {
+                    setCategories((prev) => Array.from(new Set([...prev, newCat])).sort());
+                  }
+                }}
+                categories={categories}
+                placeholder="Select or search category..."
+                buttonVariant="form"
               />
             </div>
 
@@ -409,21 +389,23 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          </div>
+
+          {/* Sticky Actions Footer */}
+          <div className="px-7 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-end gap-3 shrink-0">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={loading}
-              className="rounded-xl"
+              className="rounded-xl px-5"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md shadow-blue-500/20 px-5"
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 px-6 py-2"
             >
               {loading ? (isEditMode ? 'Updating...' : 'Creating...') : isEditMode ? 'Save Changes' : 'Create Task'}
             </Button>

@@ -1144,3 +1144,19 @@ export async function getTaskAnalytics(actor, filters = {}) {
     };
 }
 
+/**
+ * Fetch all distinct task categories available in the system plus defaults.
+ */
+export async function getTaskCategories(actor) {
+    const [rows] = await appDB.query(
+        `SELECT DISTINCT category 
+         FROM tasks 
+         WHERE category IS NOT NULL AND TRIM(category) != '' 
+         ORDER BY category ASC`
+    );
+    const existing = rows.map(r => r.category ? r.category.trim() : '').filter(Boolean);
+    const defaults = ['General', 'Finance', 'CRM', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix'];
+    const merged = Array.from(new Set([...defaults, ...existing]));
+    return merged.sort((a, b) => a.localeCompare(b));
+}
+

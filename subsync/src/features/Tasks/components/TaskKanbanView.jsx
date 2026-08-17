@@ -191,7 +191,7 @@ function KanbanColumn({ column, tasks, onStatusChange, onEdit }) {
       </div>
 
       {/* Cards List */}
-      <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin">
+      <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-270px)] scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {tasks.map((task) => (
           <KanbanCard key={task.id} task={task} onEdit={onEdit} />
         ))}
