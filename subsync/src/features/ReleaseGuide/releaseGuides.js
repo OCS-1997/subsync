@@ -88,4 +88,39 @@ export const RELEASE_GUIDES = [
     ],
     autoShow: true,
   },
+
+  {
+    id: '2.4.0-tasks-leaves-goals',
+    version: '2.4.0',
+    title: "What's New in 2.4.0",
+    description: 'Tasks Kanban module, Leaves & Permissions system, Goals tracking, and Interactive Birthday Experience.',
+    steps: [
+      {
+        id: 'step-tasks-module',
+        title: '📋 Tasks & Kanban Management',
+        body: 'Interactive task management with Kanban boards, sub-task breakdowns, granular role permissions, and productivity analytics.',
+      },
+      {
+        id: 'step-leaves-management',
+        title: '🌴 Leave & Self-Service Management',
+        body: 'Comprehensive leave management system for request submissions, approval workflows, balance tracking, and policy controls.',
+      },
+      {
+        id: 'step-goals-module',
+        title: '🎯 Goals & Milestone Tracking',
+        body: 'Define and track organizational and team goals with milestone progress bars and dedicated master configuration.',
+      },
+      {
+        id: 'step-birthday-experience',
+        title: '🎂 Birthday Celebrations',
+        body: 'Interactive birthday widget and celebrations dashboard to highlight team member birthdays and foster engagement.',
+      },
+      {
+        id: 'step-crm-sync',
+        title: '🔄 CRM Webhook Sync & Service Credits',
+        body: 'Real-time CRM event synchronization with background queue processing and service credit tracking.',
+      },
+    ],
+    autoShow: true,
+  },
 ];
