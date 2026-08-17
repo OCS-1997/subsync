@@ -48,6 +48,7 @@ import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
 import { saveAs } from 'file-saver';
 import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
+import CategorySelect from '../components/CategorySelect.jsx';
 import { taskService } from '../services/taskService';
 import { useTheme } from '@/context/ThemeContext';
 import { getLoggedUser } from '@/utils/userUtils';
@@ -619,7 +620,7 @@ export default function TaskAnalyticsPage() {
       </div>
 
       {/* Unified Collapsible Filters Toolbar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm transition-all overflow-hidden">
+      <div className={`bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm transition-all ${isFilterCollapsed ? 'overflow-hidden' : 'overflow-visible'}`}>
         <div className="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none" onClick={() => setIsFilterCollapsed(!isFilterCollapsed)}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
@@ -741,21 +742,17 @@ export default function TaskAnalyticsPage() {
 
               {/* Category Filter */}
               <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                   Category
                 </label>
-                <select
+                <CategorySelect
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="ALL">All Categories</option>
-                  {availableCategories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(newCat) => setSelectedCategory(newCat)}
+                  categories={availableCategories}
+                  placeholder="Category: All"
+                  buttonVariant="filter"
+                  className="w-full h-[34px] flex items-center justify-between"
+                />
               </div>
 
               {/* Assignee / Team Member Filter */}

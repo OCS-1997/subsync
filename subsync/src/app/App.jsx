@@ -63,7 +63,7 @@ function App() {
         position="top-right"
         autoClose={2000}
         hideProgressBar={false}
-        newestOnTop={false}
+        newestOnTop={true}
         closeOnClick
         rtl={false}
         pauseOnFocusLoss
@@ -71,6 +71,7 @@ function App() {
         pauseOnHover
         theme="light"
         transition={Bounce}
+        style={{ zIndex: 999999 }}
       />
       <ErrorBoundary>
         <ThemeProvider>

@@ -655,8 +655,8 @@ export default function TaskDetailsPage() {
         currentUser={currentUser}
         taskToEdit={task}
         onTaskCreated={(updatedTask) => {
-          setTask(updatedTask);
-          fetchTaskDetails();
+          if (updatedTask) setTask(updatedTask);
+          loadTaskDetail();
         }}
       />
     </div>

@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.Toastify__toast-container {
+  z-index: 999999 !important;
+}
+
 @layer base {
   :root {
     --mobile-padding: 1rem;

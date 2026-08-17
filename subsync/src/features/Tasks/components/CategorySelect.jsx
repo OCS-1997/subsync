@@ -52,7 +52,7 @@ export function CategorySelect({
   const isFilter = buttonVariant === 'filter';
 
   return (
-    <div className={`relative ${isFilter ? 'inline-flex' : 'w-full'}`} ref={dropdownRef}>
+    <div className={`relative ${isOpen ? 'z-30' : ''} ${isFilter ? 'inline-flex' : 'w-full'}`} ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         type="button"
@@ -82,7 +82,7 @@ export function CategorySelect({
 
       {/* Dropdown Popover */}
       {isOpen && (
-        <div className={`absolute top-full mt-1.5 w-64 max-w-[calc(100vw-2rem)] z-50 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 ${isFilter ? 'right-0 sm:left-0 sm:right-auto' : 'left-0'}`}>
+        <div className={`absolute top-full mt-1.5 w-64 max-w-[calc(100vw-2rem)] z-[100] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 ${isFilter ? 'right-0 sm:left-0 sm:right-auto' : 'left-0'}`}>
           {/* Search Box */}
           <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1.5" />
@@ -206,3 +206,5 @@ export function CategorySelect({
     </div>
   );
 }
+
+export default CategorySelect;
