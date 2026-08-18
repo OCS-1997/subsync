@@ -30,6 +30,16 @@ import {
 } from 'lucide-react';
 import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { getLoggedUser } from '@/utils/userUtils';
 
@@ -69,6 +79,8 @@ export default function TaskDetailsPage() {
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [manageableUsers, setManageableUsers] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteTaskOpen, setIsDeleteTaskOpen] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState(null);
 
   const currentUser = getLoggedUser();
   const canReassign = hasAnyPermission([PERMISSIONS.TASKS_REASSIGN, PERMISSIONS.TASKS_ASSIGN, PERMISSIONS.TASKS_MANAGE_ALL]);
@@ -137,8 +149,7 @@ export default function TaskDetailsPage() {
   };
 
   // Handle Delete Task
-  const handleDeleteTask = async () => {
-    if (!window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) return;
+  const confirmDeleteTask = async () => {
     try {
       const res = await taskService.deleteTask(id);
       if (res.success) {
@@ -147,6 +158,8 @@ export default function TaskDetailsPage() {
       }
     } catch (err) {
       toast.error(err.normalizedMessage || 'Failed to delete task');
+    } finally {
+      setIsDeleteTaskOpen(false);
     }
   };
 
@@ -219,16 +232,18 @@ export default function TaskDetailsPage() {
     }
   };
 
-  const handleDeleteAttachment = async (attachmentId) => {
-    if (!window.confirm('Delete attachment?')) return;
+  const confirmDeleteAttachment = async () => {
+    if (!attachmentToDelete) return;
     try {
-      const res = await taskService.deleteAttachment(id, attachmentId);
+      const res = await taskService.deleteAttachment(id, attachmentToDelete);
       if (res.success) {
         setTask(res.data);
         toast.success('Attachment deleted');
       }
     } catch (err) {
       toast.error('Failed to delete attachment');
+    } finally {
+      setAttachmentToDelete(null);
     }
   };
 
@@ -336,12 +351,12 @@ export default function TaskDetailsPage() {
           {/* Delete Task */}
           {(currentUser.username === task.created_by || currentUser.roleKey === 'admin') && (
             <Button
-              onClick={handleDeleteTask}
+              onClick={() => setIsDeleteTaskOpen(true)}
               variant="destructive"
-              className="rounded-xl text-xs px-3 py-2"
+              className="rounded-xl text-xs px-3 py-2 font-semibold flex items-center gap-1.5"
               title="Delete Task"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" /> Delete Task
             </Button>
           )}
         </div>
@@ -606,8 +621,8 @@ export default function TaskDetailsPage() {
                       <Download className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteAttachment(att.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-500"
+                      onClick={() => setAttachmentToDelete(att.id)}
+                      className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -659,6 +674,54 @@ export default function TaskDetailsPage() {
           loadTaskDetail();
         }}
       />
+
+      {/* Task Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteTaskOpen} onOpenChange={setIsDeleteTaskOpen}>
+        <AlertDialogContent className="rounded-3xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Task?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-600 dark:text-slate-400 pt-2">
+              Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{task.title}"</span>? This action cannot be undone and will permanently remove all checklists, comments, and attachments associated with this task.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 pt-4">
+            <AlertDialogCancel className="rounded-xl font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+            >
+              Delete Task
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Attachment Delete Confirmation Dialog */}
+      <AlertDialog open={Boolean(attachmentToDelete)} onOpenChange={(open) => !open && setAttachmentToDelete(null)}>
+        <AlertDialogContent className="rounded-3xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-rose-500" />
+              Delete Attachment?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-600 dark:text-slate-400 pt-2">
+              Are you sure you want to remove this attachment? This file will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 pt-4">
+            <AlertDialogCancel className="rounded-xl font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteAttachment}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+            >
+              Delete Attachment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

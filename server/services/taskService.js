@@ -116,21 +116,46 @@ export async function notifyTaskAssignment(task, assigneeUsername, actorName) {
         const assignee = await getUserByUsername(assigneeUsername);
         if (!assignee || !assignee.email) return;
 
+        const clientPort = process.env.CLIENT_PORT || 5173;
+        const appUrl = process.env.NODE_ENV === 'production' 
+            ? (process.env.APP_BASE_URL || `http://localhost:${clientPort}`)
+            : (process.env.APP_BASE_URL || `http://localhost:${clientPort}`);
+
+        const normalizedAppUrl = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl;
+        const taskUrl = `${normalizedAppUrl}/dashboard/tasks/${task.id}`;
+
         const subject = `[OCS365 Task] Assigned: ${task.title}`;
         const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #2563eb; margin-top: 0;">Task Assigned</h2>
-                <p>Hello <strong>${assignee.name || assigneeUsername}</strong>,</p>
-                <p><strong>${actorName}</strong> has assigned a task to you in OCS365:</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #2563eb; margin: 15px 0;">
-                    <h3 style="margin: 0 0 8px 0; color: #1e293b;">${task.title}</h3>
-                    <p style="margin: 0 0 5px 0; color: #64748b;">${task.description || 'No description provided.'}</p>
-                    <p style="margin: 5px 0 0 0;">
-                        <span style="display: inline-block; padding: 2px 8px; font-size: 12px; font-weight: bold; background: #e0f2fe; color: #0369a1; border-radius: 4px; margin-right: 8px;">Priority: ${task.priority}</span>
-                        ${task.due_date ? `<span style="font-size: 13px; color: #e11d48;">Due: ${new Date(task.due_date).toLocaleDateString()}</span>` : ''}
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+                <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 24px 30px; text-align: left;">
+                    <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">New Task Assigned</h2>
+                    <p style="color: #93c5fd; margin: 4px 0 0 0; font-size: 13px;">OCS365 Work Management</p>
+                </div>
+                <div style="padding: 24px 30px;">
+                    <p style="color: #334155; font-size: 15px; margin-top: 0;">Hello <strong>${assignee.name || assigneeUsername}</strong>,</p>
+                    <p style="color: #475569; font-size: 14px; line-height: 1.5;"><strong>${actorName}</strong> has assigned a task to you in OCS365. Here are the details:</p>
+                    
+                    <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 18px 20px; border-radius: 6px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 10px 0; color: #0f172a; font-size: 17px; font-weight: 600;">${task.title}</h3>
+                        <p style="margin: 0 0 12px 0; color: #475569; font-size: 14px; line-height: 1.6;">${task.description || 'No detailed description provided.'}</p>
+                        <div style="display: flex; gap: 12px; align-items: center; font-size: 13px;">
+                            <span style="display: inline-block; padding: 4px 10px; font-size: 12px; font-weight: 700; background-color: #dbeafe; color: #1e40af; border-radius: 20px;">Priority: ${task.priority || 'MEDIUM'}</span>
+                            ${task.due_date ? `<span style="display: inline-block; padding: 4px 10px; font-size: 12px; font-weight: 600; background-color: #ffe4e6; color: #be123c; border-radius: 20px;">Due: ${new Date(task.due_date).toLocaleDateString()}</span>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <div style="text-align: center; margin: 30px 0 20px 0;">
+                        <a href="${taskUrl}" target="_blank" style="background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);">
+                            View Task Details &rarr;
+                        </a>
+                    </div>
+
+                    <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 24px; border-t: 1px solid #f1f5f9; padding-top: 16px;">
+                        If the button above does not work, copy and paste this URL into your web browser:<br/>
+                        <a href="${taskUrl}" style="color: #2563eb; text-decoration: underline; word-break: break-all;">${taskUrl}</a>
                     </p>
                 </div>
-                <p style="color: #64748b; font-size: 13px;">Log in to OCS365 to view and manage your assigned tasks.</p>
             </div>
         `;
 
@@ -329,10 +354,11 @@ export async function getTaskStats(actor) {
             SUM(CASE WHEN assigned_to = ? AND DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_due_today_count,
             SUM(CASE WHEN due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
             SUM(CASE WHEN assigned_to = ? AND due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_overdue_count,
+            SUM(CASE WHEN assigned_to = ? AND status IN ('TODO', 'IN_PROGRESS') THEN 1 ELSE 0 END) AS my_active_tasks,
             SUM(CASE WHEN assigned_to = ? AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_open_tasks
          FROM tasks t
          ${scopeWhere}`,
-        [...params, actor.username, actor.username, actor.username]
+        [...params, actor.username, actor.username, actor.username, actor.username]
     );
 
     const [byAssigneeRows] = await appDB.query(
@@ -363,6 +389,7 @@ export async function getTaskStats(actor) {
         cancelled_count: 0,
         due_today_count: 0,
         overdue_count: 0,
+        my_active_tasks: 0,
         my_open_tasks: 0
     };
 

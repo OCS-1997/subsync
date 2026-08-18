@@ -1,8 +1,10 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { usePermissions } from '@/context/PermissionsContext';
 import { PERMISSIONS } from '@/constants/permissions';
 import { taskService } from '../services/taskService';
+import { fetchTaskStats } from '../taskSlice';
 import { toast } from 'react-toastify';
 import { X, Plus, Edit2, Trash2, Calendar, User, Tag, AlertCircle, AlertTriangle, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,7 @@ import { CategorySelect } from './CategorySelect';
 import { getLoggedUser } from '@/utils/userUtils';
 
 export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskToEdit, currentUser }) {
+  const dispatch = useDispatch();
   const { hasAnyPermission } = usePermissions();
   const canAssignOthers = hasAnyPermission([
     PERMISSIONS.TASKS_CREATE_FOR_OTHERS,
@@ -149,6 +152,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
         const res = await taskService.updateTask(taskToEdit.id, payload);
         if (res.success) {
           toast.success('Task updated successfully!');
+          dispatch(fetchTaskStats());
           onTaskCreated?.(res.data);
           onClose();
         } else {
@@ -163,6 +167,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
         const res = await taskService.createTask(payload);
         if (res.success) {
           toast.success('Task created successfully!');
+          dispatch(fetchTaskStats());
           onTaskCreated?.(res.data);
           onClose();
         } else {

@@ -13,6 +13,9 @@ import { PERMISSIONS } from '@/constants/permissions.js';
 import { useSidebarFolders } from '@/hooks/useSidebarFolders.js';
 import { getMyActiveAppraisal } from '@/features/Appraisals/appraisalSlice';
 import { fetchPendingCounts } from '@/features/Leaves/leavesSlice';
+import { fetchTaskStats } from '@/features/Tasks/taskSlice';
+import { playTaskNotificationSound } from '@/utils/soundNotifications';
+import { toast } from 'react-toastify';
 import SidebarTree from './SidebarTree.jsx';
 import SidebarHeader from './sidebar/SidebarHeader.jsx';
 import SidebarTooltip from './sidebar/SidebarTooltip.jsx';
@@ -77,10 +80,13 @@ function SideBar({ isOpen, toggleSidebar }) {
   const { hasAnyPermission } = usePermissions();
   const sidebarRef = useRef(null);
   const isDesktop = useIsDesktop();
+  const prevActiveTasksRef = useRef(null);
 
   const [desktopCollapsed, setDesktopCollapsed] = useState(() => loadCollapsedPreference());
 
   const { activeAppraisalInfo } = useSelector((state) => state.appraisals);
+  const { pendingCounts } = useSelector((state) => state.leaves);
+  const taskStats = useSelector((state) => state.tasks?.stats);
 
   useEffect(() => {
     if (hasAnyPermission(PERMISSIONS.APPRAISALS_SUBMIT)) {
@@ -89,9 +95,29 @@ function SideBar({ isOpen, toggleSidebar }) {
     if (hasAnyPermission([PERMISSIONS.LEAVES_APPROVE, PERMISSIONS.PERMISSIONS_APPROVE])) {
       dispatch(fetchPendingCounts());
     }
+    if (hasAnyPermission(PERMISSIONS.TASKS_VIEW)) {
+      dispatch(fetchTaskStats());
+      const interval = setInterval(() => {
+        dispatch(fetchTaskStats());
+      }, 45000);
+      return () => clearInterval(interval);
+    }
   }, [dispatch, hasAnyPermission]);
 
-  const { pendingCounts } = useSelector((state) => state.leaves);
+  // Audio alert and notification when task count increases
+  useEffect(() => {
+    if (taskStats && taskStats.my_active_tasks !== undefined) {
+      const currentActiveCount = Number(taskStats.my_active_tasks || 0);
+      if (prevActiveTasksRef.current !== null && currentActiveCount > prevActiveTasksRef.current) {
+        playTaskNotificationSound();
+        toast.info('You have new task assignments!', {
+          position: 'top-right',
+          autoClose: 4000,
+        });
+      }
+      prevActiveTasksRef.current = currentActiveCount;
+    }
+  }, [taskStats?.my_active_tasks]);
 
   const badgeCounts = {};
   if (
@@ -104,6 +130,11 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   if (pendingCounts?.total > 0) {
     badgeCounts['dashboard/leaves'] = pendingCounts.total;
+  }
+
+  const myActiveTaskCount = Number(taskStats?.my_active_tasks ?? 0);
+  if (myActiveTaskCount > 0) {
+    badgeCounts['dashboard/tasks'] = myActiveTaskCount;
   }
 
   const permissionFilter = useCallback(
