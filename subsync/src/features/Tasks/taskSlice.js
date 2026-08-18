@@ -27,6 +27,7 @@ const taskSlice = createSlice({
       my_open_tasks: 0,
       by_assignee: [],
     },
+    isInitialized: false,
     isLoading: false,
     error: null,
   },
@@ -44,6 +45,7 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTaskStats.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isInitialized = true;
         state.stats = action.payload || state.stats;
       })
       .addCase(fetchTaskStats.rejected, (state, action) => {

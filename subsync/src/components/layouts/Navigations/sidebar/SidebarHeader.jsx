@@ -1,8 +1,7 @@
 /* eslint-disable react/prop-types */
-import { X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils.js';
-import SidebarCollapseButton from './SidebarCollapseButton.jsx';
 import SidebarTooltip from './SidebarTooltip.jsx';
 
 export default function SidebarHeader({
@@ -21,32 +20,20 @@ export default function SidebarHeader({
       )}
     >
       <div className={cn('flex min-w-0 items-center gap-3', expanded ? 'flex-1' : '')}>
-        {expanded ? (
-          <div
+        <SidebarTooltip label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}>
+          <button
+            type="button"
+            onClick={onToggleDesktop}
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg',
-              'border border-slate-200/80 bg-white p-1 shadow-sm'
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900',
+              'text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40'
             )}
           >
-            <img src="/pwa-192x192.png" alt="" className="h-full w-full object-contain" />
-          </div>
-        ) : (
-          <SidebarTooltip label="Expand sidebar">
-            <button
-              type="button"
-              onClick={onToggleDesktop}
-              aria-label="Expand sidebar"
-              className={cn(
-                'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg',
-                'border border-slate-200/80 bg-white p-1 shadow-sm',
-                'transition-shadow duration-200 hover:ring-2 hover:ring-blue-500/20',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40'
-              )}
-            >
-              <img src="/pwa-192x192.png" alt="" className="h-full w-full object-contain" />
-            </button>
-          </SidebarTooltip>
-        )}
+            <Menu className="h-5 w-5" />
+          </button>
+        </SidebarTooltip>
 
         {expanded && (
           <div className="min-w-0 flex-1 animate-in fade-in-0 duration-200">
@@ -61,19 +48,16 @@ export default function SidebarHeader({
       </div>
 
       {expanded && (
-        <div className="flex shrink-0 items-center gap-1">
-          <SidebarCollapseButton collapsed={false} onToggle={onToggleDesktop} />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onCloseMobile}
-            aria-label="Close sidebar"
-            className="h-8 w-8 rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground lg:hidden dark:hover:bg-slate-800"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onCloseMobile}
+          aria-label="Close sidebar"
+          className="h-8 w-8 rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground lg:hidden dark:hover:bg-slate-800"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );

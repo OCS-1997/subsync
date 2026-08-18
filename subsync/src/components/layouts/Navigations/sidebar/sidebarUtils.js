@@ -8,10 +8,16 @@ export const STORAGE_KEYS = {
 };
 
 const SECTION_LABELS = {
+  'MY WORK': 'MY WORK',
+  'MARKETING': 'MARKETING',
+  'CUSTOMER': 'CUSTOMER',
+  'SERVICES': 'SERVICES',
+  'HR': 'HR',
+  'ADMIN': 'ADMIN',
   'Operations Module': 'MY WORK',
-  'CRM Module': 'CRM',
-  'Self Service': 'SELF SERVICE',
-  Administration: 'ADMINISTRATION',
+  'CRM Module': 'CUSTOMER',
+  'Self Service': 'HR',
+  Administration: 'ADMIN',
 };
 
 export function formatSectionLabel(name = '') {

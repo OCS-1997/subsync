@@ -70,9 +70,11 @@ const AppearanceSettings = () => {
     setIsResetConfirmOpen(false);
     const username = localStorage.getItem("username") || window.location.pathname.split("/")[1];
     if (username) {
+      localStorage.removeItem(`pref_order_${username}_sidebar_folders_v4`);
       localStorage.removeItem(`pref_order_${username}_sidebar_folders_v3`);
       localStorage.removeItem(`pref_order_${username}_sidebar_order`);
       try {
+        await api.put(`/preferences/${username}/sidebar_folders_v4`, { value: null });
         await api.put(`/preferences/${username}/sidebar_folders_v3`, { value: null });
         await api.put(`/preferences/${username}/sidebar_order`, { value: null });
         toast.success("Sidebar layout reset successful! Reloading page to apply...");

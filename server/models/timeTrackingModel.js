@@ -468,7 +468,24 @@ async function getTimeEntriesSummary({ userId, startDate, endDate, teamId }) {
       params,
     );
 
-    return summary;
+    const [monthlyTrend] = await appDB.query(
+      `SELECT 
+                DATE_FORMAT(start_time, '%Y-%m') as month_str,
+                COUNT(*) as total_entries,
+                SUM(duration_minutes) as total_minutes,
+                SUM(CASE WHEN is_billable = TRUE THEN duration_minutes ELSE 0 END) as billable_minutes,
+                SUM(CASE WHEN is_billable = FALSE THEN duration_minutes ELSE 0 END) as non_billable_minutes
+             FROM time_entries
+             WHERE ${whereClause}
+             GROUP BY DATE_FORMAT(start_time, '%Y-%m')
+             ORDER BY month_str ASC`,
+      params,
+    );
+
+    return {
+      ...summary,
+      monthlyTrend: monthlyTrend || []
+    };
   } catch (error) {
     console.error("Error fetching time summary:", error);
     throw error;

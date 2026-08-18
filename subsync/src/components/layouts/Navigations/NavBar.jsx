@@ -100,8 +100,20 @@ function NavBar({ toggleSidebar }) {
           <Button variant="ghost" size="icon" className="mr-1 lg:hidden h-10 w-10 shrink-0" onClick={toggleSidebar}>
             <span className="material-symbols-outlined text-2xl">menu</span>
           </Button>
-          <div className="flex-shrink-0 flex items-center p-1 rounded overflow-hidden">
-            <img src="/logo.png" alt="Logo" className="h-8 sm:h-12 p-1 invert brightness-0 contrast-200 dark:invert-0 dark:brightness-100 dark:contrast-100 transition-all object-contain" />
+          <div className="flex-shrink-0 flex items-center gap-1.5 sm:gap-2.5 p-1 rounded overflow-hidden">
+            <img 
+              src="/SubSyncLogo.png" 
+              alt="SubSync" 
+              className="h-7 sm:h-9 w-auto object-contain transition-transform hover:scale-105" 
+            />
+            <span className="text-xs sm:text-sm font-black text-slate-400 dark:text-slate-500 px-0.5 select-none">
+              x
+            </span>
+            <img 
+              src="/logo.png" 
+              alt="OCS Logo" 
+              className="h-7 sm:h-9 w-auto object-contain transition-transform hover:scale-105" 
+            />
           </div>
         </div>
         <div className="flex items-center gap-3">
