@@ -130,7 +130,11 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const clientTodayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const clientTodayStr = `${year}-${month}-${day}`;
       const params = {
         tab: viewMode,
         search,
@@ -179,12 +183,46 @@ export default function TasksPage() {
     }
   };
 
+  const getTabBadges = () => {
+    if (viewMode === 'my_tasks') {
+      return {
+        today: Number(stats.my_due_today_count ?? stats.due_today_count ?? 0),
+        overdue: Number(stats.my_overdue_count ?? stats.overdue_count ?? 0),
+      };
+    }
+    if (viewMode === 'assigned_by_me') {
+      return {
+        today: Number(stats.created_by_due_today_count ?? stats.due_today_count ?? 0),
+        overdue: Number(stats.created_by_overdue_count ?? stats.overdue_count ?? 0),
+      };
+    }
+    if (viewMode === 'management') {
+      if (assignedToFilter !== 'ALL' && Array.isArray(stats.by_assignee)) {
+        const targetUser = stats.by_assignee.find((u) => u.username === assignedToFilter);
+        return {
+          today: Number(targetUser?.due_today_count ?? 0),
+          overdue: Number(targetUser?.overdue_count ?? 0),
+        };
+      }
+      return {
+        today: Number(stats.due_today_count ?? 0),
+        overdue: Number(stats.overdue_count ?? 0),
+      };
+    }
+    return {
+      today: Number(stats.due_today_count ?? 0),
+      overdue: Number(stats.overdue_count ?? 0),
+    };
+  };
+
+  const tabBadges = getTabBadges();
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen">
       {/* Breadcrumb Navigation */}
       <Breadcrumb
         items={[
-          { label: 'My Work Group', href: '/dashboard/tasks' },
+          { label: 'MY WORK', href: '/dashboard/tasks' },
           { label: 'Tasks' },
         ]}
       />
@@ -202,7 +240,7 @@ export default function TasksPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <Button
             onClick={() => {
               fetchStats();
@@ -219,16 +257,16 @@ export default function TasksPage() {
             <Button
               onClick={() => navigate(`/${getLoggedUser()?.username}/dashboard/tasks/analytics`)}
               variant="outline"
-              className="rounded-xl px-3.5 py-2.5 flex items-center gap-2 font-semibold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="rounded-xl px-3 sm:px-3.5 py-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              Analytics
+              <span className="hidden xs:inline">Analytics</span>
             </Button>
           )}
 
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-500/20 px-4 py-2.5 flex items-center gap-2"
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-500/20 px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" /> Create Task
           </Button>
@@ -236,16 +274,16 @@ export default function TasksPage() {
       </div>
 
       {/* KPI Metric Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Tasks Card (Interactive with Splitup) */}
         <div 
           onClick={() => setIsSplitupModalOpen(true)}
           className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer group flex flex-col justify-between"
           title="Click to view full task distribution splitup"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform shrink-0">
                 <ListTodo className="w-5 h-5" />
               </div>
               <div>
@@ -255,23 +293,23 @@ export default function TasksPage() {
                 </div>
               </div>
             </div>
-            <span className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-[10px] font-extrabold group-hover:bg-blue-600 group-hover:text-white transition-all flex items-center gap-0.5 shadow-sm">
+            <span className="px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-[10px] font-extrabold group-hover:bg-blue-600 group-hover:text-white transition-all flex items-center gap-0.5 shadow-sm shrink-0">
               Splitup <ChevronRight className="w-3 h-3" />
             </span>
           </div>
 
           <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-              <User className="w-3 h-3 text-blue-500" /> Your Open Tasks:
+            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium truncate">
+              <User className="w-3 h-3 text-blue-500 shrink-0" /> Your Open Tasks:
             </span>
-            <strong className="text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/50">
+            <strong className="text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/50 shrink-0">
               {statsLoading ? '...' : (stats.my_open_tasks ?? 0)}
             </strong>
           </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 shrink-0">
             <Clock className="w-5 h-5" />
           </div>
           <div>
@@ -283,7 +321,7 @@ export default function TasksPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
+          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
@@ -295,7 +333,7 @@ export default function TasksPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+          <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
@@ -306,8 +344,8 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5 col-span-2 lg:col-span-1">
-          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5 sm:col-span-2 md:col-span-1">
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 shrink-0">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
@@ -321,13 +359,13 @@ export default function TasksPage() {
 
       {/* Main View Mode Selector */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap py-0.5">
           <button
             onClick={() => {
               setViewMode('my_tasks');
               setActiveTab('ALL');
             }}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'my_tasks'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -341,7 +379,7 @@ export default function TasksPage() {
               setViewMode('assigned_by_me');
               setActiveTab('ALL');
             }}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'assigned_by_me'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -356,7 +394,7 @@ export default function TasksPage() {
                 setViewMode('management');
                 setActiveTab('ALL');
               }}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
                 viewMode === 'management'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -368,7 +406,7 @@ export default function TasksPage() {
         </div>
 
         {/* Layout Mode Selector: Grid / List / Kanban */}
-        <div className="flex items-center gap-1 self-end sm:self-auto">
+        <div className="flex items-center justify-end gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-slate-700/60">
           <button
             onClick={() => setLayoutMode('grid')}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -405,22 +443,22 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Filter / Tabs Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-        {/* Sub-tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+      {/* Filter / Tabs Container */}
+      <div className="flex flex-col gap-3.5">
+        {/* Sub-tabs Row */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {[
             { id: 'ALL', label: 'All Tasks' },
             { 
               id: 'TODAY', 
               label: 'Today', 
-              badge: Number(viewMode === 'my_tasks' ? (stats.my_due_today_count ?? stats.due_today_count) : stats.due_today_count) || 0 
+              badge: tabBadges.today 
             },
             { id: 'UPCOMING', label: 'Upcoming' },
             { 
               id: 'OVERDUE', 
               label: 'Overdue', 
-              badge: Number(viewMode === 'my_tasks' ? (stats.my_overdue_count ?? stats.overdue_count) : stats.overdue_count) || 0, 
+              badge: tabBadges.overdue, 
               color: 'text-rose-500' 
             },
             { id: 'COMPLETED', label: 'Completed' },
@@ -450,11 +488,11 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Search & Select Filters */}
+        {/* Search & Select Filters Row */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Box */}
-          <div className="relative min-w-[200px] flex-1 sm:flex-initial">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <div className="relative flex-1 min-w-[200px] sm:max-w-xs">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
               placeholder="Search tasks..."
@@ -468,7 +506,7 @@ export default function TasksPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none"
+            className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="ALL">Status: All</option>
             <option value="TODO">TODO</option>
@@ -482,7 +520,7 @@ export default function TasksPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none"
+            className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="ALL">Priority: All</option>
             <option value="LOW">LOW</option>
@@ -505,7 +543,7 @@ export default function TasksPage() {
             <select
               value={assignedToFilter}
               onChange={(e) => setAssignedToFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none"
+              className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Assignee: All</option>
               {manageableUsers.map((u) => (
@@ -548,13 +586,13 @@ export default function TasksPage() {
       ) : layoutMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onEdit={handleEditTask} />
+            <TaskCard key={task.id} task={task} onEdit={handleEditTask} viewMode="grid" />
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onEdit={handleEditTask} />
+            <TaskCard key={task.id} task={task} onEdit={handleEditTask} viewMode="list" />
           ))}
         </div>
       )}

@@ -450,8 +450,47 @@ export default function TaskAnalyticsPage() {
     };
   }, [analytics?.priorityBreakdown]);
 
+  // Trend View Mode: 'daily' | 'monthly'
+  const [trendViewMode, setTrendViewMode] = useState('monthly');
+
   // Trend Timeline Line Chart Data
   const trendChartData = useMemo(() => {
+    if (trendViewMode === 'monthly') {
+      const monthly = analytics?.monthlyTrend || [];
+      const labels = monthly.map((item) => {
+        if (!item.month_str) return 'N/A';
+        const [y, m] = item.month_str.split('-');
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+        return dateObj.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+      });
+
+      return {
+        labels: labels.length ? labels : ['No Data'],
+        datasets: [
+          {
+            label: 'Tasks Created',
+            data: monthly.map((item) => item.created_count || 0),
+            borderColor: '#6366F1',
+            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          },
+          {
+            label: 'Tasks Completed',
+            data: monthly.map((item) => item.completed_count || 0),
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          },
+        ],
+      };
+    }
+
     const timeline = analytics?.trendTimeline || [];
     const labels = timeline.map((item) => {
       const d = new Date(item.date_str);
@@ -483,7 +522,7 @@ export default function TaskAnalyticsPage() {
         },
       ],
     };
-  }, [analytics?.trendTimeline]);
+  }, [analytics?.trendTimeline, analytics?.monthlyTrend, trendViewMode]);
 
   const chartOptionsBase = {
     responsive: true,
@@ -558,7 +597,7 @@ export default function TaskAnalyticsPage() {
         <div>
           <Breadcrumb
             items={[
-              { label: 'My Work Group', href: `/${username}/dashboard/tasks` },
+              { label: 'MY WORK', href: `/${username}/dashboard/tasks` },
               { label: 'Tasks', href: `/${username}/dashboard/tasks` },
               { label: 'Analytics & Intelligence' },
             ]}
@@ -992,16 +1031,42 @@ export default function TaskAnalyticsPage() {
       {/* Row 2: Throughput Trend Timeline & Top Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Creation vs Completion Trend Line Chart */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Activity className="h-4 w-4 text-emerald-500" />
-                Task Creation vs Completion Velocity
+                Task Creation vs Completion Velocity ({trendViewMode === 'monthly' ? 'Monthly View' : 'Daily View'})
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Daily timeline tracking task inflow and resolution rate
+                {trendViewMode === 'monthly' ? 'Month-by-month team performance and task throughput' : 'Daily timeline tracking task inflow and resolution rate'}
               </p>
+            </div>
+
+            {/* Granularity Switcher: Daily vs Monthly */}
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setTrendViewMode('daily')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  trendViewMode === 'daily'
+                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                type="button"
+                onClick={() => setTrendViewMode('monthly')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  trendViewMode === 'monthly'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
             </div>
           </div>
 
@@ -1014,6 +1079,51 @@ export default function TaskAnalyticsPage() {
               <Line data={trendChartData} options={lineChartOptions} />
             )}
           </div>
+
+          {/* Monthly Performance Breakdown Table when Monthly View is selected */}
+          {trendViewMode === 'monthly' && (
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-700/60 mt-4">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2">
+                Month-by-Month Performance Metrics
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                  <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold">
+                    <tr>
+                      <th className="p-2 rounded-l-lg">Month</th>
+                      <th className="p-2 text-right">Created</th>
+                      <th className="p-2 text-right">Completed</th>
+                      <th className="p-2 text-right">Overdue</th>
+                      <th className="p-2 text-right rounded-r-lg">Avg Resolution</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {(analytics?.monthlyTrend || []).length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-slate-400 text-xs">No monthly records found</td>
+                      </tr>
+                    ) : (
+                      (analytics?.monthlyTrend || []).map((m) => {
+                        const [y, monthNum] = (m.month_str || '').split('-');
+                        const monthLabel = m.month_str ? new Date(parseInt(y), parseInt(monthNum) - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown';
+                        return (
+                          <tr key={m.month_str} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                            <td className="p-2 font-bold text-slate-900 dark:text-white">{monthLabel}</td>
+                            <td className="p-2 text-right font-medium text-indigo-600 dark:text-indigo-400">{m.created_count || 0}</td>
+                            <td className="p-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">{m.completed_count || 0}</td>
+                            <td className="p-2 text-right font-semibold text-rose-500">{m.overdue_count || 0}</td>
+                            <td className="p-2 text-right font-medium text-slate-500 dark:text-slate-400">
+                              {m.avg_completion_days ? `${Number(m.avg_completion_days).toFixed(1)} days` : 'N/A'}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category Distribution */}

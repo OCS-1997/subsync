@@ -90,7 +90,7 @@ function LoginPage() {
             <img
               src="/logo.png"
               alt="Subsync Logo"
-              className="h-12 w-auto filter brightness-0 invert mb-8 drop-shadow-lg"
+              className="h-12 w-auto mb-8 drop-shadow-lg"
             />
             <h1 className="text-5xl font-extrabold text-white leading-tight mb-6">
               {festival ? festival.wish : <>Empower Your <span className="text-blue-200 italic">Organisation</span> Pipeline</>}
@@ -184,7 +184,7 @@ function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
-            <img src="/logo.png" alt="Subsync Logo" className="h-10 sm:h-12 w-auto mx-auto mb-4 dark:invert-0 invert" />
+            <img src="/logo.png" alt="Subsync Logo" className="h-10 sm:h-12 w-auto mx-auto mb-4" />
             <h2 className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tighter">SUBSYNC CRM</h2>
             <div className="h-1 w-12 bg-blue-600 dark:bg-blue-400 mx-auto mt-2 rounded-full opacity-20"></div>
           </div>

@@ -264,7 +264,7 @@ export default function TaskDetailsPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
       <Breadcrumb
         items={[
-          { label: 'My Work Group', href: '/dashboard/tasks' },
+          { label: 'MY WORK', href: '/dashboard/tasks' },
           { label: 'Tasks', href: '/dashboard/tasks' },
           { label: task.title || 'Task Detail' },
         ]}

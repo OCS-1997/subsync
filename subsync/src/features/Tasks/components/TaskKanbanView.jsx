@@ -12,13 +12,13 @@ import {
   useDraggable,
 } from '@dnd-kit/core';
 import { format, isBefore, isToday, parseISO } from 'date-fns';
-import { CheckSquare, Clock, AlertTriangle, MessageSquare, Paperclip, Plus, ArrowRight, Edit2, Flame } from 'lucide-react';
+import { CheckSquare, Clock, AlertTriangle, MessageSquare, Paperclip, Edit2, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const COLUMNS = [
   { id: 'TODO', title: 'To Do', color: 'bg-slate-500', bgHeader: 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200' },
   { id: 'IN_PROGRESS', title: 'In Progress', color: 'bg-indigo-500', bgHeader: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300' },
-  { id: 'BLOCKED', title: 'Blocked', color: 'bg-amber-500', bgHeader: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300' },
+  { id: 'BLOCKED', title: 'Blocked', color: 'bg-amber-50', bgHeader: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300' },
   { id: 'COMPLETED', title: 'Completed', color: 'bg-emerald-500', bgHeader: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' },
   { id: 'CANCELLED', title: 'Cancelled', color: 'bg-rose-500', bgHeader: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300' },
 ];
@@ -67,9 +67,9 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
       {...listeners}
       onClick={() => navigate(`/dashboard/tasks/${task.id}`)}
       className={cn(
-        'p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-grab active:cursor-grabbing space-y-3 relative overflow-hidden',
+        'p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-grab active:cursor-grabbing space-y-3 relative overflow-hidden',
         isUrgent && 'border-rose-400/80 dark:border-rose-600/80 bg-gradient-to-br from-rose-50/50 via-white to-amber-50/30 dark:from-rose-950/40 dark:via-slate-900 dark:to-amber-950/20 shadow-[0_0_15px_rgba(244,63,94,0.18)]',
-        isDraggingOverlay && 'shadow-2xl border-blue-500 ring-2 ring-blue-500/20 scale-105'
+        isDraggingOverlay && 'shadow-2xl border-blue-500 ring-2 ring-blue-500/20 scale-105 z-50'
       )}
     >
       {isUrgent && (
@@ -78,13 +78,13 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
 
       <div className="flex items-center justify-between gap-2">
         <span className={cn(
-          'px-2 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1',
+          'px-2 py-0.5 text-[11px] font-bold rounded-md flex items-center gap-1 shrink-0',
           isUrgent ? priorityColors.URGENT : (priorityColors[task.priority] || priorityColors.MEDIUM)
         )}>
           {isUrgent && <Flame className="w-3.5 h-3.5 fill-white text-white shrink-0" />}
           {task.priority}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0">
           {onEdit && (
             <button
               type="button"
@@ -92,21 +92,21 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
                 e.stopPropagation();
                 onEdit(task);
               }}
-              className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
               title="Edit Task"
             >
               <Edit2 className="w-3 h-3" />
             </button>
           )}
           {task.category && (
-            <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+            <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 truncate max-w-[90px]">
               {task.category}
             </span>
           )}
         </div>
       </div>
 
-      <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+      <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug break-words">
         {task.title}
       </h4>
 
@@ -138,7 +138,7 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
                 isDueToday && 'text-amber-600 dark:text-amber-400 font-semibold'
               )}
             >
-              <Clock className="w-3 h-3" />
+              <Clock className="w-3 h-3 shrink-0" />
               {format(parseISO(task.due_date), 'MMM dd')}
             </span>
           ) : (
@@ -146,7 +146,7 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {task.comment_count > 0 && (
             <span className="flex items-center gap-0.5 text-slate-400">
               <MessageSquare className="w-3 h-3" />
@@ -154,7 +154,7 @@ function KanbanCard({ task, isDraggingOverlay = false, onEdit }) {
             </span>
           )}
           <div
-            className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-[9px] flex items-center justify-center border border-blue-200 dark:border-blue-800"
+            className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-bold text-[9px] flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0"
             title={`Assignee: ${task.assignee_name || task.assigned_to}`}
           >
             {(task.assignee_name || task.assigned_to || 'U').charAt(0).toUpperCase()}
@@ -175,12 +175,12 @@ function KanbanColumn({ column, tasks, onStatusChange, onEdit }) {
     <div
       ref={setNodeRef}
       className={cn(
-        'flex flex-col min-w-[280px] w-full max-w-xs rounded-3xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 p-3.5 space-y-3 transition-all duration-200 min-h-[500px]',
+        'flex flex-col min-w-[260px] sm:min-w-[280px] w-full sm:w-80 rounded-3xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 p-3 sm:p-3.5 space-y-3 transition-all duration-200 min-h-[450px]',
         isOver && 'ring-2 ring-blue-500/40 bg-blue-50/40 dark:bg-blue-950/20'
       )}
     >
       {/* Column Header */}
-      <div className={cn('flex items-center justify-between px-3.5 py-2.5 rounded-2xl font-bold text-xs', column.bgHeader)}>
+      <div className={cn('flex items-center justify-between px-3.5 py-2.5 rounded-2xl font-bold text-xs shrink-0', column.bgHeader)}>
         <div className="flex items-center gap-2">
           <span className={cn('w-2 h-2 rounded-full', column.color)} />
           <span>{column.title}</span>
@@ -191,7 +191,7 @@ function KanbanColumn({ column, tasks, onStatusChange, onEdit }) {
       </div>
 
       {/* Cards List */}
-      <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-270px)] scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 space-y-3 overflow-y-auto max-h-[calc(100vh-270px)] scrollbar-none">
         {tasks.map((task) => (
           <KanbanCard key={task.id} task={task} onEdit={onEdit} />
         ))}
@@ -208,11 +208,12 @@ function KanbanColumn({ column, tasks, onStatusChange, onEdit }) {
 
 export default function TaskKanbanView({ tasks, onStatusChange, onEdit }) {
   const [activeTask, setActiveTask] = useState(null);
+  const [mobileSelectedColumn, setMobileSelectedColumn] = useState('ALL');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
       },
     })
   );
@@ -237,20 +238,57 @@ export default function TaskKanbanView({ tasks, onStatusChange, onEdit }) {
     }
   };
 
+  const visibleColumns = mobileSelectedColumn === 'ALL'
+    ? COLUMNS
+    : COLUMNS.filter((c) => c.id === mobileSelectedColumn);
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
-        {COLUMNS.map((column) => {
-          const columnTasks = tasks.filter((t) => t.status === column.id);
+    <div className="space-y-3">
+      {/* Mobile Column Switcher Bar (< 640px) */}
+      <div className="flex sm:hidden items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          onClick={() => setMobileSelectedColumn('ALL')}
+          className={`px-3 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-colors ${
+            mobileSelectedColumn === 'ALL'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+          }`}
+        >
+          All Columns ({tasks.length})
+        </button>
+        {COLUMNS.map((col) => {
+          const colCount = tasks.filter((t) => t.status === col.id).length;
           return (
-            <KanbanColumn key={column.id} column={column} tasks={columnTasks} onStatusChange={onStatusChange} onEdit={onEdit} />
+            <button
+              key={col.id}
+              onClick={() => setMobileSelectedColumn(col.id)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                mobileSelectedColumn === col.id
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${col.color}`} />
+              {col.title} ({colCount})
+            </button>
           );
         })}
       </div>
 
-      <DragOverlay>
-        {activeTask ? <KanbanCard task={activeTask} isDraggingOverlay /> : null}
-      </DragOverlay>
-    </DndContext>
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+          {visibleColumns.map((column) => {
+            const columnTasks = tasks.filter((t) => t.status === column.id);
+            return (
+              <KanbanColumn key={column.id} column={column} tasks={columnTasks} onStatusChange={onStatusChange} onEdit={onEdit} />
+            );
+          })}
+        </div>
+
+        <DragOverlay>
+          {activeTask ? <KanbanCard task={activeTask} isDraggingOverlay /> : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }

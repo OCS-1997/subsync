@@ -18,7 +18,7 @@ import {
     Calendar, ArrowUpRight, Target, Activity,
     Shapes, Filter, ChevronRight
 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, startOfYear, endOfYear, subMonths } from 'date-fns';
 import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ const TimeTrackingReports = () => {
     const [dateRange, setDateRange] = useState('this_week');
     const [startDate, setStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [endDate, setEndDate] = useState(endOfWeek(new Date(), { weekStartsOn: 1 }));
+    const [trendViewMode, setTrendViewMode] = useState('monthly'); // 'daily' | 'monthly'
     const [selectedUser, setSelectedUser] = useState(null);
     const [userEntries, setUserEntries] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -192,6 +193,14 @@ const TimeTrackingReports = () => {
                 break;
             case 'last_30_days':
                 start = subDays(now, 30);
+                end = now;
+                break;
+            case 'this_year':
+                start = startOfYear(now);
+                end = endOfYear(now);
+                break;
+            case 'last_12_months':
+                start = subMonths(now, 12);
                 end = now;
                 break;
         }
@@ -384,6 +393,8 @@ const TimeTrackingReports = () => {
                                 <SelectItem value="last_week">Last Week</SelectItem>
                                 <SelectItem value="this_month">This Month</SelectItem>
                                 <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+                                <SelectItem value="this_year">This Year</SelectItem>
+                                <SelectItem value="last_12_months">Last 12 Months</SelectItem>
                                 <SelectItem value="custom">Custom Range</SelectItem>
                             </SelectContent>
                         </Select>
@@ -559,66 +570,172 @@ const TimeTrackingReports = () => {
 
                     {/* Activity Analysis */}
                     <div className="grid gap-8 lg:grid-cols-12">
-                        {/* Daily Trend Area Chart */}
+                        {/* Daily / Monthly Trend Area Chart */}
                         <Card className="lg:col-span-8 dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                             <CardHeader className="p-8 pb-0">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="space-y-1">
                                         <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
                                             <TrendingUp className="w-4 h-4" />
-                                            Daily Hours Trend
+                                            {trendViewMode === 'monthly' ? 'Monthly Hours & Performance Trend' : 'Daily Hours Trend'}
                                         </CardTitle>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Daily time tracking</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                                            {trendViewMode === 'monthly' ? 'Month-by-month hours logged performance' : 'Daily time tracking'}
+                                        </p>
                                     </div>
-                                    <Badge variant="outline" className="rounded-lg border-gray-100 text-[9px] font-black uppercase tracking-widest px-3">Live Data</Badge>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl border border-gray-200/60 dark:border-slate-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => setTrendViewMode('daily')}
+                                                className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                                    trendViewMode === 'daily'
+                                                        ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                                }`}
+                                            >
+                                                Daily
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setTrendViewMode('monthly')}
+                                                className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                                    trendViewMode === 'monthly'
+                                                        ? 'bg-blue-600 text-white shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                                }`}
+                                            >
+                                                Monthly
+                                            </button>
+                                        </div>
+                                        <Badge variant="outline" className="rounded-lg border-gray-100 text-[9px] font-black uppercase tracking-widest px-3 hidden xs:inline-flex">Live Data</Badge>
+                                    </div>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-4 sm:p-8 overflow-x-auto no-scrollbar">
+                            <CardContent className="p-4 sm:p-8 overflow-x-auto no-scrollbar space-y-6">
                                 <div className="min-w-[500px] h-[350px]">
-                                    {dailyTrend.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={dailyTrend.map(d => ({
+                                    {(() => {
+                                        let chartData = [];
+                                        if (trendViewMode === 'monthly') {
+                                            if (summary?.monthlyTrend && summary.monthlyTrend.length > 0) {
+                                                chartData = summary.monthlyTrend.map(m => {
+                                                    const [y, mNum] = (m.month_str || '').split('-');
+                                                    const dObj = new Date(parseInt(y), parseInt(mNum) - 1, 1);
+                                                    return {
+                                                        date: format(dObj, 'MMM yyyy'),
+                                                        total_hours: parseFloat(((m.total_minutes || 0) / 60).toFixed(1)),
+                                                        billable_hours: parseFloat(((m.billable_minutes || 0) / 60).toFixed(1)),
+                                                        non_billable_hours: parseFloat(((m.non_billable_minutes || 0) / 60).toFixed(1))
+                                                    };
+                                                });
+                                            } else {
+                                                // Roll up dailyTrend into monthly buckets on client side if backend summary not present
+                                                const monthsMap = {};
+                                                (dailyTrend || []).forEach(d => {
+                                                    const dateObj = new Date(d.date);
+                                                    const mKey = format(dateObj, 'MMM yyyy');
+                                                    if (!monthsMap[mKey]) {
+                                                        monthsMap[mKey] = { total_minutes: 0, billable_minutes: 0 };
+                                                    }
+                                                    monthsMap[mKey].total_minutes += d.total_minutes || 0;
+                                                    monthsMap[mKey].billable_minutes += d.billable_minutes || 0;
+                                                });
+                                                chartData = Object.keys(monthsMap).map(mKey => ({
+                                                    date: mKey,
+                                                    total_hours: parseFloat((monthsMap[mKey].total_minutes / 60).toFixed(1)),
+                                                    billable_hours: parseFloat((monthsMap[mKey].billable_minutes / 60).toFixed(1))
+                                                }));
+                                            }
+                                        } else {
+                                            chartData = (dailyTrend || []).map(d => ({
                                                 ...d,
                                                 date: format(new Date(d.date), 'MMM d'),
-                                                total_hours: parseFloat((d.total_minutes / 60).toFixed(1)),
-                                                billable_hours: parseFloat((d.billable_minutes / 60).toFixed(1))
-                                            }))}>
-                                                <defs>
-                                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                                    </linearGradient>
-                                                    <linearGradient id="colorBillable" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                                    </linearGradient>
-                                                </defs>
-                                                <XAxis 
-                                                    dataKey="date" 
-                                                    axisLine={false} 
-                                                    tickLine={false} 
-                                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                                    dy={10}
-                                                />
-                                                <YAxis 
-                                                    axisLine={false} 
-                                                    tickLine={false} 
-                                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                                />
-                                                <Tooltip 
-                                                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
-                                                />
-                                                <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotal)" name="TOTAL HRS" />
-                                                <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillable)" name="BILLABLE" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
-                                            <Activity size={48} strokeWidth={1} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
-                                        </div>
-                                    )}
+                                                total_hours: parseFloat(((d.total_minutes || 0) / 60).toFixed(1)),
+                                                billable_hours: parseFloat(((d.billable_minutes || 0) / 60).toFixed(1))
+                                            }));
+                                        }
+
+                                        return chartData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={chartData}>
+                                                    <defs>
+                                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                        <linearGradient id="colorBillable" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <XAxis 
+                                                        dataKey="date" 
+                                                        axisLine={false} 
+                                                        tickLine={false} 
+                                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                                        dy={10}
+                                                    />
+                                                    <YAxis 
+                                                        axisLine={false} 
+                                                        tickLine={false} 
+                                                        tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                                    />
+                                                    <Tooltip 
+                                                        contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
+                                                    />
+                                                    <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotal)" name="TOTAL HRS" />
+                                                    <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillable)" name="BILLABLE" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
+                                                <Activity size={48} strokeWidth={1} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">No data available</span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
+
+                                {/* Monthly Performance Table */}
+                                {trendViewMode === 'monthly' && summary?.monthlyTrend && summary.monthlyTrend.length > 0 && (
+                                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white mb-3">
+                                            Month-by-Month Hours Logged & Performance
+                                        </h4>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left text-xs">
+                                                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-400 uppercase text-[9px] font-black">
+                                                    <tr>
+                                                        <th className="p-2.5 rounded-l-xl">Month</th>
+                                                        <th className="p-2.5 text-right">Total Entries</th>
+                                                        <th className="p-2.5 text-right">Total Logged</th>
+                                                        <th className="p-2.5 text-right">Billable Hours</th>
+                                                        <th className="p-2.5 text-right rounded-r-xl">Billable %</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                                    {summary.monthlyTrend.map(m => {
+                                                        const [y, mNum] = (m.month_str || '').split('-');
+                                                        const monthLabel = m.month_str ? format(new Date(parseInt(y), parseInt(mNum) - 1, 1), 'MMMM yyyy') : 'Unknown';
+                                                        const totalHrs = (m.total_minutes / 60).toFixed(1);
+                                                        const billableHrs = (m.billable_minutes / 60).toFixed(1);
+                                                        const billablePct = m.total_minutes > 0 ? Math.round((m.billable_minutes / m.total_minutes) * 100) : 0;
+                                                        return (
+                                                            <tr key={m.month_str} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                                                                <td className="p-2.5 font-bold text-slate-900 dark:text-white">{monthLabel}</td>
+                                                                <td className="p-2.5 text-right text-slate-500 dark:text-slate-400">{m.total_entries}</td>
+                                                                <td className="p-2.5 text-right font-black text-blue-600 dark:text-blue-400">{totalHrs}h</td>
+                                                                <td className="p-2.5 text-right font-black text-emerald-600 dark:text-emerald-400">{billableHrs}h</td>
+                                                                <td className="p-2.5 text-right font-bold text-slate-700 dark:text-slate-300">{billablePct}%</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 

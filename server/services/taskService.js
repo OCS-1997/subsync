@@ -269,7 +269,12 @@ export async function getTasks(actor, filters = {}) {
 
     // Filter overdue
     if (overdue === 'true' || overdue === true) {
-        conditions.push(`t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+        if (clientDate) {
+            conditions.push(`t.due_date IS NOT NULL AND (DATE(t.due_date) < CURDATE() OR DATE(t.due_date) < DATE(?)) AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+            params.push(clientDate);
+        } else {
+            conditions.push(`t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status != 'COMPLETED' AND t.status != 'CANCELLED'`);
+        }
     }
 
     // Free text search
@@ -352,13 +357,15 @@ export async function getTaskStats(actor) {
             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count,
             SUM(CASE WHEN DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS due_today_count,
             SUM(CASE WHEN assigned_to = ? AND DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_due_today_count,
+            SUM(CASE WHEN created_by = ? AND DATE(due_date) = CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS created_by_due_today_count,
             SUM(CASE WHEN due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
             SUM(CASE WHEN assigned_to = ? AND due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_overdue_count,
+            SUM(CASE WHEN created_by = ? AND due_date IS NOT NULL AND DATE(due_date) < CURDATE() AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS created_by_overdue_count,
             SUM(CASE WHEN assigned_to = ? AND status IN ('TODO', 'IN_PROGRESS') THEN 1 ELSE 0 END) AS my_active_tasks,
             SUM(CASE WHEN assigned_to = ? AND status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS my_open_tasks
          FROM tasks t
          ${scopeWhere}`,
-        [...params, actor.username, actor.username, actor.username, actor.username]
+        [...params, actor.username, actor.username, actor.username, actor.username, actor.username, actor.username]
     );
 
     const [byAssigneeRows] = await appDB.query(
@@ -371,7 +378,9 @@ export async function getTaskStats(actor) {
             SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
             SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END) AS blocked_count,
             SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
-            SUM(CASE WHEN t.status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count
+            SUM(CASE WHEN t.status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count,
+            SUM(CASE WHEN DATE(t.due_date) = CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS due_today_count,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count
          FROM tasks t
          LEFT JOIN users u ON t.assigned_to = u.username
          ${scopeWhere}
@@ -388,7 +397,11 @@ export async function getTaskStats(actor) {
         completed_count: 0,
         cancelled_count: 0,
         due_today_count: 0,
+        my_due_today_count: 0,
+        created_by_due_today_count: 0,
         overdue_count: 0,
+        my_overdue_count: 0,
+        created_by_overdue_count: 0,
         my_active_tasks: 0,
         my_open_tasks: 0
     };
@@ -1112,7 +1125,7 @@ export async function getTaskAnalytics(actor, filters = {}) {
         };
     });
 
-    // 5. Completion & Creation Trend (Daily/Weekly points for last 30 days)
+    // 5. Completion & Creation Trend (Daily points)
     const [trendRows] = await appDB.query(
         `SELECT 
             DATE_FORMAT(t.created_at, '%Y-%m-%d') AS date_str,
@@ -1123,6 +1136,22 @@ export async function getTaskAnalytics(actor, filters = {}) {
          GROUP BY DATE_FORMAT(t.created_at, '%Y-%m-%d')
          ORDER BY date_str ASC
          LIMIT 30`,
+        params
+    );
+
+    // 5b. Monthly Completion & Creation Trend
+    const [monthlyTrendRows] = await appDB.query(
+        `SELECT 
+            DATE_FORMAT(t.created_at, '%Y-%m') AS month_str,
+            COUNT(*) AS created_count,
+            SUM(CASE WHEN t.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
+            SUM(CASE WHEN t.due_date IS NOT NULL AND DATE(t.due_date) < CURDATE() AND t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
+            AVG(CASE WHEN t.status = 'COMPLETED' THEN DATEDIFF(t.updated_at, t.created_at) ELSE NULL END) AS avg_completion_days
+         FROM tasks t
+         ${whereClause}
+         GROUP BY DATE_FORMAT(t.created_at, '%Y-%m')
+         ORDER BY month_str ASC
+         LIMIT 24`,
         params
     );
 
@@ -1167,6 +1196,7 @@ export async function getTaskAnalytics(actor, filters = {}) {
         categoryBreakdown: categoryRows,
         assigneeWorkload,
         trendTimeline: trendRows,
+        monthlyTrend: monthlyTrendRows,
         overdueWatchlist
     };
 }

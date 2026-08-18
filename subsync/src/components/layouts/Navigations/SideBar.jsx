@@ -28,33 +28,32 @@ import {
 
 const sidebarItems = [
   { path: 'dashboard', title: 'Home', icon: 'home', icon_type: 'lucide', permission: PERMISSIONS.DASHBOARD_VIEW },
-  // CRM Module
-  { path: 'dashboard/customers', title: 'Customers', icon: 'person', icon_type: 'material', permission: PERMISSIONS.CUSTOMERS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/domains', title: 'Domains', icon: 'language', icon_type: 'material', permission: PERMISSIONS.DOMAINS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/services', title: 'Services', icon: 'shop', icon_type: 'material', permission: PERMISSIONS.SERVICES_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', icon_type: 'material', permission: PERMISSIONS.VENDORS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', icon_type: 'material', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/assets', title: 'Assets', icon: 'devices', icon_type: 'material', permission: PERMISSIONS.ASSETS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW, folder: 'CRM Module' },
-  { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW, folder: 'CRM Module' },
-  // My Work Group Module
-  { path: 'dashboard/tasks', title: 'Tasks', icon: 'assignment_turned_in', icon_type: 'material', permission: PERMISSIONS.TASKS_VIEW, folder: 'My Work Group' },
-  // Operations Module
-  { path: 'dashboard/goals', title: 'Goals', icon: 'flag', icon_type: 'material', permission: PERMISSIONS.GOALS_VIEW, folder: 'Operations Module' },
-  // Operations Module
-
-  { path: 'dashboard/time-tracking', title: 'Time Tracking', icon: 'schedule', icon_type: 'material', permission: PERMISSIONS.TIME_TRACKING_VIEW, folder: 'Operations Module' },
-  { path: 'dashboard/dcr', title: 'DCR Module', icon: 'phone', icon_type: 'material', permission: PERMISSIONS.DCR_VIEW, folder: 'Operations Module' },
-  { path: 'dashboard/phone-directory', title: 'Phone Directory', icon: 'contact_phone', icon_type: 'material', permission: PERMISSIONS.DIRECTORY_VIEW, folder: 'Operations Module' },
-  { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW, folder: 'Operations Module' },
-  { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', icon_type: 'material', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW, folder: 'Operations Module' },
-  // Self Service Module
-  { path: 'dashboard/leaves', title: 'Leaves & Permissions', icon: 'event_available', icon_type: 'material', permission: PERMISSIONS.LEAVES_VIEW, folder: 'Self Service' },
-  { path: 'dashboard/appraisals', title: 'Self Appraisal', icon: 'assignment', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_SUBMIT, folder: 'Self Service' },
-  // Administration Module
-  { path: 'dashboard/admin/appraisals', title: 'Appraisal Admin', icon: 'admin_panel_settings', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_MANAGE, folder: 'Administration' },
-  { path: 'dashboard/admin/leaves', title: 'Leave Admin', icon: 'settings_accessibility', icon_type: 'material', permission: PERMISSIONS.LEAVES_MANAGE_TYPES, folder: 'Administration' },
-  { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE, folder: 'Administration' },
+  // MY WORK
+  { path: 'dashboard/tasks', title: 'Tasks', icon: 'assignment_turned_in', icon_type: 'material', permission: PERMISSIONS.TASKS_VIEW, folder: 'MY WORK' },
+  { path: 'dashboard/time-tracking', title: 'Time Tracking', icon: 'schedule', icon_type: 'material', permission: PERMISSIONS.TIME_TRACKING_VIEW, folder: 'MY WORK' },
+  { path: 'dashboard/dcr', title: 'DCR', icon: 'phone', icon_type: 'material', permission: PERMISSIONS.DCR_VIEW, folder: 'MY WORK' },
+  // MARKETING
+  { path: 'dashboard/opportunities', title: 'Opportunities', icon: 'finance', icon_type: 'material', permission: PERMISSIONS.OPPORTUNITIES_VIEW, folder: 'MARKETING' },
+  { path: 'dashboard/phone-directory', title: 'Phone Directory', icon: 'contact_phone', icon_type: 'material', permission: PERMISSIONS.DIRECTORY_VIEW, folder: 'MARKETING' },
+  { path: 'dashboard/contacts', title: 'Contacts', icon: 'contacts', icon_type: 'material', permission: PERMISSIONS.CONTACTS_VIEW, folder: 'MARKETING' },
+  // CUSTOMER
+  { path: 'dashboard/customers', title: 'Customers', icon: 'person', icon_type: 'material', permission: PERMISSIONS.CUSTOMERS_VIEW, folder: 'CUSTOMER' },
+  { path: 'dashboard/subscriptions', title: 'Subscriptions', icon: 'subscriptions', icon_type: 'material', permission: PERMISSIONS.SUBSCRIPTIONS_VIEW, folder: 'CUSTOMER' },
+  { path: 'dashboard/domains', title: 'Domains', icon: 'language', icon_type: 'material', permission: PERMISSIONS.DOMAINS_VIEW, folder: 'CUSTOMER' },
+  // SERVICES
+  { path: 'dashboard/services', title: 'Services', icon: 'shop', icon_type: 'material', permission: PERMISSIONS.SERVICES_VIEW, folder: 'SERVICES' },
+  { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', icon_type: 'material', permission: PERMISSIONS.VENDORS_VIEW, folder: 'SERVICES' },
+  // HR
+  { path: 'dashboard/goals', title: 'Goals', icon: 'flag', icon_type: 'material', permission: PERMISSIONS.GOALS_VIEW, folder: 'HR' },
+  { path: 'dashboard/leaves', title: 'Leave & Permissions', icon: 'event_available', icon_type: 'material', permission: PERMISSIONS.LEAVES_VIEW, folder: 'HR' },
+  { path: 'dashboard/admin/leaves', title: 'Leave Admin', icon: 'settings_accessibility', icon_type: 'material', permission: PERMISSIONS.LEAVES_MANAGE_TYPES, folder: 'HR' },
+  { path: 'dashboard/admin/appraisals', title: 'Appraisal Admin', icon: 'admin_panel_settings', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_MANAGE, folder: 'HR' },
+  { path: 'dashboard/appraisals', title: 'Self Appraisal', icon: 'assignment', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_SUBMIT, folder: 'HR' },
+  // ADMIN
+  { path: 'dashboard/settings', title: 'Settings', icon: 'settings', icon_type: 'material', permission: PERMISSIONS.SETTINGS_MANAGE, folder: 'ADMIN' },
+  { path: 'dashboard/birthdays', title: 'Birthdays', icon: 'cake', icon_type: 'material', permission: PERMISSIONS.BIRTHDAYS_VIEW, folder: 'ADMIN' },
+  { path: 'dashboard/assets', title: 'Assets', icon: 'devices', icon_type: 'material', permission: PERMISSIONS.ASSETS_VIEW, folder: 'ADMIN' },
+  { path: 'dashboard/kb', title: 'Knowledge Base', icon: 'book', icon_type: 'material', permission: PERMISSIONS.KNOWLEDGE_BASE_VIEW, folder: 'ADMIN' },
 ];
 
 function useIsDesktop() {
@@ -86,7 +85,7 @@ function SideBar({ isOpen, toggleSidebar }) {
 
   const { activeAppraisalInfo } = useSelector((state) => state.appraisals);
   const { pendingCounts } = useSelector((state) => state.leaves);
-  const taskStats = useSelector((state) => state.tasks?.stats);
+  const { stats: taskStats, isInitialized: isTaskStatsInitialized } = useSelector((state) => state.tasks || {});
 
   useEffect(() => {
     if (hasAnyPermission(PERMISSIONS.APPRAISALS_SUBMIT)) {
@@ -104,11 +103,19 @@ function SideBar({ isOpen, toggleSidebar }) {
     }
   }, [dispatch, hasAnyPermission]);
 
-  // Audio alert and notification when task count increases
+  // Audio alert and notification when task count increases after initial API response
   useEffect(() => {
-    if (taskStats && taskStats.my_active_tasks !== undefined) {
+    if (isTaskStatsInitialized && taskStats && taskStats.my_active_tasks !== undefined) {
       const currentActiveCount = Number(taskStats.my_active_tasks || 0);
-      if (prevActiveTasksRef.current !== null && currentActiveCount > prevActiveTasksRef.current) {
+
+      // On initial API response after page load/refresh, seed ref silently
+      if (prevActiveTasksRef.current === null) {
+        prevActiveTasksRef.current = currentActiveCount;
+        return;
+      }
+
+      // On subsequent updates (polling or new task assignment), alert if count increased
+      if (currentActiveCount > prevActiveTasksRef.current) {
         playTaskNotificationSound();
         toast.info('You have new task assignments!', {
           position: 'top-right',
@@ -117,7 +124,7 @@ function SideBar({ isOpen, toggleSidebar }) {
       }
       prevActiveTasksRef.current = currentActiveCount;
     }
-  }, [taskStats?.my_active_tasks]);
+  }, [isTaskStatsInitialized, taskStats?.my_active_tasks]);
 
   const badgeCounts = {};
   if (

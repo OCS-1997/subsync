@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '@/lib/axiosInstance.js';
 
-const PREF_KEY = 'sidebar_folders_v3';
+const PREF_KEY = 'sidebar_folders_v4';
 const LEGACY_PREF_KEY = 'sidebar_order';
 const FOLDER_NAME = 'New Folder';
 
@@ -79,7 +79,10 @@ function findFolderByName(nodes, folderName) {
     if (
       node.type === 'folder' &&
       (node.name === folderName ||
-        (folderName === 'Operations Module' && (node.name === 'Operations Module' || node.name === 'MY WORK')))
+        (folderName === 'MY WORK' && (node.name === 'Operations Module' || node.name === 'My Work Group' || node.name === 'MY WORK')) ||
+        (folderName === 'CUSTOMER' && (node.name === 'CRM Module' || node.name === 'CUSTOMER')) ||
+        (folderName === 'HR' && (node.name === 'Self Service' || node.name === 'HR')) ||
+        (folderName === 'ADMIN' && (node.name === 'Administration' || node.name === 'ADMIN')))
     ) {
       return node;
     }
@@ -491,10 +494,12 @@ function groupByFolder(items) {
   let folderCount = 0;
 
   const folderIcons = {
-    'CRM Module': 'users',
-    'Operations Module': 'zap',
-    'Self Service': 'target',
-    'Administration': 'settings',
+    'MY WORK': 'zap',
+    'MARKETING': 'megaphone',
+    'CUSTOMER': 'users',
+    'SERVICES': 'shop',
+    'HR': 'user-check',
+    'ADMIN': 'settings',
   };
 
   items.forEach((item) => {

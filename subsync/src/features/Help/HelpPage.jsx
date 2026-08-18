@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { 
+    CheckSquare,
     HelpCircle, 
     Search, 
     Command, 
@@ -21,6 +22,7 @@ import {
     FileText,
     Package,
     Database,
+    Layers,
     RefreshCw,
     MousePointerClick,
     Sliders,
@@ -34,11 +36,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button.jsx";
 
 const MODULES = [
-    { title: "CRM Module", icon: Users, desc: "Customers, Domains, Services, Vendors, Subscriptions, Assets, Contacts, and Opportunities", color: "blue" },
-    { title: "Operations Module", icon: Zap, desc: "Time Tracking, Daily Call Reports, Phone Directory, Birthdays, and Knowledge Base", color: "indigo" },
-    { title: "Self Service", icon: Target, desc: "Manage your own Leaves, Permissions, and Quarterly Appraisals", color: "emerald" },
-    { title: "Administration", icon: Settings, desc: "Manage Appraisal periods, Leave types, and Global system configurations", color: "slate" },
-    { title: "Backup & Recovery", icon: Database, desc: "Automated daily system backups and data persistence", color: "red" },
+    { title: "MY WORK", icon: CheckSquare, desc: "Tasks, Time Tracking, and DCR Module", color: "indigo" },
+    { title: "MARKETING", icon: Layers, desc: "Opportunities, Phone Directory, and Contacts", color: "blue" },
+    { title: "CUSTOMER", icon: Users, desc: "Customers, Subscriptions, and Domains", color: "cyan" },
+    { title: "SERVICES", icon: Package, desc: "Services and Vendors management", color: "amber" },
+    { title: "HR", icon: Target, desc: "Goals, Leave & Permissions, Leave Admin, Appraisal Admin, and Self Appraisal", color: "emerald" },
+    { title: "ADMIN", icon: Settings, desc: "Settings, Birthdays, Assets, Knowledge Base, and System Backups", color: "slate" },
 ];
 
 const SHORTCUTS = [
