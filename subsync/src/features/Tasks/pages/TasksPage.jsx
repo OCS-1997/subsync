@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { usePermissions } from '@/context/PermissionsContext';
 import { PERMISSIONS } from '@/constants/permissions';
 import { taskService } from '../services/taskService';
+import { fetchTaskStats } from '../taskSlice';
 import TaskCard from '../components/TaskCard';
 import TaskKanbanView from '../components/TaskKanbanView';
 import CreateTaskModal from '../components/CreateTaskModal';
@@ -36,6 +38,7 @@ import { getLoggedUser } from '@/utils/userUtils';
 
 export default function TasksPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { hasAnyPermission } = usePermissions();
 
   const canViewAnalytics = hasAnyPermission([
@@ -85,10 +88,11 @@ export default function TasksPage() {
     setIsCreateModalOpen(true);
   };
 
-  // Load KPI Stats
+  // Load // Fetch KPI stats
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
+      dispatch(fetchTaskStats());
       const res = await taskService.getTaskStats();
       if (res.success && res.data) {
         setStats(res.data);
@@ -98,7 +102,7 @@ export default function TasksPage() {
     } finally {
       setStatsLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
   // Load Manageable Users for filter
   useEffect(() => {
@@ -168,6 +172,7 @@ export default function TasksPage() {
         toast.success(`Task status changed to ${newStatus.replace('_', ' ')}`);
         fetchTasks();
         fetchStats();
+        dispatch(fetchTaskStats());
       }
     } catch (err) {
       toast.error(err.normalizedMessage || 'Failed to update task status');
