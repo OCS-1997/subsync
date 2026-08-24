@@ -9,7 +9,7 @@ import TaskCard from '../components/TaskCard';
 import TaskKanbanView from '../components/TaskKanbanView';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { CategorySelect } from '../components/CategorySelect';
-import { Breadcrumb } from '@/components/ui/breadcrumb.jsx';
+import { Breadcrumb, PageHeader } from '@/components/ui/breadcrumb.jsx';
 import { toast } from 'react-toastify';
 import {
   CheckCircle2,
@@ -219,59 +219,48 @@ export default function TasksPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen">
-      {/* Breadcrumb Navigation */}
-      <Breadcrumb
-        items={[
+      {/* Standard PageHeader */}
+      <PageHeader
+        title="Task Management"
+        description="Organize, assign, track, and manage team tasks with ease."
+        breadcrumbItems={[
           { label: 'MY WORK', href: '/dashboard/tasks' },
           { label: 'Tasks' },
         ]}
-      />
-
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Task Management
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Organize, assign, track, and manage team tasks with ease.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <Button
-            onClick={() => {
-              fetchStats();
-              fetchTasks();
-            }}
-            variant="outline"
-            className="rounded-xl p-2.5"
-            title="Refresh Tasks"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-
-          {canViewAnalytics && (
+        actions={
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Button
-              onClick={() => navigate(`/${getLoggedUser()?.username}/dashboard/tasks/analytics`)}
+              onClick={() => {
+                fetchStats();
+                fetchTasks();
+              }}
               variant="outline"
-              className="rounded-xl px-3 sm:px-3.5 py-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="rounded-xl p-2.5"
+              title="Refresh Tasks"
             >
-              <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="hidden xs:inline">Analytics</span>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-          )}
 
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-500/20 px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" /> Create Task
-          </Button>
-        </div>
-      </div>
+            {canViewAnalytics && (
+              <Button
+                onClick={() => navigate(`/${getLoggedUser()?.username}/dashboard/tasks/analytics`)}
+                variant="outline"
+                className="rounded-xl px-3 sm:px-3.5 py-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="hidden xs:inline">Analytics</span>
+              </Button>
+            )}
+
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-500/20 px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Create Task
+            </Button>
+          </div>
+        }
+      />
 
       {/* KPI Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">

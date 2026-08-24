@@ -898,11 +898,15 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl z-[100]" align="start">
                                         <Command className="dark:bg-slate-900">
                                             <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
-                                            <CommandGroup className="max-h-64 overflow-y-auto p-2">
+                                            <CommandGroup 
+                                                className="max-h-64 overflow-y-auto p-2 touch-pan-y"
+                                                onWheel={(e) => e.stopPropagation()}
+                                                onTouchMove={(e) => e.stopPropagation()}
+                                            >
                                                 <CommandItem
                                                     value="all-clients"
                                                     onSelect={() => {
@@ -917,7 +921,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                                 {customers.map((c) => (
                                                     <CommandItem
                                                         key={c.customer_id}
-                                                        value={c.display_name}
+                                                        value={`${c.display_name || ''} ${c.customer_id}`}
                                                         onSelect={() => {
                                                             setFilters(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
                                                             setCustomerPopoverOpen(false);
@@ -952,11 +956,15 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl" align="start">
+                                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl z-[100]" align="start">
                                         <Command className="dark:bg-slate-900">
                                             <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
                                             <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
-                                            <CommandGroup className="max-h-64 overflow-y-auto p-2">
+                                            <CommandGroup 
+                                                className="max-h-64 overflow-y-auto p-2 touch-pan-y"
+                                                onWheel={(e) => e.stopPropagation()}
+                                                onTouchMove={(e) => e.stopPropagation()}
+                                            >
                                                 <CommandItem
                                                     value="all-projects"
                                                     onSelect={() => {
@@ -971,7 +979,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                                                 {availableProjects.map((p) => (
                                                     <CommandItem
                                                         key={p.id}
-                                                        value={p.project_name}
+                                                        value={`${p.project_name || ''} ${p.id}`}
                                                         onSelect={() => {
                                                             setFilters(prev => ({ ...prev, project_id: p.id }));
                                                             setProjectPopoverOpen(false);
