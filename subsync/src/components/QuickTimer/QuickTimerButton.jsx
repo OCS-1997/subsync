@@ -242,40 +242,40 @@ const QuickTimerButton = () => {
             )}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="w-full max-w-5xl h-[90vh] p-0 dark:bg-slate-950 border-none shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] flex flex-col">
-                    <div className="p-8 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950/50 backdrop-blur-md shrink-0 z-10">
+                <DialogContent className="w-full max-w-6xl max-h-[92vh] h-auto p-0 dark:bg-slate-950 border border-gray-100 dark:border-slate-800/80 shadow-2xl rounded-[2rem] flex flex-col overflow-hidden">
+                    <div className="px-6 py-4 sm:px-8 sm:py-5 border-b border-gray-100 dark:border-slate-800/80 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl shrink-0 z-10">
                             <div>
-                                <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">
-                                    <div className="h-10 w-10 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <DialogTitle className="flex items-center gap-3 text-xl sm:text-2xl font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">
+                                    <div className="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                                         <Timer className="h-5 w-5 text-white" />
                                     </div>
-                                    Sync Hub
+                                    LOG TIME
                                 </DialogTitle>
-                                <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    {activeTimer ? 'Mission in progress' : 'Ready for deployment'}
+                                <DialogDescription className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    {activeTimer ? 'Mission in progress' : 'Start logging'}
                                 </DialogDescription>
                             </div>
                             
                             {activeTimer && (
-                                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 px-6 py-3 rounded-[1.5rem] border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
+                                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 px-5 py-2.5 rounded-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Runtime</span>
-                                        <span className="text-xl font-mono font-black text-blue-500 tabular-nums">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Runtime</span>
+                                        <span className="text-lg font-mono font-black text-blue-500 tabular-nums">
                                             {formatTime(elapsedTime)}
                                         </span>
                                     </div>
                                     <Button
                                         onClick={handleStopTimer}
-                                        className="h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest px-4 shadow-lg shadow-red-500/20 transition-all"
+                                        className="h-9 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest px-3.5 shadow-lg shadow-red-500/20 transition-all"
                                     >
-                                        <Square className="h-3 w-3 mr-2 fill-current" />
+                                        <Square className="h-3 w-3 mr-1.5 fill-current" />
                                         Stop / Log Session
                                     </Button>
                                 </div>
                             )}
                         </div>
                         
-                        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-10 custom-scrollbar-minimal bg-slate-50/30 dark:bg-slate-900/10">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-7 custom-scrollbar-minimal bg-slate-50/50 dark:bg-slate-950/40">
                             {activeTimer ? (
                                 <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

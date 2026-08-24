@@ -48,6 +48,8 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
 
     const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
     const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [projectSearch, setProjectSearch] = useState('');
     const [durationPopoverOpen, setDurationPopoverOpen] = useState(false);
     const [isStartTimeModified, setIsStartTimeModified] = useState(false);
 
@@ -280,24 +282,47 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
     const selectedCustomer = customers.find(c => c.customer_id === formData.customer_id);
     const availableProjects = projects.filter(p => !formData.customer_id || p.customer_id === formData.customer_id);
     
-    // Sort for predictable search results
+    // Sort and filter for predictable search results
     const sortedCustomers = React.useMemo(() => 
         [...customers].sort((a, b) => (a.display_name || '').localeCompare(b.display_name || '')),
         [customers]
     );
+
+    const filteredCustomers = React.useMemo(() => {
+        if (!customerSearch.trim()) return sortedCustomers;
+        const query = customerSearch.toLowerCase().trim();
+        return sortedCustomers.filter(c => {
+            const name = (c.display_name || '').toLowerCase();
+            const company = (c.company_name || '').toLowerCase();
+            const email = (c.email || c.primary_email || '').toLowerCase();
+            const id = String(c.customer_id || '').toLowerCase();
+            return name.includes(query) || company.includes(query) || email.includes(query) || id.includes(query);
+        });
+    }, [sortedCustomers, customerSearch]);
 
     const sortedProjects = React.useMemo(() => 
         [...availableProjects].sort((a, b) => (a.project_name || '').localeCompare(b.project_name || '')),
         [availableProjects]
     );
 
+    const filteredProjects = React.useMemo(() => {
+        if (!projectSearch.trim()) return sortedProjects;
+        const query = projectSearch.toLowerCase().trim();
+        return sortedProjects.filter(p => {
+            const name = (p.project_name || '').toLowerCase();
+            const desc = (p.description || '').toLowerCase();
+            const id = String(p.id || '').toLowerCase();
+            return name.includes(query) || desc.includes(query) || id.includes(query);
+        });
+    }, [sortedProjects, projectSearch]);
+
     const selectedProject = projects.find(p => p.id === formData.project_id);
 
     const formContent = (
-        <form onSubmit={handleSubmit} className={compact ? "space-y-6" : "space-y-10"}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <form onSubmit={handleSubmit} className={compact ? "space-y-4 max-w-5xl mx-auto" : "space-y-10"}>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         {/* Start Date/Time */}
-                        <div className="md:col-span-1 lg:col-span-2 space-y-3">
+                        <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">
                                 Start Date & Time
                             </Label>
@@ -514,7 +539,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
                                 Client
                             </Label>
-                            <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen} modal={false}>
+                            <Popover open={customerPopoverOpen} onOpenChange={(open) => {
+                                setCustomerPopoverOpen(open);
+                                if (!open) setCustomerSearch('');
+                            }}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
@@ -530,32 +558,52 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl" align="start">
-                                    <Command className="dark:bg-slate-900">
-                                        <CommandInput placeholder="Search clients..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-[280px] sm:max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
-                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
-                                            <CommandGroup className="p-2">
-                                                {sortedCustomers.map((c) => (
-                                                    <CommandItem
-                                                        key={c.customer_id}
-                                                        value={c.display_name}
-                                                        onSelect={() => {
-                                                            // Allow unselecting by clicking on the same customer
-                                                            if (formData.customer_id === c.customer_id) {
-                                                                setFormData(prev => ({ ...prev, customer_id: '', project_id: '' }));
-                                                            } else {
-                                                                setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
-                                                            }
-                                                            setCustomerPopoverOpen(false);
-                                                        }}
-                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                    >
-                                                        <Check className={cn("mr-2 h-4 w-4", formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0")} />
-                                                        <span className="font-bold text-sm tracking-tight">{c.display_name}</span>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
+                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl z-[100]" align="start">
+                                    <Command className="dark:bg-slate-900" shouldFilter={false}>
+                                        <CommandInput 
+                                            placeholder="Search clients..." 
+                                            className="font-bold border-none focus:ring-0" 
+                                            value={customerSearch}
+                                            onValueChange={setCustomerSearch}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') e.preventDefault();
+                                            }}
+                                        />
+                                        <CommandList 
+                                            className="max-h-[280px] sm:max-h-[350px] overflow-y-auto p-2 custom-scrollbar touch-pan-y"
+                                            onWheel={(e) => e.stopPropagation()}
+                                            onTouchMove={(e) => e.stopPropagation()}
+                                        >
+                                            {filteredCustomers.length === 0 ? (
+                                                <CommandEmpty className="py-6 text-center text-xs font-bold text-gray-400">No client found.</CommandEmpty>
+                                            ) : (
+                                                <CommandGroup className="p-1">
+                                                    {filteredCustomers.map((c) => (
+                                                        <CommandItem
+                                                            key={c.customer_id}
+                                                            value={`${c.display_name || ''} ${c.customer_id}`}
+                                                            onSelect={() => {
+                                                                if (formData.customer_id === c.customer_id) {
+                                                                    setFormData(prev => ({ ...prev, customer_id: '', project_id: '' }));
+                                                                } else {
+                                                                    setFormData(prev => ({ ...prev, customer_id: c.customer_id, project_id: '' }));
+                                                                }
+                                                                setCustomerPopoverOpen(false);
+                                                                setCustomerSearch('');
+                                                            }}
+                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer px-3 py-2.5"
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4 shrink-0", formData.customer_id === c.customer_id ? "opacity-100" : "opacity-0")} />
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="font-bold text-sm tracking-tight truncate">{c.display_name}</span>
+                                                                {c.company_name && (
+                                                                    <span className="text-[10px] opacity-70 font-semibold truncate">{c.company_name}</span>
+                                                                )}
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            )}
                                         </CommandList>
                                     </Command>
                                 </PopoverContent>
@@ -567,7 +615,10 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
                                 Project
                             </Label>
-                            <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen} modal={false}>
+                            <Popover open={projectPopoverOpen} onOpenChange={(open) => {
+                                setProjectPopoverOpen(open);
+                                if (!open) setProjectSearch('');
+                            }}>
                                 <PopoverTrigger asChild>
                                     <Button
                                         variant="outline"
@@ -579,7 +630,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <span className="truncate flex items-center gap-2">
                                             {formData.project_id && (
                                                 <div 
-                                                    className="w-2.5 h-2.5 rounded-full shadow-sm" 
+                                                    className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
                                                     style={{ backgroundColor: projects.find((p) => p.id === formData.project_id)?.color || '#3b82f6' }} 
                                                 />
                                             )}
@@ -590,38 +641,53 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl" align="start">
-                                    <Command className="dark:bg-slate-900">
-                                        <CommandInput placeholder="Search projects..." className="font-bold border-none focus:ring-0" />
-                                        <CommandList className="max-h-[280px] sm:max-h-[400px] overflow-y-auto p-3 custom-scrollbar">
-                                            <CommandEmpty className="py-4 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
-                                            <CommandGroup className="p-2">
-                                                {sortedProjects.map((p) => (
-                                                    <CommandItem
-                                                        key={p.id}
-                                                        value={p.project_name}
-                                                        onSelect={() => {
-                                                            // Allow unselecting by clicking on the same project
-                                                            if (formData.project_id === p.id) {
-                                                                setFormData(prev => ({ ...prev, project_id: '' }));
-                                                            } else {
-                                                                setFormData(prev => ({ ...prev, project_id: p.id }));
-                                                            }
-                                                            setProjectPopoverOpen(false);
-                                                        }}
-                                                        className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer"
-                                                    >
-                                                        <Check className={cn("mr-2 h-4 w-4", formData.project_id === p.id ? "opacity-100" : "opacity-0")} />
-                                                        <div className="flex items-center gap-2 flex-1">
-                                                            <div 
-                                                                className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
-                                                                style={{ backgroundColor: p.color || '#3b82f6' }} 
-                                                            />
-                                                            <span className="font-bold text-sm tracking-tight">{p.project_name}</span>
-                                                        </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
+                                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[var(--radix-popover-trigger-width)] p-0 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl z-[100]" align="start">
+                                    <Command className="dark:bg-slate-900" shouldFilter={false}>
+                                        <CommandInput 
+                                            placeholder="Search projects..." 
+                                            className="font-bold border-none focus:ring-0" 
+                                            value={projectSearch}
+                                            onValueChange={setProjectSearch}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') e.preventDefault();
+                                            }}
+                                        />
+                                        <CommandList 
+                                            className="max-h-[280px] sm:max-h-[350px] overflow-y-auto p-2 custom-scrollbar touch-pan-y"
+                                            onWheel={(e) => e.stopPropagation()}
+                                            onTouchMove={(e) => e.stopPropagation()}
+                                        >
+                                            {filteredProjects.length === 0 ? (
+                                                <CommandEmpty className="py-6 text-center text-xs font-bold text-gray-400">No project found.</CommandEmpty>
+                                            ) : (
+                                                <CommandGroup className="p-1">
+                                                    {filteredProjects.map((p) => (
+                                                        <CommandItem
+                                                            key={p.id}
+                                                            value={`${p.project_name || ''} ${p.id}`}
+                                                            onSelect={() => {
+                                                                if (formData.project_id === p.id) {
+                                                                    setFormData(prev => ({ ...prev, project_id: '' }));
+                                                                } else {
+                                                                    setFormData(prev => ({ ...prev, project_id: p.id }));
+                                                                }
+                                                                setProjectPopoverOpen(false);
+                                                                setProjectSearch('');
+                                                            }}
+                                                            className="rounded-lg mb-1 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white cursor-pointer px-3 py-2.5"
+                                                        >
+                                                            <Check className={cn("mr-2 h-4 w-4 shrink-0", formData.project_id === p.id ? "opacity-100" : "opacity-0")} />
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                <div 
+                                                                    className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" 
+                                                                    style={{ backgroundColor: p.color || '#3b82f6' }} 
+                                                                />
+                                                                <span className="font-bold text-sm tracking-tight truncate">{p.project_name}</span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            )}
                                         </CommandList>
                                     </Command>
                                 </PopoverContent>
@@ -679,9 +745,9 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         {/* Title */}
-                        <div className="space-y-4">
+                        <div className="sm:col-span-2 space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
                                 Subject/Objective <span className="text-red-500">*</span>
                             </Label>
@@ -695,7 +761,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                         </div>
 
                         {/* Billable Toggle */}
-                        <div className="space-y-4">
+                        <div className="sm:col-span-1 space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
                                 Billing
                             </Label>
@@ -712,7 +778,7 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                     </div>
 
                     {/* Description */}
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-1">
                             Description {!formData.project_id && <span className="text-red-500">*</span>}
                         </Label>
@@ -720,9 +786,9 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             placeholder="Add details or notes..."
-                            rows={3}
+                            rows={compact ? 2 : 3}
                             required={!formData.project_id}
-                            className="rounded-[1.5rem] p-5 font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 shadow-sm transition-all focus:h-32"
+                            className="rounded-xl p-3.5 font-bold text-sm bg-white dark:bg-slate-950 border-gray-100 dark:border-slate-800 shadow-sm transition-all focus:ring-2 focus:ring-blue-500/20"
                         />
                         {!formData.project_id && (
                             <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
@@ -732,9 +798,9 @@ const TimeEntryForm = ({ onSubmit, initialData = null, customers = [], projects 
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-100 dark:border-slate-800/50">
-                        <Button type="submit" className="h-14 flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all duration-300">
-                            <Save className="mr-3 h-4 w-4" />
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-100 dark:border-slate-800/50">
+                        <Button type="submit" className="h-12 flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/25 transition-all duration-300 active:scale-[0.99] flex items-center justify-center gap-2">
+                            <Save className="h-4 w-4" />
                             {initialData ? 'Update Entry' : 'Save Entry / Start Logging'}
                         </Button>
                     </div>
