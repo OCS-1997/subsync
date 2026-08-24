@@ -80,7 +80,7 @@ function findFolderByName(nodes, folderName) {
       node.type === 'folder' &&
       (node.name === folderName ||
         (folderName === 'MY WORK' && (node.name === 'Operations Module' || node.name === 'My Work Group' || node.name === 'MY WORK')) ||
-        (folderName === 'CUSTOMER' && (node.name === 'CRM Module' || node.name === 'CUSTOMER')) ||
+        (folderName === 'CUSTOMER' && (node.name === 'BOP Module' || node.name === 'CRM Module' || node.name === 'CUSTOMER')) ||
         (folderName === 'HR' && (node.name === 'Self Service' || node.name === 'HR')) ||
         (folderName === 'ADMIN' && (node.name === 'Administration' || node.name === 'ADMIN')))
     ) {

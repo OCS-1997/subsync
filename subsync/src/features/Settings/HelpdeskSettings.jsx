@@ -268,7 +268,7 @@ function HelpdeskSettings() {
                                     </Label>
                                     <Input
                                         id="api_key"
-                                        placeholder="CRM Access key for Helpdesk"
+                                        placeholder="BOP Access key for Helpdesk"
                                         value={settings.api_key}
                                         onChange={handleChange}
                                         className="h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-border focus:ring-1 focus:ring-indigo-500"
@@ -353,7 +353,7 @@ function HelpdeskSettings() {
                                     Integration Audit Logs
                                 </CardTitle>
                                 <CardDescription className="text-slate-400 text-xs">
-                                    Delivery status of outbound sync and processing status of inbound CRM events.
+                                    Delivery status of outbound sync and processing status of inbound BOP events.
                                 </CardDescription>
                             </div>
                             <Button 
@@ -391,7 +391,7 @@ function HelpdeskSettings() {
                                             : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
                                     )}
                                 >
-                                    Inbound CRM Events
+                                    Inbound BOP Events
                                 </button>
                             </div>
 
@@ -484,7 +484,7 @@ function HelpdeskSettings() {
                                                 <TableRow>
                                                     <TableCell colSpan={6} className="text-center py-10 text-slate-400 text-xs font-bold uppercase tracking-wider">
                                                         <Database className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                                                        No inbound CRM events logged yet.
+                                                        No inbound BOP events logged yet.
                                                     </TableCell>
                                                 </TableRow>
                                             ) : (
@@ -677,7 +677,7 @@ function HelpdeskSettings() {
                     <DialogHeader className="px-6 pt-5 pb-3 border-b border-border">
                         <DialogTitle className="text-lg font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
                             <Info className="w-5 h-5 text-indigo-500" />
-                            CRM Event Processing Audit
+                            BOP Event Processing Audit
                         </DialogTitle>
                         <DialogDescription className="text-slate-400 text-xs">
                             Audit entry for Event ID: <span className="font-mono text-indigo-500 font-bold">{selectedCrmLog?.eventId}</span>

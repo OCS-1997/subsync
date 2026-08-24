@@ -96,7 +96,7 @@ function LoginPage() {
               {festival ? festival.wish : <>Empower Your <span className="text-blue-200 italic">Organisation</span> Pipeline</>}
             </h1>
             <p className={`text-xl leading-relaxed max-w-lg ${festival ? 'mb-4' : 'mb-10'} ${festival ? festival.colors.accent : 'text-blue-100/90'}`}>
-              {festival ? festival.subWish : "The next-generation CRM designed for scalability, intelligence, and seamless workflow management."}
+              {festival ? festival.subWish : "The next-generation Business Operations Platform (BOP) designed for scalability, intelligence, and seamless workflow management."}
             </p>
             {festival && (
               <div className="flex items-center gap-3 mb-10 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit">
@@ -185,7 +185,7 @@ function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
             <img src="/logo.png" alt="Subsync Logo" className="h-10 sm:h-12 w-auto mx-auto mb-4" />
-            <h2 className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tighter">SUBSYNC CRM</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tighter">SUBSYNC BOP</h2>
             <div className="h-1 w-12 bg-blue-600 dark:bg-blue-400 mx-auto mt-2 rounded-full opacity-20"></div>
           </div>
 

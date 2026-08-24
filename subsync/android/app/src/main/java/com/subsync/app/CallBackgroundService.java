@@ -54,7 +54,7 @@ public class CallBackgroundService extends Service {
         // Start foreground to keep the service alive
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Subsync Call Detection")
-                .setContentText("Monitoring calls for CRM")
+                .setContentText("Monitoring calls for BOP")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setOngoing(true)

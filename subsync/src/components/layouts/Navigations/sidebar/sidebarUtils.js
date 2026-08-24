@@ -15,6 +15,7 @@ const SECTION_LABELS = {
   'HR': 'HR',
   'ADMIN': 'ADMIN',
   'Operations Module': 'MY WORK',
+  'BOP Module': 'CUSTOMER',
   'CRM Module': 'CUSTOMER',
   'Self Service': 'HR',
   Administration: 'ADMIN',

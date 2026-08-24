@@ -9,7 +9,7 @@ export default function SidebarHeader({
   onToggleDesktop,
   onCloseMobile,
   appName = 'OCS',
-  subtitle = 'CRM Platform',
+  subtitle = 'Business Operations Platform',
 }) {
   return (
     <div

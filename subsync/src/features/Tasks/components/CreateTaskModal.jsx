@@ -30,7 +30,7 @@ export default function CreateTaskModal({ isOpen, onClose, onTaskCreated, taskTo
 
   const [loading, setLoading] = useState(false);
   const [manageableUsers, setManageableUsers] = useState([]);
-  const [categories, setCategories] = useState(['General', 'Finance', 'CRM', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix']);
+  const [categories, setCategories] = useState(['General', 'Finance', 'BOP', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix']);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
 
   const [formData, setFormData] = useState({

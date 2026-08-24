@@ -9,7 +9,7 @@ import { Preferences } from '@capacitor/preferences';
 
 const TOKEN_EXPIRY_KEY = 'subsync_token_expiry';
 const REMEMBER_ME_KEY = 'subsync_remember_me';
-const TOKEN_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 Days (for mobile CRM with call detection)
+const TOKEN_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 Days (for mobile BOP with call detection)
 
 /**
  * Detect if app is running as PWA

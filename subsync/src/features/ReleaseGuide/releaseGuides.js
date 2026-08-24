@@ -116,9 +116,9 @@ export const RELEASE_GUIDES = [
         body: 'Interactive birthday widget and celebrations dashboard to highlight team member birthdays and foster engagement.',
       },
       {
-        id: 'step-crm-sync',
-        title: '🔄 CRM Webhook Sync & Service Credits',
-        body: 'Real-time CRM event synchronization with background queue processing and service credit tracking.',
+        id: 'step-bop-sync',
+        title: '🔄 BOP Webhook Sync & Service Credits',
+        body: 'Real-time BOP event synchronization with background queue processing and service credit tracking.',
       },
     ],
     autoShow: true,

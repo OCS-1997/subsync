@@ -272,7 +272,7 @@ const FAQS = [
                             <span>Actions</span>
                         </div>
                         <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mb-1">Inline Notes</p>
-                        <p className="text-[10px] text-slate-500 leading-normal">Assign tags, add quick comments, and link to CRM.</p>
+                        <p className="text-[10px] text-slate-500 leading-normal">Assign tags, add quick comments, and link to BOP.</p>
                     </div>
                     <span className="mt-3 w-fit px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-bold">Interactive Notes</span>
                 </div>
@@ -469,7 +469,7 @@ export default function HelpPage() {
                                             "Comprehensive Leave & Self-Service Management for request submissions, balance tracking, and approvals.",
                                             "Goals & Milestone tracking system with visual progress indicators and master configuration.",
                                             "Interactive Birthday Celebrations experience and personalized employee birthday preferences.",
-                                            "Real-time CRM Webhook sync, BullMQ queue processing, and Service Credit tracking."
+                                            "Real-time BOP Webhook sync, BullMQ queue processing, and Service Credit tracking."
                                         ].map((item, i) => (
                                             <li key={i} className="flex items-start gap-3 text-[0.95rem] text-slate-600 dark:text-slate-400">
                                                 <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />

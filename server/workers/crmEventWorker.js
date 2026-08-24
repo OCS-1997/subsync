@@ -166,6 +166,6 @@ export function createCrmEventWorker() {
         console.error('[CrmEventWorker] General worker error:', err);
     });
 
-    console.log(`CRM Event worker started with concurrency: ${concurrency}`);
+    console.log(`BOP Event worker started with concurrency: ${concurrency}`);
     return worker;
 }

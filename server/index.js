@@ -146,9 +146,9 @@ let webhookWorker = null;
 let crmEventWorker = null;
 try {
     crmEventWorker = createCrmEventWorker();
-    console.log('CRM Event worker started successfully'.bgGreen.white);
+    console.log('BOP Event worker started successfully'.bgGreen.white);
 } catch (error) {
-    console.error('Failed to start CRM Event worker:'.bgRed.white, error);
+    console.error('Failed to start BOP Event worker:'.bgRed.white, error);
 }
 try {
     reminderWorker = createReminderWorker();

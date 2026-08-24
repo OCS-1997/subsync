@@ -1,8 +1,8 @@
-# Play Store Compliance Documentation for Subsync CRM
+# Play Store Compliance Documentation for Subsync BOP
 
 ## Overview
 
-This document provides all necessary information for Google Play Store submission, including permission justifications, privacy policy requirements, and compliance guidelines for the call detection feature in Subsync CRM.
+This document provides all necessary information for Google Play Store submission, including permission justifications, privacy policy requirements, and compliance guidelines for the call detection feature in Subsync BOP.
 
 ---
 
@@ -16,7 +16,7 @@ This document provides all necessary information for Google Play Store submissio
 **Justification for Google Play:**
 
 ```
-Our CRM application automatically detects incoming and outgoing phone calls to help sales teams track customer interactions. This permission is required to detect call state changes (ringing, answered, ended) for automatic call logging in our Daily Call Register feature. This enables our business users to accurately track customer communications without manual entry, improving CRM data quality and sales team productivity.
+Our BOP application automatically detects incoming and outgoing phone calls to help sales and ops teams track customer interactions. This permission is required to detect call state changes (ringing, answered, ended) for automatic call logging in our Daily Call Register feature. This enables our business users to accurately track customer communications without manual entry, improving BOP data quality and team productivity.
 ```
 
 **Business Use Case:**  
@@ -35,7 +35,7 @@ Manual call logging - rejected due to user friction and data loss.
 **Justification for Google Play:**
 
 ```
-This permission is used to verify call history and duration metadata for accurate call logging in our CRM system. It enables automatic customer lookup based on phone numbers and ensures accurate time tracking for business activity reporting. The permission allows our sales teams to match incoming/outgoing calls with existing customer records in their CRM database, streamlining workflow and improving data accuracy.
+This permission is used to verify call history and duration metadata for accurate call logging in our BOP system. It enables automatic customer lookup based on phone numbers and ensures accurate time tracking for business activity reporting. The permission allows our sales teams to match incoming/outgoing calls with existing customer records in their BOP database, streamlining workflow and improving data accuracy.
 ```
 
 **Business Use Case:**  
@@ -43,7 +43,7 @@ Customer relationship management requires accurate call duration tracking and cu
 
 **Data Collection:**
 
-- Phone numbers (to match with CRM customers)
+- Phone numbers (to match with BOP customers)
 - Call duration (for time tracking and reporting)
 - Call timestamp (for activity logging)
 
@@ -73,7 +73,7 @@ Sales professionals use multiple apps throughout the day. Background call detect
 **User Visibility:**
 
 - ✅ Persistent notification always visible
-- ✅ Notification text: "Subsync Call Detection - Monitoring calls for CRM"
+- ✅ Notification text: "Subsync Call Detection - Monitoring calls for BOP"
 - ✅ Non-dismissible (required for foreground service)
 - ✅ Low priority (doesn't interrupt user)
 
@@ -87,7 +87,7 @@ Sales professionals use multiple apps throughout the day. Background call detect
 **Justification for Google Play:**
 
 ```
-This Android 14+ permission is required to run a foreground service that monitors phone call states. It works in conjunction with FOREGROUND_SERVICE permission to enable our CRM call detection feature. This is classified as a phoneCall foreground service type as defined in our AndroidManifest.xml, which is appropriate for business communication tracking applications.
+This Android 14+ permission is required to run a foreground service that monitors phone call states. It works in conjunction with FOREGROUND_SERVICE permission to enable our BOP call detection feature. This is classified as a phoneCall foreground service type as defined in our AndroidManifest.xml, which is appropriate for business communication tracking applications.
 ```
 
 **Android Version Requirement:**  
@@ -103,7 +103,7 @@ Required for Android 14 (API 34) and above. Part of Android 14's enhanced permis
 **Justification for Google Play:**
 
 ```
-Required to show the foreground service notification that informs users the call detection feature is active. This provides transparency and allows users to be aware of background monitoring. The notification serves as a persistent indicator that the CRM is actively logging customer calls, giving users full control and visibility over the feature.
+Required to show the foreground service notification that informs users the call detection feature is active. This provides transparency and allows users to be aware of background monitoring. The notification serves as a persistent indicator that the BOP is actively logging customer calls, giving users full control and visibility over the feature.
 ```
 
 **Notification Purpose:**
@@ -159,13 +159,13 @@ Your privacy policy MUST include the following section:
 ```markdown
 ## Call Detection Feature
 
-Subsync CRM includes an optional automatic call detection feature designed for business users to track customer interactions.
+Subsync BOP includes an optional automatic call detection feature designed for business users to track customer interactions.
 
 ### What Data We Collect
 
 When you enable call detection, Subsync collects:
 
-- **Phone Numbers**: To match calls with existing customers in your CRM
+- **Phone Numbers**: To match calls with existing customers in your BOP
 - **Call Duration**: To track time spent on customer calls for reporting
 - **Call Type**: Whether the call was incoming or outgoing
 - **Call Timestamp**: When the call occurred
@@ -179,7 +179,7 @@ When you enable call detection, Subsync collects:
 
 ### How We Use This Data
 
-- Match incoming/outgoing calls with customer records in your CRM
+- Match incoming/outgoing calls with customer records in your BOP
 - Automatically log calls in your Daily Call Register
 - Generate business reports on call activity and customer engagement
 - Track sales team productivity and communication metrics
@@ -210,11 +210,11 @@ This feature requires the following Android permissions:
 
 ### Transparency
 
-When call detection is active, you will see a persistent notification: "Subsync Call Detection - Monitoring calls for CRM". This cannot be dismissed while the feature is active, ensuring full transparency.
+When call detection is active, you will see a persistent notification: "Subsync Call Detection - Monitoring calls for BOP". This cannot be dismissed while the feature is active, ensuring full transparency.
 
 ### Business Use Only
 
-This feature is designed exclusively for business communication tracking. It should only be used for work-related calls with customer contacts stored in your CRM system.
+This feature is designed exclusively for business communication tracking. It should only be used for work-related calls with customer contacts stored in your BOP system.
 ```
 
 ---
@@ -232,7 +232,7 @@ Track customer calls automatically with our intelligent call detection feature. 
 
 ✅ Automatic customer lookup
 ✅ Call duration tracking
-✅ Seamless CRM integration
+✅ Seamless BOP integration
 ✅ Background monitoring
 ✅ Full transparency with persistent notification
 
@@ -257,7 +257,7 @@ Note: Call detection requires specific permissions and displays a persistent not
 
 1. **Scene 1** (5s): App login screen → User logs in
 2. **Scene 2** (5s): Permission request appears → User grants permissions
-3. **Scene 3** (5s): Notification appears: "Subsync Call Detection - Monitoring calls for CRM"
+3. **Scene 3** (5s): Notification appears: "Subsync Call Detection - Monitoring calls for BOP"
 4. **Scene 4** (10s): User receives incoming call → Answers → Talks → Ends call
 5. **Scene 5** (10s): Post-call dialog appears → Shows customer info → User adds notes
 6. **Scene 6** (5s): User clicks "Log Call" → Success message
@@ -313,7 +313,7 @@ Note: Call detection requires specific permissions and displays a persistent not
 **Solution:**  
 Provide detailed business use case in Play Store console. Reference this document and emphasize:
 
-- CRM (business tool, not personal use)
+- BOP (business tool, not personal use)
 - Sales team productivity
 - Customer relationship tracking
 - No call audio recording

@@ -69,7 +69,7 @@ const SplashScreen = ({ onFinish }) => {
             >
                 <div className="h-[1px] w-8 md:w-12 bg-gradient-to-l from-blue-500/40 to-transparent" />
                 <span className="text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] md:tracking-[0.5em] text-slate-400 whitespace-nowrap">
-                    CRM Suite
+                    Business Operations Platform
                 </span>
                 <div className="h-[1px] w-8 md:w-12 bg-gradient-to-r from-blue-500/40 to-transparent" />
             </motion.div>

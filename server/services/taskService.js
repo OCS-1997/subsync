@@ -1212,7 +1212,7 @@ export async function getTaskCategories(actor) {
          ORDER BY category ASC`
     );
     const existing = rows.map(r => r.category ? r.category.trim() : '').filter(Boolean);
-    const defaults = ['General', 'Finance', 'CRM', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix'];
+    const defaults = ['General', 'Finance', 'BOP', 'Development', 'Marketing', 'Operations', 'HR', 'Sales', 'Support', 'Bug Fix'];
     const merged = Array.from(new Set([...defaults, ...existing]));
     return merged.sort((a, b) => a.localeCompare(b));
 }
