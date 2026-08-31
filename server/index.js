@@ -28,12 +28,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Diagnostic logging middleware
-app.use((req, res, next) => {
-    const origin = req.headers.origin || 'No Origin';
-    const log = `[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${origin}\n`;
-    fs.appendFileSync('server_reqs.log', log);
-    next();
-});
+// app.use((req, res, next) => {
+//     const origin = req.headers.origin || 'No Origin';
+//     const log = `[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${origin}\n`;
+//     fs.appendFileSync('server_reqs.log', log);
+//     next();
+// });
 // Increase body size limits to support file uploads (50MB)
 app.use(express.json({ limit: '50mb' }));
 // app.use(morgan('dev'))

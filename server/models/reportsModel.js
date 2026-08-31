@@ -157,8 +157,26 @@ async function getDetailedReports({ userId, startDate, endDate, teamId, customer
             topUsers = users;
         }
 
+        // Monthly breakdown (for trends)
+        const [monthlyTrend] = await appDB.query(
+            `SELECT 
+                DATE_FORMAT(te.start_time, '%Y-%m') as month_str,
+                COUNT(te.id) as total_entries,
+                CAST(COALESCE(SUM(te.duration_minutes), 0) AS UNSIGNED) as total_minutes,
+                CAST(COALESCE(SUM(CASE WHEN te.is_billable = TRUE THEN te.duration_minutes ELSE 0 END), 0) AS UNSIGNED) as billable_minutes,
+                CAST(COALESCE(SUM(CASE WHEN te.is_billable = FALSE THEN te.duration_minutes ELSE 0 END), 0) AS UNSIGNED) as non_billable_minutes
+             FROM time_entries te
+             WHERE ${whereClause}
+             GROUP BY DATE_FORMAT(te.start_time, '%Y-%m')
+             ORDER BY month_str ASC`,
+            params
+        );
+
         return {
-            summary,
+            summary: {
+                ...summary,
+                monthlyTrend
+            },
             byProject,
             byCustomer,
             byActivity,

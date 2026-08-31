@@ -16,7 +16,7 @@ import {
     Download, TrendingUp, Clock, 
     DollarSign, Users, User, FolderKanban,
     Calendar, ArrowUpRight, Target, Activity,
-    Shapes, Filter, ChevronRight
+    Shapes, Filter, ChevronRight, Sparkles
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, startOfYear, endOfYear, subMonths } from 'date-fns';
 import api from '@/lib/axiosInstance.js';
@@ -43,6 +43,7 @@ const TimeTrackingReports = () => {
     // Sub-tabs State
     const [subTab, setSubTab] = useState('team');
     const [selectedInsightUserId, setSelectedInsightUserId] = useState('');
+    const [indTrendViewMode, setIndTrendViewMode] = useState('monthly'); // 'monthly' | 'daily'
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [individualLogs, setIndividualLogs] = useState([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
@@ -638,8 +639,10 @@ const TimeTrackingReports = () => {
                                                     if (!monthsMap[mKey]) {
                                                         monthsMap[mKey] = { total_minutes: 0, billable_minutes: 0 };
                                                     }
-                                                    monthsMap[mKey].total_minutes += d.total_minutes || 0;
-                                                    monthsMap[mKey].billable_minutes += d.billable_minutes || 0;
+                                                    const tot = Number(d.total_minutes || 0);
+                                                    const bill = Number(d.billable_minutes || 0);
+                                                    monthsMap[mKey].total_minutes += tot;
+                                                    monthsMap[mKey].billable_minutes += bill;
                                                 });
                                                 chartData = Object.keys(monthsMap).map(mKey => ({
                                                     date: mKey,
@@ -1109,65 +1112,343 @@ const TimeTrackingReports = () => {
                         </Card>
                     </div>
 
-                    {/* Daily Hours Trend Chart */}
+                    {/* Actionable Individual Insights & Diagnostics Banner */}
+                    {(() => {
+                        const totalMins = summary?.total_minutes || 0;
+                        const billableMins = summary?.billable_minutes || 0;
+                        const billablePct = totalMins > 0 ? Math.round((billableMins / totalMins) * 100) : 0;
+                        const activeDaysCount = dailyTrend.filter(d => d.total_minutes > 0).length || 1;
+                        const avgDailyHrs = (totalMins / activeDaysCount / 60).toFixed(1);
+                        const topProj = byProject.length > 0 ? byProject[0] : null;
+                        const topCust = byCustomer.length > 0 ? byCustomer[0] : null;
+
+                        let billableStatusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+                        let billableStatusMsg = "High Billable Density — Optimal revenue generating focus.";
+                        if (billablePct < 50) {
+                            billableStatusColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
+                            billableStatusMsg = "Low Billable Density — High non-billable overhead. Review activity categories.";
+                        } else if (billablePct < 75) {
+                            billableStatusColor = "text-blue-500 bg-blue-500/10 border-blue-500/20";
+                            billableStatusMsg = "Balanced Effort — Moderate split between billable and operational tasks.";
+                        }
+
+                        return (
+                            <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20">
+                                <CardHeader className="p-8 pb-4 border-b border-gray-100/60 dark:border-slate-800">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30">
+                                                <Sparkles className="w-5 h-5 animate-pulse" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">
+                                                    Actionable Performance Diagnostics
+                                                </CardTitle>
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                    Smart analytical insights derived from logged effort data
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="outline" className="rounded-full border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest px-3 py-1">
+                                            Individual Analysis
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-8 grid gap-6 md:grid-cols-3">
+                                    {/* Insight 1: Revenue & Billability Efficiency */}
+                                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-950 border border-gray-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Billability Density</span>
+                                            <Badge className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border", billableStatusColor)}>
+                                                {billablePct}% Billable
+                                            </Badge>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                                {formatHours(billableMins)} <span className="text-xs text-slate-400 font-bold">/ {formatHours(totalMins)}</span>
+                                            </div>
+                                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                                {billableStatusMsg}
+                                            </p>
+                                        </div>
+                                        <div className="w-full h-1.5 bg-gray-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${billablePct}%` }} />
+                                        </div>
+                                    </div>
+
+                                    {/* Insight 2: Workload & Active Daily Pace */}
+                                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-950 border border-gray-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Workload Pacing</span>
+                                            <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
+                                                {activeDaysCount} Active Days
+                                            </Badge>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                                {avgDailyHrs}h <span className="text-xs text-slate-400 font-bold">/ active day</span>
+                                            </div>
+                                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                                {parseFloat(avgDailyHrs) > 8.5 
+                                                    ? "High Intensity Alert — Average daily effort exceeds standard 8h/day capacity."
+                                                    : parseFloat(avgDailyHrs) >= 6 
+                                                    ? "Consistent Momentum — Sustained daily tracker engagement across active days."
+                                                    : "Under-logged Potential — Active day average is below 6 hours per day."}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                            <span>Tracking Frequency</span>
+                                            <span className="text-blue-600 dark:text-blue-400 font-bold">{summary?.total_entries || 0} Total Logs</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Insight 3: Core Focus Anchor */}
+                                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-950 border border-gray-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Primary Focus Anchor</span>
+                                            <Badge variant="secondary" className="bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
+                                                Top Impact
+                                            </Badge>
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
+                                                {topProj ? topProj.project_name : 'No project focus'}
+                                            </div>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 mt-0.5">
+                                                {topCust ? topCust.customer_name : 'Internal Work'}
+                                            </p>
+                                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                                {topProj ? `${((topProj.total_minutes / (totalMins || 1)) * 100).toFixed(0)}% of total logged time devoted to this project.` : 'No effort logged for projects yet.'}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                            <span>Time Invested</span>
+                                            <span className="text-slate-900 dark:text-white font-bold">{topProj ? `${(topProj.total_minutes / 60).toFixed(1)}h` : '0h'}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })()}
+
+                    {/* Monthly / Daily Effort Trend Chart */}
                     <Card className="dark:bg-slate-900 dark:border-slate-800 rounded-[2rem] overflow-hidden border-gray-100 shadow-sm">
                         <CardHeader className="p-8 pb-0">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 flex items-center gap-2">
                                         <TrendingUp className="w-4 h-4" />
-                                        Daily Effort Trend
+                                        {indTrendViewMode === 'monthly' ? 'Monthly Effort & Performance Trend' : 'Daily Hours Trend'}
                                     </CardTitle>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Hours logged per day</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                                        {indTrendViewMode === 'monthly' ? 'Aggregated monthly effort breakdown and billable ratio' : 'Daily hours logged over time'}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-950 p-1 rounded-xl border border-gray-100 dark:border-slate-800">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIndTrendViewMode('monthly')}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                            indTrendViewMode === 'monthly'
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        Monthly Trend
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIndTrendViewMode('daily')}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                            indTrendViewMode === 'daily'
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        Daily View
+                                    </button>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-4 sm:p-8 overflow-x-auto no-scrollbar">
-                            <div className="min-w-[500px] h-[300px]">
-                                {dailyTrend.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={dailyTrend.map(d => ({
+                        <CardContent className="p-4 sm:p-8 overflow-x-auto no-scrollbar space-y-6">
+                            <div className="min-w-[500px] h-[320px]">
+                                {(() => {
+                                    let chartData = [];
+                                    if (indTrendViewMode === 'monthly') {
+                                        if (summary?.monthlyTrend && summary.monthlyTrend.length > 0) {
+                                            chartData = summary.monthlyTrend.map(m => {
+                                                const [y, mNum] = (m.month_str || '').split('-');
+                                                const dObj = m.month_str ? new Date(parseInt(y), parseInt(mNum) - 1, 1) : new Date();
+                                                return {
+                                                    date: format(dObj, 'MMM yyyy'),
+                                                    total_hours: parseFloat(((m.total_minutes || 0) / 60).toFixed(1)),
+                                                    billable_hours: parseFloat(((m.billable_minutes || 0) / 60).toFixed(1)),
+                                                    non_billable_hours: parseFloat((Math.max(0, (m.total_minutes || 0) - (m.billable_minutes || 0)) / 60).toFixed(1))
+                                                };
+                                            });
+                                        } else {
+                                            // Roll up dailyTrend into monthly buckets client-side
+                                            const monthsMap = {};
+                                            (dailyTrend || []).forEach(d => {
+                                                const dateObj = new Date(d.date);
+                                                const mKey = format(dateObj, 'MMM yyyy');
+                                                if (!monthsMap[mKey]) {
+                                                    monthsMap[mKey] = { total_minutes: 0, billable_minutes: 0 };
+                                                }
+                                                const tot = Number(d.total_minutes || 0);
+                                                const bill = Number(d.billable_minutes || 0);
+                                                monthsMap[mKey].total_minutes += tot;
+                                                monthsMap[mKey].billable_minutes += bill;
+                                            });
+                                            chartData = Object.keys(monthsMap).map(mKey => ({
+                                                date: mKey,
+                                                total_hours: parseFloat((monthsMap[mKey].total_minutes / 60).toFixed(1)),
+                                                billable_hours: parseFloat((monthsMap[mKey].billable_minutes / 60).toFixed(1)),
+                                                non_billable_hours: parseFloat((Math.max(0, monthsMap[mKey].total_minutes - monthsMap[mKey].billable_minutes) / 60).toFixed(1))
+                                            }));
+                                        }
+                                    } else {
+                                        chartData = (dailyTrend || []).map(d => ({
                                             ...d,
                                             date: format(new Date(d.date), 'MMM d'),
-                                            total_hours: parseFloat((d.total_minutes / 60).toFixed(1)),
-                                            billable_hours: parseFloat((d.billable_minutes / 60).toFixed(1))
-                                        }))}>
-                                            <defs>
-                                                <linearGradient id="colorTotalInd" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                                </linearGradient>
-                                                <linearGradient id="colorBillableInd" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                                </linearGradient>
-                                            </defs>
-                                            <XAxis 
-                                                dataKey="date" 
-                                                axisLine={false} 
-                                                tickLine={false} 
-                                                tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                                dy={10}
-                                            />
-                                            <YAxis 
-                                                axisLine={false} 
-                                                tickLine={false} 
-                                                tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
-                                            />
-                                            <Tooltip 
-                                                contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
-                                            />
-                                            <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotalInd)" name="TOTAL HOURS" />
-                                            <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillableInd)" name="BILLABLE HOURS" />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
-                                        <Activity size={48} strokeWidth={1} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">No effort trend logged</span>
-                                    </div>
-                                )}
+                                            total_hours: parseFloat(((d.total_minutes || 0) / 60).toFixed(1)),
+                                            billable_hours: parseFloat(((d.billable_minutes || 0) / 60).toFixed(1))
+                                        }));
+                                    }
+
+                                    return chartData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={chartData}>
+                                                <defs>
+                                                    <linearGradient id="colorTotalInd" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                    <linearGradient id="colorBillableInd" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <XAxis 
+                                                    dataKey="date" 
+                                                    axisLine={false} 
+                                                    tickLine={false} 
+                                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                                    dy={10}
+                                                />
+                                                <YAxis 
+                                                    axisLine={false} 
+                                                    tickLine={false} 
+                                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 900}}
+                                                />
+                                                <Tooltip 
+                                                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 900, textTransform: 'uppercase', fontSize: '10px'}}
+                                                />
+                                                <Area type="monotone" dataKey="total_hours" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorTotalInd)" name="TOTAL HOURS" />
+                                                <Area type="monotone" dataKey="billable_hours" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorBillableInd)" name="BILLABLE HOURS" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
+                                            <Activity size={48} strokeWidth={1} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">No effort trend logged for this period</span>
+                                        </div>
+                                    );
+                                })()}
                             </div>
+
+                            {/* Monthly Breakdown Table for Individual */}
+                            {indTrendViewMode === 'monthly' && (
+                                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white mb-3">
+                                        Month-by-Month Logged Hours & Billability Analysis
+                                    </h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-400 uppercase text-[9px] font-black">
+                                                <tr>
+                                                    <th className="p-2.5 rounded-l-xl">Month</th>
+                                                    <th className="p-2.5 text-right">Total Logs</th>
+                                                    <th className="p-2.5 text-right">Total Hours</th>
+                                                    <th className="p-2.5 text-right">Billable Hours</th>
+                                                    <th className="p-2.5 text-right rounded-r-xl">Billable %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                                {(() => {
+                                                    const monthlyRows = summary?.monthlyTrend && summary.monthlyTrend.length > 0 
+                                                        ? summary.monthlyTrend.map(m => {
+                                                            const [y, mNum] = (m.month_str || '').split('-');
+                                                            const monthLabel = m.month_str ? format(new Date(parseInt(y), parseInt(mNum) - 1, 1), 'MMMM yyyy') : 'Unknown';
+                                                            return {
+                                                                key: m.month_str,
+                                                                monthLabel,
+                                                                total_entries: m.total_entries || 0,
+                                                                totalHrs: (m.total_minutes / 60).toFixed(1),
+                                                                billableHrs: (m.billable_minutes / 60).toFixed(1),
+                                                                billablePct: m.total_minutes > 0 ? Math.round((m.billable_minutes / m.total_minutes) * 100) : 0
+                                                            };
+                                                        })
+                                                        : (() => {
+                                                            const monthsMap = {};
+                                                            (dailyTrend || []).forEach(d => {
+                                                                const dateObj = new Date(d.date);
+                                                                const mKey = format(dateObj, 'yyyy-MM');
+                                                                const mLabel = format(dateObj, 'MMMM yyyy');
+                                                                if (!monthsMap[mKey]) {
+                                                                    monthsMap[mKey] = { key: mKey, monthLabel: mLabel, total_minutes: 0, billable_minutes: 0, total_entries: 0 };
+                                                                }
+                                                                const tot = Number(d.total_minutes || 0);
+                                                                const bill = Number(d.billable_minutes || 0);
+                                                                monthsMap[mKey].total_minutes += tot;
+                                                                monthsMap[mKey].billable_minutes += bill;
+                                                                monthsMap[mKey].total_entries += (Number(d.entry_count) || (tot > 0 ? 1 : 0));
+                                                            });
+                                                            return Object.keys(monthsMap).sort().reverse().map(mKey => {
+                                                                const item = monthsMap[mKey];
+                                                                return {
+                                                                    key: item.key,
+                                                                    monthLabel: item.monthLabel,
+                                                                    total_entries: item.total_entries,
+                                                                    totalHrs: (item.total_minutes / 60).toFixed(1),
+                                                                    billableHrs: (item.billable_minutes / 60).toFixed(1),
+                                                                    billablePct: item.total_minutes > 0 ? Math.round((item.billable_minutes / item.total_minutes) * 100) : 0
+                                                                };
+                                                            });
+                                                        })();
+
+                                                    return monthlyRows.length > 0 ? (
+                                                        monthlyRows.map(row => (
+                                                            <tr key={row.key} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                                                                <td className="p-2.5 font-bold text-slate-900 dark:text-white">{row.monthLabel}</td>
+                                                                <td className="p-2.5 text-right text-slate-500 dark:text-slate-400">{row.total_entries}</td>
+                                                                <td className="p-2.5 text-right font-black text-blue-600 dark:text-blue-400">{row.totalHrs}h</td>
+                                                                <td className="p-2.5 text-right font-black text-emerald-600 dark:text-emerald-400">{row.billableHrs}h</td>
+                                                                <td className="p-2.5 text-right font-bold text-slate-700 dark:text-slate-300">
+                                                                    <span className={cn(
+                                                                        "px-2 py-0.5 rounded-full text-[9px] font-black",
+                                                                        row.billablePct >= 75 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" :
+                                                                        row.billablePct >= 50 ? "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400" :
+                                                                        "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
+                                                                    )}>
+                                                                        {row.billablePct}%
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan={5} className="p-4 text-center text-slate-400 text-[10px] uppercase font-bold">
+                                                                No monthly breakdown available
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })()}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
