@@ -380,6 +380,12 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
                    params.append(key, filters[key]);
                 }
             });
+            if (filters.startDate && !params.has('start_date')) {
+                params.append('start_date', filters.startDate);
+            }
+            if (filters.endDate && !params.has('end_date')) {
+                params.append('end_date', filters.endDate);
+            }
 
             const endpoint = showAllUsers ? '/time-tracking/entries/all' : '/time-tracking/entries';
             const response = await api.get(`${endpoint}?${params}`);
@@ -456,7 +462,7 @@ const TimeEntriesList = ({ refresh, onEdit, customers = [], projects = [], categ
     const resetFilters = () => {
         setFilters({
             search: '',
-            user_id: currentUser?.user_id || '',
+            user_id: currentUser?.username || '',
             team_id: '',
             customer_id: '',
             project_id: '',

@@ -10,6 +10,16 @@ import { generateID } from "../middlewares/generateID.js";
 function formatDateTimeForMySQL(datetime) {
   if (!datetime) return null;
 
+  if (typeof datetime === "string") {
+    const trimmed = datetime.trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return `${trimmed} 00:00:00`;
+    }
+  }
+
   const date = typeof datetime === "string" ? new Date(datetime) : datetime;
   if (isNaN(date.getTime())) return null;
 

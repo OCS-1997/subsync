@@ -11,6 +11,7 @@ export const generateID = (text) => {
   const hour = String(now.getHours()).padStart(2, '0');
   const minute = String(now.getMinutes()).padStart(2, '0');
   const second = String(now.getSeconds()).padStart(2, '0');
+  const rand = Math.floor(Math.random() * 900 + 100); // 3-digit random number
 
-  return `${text}${year}${month}${day}${hour}${minute}${second}`;
+  return `${text}${year}${month}${day}${hour}${minute}${second}${rand}`;
 }; 

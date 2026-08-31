@@ -138,7 +138,9 @@ async function getTimeEntriesController(req, res) {
 
         const {
             start_date,
+            startDate: qStartDate,
             end_date,
+            endDate: qEndDate,
             customer_id,
             project_id,
             activity_type_id,
@@ -153,10 +155,13 @@ async function getTimeEntriesController(req, res) {
             return res.status(400).json({ error: "User ID not found in session" });
         }
 
+        const effectiveStartDate = start_date || qStartDate;
+        const effectiveEndDate = end_date || qEndDate;
+
         const result = await getTimeEntries({
             userId: userId,
-            startDate: start_date,
-            endDate: end_date,
+            startDate: effectiveStartDate,
+            endDate: effectiveEndDate,
             customerId: customer_id,
             projectId: project_id,
             activityTypeId: activity_type_id,
@@ -183,7 +188,9 @@ async function getAllTimeEntriesController(req, res) {
             user_id,
             team_id,
             start_date,
+            startDate: qStartDate,
             end_date,
+            endDate: qEndDate,
             customer_id,
             project_id,
             activity_type_id,
@@ -194,11 +201,14 @@ async function getAllTimeEntriesController(req, res) {
             sort_order
         } = req.query;
 
+        const effectiveStartDate = start_date || qStartDate;
+        const effectiveEndDate = end_date || qEndDate;
+
         const result = await getTimeEntries({
             userId: user_id, // Admin can still filter by a specific user if provided
             teamId: team_id,
-            startDate: start_date,
-            endDate: end_date,
+            startDate: effectiveStartDate,
+            endDate: effectiveEndDate,
             customerId: customer_id,
             projectId: project_id,
             activityTypeId: activity_type_id,
