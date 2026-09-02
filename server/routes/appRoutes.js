@@ -46,7 +46,8 @@ import {
     uploadTaskAttachmentController,
     downloadTaskAttachmentController,
     deleteTaskAttachmentController,
-    getTaskCategoriesController
+    getTaskCategoriesController,
+    triggerDailyTaskDigestController
 } from '../controllers/taskController.js';
 import express from 'express';
 
@@ -861,6 +862,7 @@ router.get('/tasks/stats', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]),
 router.get('/tasks/categories', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskCategoriesController);
 router.get('/tasks/analytics', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW_ANALYTICS, PERMISSIONS.TASKS_VIEW_ALL, PERMISSIONS.TASKS_MANAGE_ALL], { match: 'any' }), getTaskAnalyticsController);
 router.get('/tasks/manageable-users', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getManageableUsersController);
+router.post('/tasks/trigger-daily-digest', isAuthenticated, authorize([PERMISSIONS.TASKS_MANAGE_ALL]), triggerDailyTaskDigestController);
 router.get('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_VIEW]), getTaskByIdController);
 router.post('/tasks', isAuthenticated, authorize([PERMISSIONS.TASKS_CREATE]), createTaskController);
 router.patch('/tasks/:id', isAuthenticated, authorize([PERMISSIONS.TASKS_UPDATE, PERMISSIONS.TASKS_UPDATE_ASSIGNED], { match: 'any' }), updateTaskController);

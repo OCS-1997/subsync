@@ -7,6 +7,7 @@ import { sendDailyTimeTrackingReports } from '../services/timeTrackingReportServ
 import { syncBirthdays } from '../models/birthdayModel.js';
 import { syncDirectory } from '../services/directoryService.js';
 import { sendAppraisalReminders } from '../services/appraisalService.js';
+import { sendDailyTaskDigestEmails } from '../services/taskDigestService.js';
 
 const WORKER_CONCURRENCY = parseInt(process.env.SCHEDULED_TASK_CONCURRENCY || '1', 10);
 
@@ -46,6 +47,9 @@ async function processScheduledTask(job) {
                 break;
             case 'appraisal_reminders':
                 result = await sendAppraisalReminders();
+                break;
+            case 'daily_task_digest':
+                result = await sendDailyTaskDigestEmails();
                 break;
             default:
                 throw new Error(`Unknown task name: ${taskName}`);

@@ -1,4 +1,5 @@
 import * as taskService from '../services/taskService.js';
+import { sendDailyTaskDigestEmails } from '../services/taskDigestService.js';
 
 export const getTasksController = async (req, res, next) => {
     try {
@@ -275,3 +276,17 @@ export const getTaskCategoriesController = async (req, res, next) => {
         next(error);
     }
 };
+
+export const triggerDailyTaskDigestController = async (req, res, next) => {
+    try {
+        const result = await sendDailyTaskDigestEmails();
+        return res.status(200).json({
+            success: true,
+            message: 'Daily task digest triggered successfully',
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

@@ -88,6 +88,15 @@ export async function syncScheduledTasks() {
             }
         );
 
+        // 9. Daily Task Digest Email (Daily at 10:00 AM IST / 04:30 UTC)
+        await scheduledTasksQueue.add(
+            'daily_task_digest',
+            { taskName: 'daily_task_digest' },
+            {
+                repeat: { pattern: '30 4 * * *', tz: 'UTC' }
+            }
+        );
+
         console.log('✅ All scheduled tasks synced to BullMQ');
     } catch (error) {
         console.error('❌ Error syncing scheduled tasks to BullMQ:', error);

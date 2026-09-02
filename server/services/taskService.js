@@ -116,13 +116,10 @@ export async function notifyTaskAssignment(task, assigneeUsername, actorName) {
         const assignee = await getUserByUsername(assigneeUsername);
         if (!assignee || !assignee.email) return;
 
-        const clientPort = process.env.CLIENT_PORT || 5173;
-        const appUrl = process.env.NODE_ENV === 'production' 
-            ? (process.env.APP_BASE_URL || `http://localhost:${clientPort}`)
-            : (process.env.APP_BASE_URL || `http://localhost:${clientPort}`);
-
-        const normalizedAppUrl = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl;
-        const taskUrl = `${normalizedAppUrl}/dashboard/tasks/${task.id}`;
+        const rawAppUrl = (process.env.CLIENT_URL || process.env.APP_FRONTEND_URL || 
+            (process.env.APP_BASE_URL && !process.env.APP_BASE_URL.includes(':3000') ? process.env.APP_BASE_URL : `http://localhost:${process.env.CLIENT_PORT || 5173}`));
+        const normalizedAppUrl = rawAppUrl.replace(/\/$/, '');
+        const taskUrl = assigneeUsername ? `${normalizedAppUrl}/${assigneeUsername}/dashboard/tasks/${task.id}` : `${normalizedAppUrl}/dashboard/tasks/${task.id}`;
 
         const subject = `[OCS365 Task] Assigned: ${task.title}`;
         const html = `
