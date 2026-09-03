@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS subscription_history (
   history_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  sub_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL,
   changed_by VARCHAR(255) NULL, -- username who made the change
   change_type ENUM('CREATE', 'UPDATE', 'DELETE') NOT NULL DEFAULT 'UPDATE',
   field_name VARCHAR(100) NULL, -- field that changed (NULL for full record changes)

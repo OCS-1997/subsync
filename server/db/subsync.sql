@@ -16,7 +16,7 @@ USE ocs_srms;
 
 -- Create the Customers table
 CREATE TABLE customers (
-	customer_id VARCHAR(15) PRIMARY KEY,
+	customer_id VARCHAR(50) PRIMARY KEY,
 	salutation ENUM('Mr.', 'Ms.', 'Mrs.', 'Dr.') NOT NULL,
 	first_name VARCHAR(100) NOT NULL,
 	last_name VARCHAR(100) NOT NULL,
@@ -77,8 +77,8 @@ INSERT INTO payment_terms (term_name, days, is_default) VALUES
 
 -- Create the Domains Table Associated with Customers
 CREATE TABLE IF NOT EXISTS domains (
-    domain_id VARCHAR(15) PRIMARY KEY,
-    customer_id VARCHAR(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    domain_id VARCHAR(50) PRIMARY KEY,
+    customer_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
     customer_name VARCHAR(255) NOT NULL,
     domain_name VARCHAR(255) UNIQUE NOT NULL,
     registration_date DATE NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS domains (
 
 CREATE TABLE domain_name_servers (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    domain_id VARCHAR(15) NOT NULL,
+    domain_id VARCHAR(50) NOT NULL,
     name_server VARCHAR(255) NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -450,8 +450,8 @@ VALUES (
 -- =============================================
 
 CREATE TABLE subscriptions (
-  sub_id VARCHAR(15) NOT NULL PRIMARY KEY,
-  customer_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL PRIMARY KEY,
+  customer_id VARCHAR(50) NOT NULL,
   domain_name VARCHAR(255),
   start_date DATETIME NOT NULL,
   end_date DATETIME NULL,
@@ -489,7 +489,7 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE IF NOT EXISTS subscription_items (
   item_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  sub_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL,
   service_id INT NULL,
   service_name VARCHAR(255) NULL,
   quantity DECIMAL(10,2) NOT NULL DEFAULT 1.00,
@@ -508,7 +508,7 @@ CREATE TABLE IF NOT EXISTS subscription_items (
 
 CREATE TABLE IF NOT EXISTS subscription_history (
   history_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  sub_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL,
   changed_by VARCHAR(255) NULL,
   change_type ENUM('CREATE', 'UPDATE', 'DELETE') NOT NULL DEFAULT 'UPDATE',
   field_name VARCHAR(100) NULL,
@@ -689,7 +689,7 @@ INSERT INTO reminder_policy_offsets (policy_id, days_offset, template_key, activ
 CREATE TABLE IF NOT EXISTS birthdays (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(50) NULL,
-    customer_id VARCHAR(15) NULL,
+    customer_id VARCHAR(50) NULL,
     contact_person_index INT NULL COMMENT 'Index in other_contacts array for contact persons',
     date_of_birth DATE NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -815,8 +815,8 @@ INSERT INTO quick_tools (name, url_template, icon, roles_allowed, is_active, sor
 -- =============================================
 
 CREATE TABLE IF NOT EXISTS contacts (
-    contact_id VARCHAR(15) PRIMARY KEY,
-    domain_id VARCHAR(15) NULL,
+    contact_id VARCHAR(50) PRIMARY KEY,
+    domain_id VARCHAR(50) NULL,
     domain_free_text VARCHAR(255) NULL,
     company_name VARCHAR(255) NULL,
     salutation ENUM('Mr.', 'Ms.', 'Mrs.', 'Dr.') NULL,
@@ -850,14 +850,14 @@ CREATE TABLE IF NOT EXISTS dcr_entries (
     timestamp DATETIME NOT NULL,
     call_type ENUM('incoming', 'outgoing', 'follow-up') NOT NULL DEFAULT 'incoming',
     time_spent_minutes INT NOT NULL,
-    domain_id VARCHAR(15) NULL,
+    domain_id VARCHAR(50) NULL,
     domain_free_text VARCHAR(255) NULL,
     company_name VARCHAR(255) NULL,
     contact_name VARCHAR(255) NULL,
     contact_phone_country_code VARCHAR(5) NULL,
     contact_phone_number VARCHAR(15) NULL,
     contact_email VARCHAR(255) NULL,
-    contact_id VARCHAR(15) NULL,
+    contact_id VARCHAR(50) NULL,
     notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

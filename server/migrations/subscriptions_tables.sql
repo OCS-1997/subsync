@@ -1,6 +1,6 @@
 CREATE TABLE subscriptions (
-  sub_id VARCHAR(15) NOT NULL PRIMARY KEY,
-  customer_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL PRIMARY KEY,
+  customer_id VARCHAR(50) NOT NULL,
   domain_name VARCHAR(255),
   start_date DATETIME NOT NULL,
   end_date DATETIME NULL,
@@ -34,7 +34,7 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE IF NOT EXISTS subscription_items (
   item_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  sub_id VARCHAR(15) NOT NULL,
+  sub_id VARCHAR(50) NOT NULL,
   service_id INT NULL,
   service_name VARCHAR(255) NULL,
   quantity DECIMAL(10,2) NOT NULL DEFAULT 1.00,

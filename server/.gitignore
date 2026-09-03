@@ -18,3 +18,5 @@ uploads/*
 backups
 backups/*
 server_reqs.log
+
+scratch/*
