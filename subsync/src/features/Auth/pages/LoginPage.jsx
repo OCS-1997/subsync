@@ -51,7 +51,10 @@ function LoginPage() {
       }
       if (redirect) {
         const cleanRedirect = redirect.startsWith('/') ? redirect.slice(1) : redirect;
-        navigate(`/${user.username}/${cleanRedirect}`);
+        const targetPath = cleanRedirect.includes('dashboard')
+          ? cleanRedirect.replace(/^[^/]+\/dashboard/, 'dashboard')
+          : cleanRedirect;
+        navigate(`/${user.username}/${targetPath}`);
       } else {
         navigate(`/${user.username}/dashboard`);
       }

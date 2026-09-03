@@ -38,7 +38,12 @@ export const PermissionGate = ({ children, required, any, redirectTo = "/" }) =>
   // }
 
   if (!isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
+    const rawPath = location.pathname + location.search;
+    const cleanPath = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
+    const targetPath = cleanPath.includes('dashboard')
+      ? cleanPath.replace(/^[^/]+\/dashboard/, 'dashboard')
+      : cleanPath;
+    return <Navigate to={`/?redirect=${encodeURIComponent(targetPath)}`} replace />;
   }
 
   // Get the forbidden path based on current location

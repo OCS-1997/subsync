@@ -8,6 +8,7 @@ import { syncBirthdays } from '../models/birthdayModel.js';
 import { syncDirectory } from '../services/directoryService.js';
 import { sendAppraisalReminders } from '../services/appraisalService.js';
 import { sendDailyTaskDigestEmails } from '../services/taskDigestService.js';
+import { sendWeeklyTaskReportEmail } from '../services/weeklyTaskReportService.js';
 
 const WORKER_CONCURRENCY = parseInt(process.env.SCHEDULED_TASK_CONCURRENCY || '1', 10);
 
@@ -50,6 +51,9 @@ async function processScheduledTask(job) {
                 break;
             case 'daily_task_digest':
                 result = await sendDailyTaskDigestEmails();
+                break;
+            case 'weekly_task_report':
+                result = await sendWeeklyTaskReportEmail();
                 break;
             default:
                 throw new Error(`Unknown task name: ${taskName}`);

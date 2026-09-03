@@ -97,6 +97,15 @@ export async function syncScheduledTasks() {
             }
         );
 
+        // 10. Weekly Tasks Report for Admins (Every Saturday at 18:00 IST / 12:30 UTC)
+        await scheduledTasksQueue.add(
+            'weekly_task_report',
+            { taskName: 'weekly_task_report' },
+            {
+                repeat: { pattern: '30 12 * * 6', tz: 'UTC' }
+            }
+        );
+
         console.log('✅ All scheduled tasks synced to BullMQ');
     } catch (error) {
         console.error('❌ Error syncing scheduled tasks to BullMQ:', error);
