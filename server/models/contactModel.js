@@ -79,7 +79,7 @@ const getAllContacts = async ({ page = 1, limit = 20, search = '', username = nu
                 c.*,
                 d.domain_name
             FROM contacts c
-            LEFT JOIN domains d ON c.domain_id = d.domain_id
+            LEFT JOIN domains d ON c.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci
         `;
 
         const params = [];
@@ -188,7 +188,7 @@ const getContactById = async (contact_id) => {
                 c.*,
                 d.domain_name
             FROM contacts c
-            LEFT JOIN domains d ON c.domain_id = d.domain_id
+            LEFT JOIN domains d ON c.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci
             WHERE c.contact_id = ?
         `;
 

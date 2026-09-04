@@ -229,7 +229,7 @@ export async function getPhoneCallLogs({ page = 1, limit = 20, search = '', user
             de.contact_id as entity_id,
             de.contact_name, de.company_name, de.notes, de.created_at
          FROM dcr_entries de
-         LEFT JOIN users u ON de.user_id = u.username
+         LEFT JOIN users u ON de.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
          ${where}
          ORDER BY de.created_at DESC
          LIMIT ? OFFSET ?`,

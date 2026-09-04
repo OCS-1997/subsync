@@ -193,7 +193,7 @@ async function getDcrEntries({
         const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
         // Count query - Only JOIN domains if we're filtering by domain-related fields
-        const joinClause = whereClause.includes('d.') ? 'LEFT JOIN domains d ON de.domain_id = d.domain_id' : '';
+        const joinClause = whereClause.includes('d.') ? 'LEFT JOIN domains d ON de.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci' : '';
         const [[{ total }]] = await appDB.query(
             `SELECT COUNT(*) as total
              FROM dcr_entries de
@@ -241,8 +241,8 @@ async function getDcrEntries({
                 de.created_at,
                 de.updated_at
              FROM dcr_entries de
-             LEFT JOIN users u ON de.user_id = u.username
-             LEFT JOIN domains d ON de.domain_id = d.domain_id
+             LEFT JOIN users u ON de.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             LEFT JOIN domains d ON de.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci
              ${whereClause}
              ${orderByClause}
              LIMIT ? OFFSET ?`,
@@ -287,8 +287,8 @@ async function getDcrEntryById(id, user_id, isAdmin = false) {
                 de.created_at,
                 de.updated_at
              FROM dcr_entries de
-             LEFT JOIN users u ON de.user_id = u.username
-             LEFT JOIN domains d ON de.domain_id = d.domain_id
+             LEFT JOIN users u ON de.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             LEFT JOIN domains d ON de.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci
              WHERE de.id = ?`,
             [id]
         );
@@ -466,8 +466,8 @@ async function getDcrEntriesForDate(date) {
                 de.contact_email,
                 de.notes
              FROM dcr_entries de
-             LEFT JOIN users u ON de.user_id = u.username
-             LEFT JOIN domains d ON de.domain_id = d.domain_id
+             LEFT JOIN users u ON de.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             LEFT JOIN domains d ON de.domain_id COLLATE utf8mb4_unicode_ci = d.domain_id COLLATE utf8mb4_unicode_ci
              WHERE de.timestamp >= ? AND de.timestamp <= ?
              ORDER BY de.timestamp ASC`,
             [formatDateTime(startOfDay), formatDateTime(endOfDay)]
