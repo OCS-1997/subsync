@@ -156,7 +156,7 @@ export const getAllOpportunities = async ({
     const countQuery = `
         SELECT COUNT(*) as total 
         FROM opportunities o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id COLLATE utf8mb4_unicode_ci = c.customer_id COLLATE utf8mb4_unicode_ci
         ${whereSql}
     `;
     // We use .query here as well for consistency
@@ -173,9 +173,9 @@ export const getAllOpportunities = async ({
                s.status_color, 
                u.name as owner_name
         FROM opportunities o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id COLLATE utf8mb4_unicode_ci = c.customer_id COLLATE utf8mb4_unicode_ci
         JOIN opportunity_statuses s ON o.status_id = s.id
-        LEFT JOIN users u ON o.owner = u.username
+        LEFT JOIN users u ON o.owner COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
         ${whereSql}
         ORDER BY ${finalSort} ${finalOrder}
         ${isAll ? "" : "LIMIT ? OFFSET ?"}
@@ -221,9 +221,9 @@ export const getOpportunityById = async (opportunityId) => {
                s.status_color, 
                u.name as owner_name
         FROM opportunities o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        LEFT JOIN customers c ON o.customer_id COLLATE utf8mb4_unicode_ci = c.customer_id COLLATE utf8mb4_unicode_ci
         JOIN opportunity_statuses s ON o.status_id = s.id
-        LEFT JOIN users u ON o.owner = u.username
+        LEFT JOIN users u ON o.owner COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
         WHERE o.opportunity_id = ? AND o.is_deleted = 0
     `;
     const [rows] = await appDB.execute(query, [opportunityId]);

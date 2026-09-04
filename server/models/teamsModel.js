@@ -69,7 +69,7 @@ async function getAllTeams(includeInactive = false) {
                 t.*,
                 u.name as team_lead_name
              FROM teams t
-             LEFT JOIN users u ON t.team_lead_username = u.username
+             LEFT JOIN users u ON t.team_lead_username COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
              ${whereClause}
              ORDER BY t.team_name ASC`
         );
@@ -82,7 +82,7 @@ async function getAllTeams(includeInactive = false) {
                 u.name as user_name,
                 u.email
              FROM user_teams ut
-             JOIN users u ON ut.user_id = u.username
+             JOIN users u ON ut.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
              ORDER BY u.name ASC`
         );
 
@@ -112,7 +112,7 @@ async function getTeamById(teamId) {
                 t.*,
                 u.name as team_lead_name
              FROM teams t
-             LEFT JOIN users u ON t.team_lead_username = u.username
+             LEFT JOIN users u ON t.team_lead_username COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
              WHERE t.id = ?`,
             [teamId]
         );
@@ -129,8 +129,8 @@ async function getTeamById(teamId) {
                 ut.assigned_by,
                 assigner.name as assigned_by_name
              FROM user_teams ut
-             JOIN users u ON ut.user_id = u.username
-             LEFT JOIN users assigner ON ut.assigned_by = assigner.username
+             JOIN users u ON ut.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             LEFT JOIN users assigner ON ut.assigned_by COLLATE utf8mb4_unicode_ci = assigner.username COLLATE utf8mb4_unicode_ci
              WHERE ut.team_id = ?
              ORDER BY u.name ASC`,
             [teamId]
@@ -299,8 +299,8 @@ async function getUserTeams(userId) {
                 u.name as team_lead_name
              FROM teams t
              LEFT JOIN user_teams ut ON t.id = ut.team_id
-             LEFT JOIN users u ON t.team_lead_username = u.username
-             WHERE (ut.user_id = ? OR t.team_lead_username = ?)
+             LEFT JOIN users u ON t.team_lead_username COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             WHERE (ut.user_id COLLATE utf8mb4_unicode_ci = ? OR t.team_lead_username COLLATE utf8mb4_unicode_ci = ?)
              ORDER BY t.team_name ASC`,
             [userId, userId]
         );
@@ -316,7 +316,7 @@ async function getUserTeams(userId) {
                 u.name as user_name,
                 u.email
              FROM user_teams ut
-             JOIN users u ON ut.user_id = u.username
+             JOIN users u ON ut.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
              WHERE ut.team_id IN (?)
              ORDER BY u.name ASC`,
             [teamIds]
@@ -350,8 +350,8 @@ async function getTeamMembers(teamId) {
                 ut.assigned_by,
                 assigner.name as assigned_by_name
              FROM user_teams ut
-             JOIN users u ON ut.user_id = u.username
-             LEFT JOIN users assigner ON ut.assigned_by = assigner.username
+             JOIN users u ON ut.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+             LEFT JOIN users assigner ON ut.assigned_by COLLATE utf8mb4_unicode_ci = assigner.username COLLATE utf8mb4_unicode_ci
              WHERE ut.team_id = ?
              ORDER BY u.name ASC`,
             [teamId]

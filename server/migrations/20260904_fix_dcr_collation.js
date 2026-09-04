@@ -2,7 +2,7 @@ import appDB from '../db/subsyncDB.js';
 import { pathToFileURL } from 'url';
 
 /**
- * Migration: Fix collation mismatch between dcr_entries, users, contacts, and domains
+ * Migration: Convert ALL database tables to utf8mb4_unicode_ci to eliminate all collation mismatch errors
  */
 
 async function up() {
@@ -10,20 +10,27 @@ async function up() {
         console.log('Fixing database table collations to utf8mb4_unicode_ci...');
         await appDB.query('SET FOREIGN_KEY_CHECKS = 0');
         
-        await appDB.query('ALTER TABLE dcr_entries CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        console.log('Converted dcr_entries to utf8mb4_unicode_ci');
+        // Get current database name
+        const [[{ dbName }]] = await appDB.query('SELECT DATABASE() as dbName');
+        if (dbName) {
+            await appDB.query(`ALTER DATABASE \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+            console.log(`Updated database ${dbName} default collation to utf8mb4_unicode_ci`);
+        }
 
-        await appDB.query('ALTER TABLE contacts CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        console.log('Converted contacts to utf8mb4_unicode_ci');
-
-        await appDB.query('ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        console.log('Converted users to utf8mb4_unicode_ci');
-
-        await appDB.query('ALTER TABLE domains CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-        console.log('Converted domains to utf8mb4_unicode_ci');
+        // Get all tables in database and convert each
+        const [tables] = await appDB.query('SHOW TABLES');
+        for (const row of tables) {
+            const tableName = Object.values(row)[0];
+            try {
+                await appDB.query(`ALTER TABLE \`${tableName}\` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+                console.log(`Converted table ${tableName} to utf8mb4_unicode_ci`);
+            } catch (err) {
+                console.warn(`Failed to convert table ${tableName}:`, err.message);
+            }
+        }
 
         await appDB.query('SET FOREIGN_KEY_CHECKS = 1');
-        console.log('✅ Table collations standardized successfully!');
+        console.log('✅ ALL database table collations standardized to utf8mb4_unicode_ci successfully!');
     } catch (error) {
         console.error('❌ Error fixing collations:', error);
         throw error;
