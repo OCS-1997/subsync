@@ -312,6 +312,8 @@ import {
     triggerTestEmail,
     triggerDcrReport,
     triggerTimeTrackingReport,
+    triggerWeeklyProductHoursReport,
+    triggerMonthlyProductHoursReport,
     getSystemInfo
 } from '../controllers/developerController.js';
 
@@ -485,6 +487,8 @@ router.get('/activity-logs', isAuthenticated, authorize(PERMISSIONS.ACTIVITY_LOG
 router.post('/admin/dev/test-email', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerTestEmail);
 router.post('/admin/dev/trigger-dcr', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerDcrReport);
 router.post('/admin/dev/trigger-time-tracking', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerTimeTrackingReport);
+router.post('/admin/dev/trigger-weekly-product-hours', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerWeeklyProductHoursReport);
+router.post('/admin/dev/trigger-monthly-product-hours', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), triggerMonthlyProductHoursReport);
 router.get('/admin/dev/system-info', isAuthenticated, authorize(PERMISSIONS.DEVELOPER_CONTROLS), getSystemInfo);
 
 // RBAC Management

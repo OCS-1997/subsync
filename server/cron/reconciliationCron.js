@@ -106,6 +106,24 @@ export async function syncScheduledTasks() {
             }
         );
 
+        // 11. Weekly Product Hours Report for Team Members (Every Saturday at 18:30 IST / 13:00 UTC)
+        await scheduledTasksQueue.add(
+            'weekly_product_hours_report',
+            { taskName: 'weekly_product_hours_report' },
+            {
+                repeat: { pattern: '0 13 * * 6', tz: 'UTC' }
+            }
+        );
+
+        // 12. Monthly Product Hours Report for Team Members & Admins (1st of every month at 19:00 IST / 13:30 UTC)
+        await scheduledTasksQueue.add(
+            'monthly_product_hours_report',
+            { taskName: 'monthly_product_hours_report' },
+            {
+                repeat: { pattern: '30 13 1 * *', tz: 'UTC' }
+            }
+        );
+
         console.log('✅ All scheduled tasks synced to BullMQ');
     } catch (error) {
         console.error('❌ Error syncing scheduled tasks to BullMQ:', error);

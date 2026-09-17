@@ -2,6 +2,8 @@ import { sendEmail } from "../services/emailService.js";
 import { getUserByUsername } from "../models/userModel.js";
 import { sendDailyDcrReportEmail } from "../services/dcrService.js";
 import { sendUserDailyTimeTrackingReport } from "../services/timeTrackingReportService.js";
+import { sendWeeklyProductHoursReportEmail } from "../services/weeklyProductHoursReportService.js";
+import { sendMonthlyProductHoursReports } from "../services/monthlyProductHoursReportService.js";
 import appDB from "../db/subsyncDB.js";
 import { logActivity } from "../models/activityLogModel.js";
 
@@ -212,3 +214,65 @@ export const getSystemInfo = async (req, res) => {
         res.status(500).json({ success: false, message: "Error gathering system info", error: error.message });
     }
 };
+
+/**
+ * Trigger Weekly & Month Consolidated Product Hours Report to Team Members
+ */
+export const triggerWeeklyProductHoursReport = async (req, res) => {
+    try {
+        const { date } = req.body || {};
+        const targetDate = date ? new Date(date) : new Date();
+
+        const result = await sendWeeklyProductHoursReportEmail(targetDate);
+
+        await logActivity({
+            username: req.user?.username || 'system',
+            action: 'TRIGGER_WEEKLY_PRODUCT_HOURS_REPORT',
+            resourceType: 'DeveloperControl',
+            resourceId: 'weekly_product_hours_report',
+            ipAddress: req.user?.ip || req.ip,
+            details: { targetDate, recipientsCount: result.recipients?.length }
+        });
+
+        res.json({
+            success: true,
+            message: `Consolidated Product Hours Report triggered successfully to ${result.recipients?.length || 0} team members.`,
+            data: result
+        });
+    } catch (error) {
+        console.error("Error triggering weekly product hours report:", error);
+        res.status(500).json({ success: false, message: error.message || "Failed to trigger report" });
+    }
+};
+
+/**
+ * Trigger Monthly Productive Hours Report to Team Members and Admins
+ */
+export const triggerMonthlyProductHoursReport = async (req, res) => {
+    try {
+        const { date } = req.body || {};
+        const targetDate = date ? new Date(date) : new Date();
+
+        const result = await sendMonthlyProductHoursReports(targetDate);
+
+        await logActivity({
+            username: req.user?.username || 'system',
+            action: 'TRIGGER_MONTHLY_PRODUCT_HOURS_REPORT',
+            resourceType: 'DeveloperControl',
+            resourceId: 'monthly_product_hours_report',
+            ipAddress: req.user?.ip || req.ip,
+            details: { targetDate, memberRecipients: result.memberRecipients?.length, adminRecipients: result.adminRecipients?.length }
+        });
+
+        res.json({
+            success: true,
+            message: `Monthly Productive Hours Report triggered successfully to ${result.memberRecipients?.length || 0} team members and ${result.adminRecipients?.length || 0} admins.`,
+            data: result
+        });
+    } catch (error) {
+        console.error("Error triggering monthly product hours report:", error);
+        res.status(500).json({ success: false, message: error.message || "Failed to trigger report" });
+    }
+};
+
+

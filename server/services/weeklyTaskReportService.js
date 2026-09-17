@@ -50,6 +50,51 @@ export function getMonSatDateRange(referenceDate = new Date()) {
 }
 
 /**
+ * Calculate the 4 weekly buckets for the month of referenceDate
+ * @param {Date} [referenceDate] 
+ * @returns {{ monthName: string, year: number, weeks: Array<{ label: string, periodStr: string, startDate: Date, endDate: Date }> }}
+ */
+export function getMonthWeeklyBuckets(referenceDate = new Date()) {
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const refIST = new Date(referenceDate.getTime() + IST_OFFSET_MS);
+
+    const year = refIST.getUTCFullYear();
+    const month = refIST.getUTCMonth(); // 0-indexed
+    const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const monthName = refIST.toLocaleDateString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
+    const shortMonth = refIST.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' });
+
+    // 4 non-overlapping, contiguous weekly buckets spanning the entire month:
+    // Week 1: Day 1 - 7
+    // Week 2: Day 8 - 14
+    // Week 3: Day 15 - 21
+    // Week 4: Day 22 - End of Month (e.g. 30 or 31)
+    const buckets = [
+        { label: 'WEEK 1', startDay: 1, endDay: 7 },
+        { label: 'WEEK 2', startDay: 8, endDay: 14 },
+        { label: 'WEEK 3', startDay: 15, endDay: 21 },
+        { label: 'WEEK 4', startDay: 22, endDay: lastDayOfMonth }
+    ];
+
+    const weeks = buckets.map(b => {
+        const startDate = new Date(Date.UTC(year, month, b.startDay, 0, 0, 0, 0) - IST_OFFSET_MS);
+        const endDate = new Date(Date.UTC(year, month, b.endDay, 23, 59, 59, 999) - IST_OFFSET_MS);
+        return {
+            label: b.label,
+            periodStr: `${b.startDay} &ndash; ${b.endDay} ${shortMonth}`,
+            startDate,
+            endDate
+        };
+    });
+
+    return {
+        monthName,
+        year,
+        weeks
+    };
+}
+
+/**
  * Priority badge helper for HTML email
  */
 function getPriorityBadgeHtml(priority) {
@@ -196,7 +241,67 @@ export async function sendWeeklyTaskReportEmail(referenceDate = new Date()) {
     console.log(`[WeeklyTaskReport] Recipients: ${recipientEmails.join(', ')}`);
 
     try {
-        // 1. Executive Summary Metrics
+        // 0. Monthly Status Breakdown (Week 1 to Week 4)
+        const monthConfig = getMonthWeeklyBuckets(referenceDate);
+        const monthWeeklyBreakdown = [];
+        let monthTotalCreated = 0;
+        let monthTotalCompleted = 0;
+        let monthTotalOverdue = 0;
+
+        for (const w of monthConfig.weeks) {
+            const [[wCreated]] = await appDB.query(
+                `SELECT COUNT(*) as count FROM tasks WHERE created_at >= ? AND created_at <= ?`,
+                [w.startDate, w.endDate]
+            );
+            const [[wCompleted]] = await appDB.query(
+                `SELECT COUNT(*) as count FROM tasks WHERE status = 'COMPLETED' AND updated_at >= ? AND updated_at <= ?`,
+                [w.startDate, w.endDate]
+            );
+            const [[wOverdue]] = await appDB.query(
+                `SELECT COUNT(*) as count FROM tasks 
+                 WHERE status NOT IN ('COMPLETED', 'CANCELLED') 
+                   AND due_date IS NOT NULL 
+                   AND DATE(due_date) < CURDATE() 
+                   AND created_at >= ? AND created_at <= ?`,
+                [w.startDate, w.endDate]
+            );
+
+            const c = Number(wCreated?.count || 0);
+            const comp = Number(wCompleted?.count || 0);
+            const ov = Number(wOverdue?.count || 0);
+            const net = c - comp;
+
+            monthTotalCreated += c;
+            monthTotalCompleted += comp;
+            monthTotalOverdue += ov;
+
+            monthWeeklyBreakdown.push({
+                label: w.label,
+                periodStr: w.periodStr,
+                created: c,
+                completed: comp,
+                overdue: ov,
+                netChange: net,
+                velocity: c > 0 ? Math.round((comp / c) * 100) : (comp > 0 ? 100 : 0)
+            });
+        }
+
+        const monthVelocity = monthTotalCreated > 0
+            ? Math.round((monthTotalCompleted / monthTotalCreated) * 100)
+            : (monthTotalCompleted > 0 ? 100 : 0);
+
+        const monthSummary = {
+            monthName: monthConfig.monthName,
+            year: monthConfig.year,
+            weeks: monthWeeklyBreakdown,
+            totalCreated: monthTotalCreated,
+            totalCompleted: monthTotalCompleted,
+            totalOverdue: monthTotalOverdue,
+            totalNetChange: monthTotalCreated - monthTotalCompleted,
+            velocity: monthVelocity
+        };
+
+        // 1. Executive Summary Metrics (Current Mon-Sat Cycle)
         const [[createdRow]] = await appDB.query(
             `SELECT COUNT(*) as count FROM tasks WHERE created_at >= ? AND created_at <= ?`,
             [startDate, endDate]
@@ -228,11 +333,12 @@ export async function sendWeeklyTaskReportEmail(referenceDate = new Date()) {
         const weeklyVelocity = createdThisWeek > 0 ? Math.round((completedThisWeek / createdThisWeek) * 100) : (completedThisWeek > 0 ? 100 : 0);
 
         // 2. Team Member Productivity & Workload Table
+        // Total Active strictly equals (In Progress + Todo + Blocked)
         const [assigneeRows] = await appDB.query(
             `SELECT 
                 t.assigned_to AS username,
                 COALESCE(u.name, t.assigned_to) AS name,
-                COUNT(t.id) AS total_assigned,
+                SUM(CASE WHEN t.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS total_active,
                 SUM(CASE WHEN t.status = 'COMPLETED' AND t.updated_at >= ? AND t.updated_at <= ? THEN 1 ELSE 0 END) AS completed_this_week,
                 SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) AS in_progress_count,
                 SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END) AS todo_count,
@@ -242,7 +348,8 @@ export async function sendWeeklyTaskReportEmail(referenceDate = new Date()) {
              LEFT JOIN users u ON t.assigned_to = u.username
              WHERE t.assigned_to IS NOT NULL AND TRIM(t.assigned_to) != ''
              GROUP BY t.assigned_to, u.name
-             ORDER BY completed_this_week DESC, total_assigned DESC
+             HAVING total_active > 0 OR completed_this_week > 0
+             ORDER BY completed_this_week DESC, total_active DESC
              LIMIT 20`,
             [startDate, endDate]
         );
@@ -295,8 +402,11 @@ export async function sendWeeklyTaskReportEmail(referenceDate = new Date()) {
         );
 
         const baseUrl = getFrontendAppUrl();
-        const subject = `[Admin Report] Consolidated Weekly Tasks Summary (${startDateStr} - ${endDateStr})`;
+        const subject = `[Admin Report] Consolidated Tasks Summary (${monthSummary.monthName} & Week of ${startDateStr} - ${endDateStr})`;
         let lastProviderId = null;
+
+        const currentDayOfMonth = new Date(referenceDate.getTime() + 5.5 * 60 * 60 * 1000).getUTCDate();
+        const currentWeekNum = currentDayOfMonth <= 7 ? 1 : (currentDayOfMonth <= 14 ? 2 : (currentDayOfMonth <= 21 ? 3 : 4));
 
         // Send customized email to each admin with their dynamic username CTA link
         for (const adminUser of adminUsers) {
@@ -306,6 +416,8 @@ export async function sendWeeklyTaskReportEmail(referenceDate = new Date()) {
             const html = generateWeeklyReportHtml({
                 startDateStr,
                 endDateStr,
+                currentWeekNum,
+                monthSummary,
                 createdThisWeek,
                 completedThisWeek,
                 totalActiveTasks,
@@ -356,6 +468,8 @@ function generateWeeklyReportHtml(data) {
     const {
         startDateStr,
         endDateStr,
+        currentWeekNum,
+        monthSummary,
         createdThisWeek,
         completedThisWeek,
         totalActiveTasks,
@@ -371,13 +485,15 @@ function generateWeeklyReportHtml(data) {
         ctaUrl
     } = data;
 
+    const monthTitle = monthSummary?.monthName || 'Month Overview';
+
     return `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consolidated Weekly Tasks Report</title>
+    <title>Consolidated Tasks Report - ${monthTitle}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; color: #1e293b;">
 
@@ -393,18 +509,18 @@ function generateWeeklyReportHtml(data) {
                             <tr>
                                 <td>
                                     <span style="display: inline-block; padding: 4px 12px; background-color: rgba(255, 255, 255, 0.15); color: #e0e7ff; font-size: 11px; font-weight: 700; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                                        Subsync Weekly Admin Digest
+                                        Subsync Executive Digest
                                     </span>
                                     <h1 style="margin: 4px 0 0 0; color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">
-                                        Consolidated Tasks Report
+                                        Consolidated Tasks Summary
                                     </h1>
                                     <p style="margin: 6px 0 0 0; color: #c7d2fe; font-size: 14px; font-weight: 400;">
-                                        Weekly Performance & Workload Overview (${startDateStr} &ndash; ${endDateStr})
+                                        ${monthTitle} Progression &amp; Current Week (${startDateStr} &ndash; ${endDateStr})
                                     </p>
                                 </td>
                                 <td align="right" valign="top" style="width: 120px;">
                                     <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; text-align: center;">
-                                        <span style="display: block; color: #818cf8; font-size: 10px; font-weight: 700; text-transform: uppercase;">Resolution Rate</span>
+                                        <span style="display: block; color: #818cf8; font-size: 10px; font-weight: 700; text-transform: uppercase;">Week Resolution</span>
                                         <span style="display: block; color: #ffffff; font-size: 20px; font-weight: 800; margin-top: 2px;">${weeklyVelocity}%</span>
                                     </div>
                                 </td>
@@ -417,146 +533,143 @@ function generateWeeklyReportHtml(data) {
                 <tr>
                     <td style="padding: 32px 36px;">
 
-                        <!-- KPI SUMMARY CARDS GRID -->
-                        <h2 style="font-size: 15px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0;">
-                            Executive Overview (Mon &ndash; Sat)
-                        </h2>
-                        
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
-                            <tr>
-                                <td width="32%" valign="top" style="padding-right: 10px;">
-                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 16px;">
-                                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Created This Week</span>
-                                        <span style="display: block; font-size: 26px; font-weight: 800; color: #1e293b; margin-top: 4px;">${createdThisWeek}</span>
-                                        <span style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">New tasks assigned</span>
-                                    </div>
-                                </td>
-                                <td width="32%" valign="top" style="padding: 0 5px;">
-                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #22c55e; border-radius: 8px; padding: 16px;">
-                                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Completed Mon-Sat</span>
-                                        <span style="display: block; font-size: 26px; font-weight: 800; color: #15803d; margin-top: 4px;">${completedThisWeek}</span>
-                                        <span style="display: block; font-size: 11px; color: #15803d; margin-top: 4px;">Tasks resolved</span>
-                                    </div>
-                                </td>
-                                <td width="32%" valign="top" style="padding-left: 10px;">
-                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444; border-radius: 8px; padding: 16px;">
-                                        <span style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Currently Overdue</span>
-                                        <span style="display: block; font-size: 26px; font-weight: 800; color: #b91c1c; margin-top: 4px;">${overdueTasksCount}</span>
-                                        <span style="display: block; font-size: 11px; color: #b91c1c; margin-top: 4px;">Requires attention</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- SECONDARY METRICS BAR -->
-                        <div style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 20px; margin-bottom: 32px; border: 1px solid #e2e8f0;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <!-- ============================================== -->
+                        <!-- 1) MONTH [MONTHNAME] -->
+                        <!-- ============================================== -->
+                        <div style="margin-bottom: 36px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 12px;">
                                 <tr>
-                                    <td align="center" style="border-right: 1px solid #cbd5e1;">
-                                        <span style="display: block; font-size: 11px; color: #64748b; font-weight: 600;">Active Backlog</span>
-                                        <span style="font-size: 16px; font-weight: 700; color: #0f172a;">${totalActiveTasks} tasks</span>
-                                    </td>
-                                    <td align="center" style="border-right: 1px solid #cbd5e1;">
-                                        <span style="display: block; font-size: 11px; color: #64748b; font-weight: 600;">In Progress</span>
-                                        <span style="font-size: 16px; font-weight: 700; color: #4338ca;">${inProgressCount} tasks</span>
-                                    </td>
-                                    <td align="center">
-                                        <span style="display: block; font-size: 11px; color: #64748b; font-weight: 600;">Blocked Tasks</span>
-                                        <span style="font-size: 16px; font-weight: 700; color: ${blockedTasksCount > 0 ? '#b91c1c' : '#059669'};">${blockedTasksCount} tasks</span>
+                                    <td>
+                                        <h2 style="font-size: 16px; font-weight: 800; color: #1e1b4b; margin: 0;">
+                                            1) Month ${monthTitle}
+                                        </h2>
+                                        <p style="margin: 6px 0 0 0; font-size: 13px; font-weight: 700; color: #334155;">
+                                            Status for the month
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
+
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                        <th style="padding: 11px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Week</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Period</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Created</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Completed</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Overdue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${monthSummary && monthSummary.weeks ? monthSummary.weeks.map((w, idx) => {
+                                        const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                                        return `
+                                        <tr style="background-color: ${bg}; border-bottom: 1px solid #f1f5f9;">
+                                            <td style="padding: 10px 12px; font-size: 12px; font-weight: 700; color: #1e293b;">
+                                                ${w.label}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; color: #64748b;">
+                                                ${w.periodStr}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 700; color: #1e293b;">
+                                                ${w.created}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 700; color: #15803d;">
+                                                ${w.completed}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 700; color: ${w.overdue > 0 ? '#b91c1c' : '#94a3b8'};">
+                                                ${w.overdue > 0 ? `<span style="display: inline-block; padding: 2px 7px; background-color: #fee2e2; border-radius: 6px; color: #b91c1c;">${w.overdue}</span>` : '0'}
+                                            </td>
+                                        </tr>
+                                        `;
+                                    }).join('') : ''}
+                                    <tr style="background-color: #f1f5f9; border-top: 2px solid #cbd5e1; font-weight: 800;">
+                                        <td colspan="2" style="padding: 11px 12px; font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase;">
+                                            Total Month (${monthTitle})
+                                        </td>
+                                        <td style="padding: 11px 12px; text-align: center; font-size: 13px; font-weight: 800; color: #1e293b;">
+                                            ${monthSummary?.totalCreated ?? 0}
+                                        </td>
+                                        <td style="padding: 11px 12px; text-align: center; font-size: 13px; font-weight: 800; color: #15803d;">
+                                            ${monthSummary?.totalCompleted ?? 0}
+                                        </td>
+                                        <td style="padding: 11px 12px; text-align: center; font-size: 13px; font-weight: 800; color: ${(monthSummary?.totalOverdue ?? 0) > 0 ? '#b91c1c' : '#64748b'};">
+                                            ${monthSummary?.totalOverdue ?? 0}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <!-- PRIORITY DISTRIBUTION -->
-                        <h2 style="font-size: 15px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 14px 0;">
-                            Open Backlog Priority Breakdown
-                        </h2>
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px;">
-                            <tr>
-                                <td width="25%" style="padding-right: 6px;">
-                                    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 10px; text-align: center;">
-                                        <span style="display: block; font-size: 10px; font-weight: 700; color: #9f1239;">URGENT</span>
-                                        <span style="font-size: 18px; font-weight: 800; color: #be123c;">${priorityMap.URGENT}</span>
-                                    </div>
-                                </td>
-                                <td width="25%" style="padding: 0 3px;">
-                                    <div style="background-color: #fff7ed; border: 1px solid #ffedd5; border-radius: 6px; padding: 10px; text-align: center;">
-                                        <span style="display: block; font-size: 10px; font-weight: 700; color: #9a3412;">HIGH</span>
-                                        <span style="font-size: 18px; font-weight: 800; color: #c2410c;">${priorityMap.HIGH}</span>
-                                    </div>
-                                </td>
-                                <td width="25%" style="padding: 0 3px;">
-                                    <div style="background-color: #eff6ff; border: 1px solid #dbeafe; border-radius: 6px; padding: 10px; text-align: center;">
-                                        <span style="display: block; font-size: 10px; font-weight: 700; color: #1e40af;">MEDIUM</span>
-                                        <span style="font-size: 18px; font-weight: 800; color: #1d4ed8;">${priorityMap.MEDIUM}</span>
-                                    </div>
-                                </td>
-                                <td width="25%" style="padding-left: 6px;">
-                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: center;">
-                                        <span style="display: block; font-size: 10px; font-weight: 700; color: #475569;">LOW</span>
-                                        <span style="font-size: 18px; font-weight: 800; color: #334155;">${priorityMap.LOW}</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
+                        <!-- ============================================== -->
+                        <!-- 2) WEEK [X] -->
+                        <!-- ============================================== -->
+                        <div style="margin-bottom: 36px;">
+                            <h2 style="font-size: 15px; font-weight: 800; color: #1e1b4b; margin: 0 0 6px 0;">
+                                2) Week ${currentWeekNum} (Created: ${createdThisWeek}, Completed: ${completedThisWeek}, Overdue: ${overdueTasksCount})
+                            </h2>
+                            <h3 style="font-size: 13px; font-weight: 800; color: #312e81; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0;">
+                                TEAM MEMBER WORKLOAD &amp; WEEKLY COMPLETION
+                            </h3>
 
-                        <!-- TEAM PRODUCTIVITY & WORKLOAD TABLE -->
-                        <h2 style="font-size: 15px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 14px 0;">
-                            Team Member Workload & Weekly Completion
-                        </h2>
-
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 32px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                            <thead>
-                                <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                                    <th style="padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Team Member</th>
-                                    <th style="padding: 12px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Done (Mon-Sat)</th>
-                                    <th style="padding: 12px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">In Progress</th>
-                                    <th style="padding: 12px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Overdue</th>
-                                    <th style="padding: 12px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">Total Active</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${assigneeRows && assigneeRows.length > 0 ? assigneeRows.map((row, idx) => {
-                                    const bgClass = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-                                    return `
-                                    <tr style="background-color: ${bgClass}; border-bottom: 1px solid #f1f5f9;">
-                                        <td style="padding: 12px 14px; font-size: 13px; font-weight: 600; color: #0f172a;">
-                                            ${row.name || row.username}
-                                            <span style="display: block; font-size: 11px; color: #64748b; font-weight: 400;">@${row.username}</span>
-                                        </td>
-                                        <td style="padding: 12px 14px; text-align: center; font-size: 13px; font-weight: 700; color: #15803d;">
-                                            ${row.completed_this_week}
-                                        </td>
-                                        <td style="padding: 12px 14px; text-align: center; font-size: 13px; font-weight: 600; color: #4338ca;">
-                                            ${row.in_progress_count}
-                                        </td>
-                                        <td style="padding: 12px 14px; text-align: center; font-size: 13px; font-weight: 700; color: ${row.overdue_count > 0 ? '#b91c1c' : '#94a3b8'};">
-                                            ${row.overdue_count}
-                                        </td>
-                                        <td style="padding: 12px 14px; text-align: center; font-size: 13px; font-weight: 600; color: #334155;">
-                                            ${row.total_assigned}
-                                        </td>
+                            <!-- TEAM WORKLOAD TABLE -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                        <th style="padding: 11px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">TEAM MEMBER</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">DONE (MON-SAT)</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">IN PROGRESS</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">OVERDUE</th>
+                                        <th style="padding: 11px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">TOTAL ACTIVE</th>
                                     </tr>
-                                    `;
-                                }).join('') : `
-                                    <tr>
-                                        <td colspan="5" style="padding: 20px; text-align: center; color: #94a3b8; font-size: 13px;">No task assignments found for this period.</td>
-                                    </tr>
-                                `}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${assigneeRows && assigneeRows.length > 0 ? assigneeRows.map((row, idx) => {
+                                        const bgClass = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                                        return `
+                                        <tr style="background-color: ${bgClass}; border-bottom: 1px solid #f1f5f9;">
+                                            <td style="padding: 10px 12px; font-size: 12px; font-weight: 600; color: #0f172a;">
+                                                ${row.name || row.username}
+                                                <span style="display: block; font-size: 10px; color: #64748b; font-weight: 400;">@${row.username}</span>
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 700; color: #15803d;">
+                                                ${row.completed_this_week}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 600; color: #4338ca;">
+                                                ${row.in_progress_count}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 700; color: ${row.overdue_count > 0 ? '#b91c1c' : '#94a3b8'};">
+                                                ${row.overdue_count > 0 ? `<span style="display: inline-block; padding: 2px 7px; background-color: #fee2e2; border-radius: 6px; color: #b91c1c;">${row.overdue_count}</span>` : '0'}
+                                            </td>
+                                            <td style="padding: 10px 12px; text-align: center; font-size: 12px; font-weight: 800; color: #0f172a;">
+                                                ${row.total_active}
+                                            </td>
+                                        </tr>
+                                        `;
+                                    }).join('') : `
+                                        <tr>
+                                            <td colspan="5" style="padding: 18px; text-align: center; color: #94a3b8; font-size: 12px;">No task assignments found for this period.</td>
+                                        </tr>
+                                    `}
+                                </tbody>
+                            </table>
+                            <p style="margin: 6px 0 0 0; font-size: 11px; color: #64748b; font-style: italic;">
+                                * Mathematical Check: <strong>Total Active = In Progress + Pending / Todo + Blocked</strong>. Overdue indicates tasks within active backlog past their deadline.
+                            </p>
+                        </div>
 
-                        <!-- BOTTLENECK & CRITICAL ACTION ITEMS -->
+                        <!-- ============================================== -->
+                        <!-- 3) ACTION NEEDED & CRITICAL BOTTLENECKS -->
+                        <!-- ============================================== -->
                         ${(blockedTasks.length > 0 || urgentOverdueTasks.length > 0 || stagnantTasks.length > 0) ? `
                             <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
-                                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #9f1239; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    ⚠️ Action Needed & Critical Bottlenecks
-                                </h3>
+                                <h2 style="margin: 0 0 14px 0; font-size: 14px; font-weight: 800; color: #9f1239; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    3) ACTION NEEDED &amp; CRITICAL BOTTLENECKS
+                                </h2>
 
                                 ${blockedTasks.length > 0 ? `
                                     <div style="margin-bottom: 14px;">
-                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">Blocked Tasks (${blockedTasks.length})</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">🚫 Blocked Tasks (${blockedTasks.length})</span>
                                         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">
                                             ${blockedTasks.map(t => `
                                                 <li style="margin-bottom: 4px;">
@@ -569,7 +682,7 @@ function generateWeeklyReportHtml(data) {
 
                                 ${urgentOverdueTasks.length > 0 ? `
                                     <div style="margin-bottom: 14px;">
-                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">Overdue Urgent / High Priority Tasks (${urgentOverdueTasks.length})</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">⏰ Overdue Urgent &amp; High Priority Tasks (${urgentOverdueTasks.length})</span>
                                         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">
                                             ${urgentOverdueTasks.map(t => `
                                                 <li style="margin-bottom: 4px;">
@@ -582,7 +695,7 @@ function generateWeeklyReportHtml(data) {
 
                                 ${stagnantTasks.length > 0 ? `
                                     <div>
-                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">Stagnant Tasks (No activity > 5 days)</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: #be123c; display: block; margin-bottom: 6px;">💤 Stagnant Tasks (No activity &gt; 5 days)</span>
                                         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #475569;">
                                             ${stagnantTasks.map(t => `
                                                 <li style="margin-bottom: 4px;">
@@ -593,7 +706,13 @@ function generateWeeklyReportHtml(data) {
                                     </div>
                                 ` : ''}
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 32px; text-align: center;">
+                                <span style="font-size: 13px; font-weight: 700; color: #15803d;">
+                                    ✅ No critical bottlenecks or blocked tasks detected. Operations are progressing on schedule!
+                                </span>
+                            </div>
+                        `}
 
                         <!-- CALL TO ACTION BUTTON -->
                         <table border="0" cellpadding="0" cellspacing="0" width="100%">

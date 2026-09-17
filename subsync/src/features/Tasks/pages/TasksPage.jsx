@@ -55,7 +55,7 @@ export default function TasksPage() {
 
   const [viewMode, setViewMode] = useState('my_tasks'); // 'my_tasks' | 'assigned_by_me' | 'management'
   const [activeTab, setActiveTab] = useState('ALL'); // ALL, TODAY, UPCOMING, OVERDUE, COMPLETED
-  const [layoutMode, setLayoutMode] = useState('kanban'); // 'kanban' | 'grid' | 'list'
+  const [layoutMode, setLayoutMode] = useState('list'); // Default to list view ('list' | 'kanban' | 'grid')
 
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -104,16 +104,14 @@ export default function TasksPage() {
     }
   }, [dispatch]);
 
-  // Load Manageable Users for filter
+  // Load Manageable Users for filter (available to all users for Assigned by Me & Management views)
   useEffect(() => {
-    if (canManage) {
-      taskService.getManageableUsers()
-        .then((res) => {
-          if (res.success) setManageableUsers(res.data);
-        })
-        .catch((err) => console.error(err));
-    }
-  }, [canManage]);
+    taskService.getManageableUsers()
+      .then((res) => {
+        if (res.success && Array.isArray(res.data)) setManageableUsers(res.data);
+      })
+      .catch((err) => console.error('Failed to load manageable users:', err));
+  }, []);
 
   // Load Categories for filter
   useEffect(() => {
@@ -353,6 +351,7 @@ export default function TasksPage() {
             onClick={() => {
               setViewMode('my_tasks');
               setActiveTab('ALL');
+              setAssignedToFilter('ALL');
             }}
             className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'my_tasks'
@@ -367,6 +366,7 @@ export default function TasksPage() {
             onClick={() => {
               setViewMode('assigned_by_me');
               setActiveTab('ALL');
+              setAssignedToFilter('ALL');
             }}
             className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'assigned_by_me'
@@ -382,6 +382,7 @@ export default function TasksPage() {
               onClick={() => {
                 setViewMode('management');
                 setActiveTab('ALL');
+                setAssignedToFilter('ALL');
               }}
               className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
                 viewMode === 'management'
@@ -527,8 +528,8 @@ export default function TasksPage() {
             allowCustom={true}
           />
 
-          {/* Assignee Filter (for Management View) */}
-          {canManage && viewMode === 'management' && (
+          {/* Assignee Filter (for Management View & Assigned by Me View) */}
+          {(viewMode === 'assigned_by_me' || (canManage && viewMode === 'management')) && (
             <select
               value={assignedToFilter}
               onChange={(e) => setAssignedToFilter(e.target.value)}
