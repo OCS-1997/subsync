@@ -7,11 +7,15 @@
  * @returns {number}
  */
 export const calculateWorkingDays = (startDate, endDate, holidayDates = []) => {
-    // Helper to safely parse 'YYYY-MM-DD' as local date instead of UTC
+    // Helper to safely parse 'YYYY-MM-DD' or ISO as local date instead of UTC
     const parseLocal = (d) => {
-        if (d instanceof Date) return d;
-        if (typeof d === 'string' && d.includes('-') && !d.includes('T')) {
-            const parts = d.split('-').map(Number);
+        if (!d) return new Date();
+        if (d instanceof Date) {
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+        if (typeof d === 'string') {
+            const cleanStr = d.split('T')[0];
+            const parts = cleanStr.split('-').map(Number);
             if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]);
         }
         return new Date(d);

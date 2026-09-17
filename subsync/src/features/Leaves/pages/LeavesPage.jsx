@@ -20,6 +20,7 @@ import ApplyPermissionModal from '../components/ApplyPermissionModal';
 import leavesService from '../leavesService';
 import { fetchPendingCounts } from '../leavesSlice';
 import { PERMISSIONS } from '@/constants/permissions';
+import { toast } from 'react-toastify';
 
 const LeavesPage = () => {
     const { user } = useSelector((state) => state.auth);
@@ -42,6 +43,11 @@ const LeavesPage = () => {
     const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
     const [isApplyPermissionOpen, setIsApplyPermissionOpen] = useState(false);
 
+    const isAdmin = user?.roleKey === 'admin' || user?.role?.toLowerCase() === 'admin';
+    const canApproveLeaves = isAdmin || user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE);
+    const canApprovePermissions = isAdmin || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE);
+    const canViewApprovals = canApproveLeaves || canApprovePermissions;
+
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -51,11 +57,11 @@ const LeavesPage = () => {
                 leavesService.getMyLeaves().catch(() => []),
                 leavesService.getMyPermissions().catch(() => []),
                 leavesService.getHolidays().catch(() => []),
-                user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) ? leavesService.getAllLeaves().catch(() => []) : Promise.resolve([]),
-                user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE) ? leavesService.getAllPermissions().catch(() => []) : Promise.resolve([])
+                canApproveLeaves ? leavesService.getAllLeaves().catch(() => []) : Promise.resolve([]),
+                canApprovePermissions ? leavesService.getAllPermissions().catch(() => []) : Promise.resolve([])
             ]);
             
-            if (user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE)) {
+            if (canViewApprovals) {
                 dispatch(fetchPendingCounts());
             }
 
@@ -77,12 +83,15 @@ const LeavesPage = () => {
         try {
             if (type === 'leave') {
                 await leavesService.actionLeave(requestId, status, comments);
+                toast.success(`Leave request ${status} successfully`);
             } else {
                 await leavesService.actionPermission(requestId, status, comments);
+                toast.success(`Permission request ${status} successfully`);
             }
             fetchData();
         } catch (error) {
             console.error("Error actioning request:", error);
+            toast.error(error.response?.data?.error || `Failed to ${status} request`);
         }
     };
 
@@ -158,7 +167,7 @@ const LeavesPage = () => {
                         <ShieldCheck className="w-4 h-4 mr-1.5 text-emerald-600" />
                         Holidays
                     </TabsTrigger>
-                    {(user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE)) && (
+                    {canViewApprovals && (
                         <TabsTrigger 
                             value="approvals" 
                             className="border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 relative"
@@ -303,9 +312,9 @@ const LeavesPage = () => {
                 </TabsContent>
 
                 {/* Tab 4: Approvals Hub */}
-                {(user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE)) && (
+                {canViewApprovals && (
                     <TabsContent value="approvals" className="space-y-8">
-                        {user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) && (
+                        {canApproveLeaves && (
                             <Card className="rounded-[2.5rem] border-slate-200 dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-900">
                                 <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-6">
                                     <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white flex items-center justify-between gap-2 w-full">
@@ -330,7 +339,7 @@ const LeavesPage = () => {
                             </Card>
                         )}
 
-                        {user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE) && (
+                        {canApprovePermissions && (
                             <Card className="rounded-[2.5rem] border-slate-200 dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-900">
                                 <CardHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 p-6">
                                     <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white flex items-center justify-between gap-2 w-full">
@@ -372,6 +381,7 @@ const LeavesPage = () => {
                 isOpen={isApplyLeaveOpen}
                 onClose={() => setIsApplyLeaveOpen(false)}
                 onSuccess={fetchData}
+                holidays={holidays}
             />
 
             <ApplyPermissionModal 

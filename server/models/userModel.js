@@ -35,7 +35,7 @@ const getAllUsers = async () => {
     const [rows] = await appDB.query(
         `SELECT ${userProjection}
          FROM users u
-         LEFT JOIN roles r ON r.id = u.role_id
+         LEFT JOIN roles r ON (r.id = u.role_id OR (u.role_id IS NULL AND LOWER(r.role_key) = LOWER(u.role)))
          ORDER BY u.created_at DESC`
     );
     const users = rows.map(mapUserRow);
@@ -61,7 +61,7 @@ const getUserByUsername = async (username) => {
     const [rows] = await appDB.query(
         `SELECT ${userProjection}
          FROM users u
-         LEFT JOIN roles r ON r.id = u.role_id
+         LEFT JOIN roles r ON (r.id = u.role_id OR (u.role_id IS NULL AND LOWER(r.role_key) = LOWER(u.role)))
          WHERE u.username = ?
          LIMIT 1`,
         [username]
@@ -83,7 +83,7 @@ const getUserAuthProfile = async (username) => {
             r.name AS roleName,
             r.role_key AS roleKey
          FROM users u
-         LEFT JOIN roles r ON r.id = u.role_id
+         LEFT JOIN roles r ON (r.id = u.role_id OR (u.role_id IS NULL AND LOWER(r.role_key) = LOWER(u.role)))
          WHERE u.username = ?
          LIMIT 1`,
         [username]

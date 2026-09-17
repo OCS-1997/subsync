@@ -29,6 +29,7 @@ import {
 } from "../models/permissionRequestModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import { calculateWorkingDays } from "../utils/leaveUtils.js";
+import { sendLeaveApplicationNotice, sendLeaveDecisionNotice } from "../services/leaveNotificationService.js";
 
 /**
  * Get all available leave types
@@ -55,25 +56,37 @@ async function applyLeaveController(req, res) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        // 1. Get holidays for the period
-        const holidays = await getAllHolidays(new Date(start_date).getFullYear());
-        const holidayDates = holidays.map(h => h.holiday_date.toISOString().split('T')[0]);
+        // 1. Get holidays for the period (handling multi-year spans and timezone-safe date extraction)
+        const startYear = new Date(start_date).getFullYear();
+        const endYear = new Date(end_date).getFullYear();
+        const holidaysStart = await getAllHolidays(startYear);
+        const holidaysEnd = (startYear !== endYear) ? await getAllHolidays(endYear) : [];
+        const allHolidays = [...holidaysStart, ...holidaysEnd];
 
-        // 2. Calculate duration
+        const holidayDates = allHolidays.map(h => {
+            if (!h.holiday_date) return null;
+            if (typeof h.holiday_date === 'string') return h.holiday_date.split('T')[0];
+            const d = new Date(h.holiday_date);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }).filter(Boolean);
+
+        // 2. Calculate working duration (excluding Sundays and holidays)
         let duration = calculateWorkingDays(start_date, end_date, holidayDates);
         
         if (half_day_type && half_day_type !== 'none') {
-            // If it's a single day half-leave, duration is 0.5
-            if (new Date(start_date).toDateString() === new Date(end_date).toDateString()) {
-                duration = 0.5;
+            const isSingleDay = new Date(start_date).toDateString() === new Date(end_date).toDateString();
+            if (isSingleDay) {
+                duration = duration > 0 ? 0.5 : 0;
             } else {
-                // For multi-day, we subtract 0.5 from total working days
-                duration -= 0.5;
+                duration = Math.max(0, duration - 0.5);
             }
         }
 
         if (duration <= 0) {
-            return res.status(400).json({ error: "Invalid leave period (no working days found)" });
+            return res.status(400).json({ error: "Selected dates fall on Sundays or Public Holidays. No working days to apply for." });
         }
 
         // 3. Check leave balance (simplified for now, actual implementation would check if enough days remain)
@@ -82,8 +95,6 @@ async function applyLeaveController(req, res) {
         
         if (typeBalance && typeBalance.remaining < duration) {
              // Optional: Allow negative balance or strictly restrict? 
-             // Industrial standard often allows "Loss of Pay" or restricts.
-             // We'll allow it for now but return a warning or just proceed.
         }
 
         const requestId = await createLeaveRequest({
@@ -104,6 +115,18 @@ async function applyLeaveController(req, res) {
             ipAddress: req.ip,
             details: { duration, type_id: leave_type_id }
         });
+
+        // Trigger emails: To Admin (with approval link) & To Applicant (acknowledgement)
+        sendLeaveApplicationNotice({
+            requestId,
+            userId,
+            leaveTypeId: parseInt(leave_type_id),
+            startDate: start_date,
+            endDate: end_date,
+            duration,
+            halfDayType,
+            reason
+        }).catch(err => console.error("Error sending leave application notice:", err));
 
         res.status(201).json({
             message: "Leave request submitted successfully",
@@ -170,6 +193,14 @@ async function actionLeaveController(req, res) {
             ipAddress: req.ip,
             details: { status, comments }
         });
+
+        // Trigger email notification to applicant
+        sendLeaveDecisionNotice({
+            requestId,
+            status,
+            actionedBy,
+            comments
+        }).catch(err => console.error("Error sending leave decision notice:", err));
 
         res.status(200).json({ message: `Leave request ${status} successfully` });
     } catch (error) {

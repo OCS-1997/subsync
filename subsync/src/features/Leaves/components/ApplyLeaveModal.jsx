@@ -12,12 +12,33 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar, Clock, Send, Loader2, Info } from 'lucide-react';
 import leavesService from '../leavesService';
 import { toast } from 'react-toastify';
-import { format, differenceInBusinessDays, addDays } from 'date-fns';
+import { format } from 'date-fns';
 
-const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
+const parseLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+    if (dateStr instanceof Date) return dateStr;
+    const parts = String(dateStr).split('T')[0].split('-').map(Number);
+    if (parts.length === 3) {
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    return new Date(dateStr);
+};
+
+const formatLocalYYYYMMDD = (d) => {
+    if (!d) return '';
+    const date = (d instanceof Date) ? d : parseLocalDate(d);
+    if (!date || isNaN(date.getTime())) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
+
+const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
     const { user } = useSelector((state) => state.auth);
     const [isLoading, setIsLoading] = useState(false);
     const [leaveTypes, setLeaveTypes] = useState([]);
+    const [holidaysList, setHolidaysList] = useState(holidays || []);
     const [formData, setFormData] = useState({
         leave_type_id: '',
         start_date: '',
@@ -26,6 +47,14 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
         half_day_type: 'first_half',
         reason: ''
     });
+
+    useEffect(() => {
+        if (holidays && holidays.length > 0) {
+            setHolidaysList(holidays);
+        } else if (isOpen) {
+            leavesService.getHolidays().then(h => setHolidaysList(h || [])).catch(() => {});
+        }
+    }, [isOpen, holidays]);
 
     useEffect(() => {
         if (isOpen) {
@@ -46,17 +75,87 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
         }
     }, [isOpen, user?.gender]);
 
-    // Duration calculation
-    const calculatedDays = React.useMemo(() => {
-        if (formData.is_half_day) return 0.5;
-        if (!formData.start_date || !formData.end_date) return 0;
-        const start = new Date(formData.start_date);
-        const end = new Date(formData.end_date);
-        if (end < start) return 0;
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        return diffDays;
-    }, [formData.start_date, formData.end_date, formData.is_half_day]);
+    // Fast lookup for holiday dates (handles recurring holidays across years)
+    const holidayMap = React.useMemo(() => {
+        const set = new Set();
+        const details = {};
+        (holidaysList || []).forEach(h => {
+            if (!h.holiday_date) return;
+            const dateStr = formatLocalYYYYMMDD(h.holiday_date);
+            set.add(dateStr);
+            details[dateStr] = h.name;
+
+            if (h.is_recurring) {
+                const mmdd = dateStr.substring(5);
+                const currentYear = new Date().getFullYear();
+                set.add(`${currentYear}-${mmdd}`);
+                set.add(`${currentYear + 1}-${mmdd}`);
+                details[`${currentYear}-${mmdd}`] = h.name;
+                details[`${currentYear + 1}-${mmdd}`] = h.name;
+            }
+        });
+        return { set, details };
+    }, [holidaysList]);
+
+    // Accurate working day duration calculation excluding Sundays and Public Holidays
+    const durationStats = React.useMemo(() => {
+        if (!formData.start_date) {
+            return { workingDays: 0, totalCalendarDays: 0, sundaysCount: 0, holidaysCount: 0, excludedDetails: [] };
+        }
+
+        const effectiveEndDate = formData.is_half_day ? formData.start_date : (formData.end_date || formData.start_date);
+        const start = parseLocalDate(formData.start_date);
+        const end = parseLocalDate(effectiveEndDate);
+
+        if (!start || !end || end < start) {
+            return { workingDays: 0, totalCalendarDays: 0, sundaysCount: 0, holidaysCount: 0, excludedDetails: [] };
+        }
+
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+
+        let workingCount = 0;
+        let sundaysCount = 0;
+        let holidaysCount = 0;
+        let totalCalendarDays = 0;
+        const excludedDetails = [];
+
+        let current = new Date(start);
+        while (current <= end) {
+            totalCalendarDays++;
+            const dayOfWeek = current.getDay();
+            const dateStr = formatLocalYYYYMMDD(current);
+
+            const isSunday = (dayOfWeek === 0);
+            const isHoliday = holidayMap.set.has(dateStr);
+
+            if (isSunday) {
+                sundaysCount++;
+                excludedDetails.push({ date: dateStr, reason: 'Sunday' });
+            } else if (isHoliday) {
+                holidaysCount++;
+                excludedDetails.push({ date: dateStr, reason: holidayMap.details[dateStr] || 'Public Holiday' });
+            } else {
+                workingCount++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        let finalWorkingDays = workingCount;
+        if (formData.is_half_day) {
+            finalWorkingDays = workingCount > 0 ? 0.5 : 0;
+        }
+
+        return {
+            workingDays: finalWorkingDays,
+            totalCalendarDays,
+            sundaysCount,
+            holidaysCount,
+            excludedDetails
+        };
+    }, [formData.start_date, formData.end_date, formData.is_half_day, holidayMap]);
+
+    const calculatedDays = durationStats.workingDays;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -66,6 +165,10 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
         }
         if (!formData.start_date || (!formData.is_half_day && !formData.end_date)) {
             toast.error("Please select valid dates");
+            return;
+        }
+        if (calculatedDays <= 0) {
+            toast.error("Selected dates fall entirely on non-working days (Sundays / Holidays). Please choose working days.");
             return;
         }
 
@@ -196,17 +299,45 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
                         )}
                     </div>
 
-                    {/* Calculated Days Preview Box */}
-                    {calculatedDays > 0 && (
-                        <div className="p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Calculated Duration:</span>
+                    {/* Calculated Days Preview Box & Exclusions */}
+                    {formData.start_date && (formData.end_date || formData.is_half_day) && (
+                        calculatedDays > 0 ? (
+                            <div className="p-4 bg-blue-50/60 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/40 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Calculated Duration:</span>
+                                    </div>
+                                    <span className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                                        {calculatedDays} {calculatedDays === 1 ? 'Working Day' : 'Working Days'}
+                                    </span>
+                                </div>
+                                {(durationStats.sundaysCount > 0 || durationStats.holidaysCount > 0) && (
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-blue-100 dark:border-blue-900/40 text-[10px] text-slate-500 font-medium">
+                                        <span className="font-bold text-slate-600 dark:text-slate-400">Excluded:</span>
+                                        {durationStats.sundaysCount > 0 && (
+                                            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                                                {durationStats.sundaysCount} {durationStats.sundaysCount === 1 ? 'Sunday' : 'Sundays'}
+                                            </span>
+                                        )}
+                                        {durationStats.holidaysCount > 0 && (
+                                            <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                                                {durationStats.holidaysCount} {durationStats.holidaysCount === 1 ? 'Public Holiday' : 'Public Holidays'}
+                                            </span>
+                                        )}
+                                        <span className="text-slate-400 text-[9px]">(Not deducted)</span>
+                                    </div>
+                                )}
                             </div>
-                            <span className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                                {calculatedDays} {calculatedDays === 1 ? 'Day' : 'Days'}
-                            </span>
-                        </div>
+                        ) : (
+                            <div className="p-4 bg-red-50/80 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-900/60 flex items-start gap-3">
+                                <Info className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                                <div className="space-y-0.5 text-xs text-red-700 dark:text-red-300 font-medium">
+                                    <p className="font-bold">Zero working days in selected range</p>
+                                    <p className="text-[11px] opacity-90">All selected dates are Sundays or Public Holidays. Please select working days for your leave request.</p>
+                                </div>
+                            </div>
+                        )
                     )}
 
                     {/* Reason Textarea */}
@@ -227,8 +358,8 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
                         </Button>
                         <Button 
                             type="submit" 
-                            disabled={isLoading}
-                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold px-6 h-10 shadow-md"
+                            disabled={isLoading || (formData.start_date && calculatedDays === 0)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold px-6 h-10 shadow-md disabled:opacity-50"
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                             Submit Leave Application

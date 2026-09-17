@@ -46,7 +46,7 @@ export const authorize = (requiredPermissions = [], options = { match: 'all' }) 
             return res.status(401).json({ error: "Unauthorized" });
         }
         // Admin bypass
-        if (req.user.roleKey === 'admin') {
+        if (req.user.roleKey === 'admin' || req.user.role?.toLowerCase() === 'admin') {
             return next();
         }
         const userPermissions = req.user.permissions || [];

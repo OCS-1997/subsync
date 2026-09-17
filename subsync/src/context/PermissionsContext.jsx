@@ -35,22 +35,36 @@ export const PermissionsProvider = ({ children }) => {
   //   });
   // }
 
+  const user = useSelector((state) => state.auth.user);
+  const isAdmin = useMemo(() => {
+    if (user?.roleKey === 'admin' || user?.role?.toLowerCase() === 'admin') return true;
+    try {
+      const raw = getStorageItem("subsync_user");
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.roleKey === 'admin' || parsed?.role?.toLowerCase() === 'admin') return true;
+    } catch {
+      // ignore JSON error
+    }
+    return false;
+  }, [user]);
+
   const value = useMemo(() => {
     const normalized = new Set(permissions);
     return {
       permissions,
       hasPermission: (required) => {
-        if (!required) return true;
+        if (!required || isAdmin) return true;
         const list = Array.isArray(required) ? required : [required];
         return list.every((perm) => normalized.has(perm));
       },
       hasAnyPermission: (required) => {
-        if (!required) return true;
+        if (!required || isAdmin) return true;
         const list = Array.isArray(required) ? required : [required];
         return list.some((perm) => normalized.has(perm));
       },
+      isAdmin,
     };
-  }, [permissions]);
+  }, [permissions, isAdmin]);
 
   return (
     <PermissionsContext.Provider value={value}>
