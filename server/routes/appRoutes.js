@@ -802,7 +802,7 @@ router.get('/leaves/stats/pending-counts', isAuthenticated, authorize(PERMISSION
 router.post('/leaves/types', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createLeaveTypeController);
 router.put('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateLeaveTypeController);
 router.delete('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteLeaveTypeController);
-router.get('/leaves/permission-settings', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), getPermissionSettingsController);
+router.get('/leaves/permission-settings', isAuthenticated, getPermissionSettingsController);
 router.put('/leaves/permission-settings', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updatePermissionSettingsController);
 router.get('/leaves/balances/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), getAllUserBalancesController);
 router.post('/leaves/balances/adjust', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), adjustUserBalanceController);

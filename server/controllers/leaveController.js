@@ -124,7 +124,7 @@ async function applyLeaveController(req, res) {
             startDate: start_date,
             endDate: end_date,
             duration,
-            halfDayType,
+            halfDayType: half_day_type,
             reason
         }).catch(err => console.error("Error sending leave application notice:", err));
 
