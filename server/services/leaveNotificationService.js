@@ -26,33 +26,25 @@ const formatDate = (dateVal) => {
 };
 
 /**
- * Get all active Admin and Manager emails eligible for leave approval notices
+ * Get Admin emails configured in the environment for leave approval notices.
+ * Restricted strictly to ADMIN_EMAILS configured in the .env file.
  */
 const getApproverEmails = async () => {
     try {
-        const [rows] = await appDB.query(`
-            SELECT DISTINCT u.email, u.name, u.username
-            FROM users u
-            LEFT JOIN roles r ON (r.id = u.role_id OR (u.role_id IS NULL AND LOWER(r.role_key) = LOWER(u.role)))
-            LEFT JOIN role_permissions rp ON rp.role_id = r.id
-            LEFT JOIN permissions p ON p.id = rp.permission_id
-            WHERE (u.is_active = 1 OR u.is_active IS NULL)
-              AND u.email IS NOT NULL AND u.email != ''
-              AND (
-                  r.role_key IN ('admin', 'manager') 
-                  OR LOWER(u.role) IN ('admin', 'manager')
-                  OR p.permission_key = 'leaves.approve'
-              )
-        `);
-
-        const emails = rows.map(r => r.email.trim()).filter(Boolean);
-        if (emails.length === 0 && process.env.SMTP_USER) {
-            emails.push(process.env.SMTP_USER.trim());
+        if (process.env.ADMIN_EMAILS) {
+            const cleanAdminEmails = process.env.ADMIN_EMAILS.split('#')[0].trim();
+            const emails = cleanAdminEmails
+                .split(',')
+                .map(e => e.trim())
+                .filter(Boolean);
+            if (emails.length > 0) {
+                return [...new Set(emails)];
+            }
         }
-        return [...new Set(emails)];
+        return [];
     } catch (err) {
-        console.error("Error fetching approver emails:", err);
-        return process.env.SMTP_USER ? [process.env.SMTP_USER.trim()] : [];
+        console.error("Error parsing ADMIN_EMAILS for approvers:", err);
+        return [];
     }
 };
 
