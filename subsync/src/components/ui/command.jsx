@@ -37,14 +37,7 @@ const CommandInput = React.forwardRef(({ className, onKeyDown, ...props }, ref) 
     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
       ref={ref}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-        }
-        if (onKeyDown) {
-          onKeyDown(e);
-        }
-      }}
+      onKeyDown={onKeyDown}
       className={cn(
         "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className

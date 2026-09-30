@@ -93,7 +93,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     }, []);
 
     useEffect(() => {
-        if (activeFilter === 'custom' && (!dateFrom || !dateTo)) {
+        if (activeFilter === 'custom' && !dateFrom && !dateTo) {
             return;
         }
         loadRenewals();
@@ -138,9 +138,17 @@ function SubscriptionsTab({ visibleWidgets }) {
         try {
             setRenewalsLoading(true);
             const params = { filterType: activeFilter };
-            if (activeFilter === 'custom' && dateFrom && dateTo) {
-                params.startDate = dateFrom;
-                params.endDate = dateTo;
+            if (activeFilter === 'custom') {
+                if (dateFrom && dateTo) {
+                    const start = dateFrom <= dateTo ? dateFrom : dateTo;
+                    const end = dateFrom <= dateTo ? dateTo : dateFrom;
+                    params.startDate = start;
+                    params.endDate = end;
+                } else if (dateFrom) {
+                    params.startDate = dateFrom;
+                } else if (dateTo) {
+                    params.endDate = dateTo;
+                }
             }
 
             const response = await api.get('/dashboard/renewals', { params });
@@ -341,8 +349,8 @@ function SubscriptionsTab({ visibleWidgets }) {
                         </div>
                     ) : filteredSubscriptions.length === 0 ? (
                         <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-                            {activeFilter === 'custom' && (!dateFrom || !dateTo)
-                                ? 'Please select both start and end dates'
+                            {activeFilter === 'custom' && !dateFrom && !dateTo
+                                ? 'Please select a date range'
                                 : 'No subscriptions found'}
                         </div>
                     ) : (

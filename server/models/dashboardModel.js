@@ -39,14 +39,30 @@ export async function getRenewalsWithFilters(filters = {}) {
             break;
         case 'custom':
             if (startDate && endDate) {
+                const s = startDate <= endDate ? startDate : endDate;
+                const e = startDate <= endDate ? endDate : startDate;
                 whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE(?)`;
-                params.push(startDate, endDate);
+                params.push(s, e);
+            } else if (startDate) {
+                whereClause += ` AND DATE(s.end_date) >= DATE(?)`;
+                params.push(startDate);
+            } else if (endDate) {
+                whereClause += ` AND DATE(s.end_date) <= DATE(?)`;
+                params.push(endDate);
             }
             break;
         default:
             if (startDate && endDate) {
+                const s = startDate <= endDate ? startDate : endDate;
+                const e = startDate <= endDate ? endDate : startDate;
                 whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE(?)`;
-                params.push(startDate, endDate);
+                params.push(s, e);
+            } else if (startDate) {
+                whereClause += ` AND DATE(s.end_date) >= DATE(?)`;
+                params.push(startDate);
+            } else if (endDate) {
+                whereClause += ` AND DATE(s.end_date) <= DATE(?)`;
+                params.push(endDate);
             }
             break;
     }
