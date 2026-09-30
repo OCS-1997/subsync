@@ -5,15 +5,12 @@ import appDB from "../db/subsyncDB.js";
  * @param {Object} filters - { filterType: 'today'|'expired'|'current'|'custom', startDate?, endDate? }
  */
 export async function getRenewalsWithFilters(filters = {}) {
-    const { filterType = 'today', startDate, endDate } = filters;
+    const { filterType = 'this_month', startDate, endDate, year, month } = filters;
     const now = new Date();
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(now);
-    todayEnd.setHours(23, 59, 59, 999);
 
-    let whereClause = 'WHERE s.archived_at IS NULL';
+    let whereClause = 'WHERE s.archived_at IS NULL AND s.end_date IS NOT NULL';
     const params = [];
+    let orderClause = 'ORDER BY s.end_date ASC';
 
     switch (filterType) {
         case 'today':
@@ -21,24 +18,35 @@ export async function getRenewalsWithFilters(filters = {}) {
             params.push(now);
             break;
         case 'expired':
-            whereClause += ` AND s.end_date < ?`;
+            whereClause += ` AND DATE(s.end_date) < DATE(?)`;
             params.push(now);
+            orderClause = 'ORDER BY s.end_date DESC';
             break;
+        case 'this_month':
         case 'current':
-            // Current month
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-            whereClause += ` AND s.end_date >= ? AND s.end_date <= ?`;
-            params.push(monthStart, monthEnd);
+            if (year && month) {
+                whereClause += ` AND YEAR(s.end_date) = ? AND MONTH(s.end_date) = ?`;
+                params.push(parseInt(year, 10), parseInt(month, 10));
+            } else {
+                whereClause += ` AND YEAR(s.end_date) = YEAR(?) AND MONTH(s.end_date) = MONTH(?)`;
+                params.push(now, now);
+            }
+            break;
+        case 'expiring':
+        case 'soon':
+            whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE_ADD(DATE(?), INTERVAL 30 DAY)`;
+            params.push(now, now);
             break;
         case 'custom':
             if (startDate && endDate) {
-                const customStart = new Date(startDate);
-                customStart.setHours(0, 0, 0, 0);
-                const customEnd = new Date(endDate);
-                customEnd.setHours(23, 59, 59, 999);
-                whereClause += ` AND s.end_date >= ? AND s.end_date <= ?`;
-                params.push(customStart, customEnd);
+                whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE(?)`;
+                params.push(startDate, endDate);
+            }
+            break;
+        default:
+            if (startDate && endDate) {
+                whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE(?)`;
+                params.push(startDate, endDate);
             }
             break;
     }
@@ -46,11 +54,11 @@ export async function getRenewalsWithFilters(filters = {}) {
     const [subscriptions] = await appDB.query(
         `SELECT s.sub_id, s.domain_name, s.end_date, s.start_date, s.status, s.total,
                 c.display_name AS customer_name, c.customer_id,
-                DATEDIFF(s.end_date, ?) AS days_left,
+                DATEDIFF(DATE(s.end_date), DATE(?)) AS days_left,
                 CASE 
-                    WHEN s.end_date < ? THEN 'expired'
                     WHEN DATE(s.end_date) = DATE(?) THEN 'today'
-                    WHEN s.end_date <= DATE_ADD(?, INTERVAL 7 DAY) THEN 'soon'
+                    WHEN DATE(s.end_date) < DATE(?) THEN 'expired'
+                    WHEN DATE(s.end_date) <= DATE_ADD(DATE(?), INTERVAL 7 DAY) THEN 'soon'
                     ELSE 'upcoming'
                 END AS renewal_status,
                 (
@@ -68,7 +76,7 @@ export async function getRenewalsWithFilters(filters = {}) {
          FROM subscriptions s
          JOIN customers c ON s.customer_id = c.customer_id
          ${whereClause}
-         ORDER BY s.end_date ASC`,
+         ${orderClause}`,
         [now, now, now, now, ...params]
     );
 
@@ -130,8 +138,45 @@ export async function getExpiringTodayCount() {
         `SELECT COUNT(*) as count
          FROM subscriptions s
          WHERE s.archived_at IS NULL
+         AND s.end_date IS NOT NULL
          AND DATE(s.end_date) = DATE(?)`,
         [now]
+    );
+    return result[0]?.count || 0;
+}
+
+/**
+ * Get expiring this month count
+ */
+export async function getExpiringThisMonthCount(year, month) {
+    const now = new Date();
+    const queryYear = year ? parseInt(year, 10) : now.getFullYear();
+    const queryMonth = month ? parseInt(month, 10) : (now.getMonth() + 1);
+    const [result] = await appDB.query(
+        `SELECT COUNT(*) as count
+         FROM subscriptions s
+         WHERE s.archived_at IS NULL
+         AND s.end_date IS NOT NULL
+         AND YEAR(s.end_date) = ?
+         AND MONTH(s.end_date) = ?`,
+        [queryYear, queryMonth]
+    );
+    return result[0]?.count || 0;
+}
+
+/**
+ * Get expiring soon count (next 30 days)
+ */
+export async function getExpiringSoonCount(days = 30) {
+    const now = new Date();
+    const [result] = await appDB.query(
+        `SELECT COUNT(*) as count
+         FROM subscriptions s
+         WHERE s.archived_at IS NULL
+         AND s.end_date IS NOT NULL
+         AND DATE(s.end_date) >= DATE(?)
+         AND DATE(s.end_date) <= DATE_ADD(DATE(?), INTERVAL ? DAY)`,
+        [now, now, days]
     );
     return result[0]?.count || 0;
 }
@@ -165,7 +210,9 @@ export async function getDashboardStats() {
         monthlyRevenue,
         todayDCRs,
         openOpportunities,
-        kbArticles
+        kbArticles,
+        expiringThisMonth,
+        expiringSoon
     ] = await Promise.all([
         // Total customers
         safeQuery('SELECT COUNT(*) as count FROM customers'),
@@ -192,7 +239,25 @@ export async function getDashboardStats() {
             AND s.status_name NOT IN ('Closed / Won', 'Closed / Lost', 'Completed', 'Dropped')
         `),
         // KB Articles (may not exist)
-        safeQuery('SELECT COUNT(*) as count FROM knowledge_articles WHERE is_published = 1')
+        safeQuery('SELECT COUNT(*) as count FROM knowledge_articles WHERE is_published = 1'),
+        // Expiring this month
+        safeQuery(`
+            SELECT COUNT(*) as count 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND end_date IS NOT NULL 
+            AND YEAR(end_date) = YEAR(?) 
+            AND MONTH(end_date) = MONTH(?)
+        `, [now, now]),
+        // Expiring soon (next 30 days)
+        safeQuery(`
+            SELECT COUNT(*) as count 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND end_date IS NOT NULL 
+            AND DATE(end_date) >= DATE(?) 
+            AND DATE(end_date) <= DATE_ADD(DATE(?), INTERVAL 30 DAY)
+        `, [now, now])
     ]);
 
     return {
@@ -202,7 +267,9 @@ export async function getDashboardStats() {
         monthlyRevenue: parseFloat(monthlyRevenue[0]?.revenue) || 0,
         todayDCRs: todayDCRs[0]?.count || 0,
         openOpportunities: openOpportunities[0]?.count || 0,
-        kbArticles: kbArticles[0]?.count || 0
+        kbArticles: kbArticles[0]?.count || 0,
+        expiringThisMonthCount: expiringThisMonth[0]?.count || 0,
+        expiringSoonCount: expiringSoon[0]?.count || 0
     };
 }
 

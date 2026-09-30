@@ -2,6 +2,8 @@ import {
     getRenewalsWithFilters,
     getExpiredServices,
     getExpiringTodayCount,
+    getExpiringThisMonthCount,
+    getExpiringSoonCount,
     getDashboardStats
 } from '../models/dashboardModel.js';
 import { getUpcomingBirthdays } from '../models/birthdayModel.js';
@@ -13,7 +15,7 @@ import { getUpcomingBirthdays } from '../models/birthdayModel.js';
 export const getDashboardController = async (req, res) => {
     try {
         const user = req.user;
-        const { filterType = 'today', startDate, endDate } = req.query;
+        const { filterType = 'this_month', startDate, endDate } = req.query;
 
         // Execute independent queries in parallel for better performance
         // Wrap with individual try-catches to ensure one failing query doesn't break the whole dashboard
@@ -21,6 +23,8 @@ export const getDashboardController = async (req, res) => {
             renewals,
             expiredServices,
             expiringTodayCount,
+            expiringThisMonthCount,
+            expiringSoonCount,
             birthdays,
             stats
         ] = await Promise.all([
@@ -34,16 +38,25 @@ export const getDashboardController = async (req, res) => {
                 endDate: req.query.expiredEndDate
             }).catch(err => { console.error('Expired services fetch failed:', err); return []; }),
             getExpiringTodayCount().catch(err => { console.error('Expiring count fetch failed:', err); return 0; }),
+            getExpiringThisMonthCount().catch(err => { console.error('Expiring this month count fetch failed:', err); return 0; }),
+            getExpiringSoonCount().catch(err => { console.error('Expiring soon count fetch failed:', err); return 0; }),
             getUpcomingBirthdays().catch(err => { console.error('Birthdays fetch failed:', err); return { today: [], upcoming: [] }; }),
             getDashboardStats().catch(err => { console.error('Stats fetch failed:', err); return {}; })
         ]);
 
         res.json({
-            stats,
+            stats: {
+                ...stats,
+                expiringTodayCount,
+                expiringThisMonthCount,
+                expiringSoonCount
+            },
             renewals: {
                 data: renewals,
                 count: renewals.length,
-                expiringTodayCount
+                expiringTodayCount,
+                expiringThisMonthCount,
+                expiringSoonCount
             },
             expiredServices: {
                 data: expiredServices,
@@ -63,8 +76,8 @@ export const getDashboardController = async (req, res) => {
  */
 export const getRenewalsController = async (req, res) => {
     try {
-        const { filterType = 'today', startDate, endDate } = req.query;
-        const renewals = await getRenewalsWithFilters({ filterType, startDate, endDate });
+        const { filterType = 'this_month', startDate, endDate, year, month } = req.query;
+        const renewals = await getRenewalsWithFilters({ filterType, startDate, endDate, year, month });
         res.json(renewals);
     } catch (error) {
         console.error('Error fetching renewals:', error);

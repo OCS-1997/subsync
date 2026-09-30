@@ -32,9 +32,9 @@ const STATUS_COLORS = {
 };
 
 const FILTER_OPTIONS = [
-    { id: 'all', label: 'All', icon: Package },
-    { id: 'today', label: 'Today', icon: AlertTriangle },
+    { id: 'this_month', label: 'This Month', icon: Calendar },
     { id: 'expiring', label: 'Expiring Soon', icon: Clock },
+    { id: 'today', label: 'Today', icon: AlertTriangle },
     { id: 'expired', label: 'Expired', icon: XCircle },
     { id: 'custom', label: 'Custom', icon: Calendar },
 ];
@@ -44,6 +44,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     const { user } = useSelector((state) => state.auth);
     const { theme } = useTheme();
     const [loading, setLoading] = useState(true);
+    const [renewalsLoading, setRenewalsLoading] = useState(false);
     const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
 
     // Helper to check if widget is visible
@@ -57,12 +58,12 @@ function SubscriptionsTab({ visibleWidgets }) {
         active: 0,
         expired: 0,
         expiringSoon: 0,
+        expiringThisMonth: 0,
         totalRevenue: 0
     });
-    const [allSubscriptions, setAllSubscriptions] = useState([]);
-    const [todaySubscriptions, setTodaySubscriptions] = useState([]);
+    const [renewals, setRenewals] = useState([]);
     const [statusDistribution, setStatusDistribution] = useState([]);
-    const [activeFilter, setActiveFilter] = useState('all');
+    const [activeFilter, setActiveFilter] = useState('this_month');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
@@ -88,68 +89,35 @@ function SubscriptionsTab({ visibleWidgets }) {
     };
 
     useEffect(() => {
-        loadSubscriptionData();
+        loadDashboardStats();
     }, []);
 
-    const loadSubscriptionData = async () => {
+    useEffect(() => {
+        if (activeFilter === 'custom' && (!dateFrom || !dateTo)) {
+            return;
+        }
+        loadRenewals();
+    }, [activeFilter, dateFrom, dateTo]);
+
+    const loadDashboardStats = async () => {
         try {
             setLoading(true);
-
-            const [dashRes, renewalsRes, expiredRes, todayRes] = await Promise.all([
-                api.get('/dashboard'),
-                api.get('/dashboard/renewals', { params: { filterType: 'current' } }),
-                api.get('/dashboard/renewals', { params: { filterType: 'expired' } }),
-                api.get('/dashboard/renewals', { params: { filterType: 'today' } })
-            ]);
-
+            const dashRes = await api.get('/dashboard');
             const dashData = dashRes.data;
 
             const active = dashData.stats?.activeSubscriptions || 0;
-            const expiredCount = expiredRes.data?.length || 0;
-            const expiringSoon = dashData.renewals?.expiringTodayCount || 0;
+            const expiredCount = dashData.stats?.expiredCount || 0;
+            const expiringSoon = dashData.stats?.expiringSoonCount || dashData.renewals?.expiringSoonCount || 0;
+            const expiringThisMonth = dashData.stats?.expiringThisMonthCount || dashData.renewals?.expiringThisMonthCount || 0;
 
             setStats({
                 total: active + expiredCount,
                 active,
                 expired: expiredCount,
                 expiringSoon,
+                expiringThisMonth,
                 totalRevenue: dashData.stats?.monthlyRevenue || 0
             });
-
-            // Combine expiring and expired subscriptions
-            const expiring = (renewalsRes.data || []).map(item => ({
-                ...item,
-                status_type: item.days_left <= 0 ? 'expired' : item.days_left === 0 ? 'today' : 'expiring'
-            }));
-            const expired = (expiredRes.data || []).map(item => ({
-                ...item,
-                status_type: 'expired'
-            }));
-            const today = (todayRes.data || []).map(item => ({
-                ...item,
-                status_type: 'today'
-            }));
-
-            // Store today's subscriptions separately
-            setTodaySubscriptions(today);
-
-            // Combine and deduplicate by sub_id
-            const combined = [...today];
-            expiring.forEach(exp => {
-                if (!combined.find(c => c.sub_id === exp.sub_id)) {
-                    combined.push(exp);
-                }
-            });
-            expired.forEach(exp => {
-                if (!combined.find(c => c.sub_id === exp.sub_id)) {
-                    combined.push(exp);
-                }
-            });
-
-            // Sort by days_left (most urgent first)
-            combined.sort((a, b) => (a.days_left || 0) - (b.days_left || 0));
-
-            setAllSubscriptions(combined);
 
             // Build status distribution for pie chart
             setStatusDistribution([
@@ -159,10 +127,30 @@ function SubscriptionsTab({ visibleWidgets }) {
             ].filter(item => item.value > 0));
 
         } catch (err) {
-            console.error('Error loading subscription data:', err);
-            toast.error('Failed to load subscription data');
+            console.error('Error loading dashboard stats:', err);
+            toast.error('Failed to load dashboard data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadRenewals = async () => {
+        try {
+            setRenewalsLoading(true);
+            const params = { filterType: activeFilter };
+            if (activeFilter === 'custom' && dateFrom && dateTo) {
+                params.startDate = dateFrom;
+                params.endDate = dateTo;
+            }
+
+            const response = await api.get('/dashboard/renewals', { params });
+            setRenewals(Array.isArray(response.data) ? response.data : []);
+        } catch (err) {
+            console.error('Error loading renewals:', err);
+            toast.error('Failed to load renewals data');
+            setRenewals([]);
+        } finally {
+            setRenewalsLoading(false);
         }
     };
 
@@ -172,59 +160,43 @@ function SubscriptionsTab({ visibleWidgets }) {
         return `₹${value}`;
     };
 
-    // Filter subscriptions based on active filter and search query
-    const filteredSubscriptions = allSubscriptions.filter(sub => {
-        // Status filter
-        if (activeFilter === 'today' && sub.days_left !== 0) return false;
-        if (activeFilter === 'expiring' && (sub.days_left <= 0 || sub.days_left === 0)) return false;
-        if (activeFilter === 'expired' && sub.days_left > 0) return false;
-
-        // Custom date filter
-        if (activeFilter === 'custom' && dateFrom && dateTo) {
-            const subDate = new Date(sub.end_date);
-            const fromDate = new Date(dateFrom);
-            const toDate = new Date(dateTo);
-            toDate.setHours(23, 59, 59, 999);
-            if (subDate < fromDate || subDate > toDate) return false;
-        }
-
-        // Search filter
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            return (
-                sub.domain_name?.toLowerCase().includes(query) ||
-                sub.customer_name?.toLowerCase().includes(query) ||
-                sub.services?.some(s => s.name?.toLowerCase().includes(query))
-            );
-        }
-        return true;
+    // Filter subscriptions based on search query
+    const filteredSubscriptions = renewals.filter(sub => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            sub.domain_name?.toLowerCase().includes(query) ||
+            sub.customer_name?.toLowerCase().includes(query) ||
+            sub.services?.some(s => (s.service_name || s.name)?.toLowerCase().includes(query))
+        );
     });
 
     const getStatusBadge = (sub) => {
-        if (sub.days_left < 0) {
+        const days = sub.days_left;
+        if (days < 0 || sub.renewal_status === 'expired') {
             return (
                 <Badge variant="outline" className="border-rose-500/50 text-rose-500 dark:text-rose-400 text-[9px]">
-                    Expired {Math.abs(sub.days_left)}d ago
+                    Expired {Math.abs(days)}d ago
                 </Badge>
             );
         }
-        if (sub.days_left === 0) {
+        if (days === 0 || sub.renewal_status === 'today') {
             return (
                 <Badge variant="outline" className="border-amber-500/50 text-amber-500 dark:text-amber-400 text-[9px]">
                     Expires Today
                 </Badge>
             );
         }
-        if (sub.days_left <= 7) {
+        if (days <= 7) {
             return (
                 <Badge variant="outline" className="border-amber-500/50 text-amber-500 dark:text-amber-400 text-[9px]">
-                    {sub.days_left}d left
+                    {days}d left
                 </Badge>
             );
         }
         return (
             <Badge variant="outline" className="border-blue-500/50 text-blue-500 dark:text-blue-400 text-[9px]">
-                {sub.days_left}d left
+                {days}d left
             </Badge>
         );
     };
@@ -362,9 +334,16 @@ function SubscriptionsTab({ visibleWidgets }) {
 
                 {/* Subscriptions List */}
                 <TooltipProvider delayDuration={200}>
-                    {filteredSubscriptions.length === 0 ? (
+                    {renewalsLoading ? (
+                        <div className="flex items-center justify-center h-32 text-slate-500 text-sm gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                            <span>Loading subscriptions...</span>
+                        </div>
+                    ) : filteredSubscriptions.length === 0 ? (
                         <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-                            No subscriptions found
+                            {activeFilter === 'custom' && (!dateFrom || !dateTo)
+                                ? 'Please select both start and end dates'
+                                : 'No subscriptions found'}
                         </div>
                     ) : (
                         <div className="space-y-2 pr-1">
