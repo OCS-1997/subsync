@@ -27,7 +27,7 @@ async function trigger() {
 
     try {
         const result = await sendWeeklyProductHoursReportEmail(referenceDate);
-        console.log('Successfully completed triggering weekly product hours report:');
+        console.log(`Successfully completed triggering weekly product hours report (Sunday work included: ${result.hasSundayWork}):`);
         console.log(JSON.stringify(result, null, 2));
         process.exit(0);
     } catch (error) {

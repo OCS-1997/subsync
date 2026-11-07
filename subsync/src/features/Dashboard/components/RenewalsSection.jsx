@@ -17,6 +17,8 @@ import api from '@/lib/axiosInstance.js';
 import { toast } from 'react-toastify';
 import { cn } from '@/lib/utils';
 
+import RenewSubscriptionModal from './RenewSubscriptionModal';
+
 function RenewalsSection() {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
@@ -27,6 +29,8 @@ function RenewalsSection() {
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [sendingReminder, setSendingReminder] = useState(null);
+    const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+    const [subToRenew, setSubToRenew] = useState(null);
 
 
 
@@ -80,6 +84,9 @@ function RenewalsSection() {
     };
 
     const getStatusBadge = (renewal) => {
+        if (renewal.renewal_status === 'renewed' || renewal.status === 'renewed') {
+            return <span className="px-2 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 rounded text-xs font-semibold">Renewed</span>;
+        }
         if (renewal.renewal_status === 'expired') {
             return <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">Expired</span>;
         }
@@ -124,18 +131,25 @@ function RenewalsSection() {
                             Expiring Today ({expiringTodayCount})
                         </Button>
                         <Button
+                            variant={filterType === 'current' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterType('current')}
+                        >
+                            This Month
+                        </Button>
+                        <Button
+                            variant={filterType === 'soon' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setFilterType('soon')}
+                        >
+                            Expiring Soon
+                        </Button>
+                        <Button
                             variant={filterType === 'expired' ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => setFilterType('expired')}
                         >
                             Expired
-                        </Button>
-                        <Button
-                            variant={filterType === 'current' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setFilterType('current')}
-                        >
-                            Current Due Date
                         </Button>
                         <Button
                             variant={filterType === 'custom' ? 'default' : 'outline'}
@@ -281,25 +295,39 @@ function RenewalsSection() {
                                                         </div>
                                                     )}
 
-                                                    {/* Send Reminder Button */}
-                                                    <Button
-                                                        size="sm"
-                                                        className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8"
-                                                        onClick={(e) => sendReminder(renewal.sub_id, e)}
-                                                        disabled={sendingReminder === renewal.sub_id}
-                                                    >
-                                                        {sendingReminder === renewal.sub_id ? (
-                                                            <>
-                                                                <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                                                                Sending...
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Mail className="w-3 h-3 mr-2" />
-                                                                Send Reminder Email
-                                                            </>
-                                                        )}
-                                                    </Button>
+                                                    {/* Actions: Renew Button along with Send Reminder Button */}
+                                                    <div className="flex gap-2 mt-3 pt-2 border-t border-slate-700/60">
+                                                        <Button
+                                                            size="sm"
+                                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSubToRenew(renewal);
+                                                                setIsRenewModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <RefreshCw className="w-3 h-3 mr-1.5" />
+                                                            Mark as Renewed
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
+                                                            onClick={(e) => sendReminder(renewal.sub_id, e)}
+                                                            disabled={sendingReminder === renewal.sub_id}
+                                                        >
+                                                            {sendingReminder === renewal.sub_id ? (
+                                                                <>
+                                                                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                                                                    Sending...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Mail className="w-3 h-3 mr-1.5" />
+                                                                    Send Reminder
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </TooltipContent>
                                         </Tooltip>
@@ -310,6 +338,18 @@ function RenewalsSection() {
                     </div>
                 )}
             </CardContent>
+
+            <RenewSubscriptionModal
+                isOpen={isRenewModalOpen}
+                onClose={() => {
+                    setIsRenewModalOpen(false);
+                    setSubToRenew(null);
+                }}
+                subscription={subToRenew}
+                onSuccess={() => {
+                    loadRenewals();
+                }}
+            />
         </Card>
     );
 }

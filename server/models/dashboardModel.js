@@ -14,12 +14,10 @@ export async function getRenewalsWithFilters(filters = {}) {
 
     switch (filterType) {
         case 'today':
-            whereClause += ` AND DATE(s.end_date) = DATE(?)`;
-            params.push(now);
+            whereClause += ` AND DATE(s.end_date) = CURDATE()`;
             break;
         case 'expired':
-            whereClause += ` AND DATE(s.end_date) < DATE(?)`;
-            params.push(now);
+            whereClause += ` AND DATE(s.end_date) < CURDATE()`;
             orderClause = 'ORDER BY s.end_date DESC';
             break;
         case 'this_month':
@@ -28,14 +26,12 @@ export async function getRenewalsWithFilters(filters = {}) {
                 whereClause += ` AND YEAR(s.end_date) = ? AND MONTH(s.end_date) = ?`;
                 params.push(parseInt(year, 10), parseInt(month, 10));
             } else {
-                whereClause += ` AND YEAR(s.end_date) = YEAR(?) AND MONTH(s.end_date) = MONTH(?)`;
-                params.push(now, now);
+                whereClause += ` AND YEAR(s.end_date) = YEAR(CURDATE()) AND MONTH(s.end_date) = MONTH(CURDATE())`;
             }
             break;
         case 'expiring':
         case 'soon':
-            whereClause += ` AND DATE(s.end_date) >= DATE(?) AND DATE(s.end_date) <= DATE_ADD(DATE(?), INTERVAL 30 DAY)`;
-            params.push(now, now);
+            whereClause += ` AND DATE(s.end_date) >= CURDATE() AND DATE(s.end_date) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)`;
             break;
         case 'custom':
             if (startDate && endDate) {
@@ -69,12 +65,14 @@ export async function getRenewalsWithFilters(filters = {}) {
 
     const [subscriptions] = await appDB.query(
         `SELECT s.sub_id, s.domain_name, s.end_date, s.start_date, s.status, s.total,
+                s.repeat_every_value, s.repeat_every_unit,
                 c.display_name AS customer_name, c.customer_id,
-                DATEDIFF(DATE(s.end_date), DATE(?)) AS days_left,
+                DATEDIFF(DATE(s.end_date), CURDATE()) AS days_left,
                 CASE 
-                    WHEN DATE(s.end_date) = DATE(?) THEN 'today'
-                    WHEN DATE(s.end_date) < DATE(?) THEN 'expired'
-                    WHEN DATE(s.end_date) <= DATE_ADD(DATE(?), INTERVAL 7 DAY) THEN 'soon'
+                    WHEN s.status = 'renewed' THEN 'renewed'
+                    WHEN DATE(s.end_date) = CURDATE() THEN 'today'
+                    WHEN DATE(s.end_date) < CURDATE() THEN 'expired'
+                    WHEN DATE(s.end_date) <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'soon'
                     ELSE 'upcoming'
                 END AS renewal_status,
                 (
@@ -93,7 +91,7 @@ export async function getRenewalsWithFilters(filters = {}) {
          JOIN customers c ON s.customer_id = c.customer_id
          ${whereClause}
          ${orderClause}`,
-        [now, now, now, now, ...params]
+        params
     );
 
     // Parse the services JSON for each subscription
@@ -149,14 +147,12 @@ export async function getExpiredServices(filters = {}) {
  * Get expiring today count
  */
 export async function getExpiringTodayCount() {
-    const now = new Date();
     const [result] = await appDB.query(
         `SELECT COUNT(*) as count
          FROM subscriptions s
          WHERE s.archived_at IS NULL
          AND s.end_date IS NOT NULL
-         AND DATE(s.end_date) = DATE(?)`,
-        [now]
+         AND DATE(s.end_date) = CURDATE()`
     );
     return result[0]?.count || 0;
 }

@@ -422,6 +422,7 @@ router.get('/subscriptions/:id/history', isAuthenticated, authorize(PERMISSIONS.
 router.put('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), updateSubscriptionController);
 router.delete('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_DELETE), deleteSubscriptionController);
 router.post('/subscriptions/:id/renew', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), renewSubscriptionController);
+router.post('/subscription/:id/renew', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), renewSubscriptionController);
 router.post('/subscriptions/:id/archive', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), archiveSubscriptionController);
 router.post('/subscriptions/:id/unarchive', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), unarchiveSubscriptionController);
 router.post('/subscriptions/:id/enqueue-reminders', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), enqueueRemindersController);

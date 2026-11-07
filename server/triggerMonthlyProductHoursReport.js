@@ -9,15 +9,19 @@ dotenv.config();
  * - Individual monthly report of respective users about their time to them
  * - Consolidated overall monthly report to admins
  * 
+ * By default, targets the PREVIOUS month (e.g., triggered on Nov 1 -> reports for October).
+ * 
  * Usage:
  *   node triggerMonthlyProductHoursReport.js
- *   node triggerMonthlyProductHoursReport.js 2026-07-04
+ *   node triggerMonthlyProductHoursReport.js 2026-11-01
+ *   node triggerMonthlyProductHoursReport.js 2026-10-15 --current-month
  */
 async function trigger() {
     console.log('--- Manual Trigger: Consolidated Monthly Productive Hours Report ---');
     
-    // Allow optional custom date argument: node triggerMonthlyProductHoursReport.js 2026-07-04
-    const customDateArg = process.argv[2];
+    const args = process.argv.slice(2);
+    const targetCurrentMonth = args.includes('--current-month') || args.includes('--exact');
+    const customDateArg = args.find(a => !a.startsWith('--'));
     const referenceDate = customDateArg ? new Date(customDateArg) : new Date();
 
     if (isNaN(referenceDate.getTime())) {
@@ -25,11 +29,13 @@ async function trigger() {
         process.exit(1);
     }
 
-    console.log(`Using reference date: ${referenceDate.toISOString()}`);
+    const targetPreviousMonth = !targetCurrentMonth;
+    console.log(`Trigger Reference date: ${referenceDate.toISOString()}`);
+    console.log(`Targeting mode: ${targetPreviousMonth ? 'PREVIOUS COMPLETED MONTH' : 'CURRENT MONTH'}`);
 
     try {
-        const result = await sendMonthlyProductHoursReports(referenceDate);
-        console.log('Successfully completed triggering monthly product hours report:');
+        const result = await sendMonthlyProductHoursReports(referenceDate, { targetPreviousMonth });
+        console.log(`Successfully completed triggering monthly product hours report for: ${result.targetMonth}`);
         console.log(JSON.stringify(result, null, 2));
         process.exit(0);
     } catch (error) {
@@ -39,3 +45,4 @@ async function trigger() {
 }
 
 trigger();
+

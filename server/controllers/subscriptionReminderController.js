@@ -10,14 +10,10 @@ import appDB from '../db/subsyncDB.js';
 export const renewSubscriptionController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { end_date } = req.body;
+        const { end_date } = req.body || {};
         const userId = req.user?.id || null;
 
-        if (!end_date) {
-            return res.status(400).json({ error: 'end_date is required' });
-        }
-
-        const result = await renewSubscription(id, end_date, userId);
+        const result = await renewSubscription(id, end_date || null, userId);
 
         if (req.user?.username) {
             await logActivity({
@@ -26,11 +22,16 @@ export const renewSubscriptionController = async (req, res) => {
                 resourceType: 'Subscription',
                 resourceId: id,
                 ipAddress: req.ip,
-                details: { end_date },
+                details: { end_date: result.newEndDate, enqueued: result.enqueued },
             });
         }
 
-        res.json({ message: result.message, success: true });
+        res.json({
+            message: result.message,
+            success: true,
+            newEndDate: result.newEndDate,
+            enqueued: result.enqueued
+        });
     } catch (error) {
         console.error('Error renewing subscription:', error);
         res.status(500).json({ error: error.message || 'Failed to renew subscription' });

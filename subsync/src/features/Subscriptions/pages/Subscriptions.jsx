@@ -39,8 +39,18 @@ function toTimestamp(dateStr) {
 }
 
 const StatusPill = ({ status }) => {
-  const variant = status === 'Active' ? 'secondary' : status === 'Expired' ? 'destructive' : 'default';
-  return <Badge variant={variant}>{status}</Badge>;
+  const s = (status || '').toLowerCase();
+  let variant = 'default';
+  if (s === 'active' || s === 'renewed') variant = 'secondary';
+  else if (s === 'expired') variant = 'destructive';
+  return (
+    <Badge
+      variant={variant}
+      className={s === 'renewed' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : ''}
+    >
+      {status}
+    </Badge>
+  );
 };
 
 const ListView = ({ onAddNew }) => {

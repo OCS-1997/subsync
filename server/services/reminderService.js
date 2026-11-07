@@ -378,23 +378,51 @@ export async function archiveOldSubscriptions(archivalDelayDays = 30) {
 /**
  * Renew a subscription: update end_date and enqueue new reminders
  * @param {string} subscriptionId
- * @param {Date|string} newEndDate
+ * @param {Date|string|null} newEndDate Optional new end date. If omitted, calculated from subscription cycle (renews in)
  * @param {number|null} userId
- * @returns {Promise<{success: boolean, message: string}>}
+ * @returns {Promise<{success: boolean, message: string, newEndDate: Date, enqueued: number}>}
  */
-export async function renewSubscription(subscriptionId, newEndDate, userId = null) {
+export async function renewSubscription(subscriptionId, newEndDate = null, userId = null) {
     try {
         const subscription = await getSubscriptionById(subscriptionId);
         if (!subscription) {
             throw new Error(`Subscription not found: ${subscriptionId}`);
         }
 
-        const endDate = newEndDate instanceof Date ? newEndDate : new Date(newEndDate);
+        let endDate;
+        if (newEndDate) {
+            endDate = newEndDate instanceof Date ? newEndDate : new Date(newEndDate);
+        } else {
+            // Calculate next subscription cycle end date based on repeat_every or duration
+            const now = new Date();
+            const val = parseInt(subscription.repeat_every_value, 10) || 1;
+            const unit = subscription.repeat_every_unit || 'years';
 
-        // Update subscription end_date and unarchive if archived
+            const addInterval = (d) => {
+                const res = new Date(d);
+                if (unit === 'days') res.setDate(res.getDate() + val);
+                else if (unit === 'weeks') res.setDate(res.getDate() + (val * 7));
+                else if (unit === 'months') res.setMonth(res.getMonth() + val);
+                else if (unit === 'years') res.setFullYear(res.getFullYear() + val);
+                else res.setFullYear(res.getFullYear() + 1);
+                return res;
+            };
+
+            const baseDate = subscription.end_date ? new Date(subscription.end_date) : new Date();
+            let nextDate = addInterval(baseDate);
+
+            // If base date was in past, advance until future
+            while (nextDate <= now) {
+                nextDate = addInterval(nextDate);
+            }
+            endDate = nextDate;
+        }
+
+        // Update subscription end_date, set status to 'renewed', and unarchive if archived
         await appDB.query(`
             UPDATE subscriptions
             SET end_date = ?,
+                status = 'renewed',
                 archived_at = NULL,
                 updated_at = NOW()
             WHERE sub_id = ?
@@ -403,12 +431,14 @@ export async function renewSubscription(subscriptionId, newEndDate, userId = nul
         // Cancel old pending jobs
         await cancelPendingReminderJobs(subscriptionId);
 
-        // Enqueue new reminders
+        // Enqueue new reminders for the new cycle
         const { enqueued } = await enqueueReminders(subscriptionId, userId);
 
         return {
             success: true,
-            message: `Subscription renewed. ${enqueued} reminders enqueued.`,
+            newEndDate: endDate,
+            enqueued: enqueued || 0,
+            message: `Subscription renewed successfully. ${enqueued || 0} reminders queued for the next cycle.`,
         };
     } catch (error) {
         console.error(`Error renewing subscription ${subscriptionId}:`, error);

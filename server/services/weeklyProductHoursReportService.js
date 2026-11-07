@@ -47,11 +47,12 @@ export function formatHoursAndMins(minutes) {
 }
 
 /**
- * Calculate Monday 00:00:00 IST to Saturday 23:59:59 IST date range for a given reference date
+/**
+ * Calculate Monday 00:00:00 IST to Saturday/Sunday date range for a given reference date
  * @param {Date} [referenceDate] 
- * @returns {{ startDate: Date, endDate: Date, startDateStr: string, endDateStr: string, days: Array<{ dayName: string, dateStr: string, dateUTC: string, start: Date, end: Date }> }}
+ * @returns {{ startDate: Date, saturdayEndDate: Date, sundayStartDate: Date, sundayEndDate: Date, startDateStr: string, saturdayEndDateStr: string, sundayEndDateStr: string, standardDays: Array<{ dayName: string, dateStr: string, dateUTC: string, start: Date, end: Date }>, sundayDay: { dayName: string, dateStr: string, dateUTC: string, start: Date, end: Date }, endDate: Date, endDateStr: string, days: Array<any> }}
  */
-export function getMonSatDateRange(referenceDate = new Date()) {
+export function getWeeklyReportDateRange(referenceDate = new Date()) {
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
     const refIST = new Date(referenceDate.getTime() + IST_OFFSET_MS);
 
@@ -67,11 +68,17 @@ export function getMonSatDateRange(referenceDate = new Date()) {
     const startDate = new Date(Date.UTC(year, month, date - diffToMon, 0, 0, 0, 0) - IST_OFFSET_MS);
 
     // Saturday 23:59:59.999 IST in UTC
-    const endDate = new Date(Date.UTC(year, month, date - diffToMon + 5, 23, 59, 59, 999) - IST_OFFSET_MS);
+    const saturdayEndDate = new Date(Date.UTC(year, month, date - diffToMon + 5, 23, 59, 59, 999) - IST_OFFSET_MS);
 
-    // Generate individual 6 days (Mon to Sat)
+    // Sunday 00:00:00 IST in UTC
+    const sundayStartDate = new Date(Date.UTC(year, month, date - diffToMon + 6, 0, 0, 0, 0) - IST_OFFSET_MS);
+
+    // Sunday 23:59:59.999 IST in UTC
+    const sundayEndDate = new Date(Date.UTC(year, month, date - diffToMon + 6, 23, 59, 59, 999) - IST_OFFSET_MS);
+
+    // Generate individual 6 standard days (Mon to Sat)
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const days = dayNames.map((name, i) => {
+    const standardDays = dayNames.map((name, i) => {
         const dStart = new Date(Date.UTC(year, month, date - diffToMon + i, 0, 0, 0, 0) - IST_OFFSET_MS);
         const dEnd = new Date(Date.UTC(year, month, date - diffToMon + i, 23, 59, 59, 999) - IST_OFFSET_MS);
         const dIST = new Date(dStart.getTime() + IST_OFFSET_MS);
@@ -86,14 +93,33 @@ export function getMonSatDateRange(referenceDate = new Date()) {
         };
     });
 
+    const sunIST = new Date(sundayStartDate.getTime() + IST_OFFSET_MS);
+    const sundayDay = {
+        dayName: 'Sunday',
+        dateStr: sunIST.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }),
+        dateUTC: `${sunIST.getUTCFullYear()}-${String(sunIST.getUTCMonth() + 1).padStart(2, '0')}-${String(sunIST.getUTCDate()).padStart(2, '0')}`,
+        start: sundayStartDate,
+        end: sundayEndDate
+    };
+
     return {
         startDate,
-        endDate,
+        saturdayEndDate,
+        sundayStartDate,
+        sundayEndDate,
         startDateStr: formatDateIST(startDate),
-        endDateStr: formatDateIST(endDate),
-        days
+        saturdayEndDateStr: formatDateIST(saturdayEndDate),
+        sundayEndDateStr: formatDateIST(sundayEndDate),
+        standardDays,
+        sundayDay,
+        // Backward-compatibility aliases
+        endDate: saturdayEndDate,
+        endDateStr: formatDateIST(saturdayEndDate),
+        days: standardDays
     };
 }
+
+export const getMonSatDateRange = getWeeklyReportDateRange;
 
 /**
  * Fetch all active team members with email addresses
@@ -123,12 +149,41 @@ export const sendWeeklyProductHoursReportEmail = sendWeeklyProductHoursReports;
  * 1) Individual weekly email to respective team members about their time
  * 2) Overall consolidated weekly email to admins
  * 
+ * If ANY team member has worked on Sunday, Sunday logs are included in both individual and admin reports.
+ * 
  * @param {Date} [referenceDate] 
- * @returns {Promise<{ success: boolean, memberRecipients: string[], adminRecipients: string[] }>}
+ * @returns {Promise<{ success: boolean, memberRecipients: string[], adminRecipients: string[], hasSundayWork: boolean }>}
  */
 export async function sendWeeklyProductHoursReports(referenceDate = new Date()) {
     console.log(`[WeeklyProductHoursReport] Starting weekly report generation for: ${referenceDate.toISOString()}`);
-    const { startDate, endDate, startDateStr, endDateStr, days } = getMonSatDateRange(referenceDate);
+    const rangeConfig = getWeeklyReportDateRange(referenceDate);
+
+    // 0. Check if ANY team member has logged hours on Sunday of this week
+    const [[sundayTeamRow]] = await appDB.query(
+        `SELECT 
+            COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+            COALESCE(SUM(CASE WHEN te.is_billable = TRUE THEN te.duration_minutes ELSE 0 END), 0) as billable_minutes,
+            COUNT(DISTINCT te.user_id) as active_members,
+            COUNT(te.id) as entry_count
+         FROM time_entries te
+         WHERE te.deleted_at IS NULL 
+           AND te.end_time IS NOT NULL
+           AND te.start_time >= ? AND te.start_time <= ?`,
+        [rangeConfig.sundayStartDate, rangeConfig.sundayEndDate]
+    );
+
+    const teamSundayTotalMins = Number(sundayTeamRow?.total_minutes || 0);
+    const teamSundayBillableMins = Number(sundayTeamRow?.billable_minutes || 0);
+    const teamSundayActiveMembers = Number(sundayTeamRow?.active_members || 0);
+    const teamSundayEntries = Number(sundayTeamRow?.entry_count || 0);
+    const hasSundayTeamWork = teamSundayTotalMins > 0;
+
+    console.log(`[WeeklyProductHoursReport] Sunday work check: ${teamSundayTotalMins} mins (${formatHours(teamSundayTotalMins)}) across ${teamSundayActiveMembers} member(s). Include Sunday: ${hasSundayTeamWork}`);
+
+    // If ANY team member worked on Sunday, effective end date extends through Sunday 23:59:59.999 IST
+    const effectiveEndDate = hasSundayTeamWork ? rangeConfig.sundayEndDate : rangeConfig.saturdayEndDate;
+    const effectiveEndDateStr = hasSundayTeamWork ? rangeConfig.sundayEndDateStr : rangeConfig.saturdayEndDateStr;
+    const periodSubtitle = hasSundayTeamWork ? 'Monday – Sunday' : 'Monday – Saturday';
 
     const teamMembers = await getTeamMemberUsers();
     const adminUsers = await getAdminUsers();
@@ -147,7 +202,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
     // =========================================================================
     for (const member of teamMembers) {
         try {
-            // 1. User overall weekly stats
+            // 1. User overall weekly stats (Mon to Sat, or Mon to Sun if Sunday worked)
             const [[userMetrics]] = await appDB.query(
                 `SELECT 
                     COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
@@ -160,7 +215,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                    AND te.deleted_at IS NULL 
                    AND te.end_time IS NOT NULL
                    AND te.start_time >= ? AND te.start_time <= ?`,
-                [member.username, startDate, endDate]
+                [member.username, rangeConfig.startDate, effectiveEndDate]
             );
 
             const userTotalMins = Number(userMetrics?.total_minutes || 0);
@@ -171,9 +226,9 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
             const userUtilization = userTotalMins > 0 ? Math.round((userBillableMins / userTotalMins) * 100) : 0;
             const userDailyAvgMins = userActiveDays > 0 ? Math.round(userTotalMins / userActiveDays) : 0;
 
-            // 2. User daily breakdown (Mon - Sat)
+            // 2. User daily breakdown (Monday to Saturday)
             const userDailyBreakdown = [];
-            for (const d of days) {
+            for (const d of rangeConfig.standardDays) {
                 const [[dRow]] = await appDB.query(
                     `SELECT 
                         COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
@@ -194,7 +249,38 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                     totalMins: dm,
                     totalHoursStr: formatHours(dm),
                     billableHoursStr: formatHours(dbm),
-                    entryCount: Number(dRow?.count || 0)
+                    entryCount: Number(dRow?.count || 0),
+                    isSunday: false
+                });
+            }
+
+            // 2b. Sunday breakdown for this user
+            const [[userSunRow]] = await appDB.query(
+                `SELECT 
+                    COALESCE(SUM(te.duration_minutes), 0) as total_minutes,
+                    COALESCE(SUM(CASE WHEN te.is_billable = TRUE THEN te.duration_minutes ELSE 0 END), 0) as billable_minutes,
+                    COUNT(te.id) as count
+                 FROM time_entries te
+                 WHERE te.user_id = ?
+                   AND te.deleted_at IS NULL 
+                   AND te.end_time IS NOT NULL
+                   AND te.start_time >= ? AND te.start_time <= ?`,
+                [member.username, rangeConfig.sundayDay.start, rangeConfig.sundayDay.end]
+            );
+            const userSunMins = Number(userSunRow?.total_minutes || 0);
+            const userSunBillableMins = Number(userSunRow?.billable_minutes || 0);
+            const userSunCount = Number(userSunRow?.count || 0);
+
+            // If ANY team member worked on Sunday (or this user worked on Sunday), include Sunday in the daily breakdown
+            if (hasSundayTeamWork || userSunMins > 0) {
+                userDailyBreakdown.push({
+                    dayName: rangeConfig.sundayDay.dayName,
+                    dateStr: rangeConfig.sundayDay.dateStr,
+                    totalMins: userSunMins,
+                    totalHoursStr: formatHours(userSunMins),
+                    billableHoursStr: formatHours(userSunBillableMins),
+                    entryCount: userSunCount,
+                    isSunday: true
                 });
             }
 
@@ -216,7 +302,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                  GROUP BY p.id, p.project_name, p.project_code, p.color
                  HAVING total_minutes > 0
                  ORDER BY total_minutes DESC`,
-                [member.username, startDate, endDate]
+                [member.username, rangeConfig.startDate, effectiveEndDate]
             );
 
             const userProductStats = userProducts.map(p => {
@@ -250,7 +336,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                  GROUP BY tat.id, tat.type_name, tat.color
                  HAVING total_minutes > 0
                  ORDER BY total_minutes DESC`,
-                [member.username, startDate, endDate]
+                [member.username, rangeConfig.startDate, effectiveEndDate]
             );
 
             const userActivityStats = userActivities.map(a => {
@@ -269,8 +355,11 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
 
             const memberHtml = generateUserWeeklyHoursHtml({
                 userName: member.name || member.username,
-                startDateStr,
-                endDateStr,
+                startDateStr: rangeConfig.startDateStr,
+                endDateStr: effectiveEndDateStr,
+                periodSubtitle,
+                hasSundayWork: hasSundayTeamWork,
+                userSunMins,
                 userTotalMins,
                 userBillableMins,
                 userNonBillableMins,
@@ -284,7 +373,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                 ctaUrl
             });
 
-            const subject = `Your Weekly Productive Hours Report (${startDateStr} - ${endDateStr})`;
+            const subject = `Your Weekly Productive Hours Report (${rangeConfig.startDateStr} - ${effectiveEndDateStr})`;
             await sendEmail({
                 to: member.email,
                 subject,
@@ -315,14 +404,14 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                  WHERE te.deleted_at IS NULL 
                    AND te.end_time IS NOT NULL
                    AND te.start_time >= ? AND te.start_time <= ?`,
-                [startDate, endDate]
+                [rangeConfig.startDate, effectiveEndDate]
             );
 
             const teamTotalMins = Number(teamMetrics?.total_minutes || 0);
             const teamBillableMins = Number(teamMetrics?.billable_minutes || 0);
             const teamNonBillableMins = Number(teamMetrics?.non_billable_minutes || 0);
             const teamActiveMembers = Number(teamMetrics?.active_members || 0);
-            const teamActiveProducts = Number(teamMetrics?.active_projects || 0);
+            const teamActiveProducts = Number(teamMetrics?.active_products || 0);
             const teamUtilization = teamTotalMins > 0 ? Math.round((teamBillableMins / teamTotalMins) * 100) : 0;
 
             // 2. Team members workload breakdown
@@ -342,7 +431,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                  WHERE u.is_active = 1
                  GROUP BY u.username, u.name, u.email
                  ORDER BY week_minutes DESC`,
-                [startDate, endDate]
+                [rangeConfig.startDate, effectiveEndDate]
             );
 
             const teamMemberStats = [];
@@ -366,7 +455,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                      GROUP BY p.project_name
                      ORDER BY mins DESC
                      LIMIT 1`,
-                    [m.username, startDate, endDate]
+                    [m.username, rangeConfig.startDate, effectiveEndDate]
                 );
                 if (tpRows.length > 0 && tpRows[0].project_name) {
                     topProduct = tpRows[0].project_name;
@@ -400,7 +489,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                  GROUP BY p.id, p.project_name, p.project_code, p.color
                  HAVING week_minutes > 0
                  ORDER BY week_minutes DESC`,
-                [startDate, endDate]
+                [rangeConfig.startDate, effectiveEndDate]
             );
 
             const teamProductStats = productRows.map(p => {
@@ -417,14 +506,25 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                 };
             });
 
+            const sundayStats = hasSundayTeamWork ? {
+                totalMins: teamSundayTotalMins,
+                hoursStr: formatHours(teamSundayTotalMins),
+                billableHoursStr: formatHours(teamSundayBillableMins),
+                activeMembers: teamSundayActiveMembers,
+                entries: teamSundayEntries
+            } : null;
+
             // 4. Send to each admin
             for (const admin of adminUsers) {
                 const usernameSegment = admin.username ? `${admin.username}/` : '';
                 const ctaUrl = `${baseUrl}/${usernameSegment}dashboard/time-tracking`;
 
                 const adminHtml = generateAdminWeeklyHoursHtml({
-                    startDateStr,
-                    endDateStr,
+                    startDateStr: rangeConfig.startDateStr,
+                    endDateStr: effectiveEndDateStr,
+                    periodSubtitle,
+                    hasSundayWork: hasSundayTeamWork,
+                    sundayStats,
                     teamTotalMins,
                     teamBillableMins,
                     teamNonBillableMins,
@@ -436,7 +536,7 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
                     ctaUrl
                 });
 
-                const subject = `[Admin Digest] Consolidated Weekly Productive Hours Report (${startDateStr} - ${endDateStr})`;
+                const subject = `[Admin Digest] Consolidated Weekly Productive Hours Report (${rangeConfig.startDateStr} - ${effectiveEndDateStr})`;
                 await sendEmail({
                     to: admin.email,
                     subject,
@@ -450,11 +550,12 @@ export async function sendWeeklyProductHoursReports(referenceDate = new Date()) 
         }
     }
 
-    console.log(`[WeeklyProductHoursReport] Completed. Sent to ${memberRecipients.length} team members and ${adminRecipients.length} admins.`);
+    console.log(`[WeeklyProductHoursReport] Completed. Sent to ${memberRecipients.length} team members and ${adminRecipients.length} admins. Sunday included: ${hasSundayTeamWork}`);
     return {
         success: true,
         memberRecipients,
-        adminRecipients
+        adminRecipients,
+        hasSundayWork: hasSundayTeamWork
     };
 }
 
@@ -466,6 +567,9 @@ function generateUserWeeklyHoursHtml(data) {
         userName,
         startDateStr,
         endDateStr,
+        periodSubtitle = 'Monday – Saturday',
+        hasSundayWork = false,
+        userSunMins = 0,
         userTotalMins,
         userBillableMins,
         userNonBillableMins,
@@ -507,7 +611,7 @@ function generateUserWeeklyHoursHtml(data) {
                             Your Weekly Productive Hours Report
                         </h1>
                         <p style="margin: 6px 0 0 0; color: #c7d2fe; font-size: 13px;">
-                            Monday &ndash; Saturday (${startDateStr} &ndash; ${endDateStr})
+                            ${periodSubtitle} (${startDateStr} &ndash; ${endDateStr})
                         </p>
                     </td>
                 </tr>
@@ -530,7 +634,7 @@ function generateUserWeeklyHoursHtml(data) {
                                     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 14px;">
                                         <span style="display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Time Logged</span>
                                         <span style="display: block; font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">${totalHoursStr}</span>
-                                        <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">Over ${userActiveDays} active days</span>
+                                        <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">Over ${userActiveDays} active days${userSunMins > 0 ? ' (incl. Sunday)' : ''}</span>
                                     </div>
                                 </td>
                                 <td width="32%" valign="top" style="padding: 0 4px;">
@@ -552,11 +656,11 @@ function generateUserWeeklyHoursHtml(data) {
                     </td>
                 </tr>
 
-                <!-- 1. DAILY BREAKDOWN (MON-SAT) -->
+                <!-- 1. DAILY BREAKDOWN -->
                 <tr>
                     <td style="padding: 0 32px 28px 32px;">
                         <h3 style="font-size: 13px; font-weight: 800; color: #1e1b4b; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px 0;">
-                            Daily Breakdown (Monday &ndash; Saturday)
+                            Daily Breakdown (${periodSubtitle})
                         </h3>
                         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                             <thead>
@@ -572,10 +676,12 @@ function generateUserWeeklyHoursHtml(data) {
                                 ${userDailyBreakdown.map((d, idx) => {
                                     const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
                                     const isLogged = d.totalMins > 0;
+                                    const isSun = Boolean(d.isSunday);
                                     return `
                                     <tr style="background-color: ${bg}; border-bottom: 1px solid #f1f5f9;">
-                                        <td style="padding: 9px 12px; font-size: 12px; font-weight: 700; color: ${isLogged ? '#0f172a' : '#94a3b8'};">
+                                        <td style="padding: 9px 12px; font-size: 12px; font-weight: 700; color: ${isSun ? (isLogged ? '#b45309' : '#64748b') : (isLogged ? '#0f172a' : '#94a3b8')};">
                                             ${d.dayName}
+                                            ${isSun ? (isLogged ? '<span style="display: inline-block; padding: 2px 6px; background-color: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; border-radius: 4px; margin-left: 6px;">Weekend Log</span>' : '<span style="display: inline-block; padding: 2px 6px; background-color: #f1f5f9; color: #64748b; font-size: 10px; font-weight: 600; border-radius: 4px; margin-left: 6px;">Weekend Off</span>') : ''}
                                         </td>
                                         <td style="padding: 9px 12px; text-align: center; font-size: 12px; color: #64748b;">
                                             ${d.dateStr}
@@ -691,7 +797,7 @@ function generateUserWeeklyHoursHtml(data) {
                     <td style="background-color: #f8fafc; padding: 18px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
                         <p style="margin: 0; font-size: 11px; color: #94a3b8;">
                             This is your automated individual weekly productive hours report.<br>
-                            Sent every Saturday at 6:30 PM IST by Subsync Platform.
+                            Sent every Sunday at 6:30 PM IST by Subsync Platform.
                         </p>
                     </td>
                 </tr>
@@ -713,6 +819,9 @@ function generateAdminWeeklyHoursHtml(data) {
     const {
         startDateStr,
         endDateStr,
+        periodSubtitle = 'Monday – Saturday',
+        hasSundayWork = false,
+        sundayStats = null,
         teamTotalMins,
         teamBillableMins,
         teamActiveMembers,
@@ -754,7 +863,7 @@ function generateAdminWeeklyHoursHtml(data) {
                                         Consolidated Weekly Productive Hours
                                     </h1>
                                     <p style="margin: 6px 0 0 0; color: #c7d2fe; font-size: 13px;">
-                                        Monday &ndash; Saturday (${startDateStr} &ndash; ${endDateStr})
+                                        ${periodSubtitle} (${startDateStr} &ndash; ${endDateStr})
                                     </p>
                                 </td>
                                 <td align="right" valign="top" style="width: 130px;">
@@ -779,7 +888,7 @@ function generateAdminWeeklyHoursHtml(data) {
                                     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 14px;">
                                         <span style="display: block; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Team Hours</span>
                                         <span style="display: block; font-size: 22px; font-weight: 800; color: #1e293b; margin-top: 4px;">${teamTotalHoursStr}</span>
-                                        <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">Mon-Sat cumulative</span>
+                                        <span style="display: block; font-size: 11px; color: #64748b; margin-top: 2px;">${hasSundayWork ? 'Mon-Sun' : 'Mon-Sat'} cumulative</span>
                                     </div>
                                 </td>
                                 <td width="32%" valign="top" style="padding: 0 4px;">
@@ -798,6 +907,22 @@ function generateAdminWeeklyHoursHtml(data) {
                                 </td>
                             </tr>
                         </table>
+
+                        <!-- SUNDAY WORK HIGHLIGHT (if any member logged hours on Sunday) -->
+                        ${hasSundayWork && sundayStats ? `
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 8px;">
+                            <tr>
+                                <td style="padding: 14px 18px;">
+                                    <span style="display: block; font-size: 12px; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        ⭐ Sunday Work Logs Included
+                                    </span>
+                                    <span style="display: block; font-size: 13px; color: #78350f; margin-top: 4px; font-weight: 500;">
+                                        A total of <strong>${sundayStats.hoursStr}</strong> (${sundayStats.billableHoursStr} billable across ${sundayStats.entries} log entries) was tracked on Sunday by <strong>${sundayStats.activeMembers}</strong> team member(s).
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                        ` : ''}
 
                         <!-- 1. TEAM MEMBER WORKLOAD TABLE -->
                         <div style="margin-bottom: 32px;">
@@ -904,7 +1029,7 @@ function generateAdminWeeklyHoursHtml(data) {
                     <td style="background-color: #f8fafc; padding: 20px 36px; border-top: 1px solid #e2e8f0; text-align: center;">
                         <p style="margin: 0; font-size: 12px; color: #94a3b8;">
                             This is an automated consolidated report generated by Subsync Business Operations System.<br>
-                            Sent every Saturday at 6:30 PM IST to Admins.
+                            Sent every Sunday at 6:30 PM IST to Admins.
                         </p>
                     </td>
                 </tr>
@@ -918,3 +1043,4 @@ function generateAdminWeeklyHoursHtml(data) {
 </html>
     `;
 }
+

@@ -21,6 +21,8 @@ function StatusPill({ status }) {
 
   if (s === "active") {
     colorClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
+  } else if (s === "renewed") {
+    colorClass = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700";
   } else if (s === "expired") {
     colorClass = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800";
   } else if (s === "expiring soon" || s === "soon") {

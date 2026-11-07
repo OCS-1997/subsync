@@ -106,12 +106,12 @@ export async function syncScheduledTasks() {
             }
         );
 
-        // 11. Weekly Product Hours Report for Team Members (Every Saturday at 18:30 IST / 13:00 UTC)
+        // 11. Weekly Product Hours Report for Team Members & Admins (Every Sunday at 18:30 IST / 13:00 UTC)
         await scheduledTasksQueue.add(
             'weekly_product_hours_report',
             { taskName: 'weekly_product_hours_report' },
             {
-                repeat: { pattern: '0 13 * * 6', tz: 'UTC' }
+                repeat: { pattern: '0 13 * * 0', tz: 'UTC' }
             }
         );
 

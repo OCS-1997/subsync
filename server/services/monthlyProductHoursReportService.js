@@ -5,19 +5,32 @@ import { getAdminUsers } from './weeklyTaskReportService.js';
 import { getTeamMemberUsers, formatHours, formatHoursAndMins } from './weeklyProductHoursReportService.js';
 
 /**
- * Calculate the 4 weekly buckets for the month of referenceDate
+ * Calculate the 4 weekly buckets for the target month
+ * By default, targets the PREVIOUS month relative to referenceDate (e.g. triggered on Nov 1 -> reports on October).
+ * Set options.targetPreviousMonth = false to target the exact month of referenceDate.
+ * 
  * @param {Date} [referenceDate] 
- * @returns {{ monthName: string, year: number, monthStartDate: Date, monthEndDate: Date, weeks: Array<{ label: string, periodStr: string, startDate: Date, endDate: Date }> }}
+ * @param {{ targetPreviousMonth?: boolean }} [options]
+ * @returns {{ monthName: string, shortMonth: string, year: number, monthStartDate: Date, monthEndDate: Date, weeks: Array<{ label: string, periodStr: string, startDate: Date, endDate: Date }> }}
  */
-export function getMonthWeeklyBuckets(referenceDate = new Date()) {
+export function getMonthWeeklyBuckets(referenceDate = new Date(), options = {}) {
+    const { targetPreviousMonth = true } = options;
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
     const refIST = new Date(referenceDate.getTime() + IST_OFFSET_MS);
 
-    const year = refIST.getUTCFullYear();
-    const month = refIST.getUTCMonth(); // 0-indexed
+    // Target previous month by default when triggered e.g. on the 1st of the month
+    const targetRef = targetPreviousMonth
+        ? new Date(Date.UTC(refIST.getUTCFullYear(), refIST.getUTCMonth() - 1, 1))
+        : refIST;
+
+    const year = targetRef.getUTCFullYear();
+    const month = targetRef.getUTCMonth(); // 0-indexed
     const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-    const monthName = refIST.toLocaleDateString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
-    const shortMonth = refIST.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' });
+    
+    // Explicit midday date to avoid timezone rollover when formatting
+    const targetDateForFormat = new Date(Date.UTC(year, month, 1, 12, 0, 0));
+    const monthName = targetDateForFormat.toLocaleDateString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
+    const shortMonth = targetDateForFormat.toLocaleDateString('en-IN', { month: 'short', timeZone: 'Asia/Kolkata' });
 
     const buckets = [
         { label: 'WEEK 1', startDay: 1, endDay: 7 },
@@ -42,6 +55,7 @@ export function getMonthWeeklyBuckets(referenceDate = new Date()) {
 
     return {
         monthName,
+        shortMonth,
         year,
         monthStartDate,
         monthEndDate,
@@ -54,12 +68,15 @@ export function getMonthWeeklyBuckets(referenceDate = new Date()) {
  * 1) Individual monthly email to respective team members about their month's time
  * 2) Overall consolidated monthly email to admins
  * 
+ * By default, targets the previous month (e.g. triggered on Nov 1 -> reports for October).
+ * 
  * @param {Date} [referenceDate] 
- * @returns {Promise<{ success: boolean, memberRecipients: string[], adminRecipients: string[] }>}
+ * @param {{ targetPreviousMonth?: boolean }} [options]
+ * @returns {Promise<{ success: boolean, memberRecipients: string[], adminRecipients: string[], targetMonth: string }>}
  */
-export async function sendMonthlyProductHoursReports(referenceDate = new Date()) {
-    console.log(`[MonthlyProductHoursReport] Starting monthly report generation for: ${referenceDate.toISOString()}`);
-    const monthConfig = getMonthWeeklyBuckets(referenceDate);
+export async function sendMonthlyProductHoursReports(referenceDate = new Date(), options = {}) {
+    const monthConfig = getMonthWeeklyBuckets(referenceDate, options);
+    console.log(`[MonthlyProductHoursReport] Starting monthly report generation triggered at: ${referenceDate.toISOString()}, targeting ${monthConfig.monthName} ${monthConfig.year} (${monthConfig.monthStartDate.toISOString()} to ${monthConfig.monthEndDate.toISOString()})`);
 
     const teamMembers = await getTeamMemberUsers();
     const adminUsers = await getAdminUsers();
@@ -417,9 +434,12 @@ export async function sendMonthlyProductHoursReports(referenceDate = new Date())
         }
     }
 
-    console.log(`[MonthlyProductHoursReport] Completed. Sent to ${memberRecipients.length} team members and ${adminRecipients.length} admins.`);
+    console.log(`[MonthlyProductHoursReport] Completed for ${monthConfig.monthName} ${monthConfig.year}. Sent to ${memberRecipients.length} team members and ${adminRecipients.length} admins.`);
     return {
         success: true,
+        targetMonth: `${monthConfig.monthName} ${monthConfig.year}`,
+        monthStartDate: monthConfig.monthStartDate,
+        monthEndDate: monthConfig.monthEndDate,
         memberRecipients,
         adminRecipients
     };

@@ -231,12 +231,17 @@ export const triggerWeeklyProductHoursReport = async (req, res) => {
             resourceType: 'DeveloperControl',
             resourceId: 'weekly_product_hours_report',
             ipAddress: req.user?.ip || req.ip,
-            details: { targetDate, recipientsCount: result.recipients?.length }
+            details: { 
+                targetDate, 
+                memberRecipients: result.memberRecipients?.length, 
+                adminRecipients: result.adminRecipients?.length,
+                hasSundayWork: result.hasSundayWork 
+            }
         });
 
         res.json({
             success: true,
-            message: `Consolidated Product Hours Report triggered successfully to ${result.recipients?.length || 0} team members.`,
+            message: `Weekly Productive Hours Report triggered successfully to ${result.memberRecipients?.length || 0} team members and ${result.adminRecipients?.length || 0} admins.${result.hasSundayWork ? ' (Includes Sunday work logs)' : ''}`,
             data: result
         });
     } catch (error) {
@@ -250,10 +255,11 @@ export const triggerWeeklyProductHoursReport = async (req, res) => {
  */
 export const triggerMonthlyProductHoursReport = async (req, res) => {
     try {
-        const { date } = req.body || {};
+        const { date, targetPreviousMonth } = req.body || {};
         const targetDate = date ? new Date(date) : new Date();
+        const shouldTargetPrev = targetPreviousMonth !== undefined ? Boolean(targetPreviousMonth) : true;
 
-        const result = await sendMonthlyProductHoursReports(targetDate);
+        const result = await sendMonthlyProductHoursReports(targetDate, { targetPreviousMonth: shouldTargetPrev });
 
         await logActivity({
             username: req.user?.username || 'system',
@@ -261,12 +267,17 @@ export const triggerMonthlyProductHoursReport = async (req, res) => {
             resourceType: 'DeveloperControl',
             resourceId: 'monthly_product_hours_report',
             ipAddress: req.user?.ip || req.ip,
-            details: { targetDate, memberRecipients: result.memberRecipients?.length, adminRecipients: result.adminRecipients?.length }
+            details: { 
+                targetDate, 
+                targetMonth: result.targetMonth,
+                memberRecipients: result.memberRecipients?.length, 
+                adminRecipients: result.adminRecipients?.length 
+            }
         });
 
         res.json({
             success: true,
-            message: `Monthly Productive Hours Report triggered successfully to ${result.memberRecipients?.length || 0} team members and ${result.adminRecipients?.length || 0} admins.`,
+            message: `Monthly Productive Hours Report (${result.targetMonth}) triggered successfully to ${result.memberRecipients?.length || 0} team members and ${result.adminRecipients?.length || 0} admins.`,
             data: result
         });
     } catch (error) {

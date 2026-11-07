@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
     Package, Calendar, TrendingUp, AlertTriangle, Filter,
-    CheckCircle, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2, Maximize2
+    CheckCircle, CheckCircle2, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2, Maximize2
 } from 'lucide-react';
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
+import RenewSubscriptionModal from '../RenewSubscriptionModal';
 import { toast } from 'react-toastify';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
@@ -26,15 +27,16 @@ import { useTheme } from '@/context/ThemeContext';
 
 const STATUS_COLORS = {
     active: '#10b981',
+    renewed: '#059669',
     expired: '#ef4444',
     'expiring soon': '#f59e0b',
     soon: '#f59e0b'
 };
 
 const FILTER_OPTIONS = [
+    { id: 'today', label: 'Today', icon: AlertTriangle },
     { id: 'this_month', label: 'This Month', icon: Calendar },
     { id: 'expiring', label: 'Expiring Soon', icon: Clock },
-    { id: 'today', label: 'Today', icon: AlertTriangle },
     { id: 'expired', label: 'Expired', icon: XCircle },
     { id: 'custom', label: 'Custom', icon: Calendar },
 ];
@@ -46,6 +48,8 @@ function SubscriptionsTab({ visibleWidgets }) {
     const [loading, setLoading] = useState(true);
     const [renewalsLoading, setRenewalsLoading] = useState(false);
     const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
+    const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+    const [subToRenew, setSubToRenew] = useState(null);
 
     // Helper to check if widget is visible
     const isWidgetVisible = (widgetKey) => {
@@ -63,7 +67,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     });
     const [renewals, setRenewals] = useState([]);
     const [statusDistribution, setStatusDistribution] = useState([]);
-    const [activeFilter, setActiveFilter] = useState('this_month');
+    const [activeFilter, setActiveFilter] = useState('today');
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
@@ -86,6 +90,19 @@ function SubscriptionsTab({ visibleWidgets }) {
         } finally {
             setSendingReminder(null);
         }
+    };
+
+    // Open renew modal for a subscription
+    const handleOpenRenewModal = (sub, e) => {
+        if (e) e.stopPropagation();
+        setSubToRenew(sub);
+        setIsRenewModalOpen(true);
+    };
+
+    // When subscription is renewed successfully
+    const handleRenewSuccess = () => {
+        loadRenewals();
+        loadDashboardStats();
     };
 
     useEffect(() => {
@@ -181,6 +198,13 @@ function SubscriptionsTab({ visibleWidgets }) {
 
     const getStatusBadge = (sub) => {
         const days = sub.days_left;
+        if (sub.renewal_status === 'renewed' || sub.status === 'renewed') {
+            return (
+                <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold">
+                    Renewed
+                </Badge>
+            );
+        }
         if (days < 0 || sub.renewal_status === 'expired') {
             return (
                 <Badge variant="outline" className="border-rose-500/50 text-rose-500 dark:text-rose-400 text-[9px]">
@@ -348,10 +372,28 @@ function SubscriptionsTab({ visibleWidgets }) {
                             <span>Loading subscriptions...</span>
                         </div>
                     ) : filteredSubscriptions.length === 0 ? (
-                        <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-                            {activeFilter === 'custom' && !dateFrom && !dateTo
-                                ? 'Please select a date range'
-                                : 'No subscriptions found'}
+                        <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50/50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 my-2">
+                            {activeFilter === 'today' ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 shadow-sm">
+                                        <CheckCircle className="w-6 h-6" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        No Subscriptions Expiring Today
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+                                        All systems clear! There are currently no subscriptions scheduled to expire today.
+                                    </p>
+                                </>
+                            ) : activeFilter === 'custom' && !dateFrom && !dateTo ? (
+                                <div className="text-slate-500 text-sm py-4">
+                                    Please select a date range to view subscriptions
+                                </div>
+                            ) : (
+                                <div className="text-slate-500 text-sm py-4">
+                                    No subscriptions found for {FILTER_OPTIONS.find(f => f.id === activeFilter)?.label || 'this filter'}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-2 pr-1">
@@ -371,13 +413,30 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                 </div>
                                                 <p className="text-[10px] text-slate-500 truncate mt-0.5">
                                                     {sub.customer_name} • Ends: {new Date(sub.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    {sub.repeat_every_value && (
+                                                        <span className="text-slate-400 dark:text-slate-500 ml-1">
+                                                            • Renews in {sub.repeat_every_value} {sub.repeat_every_unit}
+                                                        </span>
+                                                    )}
                                                 </p>
                                             </div>
-                                            {sub.total && (
-                                                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 ml-2">
-                                                    {formatCurrency(parseFloat(sub.total))}
-                                                </span>
-                                            )}
+                                            <div className="flex items-center gap-2 ml-2" onClick={(e) => e.stopPropagation()}>
+                                                {sub.total && (
+                                                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                                                        {formatCurrency(parseFloat(sub.total))}
+                                                    </span>
+                                                )}
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-7 px-2.5 text-[10px] font-bold border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400 rounded-lg flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+                                                    onClick={(e) => handleOpenRenewModal(sub, e)}
+                                                    title="Mark as Renewed & Queue Next Cycle"
+                                                >
+                                                    <RefreshCw className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                                    <span>Renew</span>
+                                                </Button>
+                                            </div>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent
@@ -385,7 +444,7 @@ function SubscriptionsTab({ visibleWidgets }) {
                                         align="center"
                                         sideOffset={8}
                                         collisionPadding={20}
-                                        className="max-w-sm bg-slate-900 dark:bg-slate-800 border-slate-700 p-4 rounded-xl z-50"
+                                        className="max-w-sm bg-slate-900 dark:bg-slate-800 border-slate-700 p-4 rounded-xl z-50 shadow-2xl"
                                     >
                                         <div className="space-y-3">
                                             <div>
@@ -399,7 +458,7 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                     <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">Services</p>
                                                     <div className="space-y-1">
                                                         {sub.services.slice(0, 4).map((service, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between text-[10px] p-1.5 rounded bg-slate-800/50">
+                                                             <div key={idx} className="flex items-center justify-between text-[10px] p-1.5 rounded bg-slate-800/50">
                                                                 <span className="text-slate-300 truncate max-w-[140px]">{service.service_name || 'Unnamed Service'}</span>
                                                                 <span className="text-emerald-400 font-bold shrink-0 ml-2">₹{service.amount || service.rate || 0}</span>
                                                             </div>
@@ -421,6 +480,7 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                     <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">End</p>
                                                     <p className={cn(
                                                         "text-xs font-bold",
+                                                        sub.renewal_status === 'renewed' || sub.status === 'renewed' ? "text-emerald-400" :
                                                         sub.days_left < 0 ? "text-rose-400" : sub.days_left <= 7 ? "text-amber-400" : "text-blue-400"
                                                     )}>
                                                         {sub.end_date ? new Date(sub.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
@@ -434,9 +494,11 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                     <span className="text-[9px] text-slate-500 block">Status</span>
                                                     <span className={cn(
                                                         "text-xs font-bold",
+                                                        sub.renewal_status === 'renewed' || sub.status === 'renewed' ? "text-emerald-400" :
                                                         sub.days_left < 0 ? "text-rose-400" : sub.days_left <= 7 ? "text-amber-400" : "text-blue-400"
                                                     )}>
-                                                        {sub.days_left < 0 ? `Expired ${Math.abs(sub.days_left)}d ago` :
+                                                        {sub.renewal_status === 'renewed' || sub.status === 'renewed' ? 'Renewed' :
+                                                            sub.days_left < 0 ? `Expired ${Math.abs(sub.days_left)}d ago` :
                                                             sub.days_left === 0 ? 'Expires Today!' :
                                                                 `${sub.days_left}d remaining`}
                                                     </span>
@@ -449,25 +511,35 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                 )}
                                             </div>
 
-                                            {/* Send Reminder Button */}
-                                            <Button
-                                                size="sm"
-                                                className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8"
-                                                onClick={(e) => sendReminder(sub.sub_id, e)}
-                                                disabled={sendingReminder === sub.sub_id}
-                                            >
-                                                {sendingReminder === sub.sub_id ? (
-                                                    <>
-                                                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                                                        Sending...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Mail className="w-3 h-3 mr-2" />
-                                                        Send Reminder Email
-                                                    </>
-                                                )}
-                                            </Button>
+                                            {/* Actions: Renew Button along with Send Reminder Button */}
+                                            <div className="flex gap-2 mt-3 pt-2 border-t border-slate-700/60">
+                                                <Button
+                                                    size="sm"
+                                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
+                                                    onClick={(e) => handleOpenRenewModal(sub, e)}
+                                                >
+                                                    <RefreshCw className="w-3 h-3 mr-1.5" />
+                                                    Mark as Renewed
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
+                                                    onClick={(e) => sendReminder(sub.sub_id, e)}
+                                                    disabled={sendingReminder === sub.sub_id}
+                                                >
+                                                    {sendingReminder === sub.sub_id ? (
+                                                        <>
+                                                            <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                                                            Sending...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Mail className="w-3 h-3 mr-1.5" />
+                                                            Send Reminder
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </div>
                                     </TooltipContent>
                                 </Tooltip>
@@ -557,6 +629,16 @@ function SubscriptionsTab({ visibleWidgets }) {
         <RevenueBreakdownModal 
             isOpen={isRevenueModalOpen} 
             onClose={() => setIsRevenueModalOpen(false)} 
+        />
+
+        <RenewSubscriptionModal
+            isOpen={isRenewModalOpen}
+            onClose={() => {
+                setIsRenewModalOpen(false);
+                setSubToRenew(null);
+            }}
+            subscription={subToRenew}
+            onSuccess={handleRenewSuccess}
         />
         </>
     );
