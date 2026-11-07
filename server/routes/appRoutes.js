@@ -793,11 +793,11 @@ router.post('/my/appraisal/save', isAuthenticated, authorize(PERMISSIONS.APPRAIS
 // Leaves
 router.get('/leaves/types', isAuthenticated, getLeaveTypesController);
 router.post('/leaves/apply', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPLY), applyLeaveController);
-router.get('/leaves/my', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyLeavesController);
-router.get('/leaves/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW_ALL), getAllLeavesController);
+router.get('/leaves/my', isAuthenticated, authorize([PERMISSIONS.LEAVES_VIEW, PERMISSIONS.LEAVES_APPLY], { match: 'any' }), getMyLeavesController);
+router.get('/leaves/all', isAuthenticated, authorize([PERMISSIONS.LEAVES_VIEW_ALL, PERMISSIONS.LEAVES_APPROVE], { match: 'any' }), getAllLeavesController);
 router.put('/leaves/action/:requestId', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), actionLeaveController);
-router.get('/leaves/balances', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyBalancesController);
-router.get('/leaves/stats/pending-counts', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), getPendingCountsController);
+router.get('/leaves/balances', isAuthenticated, authorize([PERMISSIONS.LEAVES_VIEW, PERMISSIONS.LEAVES_APPLY], { match: 'any' }), getMyBalancesController);
+router.get('/leaves/stats/pending-counts', isAuthenticated, authorize([PERMISSIONS.LEAVES_APPROVE, PERMISSIONS.PERMISSIONS_APPROVE], { match: 'any' }), getPendingCountsController);
 
 // Admin: Leave Types & Admin Balances
 router.post('/leaves/types', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createLeaveTypeController);
@@ -805,21 +805,21 @@ router.put('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MA
 router.delete('/leaves/types/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteLeaveTypeController);
 router.get('/leaves/permission-settings', isAuthenticated, getPermissionSettingsController);
 router.put('/leaves/permission-settings', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updatePermissionSettingsController);
-router.get('/leaves/balances/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), getAllUserBalancesController);
+router.get('/leaves/balances/all', isAuthenticated, authorize([PERMISSIONS.LEAVES_MANAGE_TYPES, PERMISSIONS.HOLIDAYS_MANAGE], { match: 'any' }), getAllUserBalancesController);
 router.post('/leaves/balances/adjust', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), adjustUserBalanceController);
 
 // Permissions (Short duration)
 router.post('/permissions/apply', isAuthenticated, authorize(PERMISSIONS.PERMISSIONS_APPLY), applyPermissionController);
-router.get('/permissions/my', isAuthenticated, authorize(PERMISSIONS.LEAVES_VIEW), getMyPermissionsController);
-router.get('/permissions/all', isAuthenticated, authorize(PERMISSIONS.LEAVES_APPROVE), getAllPermissionsController);
+router.get('/permissions/my', isAuthenticated, authorize([PERMISSIONS.LEAVES_VIEW, PERMISSIONS.PERMISSIONS_APPLY], { match: 'any' }), getMyPermissionsController);
+router.get('/permissions/all', isAuthenticated, authorize([PERMISSIONS.PERMISSIONS_APPROVE, PERMISSIONS.LEAVES_APPROVE], { match: 'any' }), getAllPermissionsController);
 router.put('/permissions/action/:requestId', isAuthenticated, authorize(PERMISSIONS.PERMISSIONS_APPROVE), actionPermissionController);
 
 // Holidays
 router.get('/holidays', isAuthenticated, getHolidaysController);
-router.post('/holidays', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), createHolidayController);
-router.post('/holidays/copy-year', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), copyHolidaysNextYearController);
-router.put('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), updateHolidayController);
-router.delete('/holidays/:id', isAuthenticated, authorize(PERMISSIONS.LEAVES_MANAGE_TYPES), deleteHolidayController);
+router.post('/holidays', isAuthenticated, authorize([PERMISSIONS.HOLIDAYS_MANAGE, PERMISSIONS.LEAVES_MANAGE_TYPES], { match: 'any' }), createHolidayController);
+router.post('/holidays/copy-year', isAuthenticated, authorize([PERMISSIONS.HOLIDAYS_MANAGE, PERMISSIONS.LEAVES_MANAGE_TYPES], { match: 'any' }), copyHolidaysNextYearController);
+router.put('/holidays/:id', isAuthenticated, authorize([PERMISSIONS.HOLIDAYS_MANAGE, PERMISSIONS.LEAVES_MANAGE_TYPES], { match: 'any' }), updateHolidayController);
+router.delete('/holidays/:id', isAuthenticated, authorize([PERMISSIONS.HOLIDAYS_MANAGE, PERMISSIONS.LEAVES_MANAGE_TYPES], { match: 'any' }), deleteHolidayController);
 
 // Goals Module Endpoints
 router.get('/goals/dashboard-stats', isAuthenticated, authorize(['goals.view']), getDashboardStats);

@@ -106,6 +106,7 @@ export const PERMISSIONS = Object.freeze({
   LEAVES_MANAGE_TYPES: 'leaves.manage_types',
   PERMISSIONS_APPLY: 'permissions.apply',
   PERMISSIONS_APPROVE: 'permissions.approve',
+  HOLIDAYS_MANAGE: 'holidays.manage',
   DEVELOPER_CONTROLS: 'developer_controls.manage',
   // Goals Module
   GOALS_VIEW: 'goals.view',
@@ -154,6 +155,9 @@ export const PAGE_PERMISSIONS = {
   performanceReports: PERMISSIONS.PERFORMANCE_REPORTS_VIEW,
   goals: PERMISSIONS.GOALS_VIEW,
   tasks: PERMISSIONS.TASKS_VIEW,
+  leaves: PERMISSIONS.LEAVES_VIEW,
+  adminLeaves: PERMISSIONS.LEAVES_MANAGE_TYPES,
+  holidays: PERMISSIONS.HOLIDAYS_MANAGE,
 };
 
 

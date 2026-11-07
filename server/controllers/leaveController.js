@@ -30,6 +30,7 @@ import {
 import { logActivity } from "../models/activityLogModel.js";
 import { calculateWorkingDays } from "../utils/leaveUtils.js";
 import { sendLeaveApplicationNotice, sendLeaveDecisionNotice } from "../services/leaveNotificationService.js";
+import { PERMISSIONS } from "../constants/permissions.js";
 
 /**
  * Get all available leave types
@@ -49,8 +50,18 @@ async function getLeaveTypesController(req, res) {
  */
 async function applyLeaveController(req, res) {
     try {
-        const { leave_type_id, start_date, end_date, half_day_type, reason } = req.body;
-        const userId = req.user.username;
+        const { leave_type_id, start_date, end_date, half_day_type, reason, target_user_id } = req.body;
+        let userId = req.user.username;
+
+        if (target_user_id && target_user_id !== userId) {
+            const canApplyForOthers = req.user.roleKey === 'admin' || 
+                req.user.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) ||
+                req.user.permissions?.includes(PERMISSIONS.LEAVES_VIEW_ALL);
+            if (!canApplyForOthers) {
+                return res.status(403).json({ error: "Insufficient permission to apply leave for other employees" });
+            }
+            userId = target_user_id;
+        }
 
         if (!leave_type_id || !start_date || !end_date || !reason) {
             return res.status(400).json({ error: "Missing required fields" });

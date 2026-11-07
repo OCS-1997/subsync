@@ -47,6 +47,7 @@ const LeavesPage = () => {
     const canApproveLeaves = isAdmin || user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE);
     const canApprovePermissions = isAdmin || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE);
     const canViewApprovals = canApproveLeaves || canApprovePermissions;
+    const canManageHolidays = isAdmin || user?.permissions?.includes(PERMISSIONS.HOLIDAYS_MANAGE) || user?.permissions?.includes(PERMISSIONS.LEAVES_MANAGE_TYPES);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -308,7 +309,11 @@ const LeavesPage = () => {
 
                 {/* Tab 3: Company Holidays */}
                 <TabsContent value="holidays">
-                    <HolidayCalendar holidays={holidays} />
+                    <HolidayCalendar 
+                        holidays={holidays} 
+                        canManage={canManageHolidays} 
+                        onRefresh={fetchData} 
+                    />
                 </TabsContent>
 
                 {/* Tab 4: Approvals Hub */}

@@ -4,11 +4,22 @@ import {
     updatePermissionStatus
 } from "../models/permissionRequestModel.js";
 import { logActivity } from "../models/activityLogModel.js";
+import { PERMISSIONS } from "../constants/permissions.js";
 
 async function applyPermissionController(req, res) {
     try {
-        const { date, start_time, end_time, reason } = req.body;
-        const userId = req.user.username;
+        const { date, start_time, end_time, reason, target_user_id } = req.body;
+        let userId = req.user.username;
+
+        if (target_user_id && target_user_id !== userId) {
+            const canApplyForOthers = req.user.roleKey === 'admin' || 
+                req.user.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE) ||
+                req.user.permissions?.includes(PERMISSIONS.LEAVES_APPROVE);
+            if (!canApplyForOthers) {
+                return res.status(403).json({ error: "Insufficient permission to apply permission for other employees" });
+            }
+            userId = target_user_id;
+        }
 
         if (!date || !start_time || !end_time || !reason) {
             return res.status(400).json({ error: "Missing required fields" });

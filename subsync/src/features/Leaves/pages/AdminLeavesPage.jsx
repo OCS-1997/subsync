@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +20,18 @@ import EmployeeBalanceCard from '../components/EmployeeBalanceCard';
 import EmployeeBalanceDetailsModal from '../components/EmployeeBalanceDetailsModal';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const AdminLeavesPage = () => {
+    const { user } = useSelector((state) => state.auth);
     const location = useLocation();
     const username = location.pathname.split('/')[1] || '';
 
-    const [activeTab, setActiveTab] = useState('leave-types');
+    const isAdmin = user?.roleKey === 'admin' || user?.role?.toLowerCase() === 'admin';
+    const canManageTypes = isAdmin || user?.permissions?.includes(PERMISSIONS.LEAVES_MANAGE_TYPES);
+    const canManageHolidays = isAdmin || user?.permissions?.includes(PERMISSIONS.HOLIDAYS_MANAGE) || canManageTypes;
+
+    const [activeTab, setActiveTab] = useState(canManageTypes ? 'leave-types' : 'holidays');
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [holidays, setHolidays] = useState([]);
     const [permissionSettings, setPermissionSettings] = useState(null);
@@ -44,8 +51,8 @@ const AdminLeavesPage = () => {
         setIsLoading(true);
         try {
             const [types, hols, permSets, balances] = await Promise.all([
-                leavesService.getLeaveTypes(),
-                leavesService.getHolidays(),
+                leavesService.getLeaveTypes().catch(() => []),
+                leavesService.getHolidays().catch(() => []),
                 leavesService.getPermissionSettings().catch(() => null),
                 leavesService.getAllUserBalances().catch(() => [])
             ]);
@@ -230,34 +237,42 @@ const AdminLeavesPage = () => {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="border-b border-slate-200 dark:border-slate-800 bg-transparent p-0 h-auto justify-start gap-2 sm:gap-6 rounded-none mb-6 w-full flex-wrap">
-                    <TabsTrigger 
-                        value="leave-types" 
-                        className="border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
-                    >
-                        <ShieldCheck className="w-4 h-4 mr-1.5 text-indigo-600" />
-                        Leave Types
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="permissions" 
-                        className="border-b-2 border-transparent data-[state=active]:border-violet-600 data-[state=active]:text-violet-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
-                    >
-                        <Clock className="w-4 h-4 mr-1.5 text-violet-600" />
-                        Permission Rules
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="holidays" 
-                        className="border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
-                    >
-                        <Calendar className="w-4 h-4 mr-1.5 text-emerald-600" />
-                        Holidays
-                    </TabsTrigger>
-                    <TabsTrigger 
-                        value="balances" 
-                        className="border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
-                    >
-                        <Users className="w-4 h-4 mr-1.5 text-blue-600" />
-                        Employee Balances
-                    </TabsTrigger>
+                    {canManageTypes && (
+                        <TabsTrigger 
+                            value="leave-types" 
+                            className="border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
+                        >
+                            <ShieldCheck className="w-4 h-4 mr-1.5 text-indigo-600" />
+                            Leave Types
+                        </TabsTrigger>
+                    )}
+                    {canManageTypes && (
+                        <TabsTrigger 
+                            value="permissions" 
+                            className="border-b-2 border-transparent data-[state=active]:border-violet-600 data-[state=active]:text-violet-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
+                        >
+                            <Clock className="w-4 h-4 mr-1.5 text-violet-600" />
+                            Permission Rules
+                        </TabsTrigger>
+                    )}
+                    {canManageHolidays && (
+                        <TabsTrigger 
+                            value="holidays" 
+                            className="border-b-2 border-transparent data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
+                        >
+                            <Calendar className="w-4 h-4 mr-1.5 text-emerald-600" />
+                            Holidays
+                        </TabsTrigger>
+                    )}
+                    {canManageTypes && (
+                        <TabsTrigger 
+                            value="balances" 
+                            className="border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400"
+                        >
+                            <Users className="w-4 h-4 mr-1.5 text-blue-600" />
+                            Employee Balances
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 <TabsContent value="leave-types" className="space-y-6">

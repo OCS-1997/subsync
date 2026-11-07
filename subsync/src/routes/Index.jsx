@@ -192,8 +192,8 @@ const router = createBrowserRouter([
       { path: "admin/appraisals/period/:periodId", element: <PermissionGate required={PERMISSIONS.APPRAISALS_VIEW_TEAM}><AdminAppraisalSubmissions /></PermissionGate> },
 
       // Leaves & Permissions
-      { path: "leaves", element: <PermissionGate required={PERMISSIONS.LEAVES_VIEW}><LeavesPage /></PermissionGate> },
-      { path: "admin/leaves", element: <PermissionGate required={PERMISSIONS.LEAVES_MANAGE_TYPES}><AdminLeavesPage /></PermissionGate> },
+      { path: "leaves", element: <PermissionGate any={[PERMISSIONS.LEAVES_VIEW, PERMISSIONS.LEAVES_APPLY, PERMISSIONS.PERMISSIONS_APPLY]}><LeavesPage /></PermissionGate> },
+      { path: "admin/leaves", element: <PermissionGate any={[PERMISSIONS.LEAVES_MANAGE_TYPES, PERMISSIONS.HOLIDAYS_MANAGE]}><AdminLeavesPage /></PermissionGate> },
 
       // Reports 360
       // Reports 360 routes removed

@@ -420,7 +420,8 @@ async function ensureLeavePermissions() {
                 'leaves.approve',
                 'leaves.view_all',
                 'permissions.apply',
-                'permissions.approve'
+                'permissions.approve',
+                'holidays.manage'
             )
             WHERE r.role_key = 'manager'
         `);
@@ -434,7 +435,7 @@ async function ensureLeavePermissions() {
                 'leaves.apply',
                 'permissions.apply'
             )
-            WHERE r.role_key IN ('sales', 'support', 'viewer', 'intern')
+            WHERE r.role_key != 'admin'
         `);
     } catch (err) {
         console.warn("[LEAVES RBAC] ensureLeavePermissions notice:", err.message);

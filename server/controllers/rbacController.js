@@ -1,6 +1,7 @@
 import { getAllPermissions } from "../models/permissionModel.js";
 import { getRoleById } from "../models/roleModel.js";
 import { fetchRolesWithDetails, persistRole, removeRole, setRolePermissionsByKeys } from "../services/rbacService.js";
+import { PERMISSIONS } from "../constants/permissions.js";
 
 export const listRolesController = async (req, res) => {
     try {
@@ -19,6 +20,15 @@ export const createRoleController = async (req, res) => {
             return res.status(400).json({ error: "roleKey and name are required" });
         }
         const roleId = await persistRole({ roleKey, name, description });
+        try {
+            await setRolePermissionsByKeys(roleId, [
+                PERMISSIONS.LEAVES_VIEW,
+                PERMISSIONS.LEAVES_APPLY,
+                PERMISSIONS.PERMISSIONS_APPLY
+            ]);
+        } catch (permErr) {
+            console.warn("Could not auto-assign base leave permissions to new role:", permErr.message);
+        }
         res.status(201).json({ message: "Role created", roleId });
     } catch (error) {
         console.error("Error creating role:", error);

@@ -13,6 +13,8 @@ import { Calendar, Clock, Send, Loader2, Info } from 'lucide-react';
 import leavesService from '../leavesService';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { PERMISSIONS } from '@/constants/permissions';
+import axiosInstance from '@/lib/axiosInstance';
 
 const parseLocalDate = (dateStr) => {
     if (!dateStr) return null;
@@ -36,10 +38,14 @@ const formatLocalYYYYMMDD = (d) => {
 
 const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
     const { user } = useSelector((state) => state.auth);
+    const isAdmin = user?.roleKey === 'admin' || user?.role?.toLowerCase() === 'admin';
+    const canApplyForOthers = isAdmin || user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE) || user?.permissions?.includes(PERMISSIONS.LEAVES_VIEW_ALL);
+    const [employeeList, setEmployeeList] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [holidaysList, setHolidaysList] = useState(holidays || []);
     const [formData, setFormData] = useState({
+        target_user_id: '',
         leave_type_id: '',
         start_date: '',
         end_date: '',
@@ -47,6 +53,26 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
         half_day_type: 'first_half',
         reason: ''
     });
+
+    useEffect(() => {
+        if (isOpen && canApplyForOthers) {
+            axiosInstance.get('/users')
+                .then(res => setEmployeeList(res.data || []))
+                .catch(() => {
+                    leavesService.getAllUserBalances()
+                        .then(bals => {
+                            const map = new Map();
+                            (bals || []).forEach(b => {
+                                if (b.user_id && !map.has(b.user_id)) {
+                                    map.set(b.user_id, { username: b.user_id, name: b.user_name || b.user_id });
+                                }
+                            });
+                            setEmployeeList(Array.from(map.values()));
+                        })
+                        .catch(() => {});
+                });
+        }
+    }, [isOpen, canApplyForOthers]);
 
     useEffect(() => {
         if (holidays && holidays.length > 0) {
@@ -175,6 +201,7 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
         setIsLoading(true);
         try {
             const payload = {
+                target_user_id: (formData.target_user_id && formData.target_user_id !== user?.username) ? formData.target_user_id : undefined,
                 leave_type_id: parseInt(formData.leave_type_id),
                 start_date: formData.start_date,
                 end_date: formData.is_half_day ? formData.start_date : formData.end_date,
@@ -186,6 +213,7 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
             await leavesService.applyLeave(payload);
             toast.success("Leave application submitted successfully!");
             setFormData({
+                target_user_id: '',
                 leave_type_id: leaveTypes[0]?.id?.toString() || '',
                 start_date: '',
                 end_date: '',
@@ -219,6 +247,33 @@ const ApplyLeaveModal = ({ isOpen, onClose, onSuccess, holidays = [] }) => {
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Employee Selector (Admins / Approvers only) */}
+                    {canApplyForOthers && employeeList.length > 0 && (
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                Apply For Employee
+                            </Label>
+                            <Select 
+                                value={formData.target_user_id || user?.username || ''} 
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, target_user_id: val }))}
+                            >
+                                <SelectTrigger className="h-11 rounded-xl font-bold border-slate-200 dark:border-slate-800">
+                                    <SelectValue placeholder="Select employee..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value={user?.username || 'self'} className="font-bold">
+                                        Myself ({user?.name || user?.username})
+                                    </SelectItem>
+                                    {employeeList.filter(e => e.username !== user?.username).map(emp => (
+                                        <SelectItem key={emp.username} value={emp.username} className="font-bold">
+                                            {emp.name || emp.username} ({emp.username})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Leave Type Selector */}
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Leave Type</Label>

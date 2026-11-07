@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { 
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
 } from "@/components/ui/dialog";
@@ -6,18 +7,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Send, Loader2, Info, AlertTriangle } from 'lucide-react';
 import leavesService from '../leavesService';
 import { toast } from 'react-toastify';
+import { PERMISSIONS } from '@/constants/permissions';
+import axiosInstance from '@/lib/axiosInstance';
 
 const ApplyPermissionModal = ({ isOpen, onClose, onSuccess, settings }) => {
+    const { user } = useSelector((state) => state.auth);
+    const isAdmin = user?.roleKey === 'admin' || user?.role?.toLowerCase() === 'admin';
+    const canApplyForOthers = isAdmin || user?.permissions?.includes(PERMISSIONS.PERMISSIONS_APPROVE) || user?.permissions?.includes(PERMISSIONS.LEAVES_APPROVE);
+    const [employeeList, setEmployeeList] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
+        target_user_id: '',
         date: '',
         start_time: '09:00',
         end_time: '11:00',
         reason: ''
     });
+
+    useEffect(() => {
+        if (isOpen && canApplyForOthers) {
+            axiosInstance.get('/users')
+                .then(res => setEmployeeList(res.data || []))
+                .catch(() => {});
+        }
+    }, [isOpen, canApplyForOthers]);
 
     // Real-time duration calculation in minutes & hours
     const durationMinutes = useMemo(() => {
@@ -52,6 +69,7 @@ const ApplyPermissionModal = ({ isOpen, onClose, onSuccess, settings }) => {
         setIsLoading(true);
         try {
             const payload = {
+                target_user_id: (formData.target_user_id && formData.target_user_id !== user?.username) ? formData.target_user_id : undefined,
                 date: formData.date,
                 start_time: formData.start_time,
                 end_time: formData.end_time,
@@ -61,6 +79,7 @@ const ApplyPermissionModal = ({ isOpen, onClose, onSuccess, settings }) => {
             await leavesService.applyPermission(payload);
             toast.success("Permission request submitted successfully!");
             setFormData({
+                target_user_id: '',
                 date: '',
                 start_time: '09:00',
                 end_time: '11:00',
@@ -92,6 +111,33 @@ const ApplyPermissionModal = ({ isOpen, onClose, onSuccess, settings }) => {
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Employee Selector (Admins / Approvers only) */}
+                    {canApplyForOthers && employeeList.length > 0 && (
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                Request For Employee
+                            </Label>
+                            <Select 
+                                value={formData.target_user_id || user?.username || ''} 
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, target_user_id: val }))}
+                            >
+                                <SelectTrigger className="h-11 rounded-xl font-bold border-slate-200 dark:border-slate-800">
+                                    <SelectValue placeholder="Select employee..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    <SelectItem value={user?.username || 'self'} className="font-bold">
+                                        Myself ({user?.name || user?.username})
+                                    </SelectItem>
+                                    {employeeList.filter(e => e.username !== user?.username).map(emp => (
+                                        <SelectItem key={emp.username} value={emp.username} className="font-bold">
+                                            {emp.name || emp.username} ({emp.username})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Date Picker */}
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Date</Label>

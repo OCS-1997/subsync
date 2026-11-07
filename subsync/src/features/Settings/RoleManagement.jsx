@@ -247,11 +247,19 @@ const RoleManagement = () => {
 
   const togglePermission = (permissionKey) => {
     if (!canAssignPerms) return;
-    setSelectedPermissions((prev) =>
-      prev.includes(permissionKey)
-        ? prev.filter((key) => key !== permissionKey)
-        : [...prev, permissionKey]
-    );
+    setSelectedPermissions((prev) => {
+      const exists = prev.includes(permissionKey);
+      if (exists) {
+        return prev.filter((key) => key !== permissionKey);
+      } else {
+        const next = [...prev, permissionKey];
+        // Automatically ensure leaves.view is included if applying for leaves or permissions is granted
+        if ((permissionKey === 'leaves.apply' || permissionKey === 'permissions.apply') && !next.includes('leaves.view')) {
+          next.push('leaves.view');
+        }
+        return next;
+      }
+    });
   };
 
   const toggleCategory = (category) => {

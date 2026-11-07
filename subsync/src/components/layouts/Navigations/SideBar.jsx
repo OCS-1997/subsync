@@ -45,8 +45,8 @@ const sidebarItems = [
   { path: 'dashboard/vendors', title: 'Vendors', icon: 'business', icon_type: 'material', permission: PERMISSIONS.VENDORS_VIEW, folder: 'SERVICES' },
   // HR
   { path: 'dashboard/goals', title: 'Goals', icon: 'flag', icon_type: 'material', permission: PERMISSIONS.GOALS_VIEW, folder: 'HR' },
-  { path: 'dashboard/leaves', title: 'Leave & Permissions', icon: 'event_available', icon_type: 'material', permission: PERMISSIONS.LEAVES_VIEW, folder: 'HR' },
-  { path: 'dashboard/admin/leaves', title: 'Leave Admin', icon: 'settings_accessibility', icon_type: 'material', permission: PERMISSIONS.LEAVES_MANAGE_TYPES, folder: 'HR' },
+  { path: 'dashboard/leaves', title: 'Leave & Permissions', icon: 'event_available', icon_type: 'material', permission: [PERMISSIONS.LEAVES_VIEW, PERMISSIONS.LEAVES_APPLY, PERMISSIONS.PERMISSIONS_APPLY], folder: 'HR' },
+  { path: 'dashboard/admin/leaves', title: 'Leave Admin', icon: 'settings_accessibility', icon_type: 'material', permission: [PERMISSIONS.LEAVES_MANAGE_TYPES, PERMISSIONS.HOLIDAYS_MANAGE], folder: 'HR' },
   { path: 'dashboard/admin/appraisals', title: 'Appraisal Admin', icon: 'admin_panel_settings', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_MANAGE, folder: 'HR' },
   { path: 'dashboard/appraisals', title: 'Self Appraisal', icon: 'assignment', icon_type: 'material', permission: PERMISSIONS.APPRAISALS_SUBMIT, folder: 'HR' },
   // ADMIN
