@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
-import { toast} from "react-toastify";
+import { toast} from '@/utils/toast';
 import countryList from "react-select-country-list";
 
 import { Button } from "@/components/ui/button";

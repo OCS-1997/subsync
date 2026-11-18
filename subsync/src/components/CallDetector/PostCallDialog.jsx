@@ -7,7 +7,7 @@ import {
   UserPlus, ChevronRight, Mail, Sparkles, LogIn
 } from 'lucide-react';
 import api from '@/lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { addDcrEntry } from '@/features/DCR/dcrSlice';
 
 /* ─────────────────────────────────────────────────────────────────────────────

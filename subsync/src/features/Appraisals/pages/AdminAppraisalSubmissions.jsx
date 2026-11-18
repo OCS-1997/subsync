@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, CheckCircle2, AlertCircle, FileText, Send, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

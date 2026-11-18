@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { History, Loader2, ArrowLeft, X } from "lucide-react";
 import api from "@/lib/axiosInstance.js";
 import { Button } from "@/components/ui/button.jsx";

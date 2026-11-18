@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
 import RenewSubscriptionModal from './RenewSubscriptionModal';

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 function QuickActionsWidget({ data }) {
     const navigate = useNavigate();

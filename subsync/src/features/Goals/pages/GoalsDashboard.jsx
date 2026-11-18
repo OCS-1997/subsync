@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/ui/breadcrumb.jsx';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import {
     Loader2, Plus, Download, Search, Filter, RefreshCw, Target, CheckCircle2,
     Clock, AlertTriangle, XCircle, TrendingUp, Calendar, User, Eye, Edit, Trash2, ChevronRight, Settings, SlidersHorizontal

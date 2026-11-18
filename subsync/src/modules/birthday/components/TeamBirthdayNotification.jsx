@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useBirthdayExperience } from '../hooks/useBirthdayExperience';
 import { Button } from '@/components/ui/button';
 import { PartyPopper, Heart } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 
 const TeamBirthdayNotification = () => {

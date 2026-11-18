@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 function BirthdayWidget({ data }) {
     const navigate = useNavigate();

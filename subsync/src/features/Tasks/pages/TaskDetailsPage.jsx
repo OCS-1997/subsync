@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePermissions } from '@/context/PermissionsContext';
 import { PERMISSIONS } from '@/constants/permissions';
 import { taskService } from '../services/taskService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format, parseISO } from 'date-fns';
 import {
   ArrowLeft,

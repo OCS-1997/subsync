@@ -7,7 +7,7 @@ import {
     Network, Shield, Cpu, Database, Cloud, Map as MapIcon,
     Table as TableIcon, FileText, Briefcase, Camera, Speaker, HardDrive, Package, Layers
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

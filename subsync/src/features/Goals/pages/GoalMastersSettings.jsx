@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { PageHeader } from '@/components/ui/breadcrumb.jsx';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Loader2, Plus, Edit2, Trash2, Settings, Shield, Circle, ArrowLeft, MoveUp, MoveDown } from 'lucide-react';
 import { goalService } from '../services/goalService';
 import { usePermissions } from '@/context/PermissionsContext';

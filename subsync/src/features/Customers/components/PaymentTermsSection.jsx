@@ -1,5 +1,5 @@
 import { Settings2 } from "lucide-react";
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { useState, useEffect, useMemo } from 'react';
 
 import { Button } from "@/components/ui/button";

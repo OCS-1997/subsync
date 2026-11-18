@@ -4,7 +4,7 @@ import {
     UserPlus, UserMinus, Crown, Search, Filter, Mail, Shield, Eye,
     UserCheck, UserCog, Users as UsersIcon, LayoutGrid, List, Info, Calendar, X, Plus, Trash2, Edit2, Save, Loader2, MoreVertical
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

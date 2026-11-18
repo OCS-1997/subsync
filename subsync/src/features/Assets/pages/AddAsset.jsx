@@ -5,7 +5,7 @@ import {
     HardDrive, ArrowLeft, Save, Loader2, Sparkles, Building2, Calendar, 
     Banknote, MapPin, ClipboardList, Info, FileText
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

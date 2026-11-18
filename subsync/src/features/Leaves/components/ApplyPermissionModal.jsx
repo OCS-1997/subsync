@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Send, Loader2, Info, AlertTriangle } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { PERMISSIONS } from '@/constants/permissions';
 import axiosInstance from '@/lib/axiosInstance';
 

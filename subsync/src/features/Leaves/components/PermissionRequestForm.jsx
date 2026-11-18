@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Save, Loader2 } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const PermissionRequestForm = ({ onSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);

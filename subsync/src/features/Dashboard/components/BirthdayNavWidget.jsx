@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Gift, Loader2, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.jsx';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 function BirthdayNavWidget() {
   const [birthdays, setBirthdays] = useState(null);

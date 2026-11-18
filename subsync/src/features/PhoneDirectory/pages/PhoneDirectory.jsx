@@ -2,7 +2,7 @@ import { Search, RefreshCw, User, Briefcase, Phone, Mail, Building2, FileDown } 
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import * as Papa from "papaparse";
 import { saveAs } from "file-saver";
 import { jsPDF } from "jspdf";

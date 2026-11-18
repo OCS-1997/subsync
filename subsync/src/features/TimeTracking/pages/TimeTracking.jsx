@@ -10,7 +10,7 @@ import ProjectManagement from '../components/ProjectManagement';
 import CategoryManagement from '../components/CategoryManagement';
 import TimeTrackingReports from './TimeTrackingReports';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { Card, CardContent } from "@/components/ui/card";
 import { PERMISSIONS } from '@/constants/permissions';

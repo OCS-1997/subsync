@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { PageHeader } from "@/components/ui/breadcrumb";
 
 import { fetchStatuses, fetchOpportunityById, clearCurrentOpportunity } from "../opportunitySlice.js";

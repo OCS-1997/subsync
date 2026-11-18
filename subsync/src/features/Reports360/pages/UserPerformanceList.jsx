@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Search, Filter, ArrowUpRight, Clock, Phone, Activity, ChevronRight } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format } from 'date-fns';
 
 const UserPerformanceList = ({ type = 'individual', period = 'monthly' }) => {

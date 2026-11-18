@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { 
     User, Mail, KeyRound, Save, Eye, EyeOff, Loader2, 
     Palette, Zap, Calculator, Moon, Sun, Shield, 

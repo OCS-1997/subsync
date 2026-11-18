@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table.jsx';
 import { Checkbox } from '@/components/ui/checkbox.jsx';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Save } from 'lucide-react';
 
 const ROLES = ['admin', 'manager', 'sales', 'support', 'viewer'];

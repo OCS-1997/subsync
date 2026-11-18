@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BarChart3, Eye, Users, Clock, MousePointerClick, TrendingUp, ExternalLink } from 'lucide-react';
 import api from '../../../lib/axiosInstance';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 export default function ArticleAnalytics({ articleId }) {
     const [analytics, setAnalytics] = useState(null);

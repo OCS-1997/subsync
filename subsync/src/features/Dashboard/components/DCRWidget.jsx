@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Phone, TrendingUp, Clock, Users, ArrowRight, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import {
     BarChart,
     Bar,

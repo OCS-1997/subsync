@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown, Copy } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

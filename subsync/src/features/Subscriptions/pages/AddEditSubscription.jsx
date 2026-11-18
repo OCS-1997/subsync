@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef, Fragment } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { ArrowLeft, Mail, Plus, Trash2, X, Building2, CreditCard, FileText, Users, Loader2 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 

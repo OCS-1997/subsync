@@ -8,7 +8,7 @@ import {
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import RenewSubscriptionModal from '../RenewSubscriptionModal';
 import DueSoonBreakdownModal from '../DueSoonBreakdownModal';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
 import BentoCard from '../BentoCard';

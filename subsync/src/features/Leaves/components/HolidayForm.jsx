@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Save, Loader2, Calendar } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const HolidayForm = ({ holiday = null, onSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);

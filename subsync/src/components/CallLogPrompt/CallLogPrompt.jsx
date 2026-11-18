@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Clock, User, Building2, CheckCircle2, UserPlus, X, ChevronRight, Mail, Sparkles, Loader2, LogIn } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { addDcrEntry } from '@/features/DCR/dcrSlice';
 import { searchCustomerByPhone } from './services/callLogService';
 import api from '@/lib/axiosInstance';

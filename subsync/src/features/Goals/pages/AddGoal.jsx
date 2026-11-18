@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader } from '@/components/ui/breadcrumb.jsx';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import {
     Loader2, Target, Save, ArrowLeft, Calendar, Flag, Users, CheckCircle,
     Info, Sparkles, Check

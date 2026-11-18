@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Edit, Trash2, RefreshCw } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 
 import api from "@/lib/axiosInstance.js";
 import Hamster from "@/components/animations/Hamster.jsx";

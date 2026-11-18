@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import countryList from "react-select-country-list";
-import { Bounce, toast } from "react-toastify";
+import { Bounce, toast } from '@/utils/toast';
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import api from "@/lib/axiosInstance.js";
@@ -306,7 +306,7 @@ const AddCustomer = () => {
           backendMsg.toLowerCase().includes("duplicate")) {
           toast.error("A customer with this name already exists. Please use a different name.", {
             position: "top-center",
-            autoClose: 5000,
+            autoClose: 2000,
             hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,
@@ -328,13 +328,13 @@ const AddCustomer = () => {
           // Handle other validation errors
           toast.error(backendMsg, {
             position: "top-center",
-            autoClose: 5000,
+            autoClose: 2000,
           });
         } else {
           // Generic error message
           toast.error(backendMsg || "Failed to save customer details.", {
             position: "top-center",
-            autoClose: 5000,
+            autoClose: 2000,
           });
         }
         // IMPORTANT: Don't reset the form - keep all user data
@@ -352,7 +352,7 @@ const AddCustomer = () => {
       const errorMessage = typeof err === 'string' ? err : err.message || 'An error occurred';
       toast.error(errorMessage, {
         position: "top-center",
-        autoClose: 5000,
+        autoClose: 2000,
       });
       // IMPORTANT: Don't reset the form - keep all user data
     }

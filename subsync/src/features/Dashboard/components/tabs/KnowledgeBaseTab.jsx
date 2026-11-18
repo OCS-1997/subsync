@@ -5,7 +5,7 @@ import {
     BookOpen, FileText, FolderOpen, Eye,
     ArrowRight, Plus, TrendingUp, Star
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
 import BentoCard from '../BentoCard';

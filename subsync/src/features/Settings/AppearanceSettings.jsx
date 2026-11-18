@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import api from "@/lib/axiosInstance";
 import { useTheme } from "@/context/ThemeContext";
 import { THEMES, FONT_PRESETS } from "@/constants/themes";

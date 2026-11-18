@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { ArrowLeft, Mail, Plus, RotateCcw, FileDown, Archive } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 

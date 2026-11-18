@@ -5,7 +5,7 @@ import { usePermissions } from '@/context/PermissionsContext';
 import { PERMISSIONS } from '@/constants/permissions';
 import { taskService } from '../services/taskService';
 import { fetchTaskStats } from '../taskSlice';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { X, Plus, Edit2, Trash2, Calendar, User, Tag, AlertCircle, AlertTriangle, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategorySelect } from './CategorySelect';

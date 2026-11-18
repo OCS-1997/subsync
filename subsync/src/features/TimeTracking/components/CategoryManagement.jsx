@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Tag, LayoutGrid, Clock, DollarSign, ListOrdered, Eye, ShieldCheck, History } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { cn } from "@/lib/utils";
 
 const CategoryManagement = () => {

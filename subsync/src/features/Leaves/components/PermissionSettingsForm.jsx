@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Save, Loader2, ShieldCheck, Info } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const PermissionSettingsForm = ({ onSuccess }) => {
     const [isLoading, setIsLoading] = useState(false);

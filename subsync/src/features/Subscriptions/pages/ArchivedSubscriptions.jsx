@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { ArrowLeft, Archive, RotateCcw, MoreVertical, History, Trash2, ArchiveRestore, Eye } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";

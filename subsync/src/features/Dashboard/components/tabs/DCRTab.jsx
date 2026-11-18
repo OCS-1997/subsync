@@ -5,7 +5,7 @@ import {
     Phone, Clock, TrendingUp, Users, Calendar,
     ArrowRight, Plus, BarChart3, User
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
 import BentoCard from '../BentoCard';

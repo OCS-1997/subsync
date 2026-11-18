@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import {
     Search,
     Plus,

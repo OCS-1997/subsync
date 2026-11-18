@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import api from "@/lib/axiosInstance";
 import {
     Loader2,

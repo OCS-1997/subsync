@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronRight, ChevronDown, Folder, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/axiosInstance.js";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import {
     Tooltip,
     TooltipContent,

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Calendar, CheckCircle2, AlertTriangle, Clock, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import api from '@/lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
 export default function RenewSubscriptionModal({ isOpen, onClose, subscription, onSuccess }) {

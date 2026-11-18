@@ -3,7 +3,7 @@ import { useTheme } from "@/context/ThemeContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "@/features/Auth/authSlice.js";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import {
     Command,
     CommandEmpty,

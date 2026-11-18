@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus, Pencil, Trash2, Check, X, GripVertical, Settings2, Palette } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 
 import { fetchStatuses } from "../opportunitySlice.js";
 import opportunityService from "../services/opportunityService.js";

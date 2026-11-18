@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Save, Loader2, UserCheck, Plus, Minus } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const BalanceAdjustmentModal = ({ isOpen, onClose, leaveTypes, users, onSuccess, initialUserId = '' }) => {
     const [isLoading, setIsLoading] = useState(false);

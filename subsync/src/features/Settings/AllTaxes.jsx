@@ -1,7 +1,7 @@
 import { Pencil, Trash2, Star, Plus, AlertCircle, ChevronDown, Layers, ArrowDownWideNarrow, Receipt, ShieldCheck, Zap, History, Layout } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover.jsx";

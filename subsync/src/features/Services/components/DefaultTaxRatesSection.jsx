@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { Percent, Layers, AlertCircle, Loader2, Settings, Info, RefreshCw } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";

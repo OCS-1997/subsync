@@ -20,7 +20,7 @@ import ApplyPermissionModal from '../components/ApplyPermissionModal';
 import leavesService from '../leavesService';
 import { fetchPendingCounts } from '../leavesSlice';
 import { PERMISSIONS } from '@/constants/permissions';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const LeavesPage = () => {
     const { user } = useSelector((state) => state.auth);

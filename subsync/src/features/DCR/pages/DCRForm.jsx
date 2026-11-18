@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Clock, Building2, User, Mail, Phone } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -227,14 +227,14 @@ export default function DCRForm() {
         const errorData = err.response.data;
 
         if (errorData.message) {
-          toast.error(errorData.message, { autoClose: 5000 });
+          toast.error(errorData.message, { autoClose: 2000 });
         } else {
           toast.error(errorData.error || "Failed to add contact");
         }
 
         // If domain exists in system, suggest using existing customer
         if (errorData.domain) {
-          toast.info(`Tip: Switch to "Existing Customer" and search for "${errorData.domain.domain_name}"`, { autoClose: 7000 });
+          toast.info(`Tip: Switch to "Existing Customer" and search for "${errorData.domain.domain_name}"`, { autoClose: 2000 });
         }
       } else {
         toast.error(err.response?.data?.error || err.message || "Failed to add contact");

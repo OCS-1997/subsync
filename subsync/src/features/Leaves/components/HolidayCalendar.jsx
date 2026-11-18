@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ShieldCheck, Calendar as CalendarIcon, Repeat, Plus, Edit2, Trash2 } from 'lucide-react';
 import HolidayForm from './HolidayForm';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const HolidayCalendar = ({ holidays = [], canManage = false, onRefresh }) => {
     const [isAddOpen, setIsAddOpen] = useState(false);

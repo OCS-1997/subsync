@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { ArrowLeft, Save, Eye, Plus, FolderPlus, Check, ChevronsUpDown } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import api from "@/lib/axiosInstance.js";

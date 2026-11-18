@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Timer, PlayCircle, Square, Clock } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import TimeEntryForm from '@/features/TimeTracking/components/TimeEntryForm';
 import api from '@/lib/axiosInstance.js';
 import { getStorageItem } from '@/utils/storage.js';

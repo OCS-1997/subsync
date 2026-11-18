@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Loader2, Calendar, Target, Flag, Users, CheckCircle } from 'lucide-react';
 import api from '@/lib/axiosInstance';
 import { goalService } from '../services/goalService';

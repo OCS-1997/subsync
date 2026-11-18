@@ -49,7 +49,7 @@ import {
     Filter,
 } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format, isToday as isDateToday, isTomorrow as isDateTomorrow, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, addMonths, parseISO } from 'date-fns';
 import PermissionGate from '@/components/auth/PermissionGate.jsx';
 import { PERMISSIONS } from '@/constants/permissions.js';

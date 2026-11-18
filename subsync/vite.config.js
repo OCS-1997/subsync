@@ -63,6 +63,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'react-toastify/dist/ReactToastify.css': path.resolve(__dirname, './src/utils/empty.css'),
+        'react-toastify': path.resolve(__dirname, './src/utils/toast.jsx'),
       },
     },
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card.jsx";

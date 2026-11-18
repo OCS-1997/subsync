@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Star, Trash2, ExternalLink, X } from 'lucide-react';
 import api from '../../../lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 export default function ImageGallery({ images = [], onDelete, onSetFeatured, onReorder, editable = false }) {
     const [lightboxImage, setLightboxImage] = useState(null);

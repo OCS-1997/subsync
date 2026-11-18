@@ -9,7 +9,7 @@ import Hamster from "@/components/animations/Hamster.jsx";
 import { getDcrById, clearDcrState } from "../dcrSlice";
 import { usePermissions } from "@/context/PermissionsContext";
 import { PERMISSIONS } from "@/constants/permissions";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import api from "@/lib/axiosInstance.js";
 
 export default function ViewDCR() {

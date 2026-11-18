@@ -4,8 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
-.Toastify__toast-container {
-  z-index: 999999 !important;
+/* Dynaura Dynamic Island Toast Styling */
+.dynaura-root {
+  --dynaura-font: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  z-index: 2147483647 !important;
+}
+
+.dynaura-title {
+  max-width: min(340px, 78vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
 }
 
 @layer base {

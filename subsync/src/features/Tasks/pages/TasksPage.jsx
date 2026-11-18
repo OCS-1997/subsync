@@ -11,7 +11,7 @@ import CreateTaskModal from '../components/CreateTaskModal';
 import { CategorySelect } from '../components/CategorySelect';
 import Pagination from '@/components/layouts/Pagination.jsx';
 import { Breadcrumb, PageHeader } from '@/components/ui/breadcrumb.jsx';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import {
   CheckCircle2,
   Clock,

@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '@/components/ui/breadcrumb.jsx';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import {
     Loader2, Target, Calendar, User, Users, Flag, Edit, Trash2, ArrowLeft,
     Paperclip, MessageSquare, History, Clock, CheckCircle2, AlertTriangle, Upload, FileText
@@ -59,7 +59,11 @@ export default function GoalDetails() {
     const handleProgressQuickUpdate = async (newVal) => {
         try {
             const res = await goalService.patchProgress(id, newVal);
-            toast.success(`Progress updated to ${res.progress}%`);
+            const isCompleted = Number(res.progress) >= 100;
+            toast.success(isCompleted ? 'Goal completed! (100%)' : `Progress updated to ${res.progress}%`, {
+                confetti: isCompleted,
+                description: isCompleted ? 'Congratulations on achieving your milestone!' : undefined,
+            });
             loadGoalDetails();
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to update progress');

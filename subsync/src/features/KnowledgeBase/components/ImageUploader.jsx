@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import api from '../../../lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 export default function ImageUploader({ articleId, onUploadComplete, maxFiles = 10 }) {
     const [uploading, setUploading] = useState(false);

@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import api from "@/lib/axiosInstance.js";
 
 import { Button } from "@/components/ui/button";

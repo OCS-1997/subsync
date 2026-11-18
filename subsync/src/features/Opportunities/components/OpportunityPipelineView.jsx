@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { Plus } from 'lucide-react';
 import OpportunityCard from './OpportunityCard.jsx';
 import opportunityService from '../services/opportunityService.js';

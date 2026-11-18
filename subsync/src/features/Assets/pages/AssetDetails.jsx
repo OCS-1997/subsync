@@ -7,7 +7,7 @@ import {
     Package, Info, Activity, AlertCircle, FileText, ChevronRight, Building2, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -111,7 +111,7 @@ function AssetDetails() {
                         Undo
                     </Button>
                 </div>,
-                { autoClose: 5000 }
+                { autoClose: 2000 }
             );
             setDeleteDialogOpen(false);
             navigate(`/${user.username}/dashboard/assets`);

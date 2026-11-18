@@ -1,6 +1,6 @@
 import { Settings2, Loader2, Trash2, Pencil, X, AlertTriangle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";

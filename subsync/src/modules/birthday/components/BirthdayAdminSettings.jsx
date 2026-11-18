@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Cake, Sparkles, Save } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const BirthdayAdminSettings = () => {
   const { adminSettings, updateAdminSettings } = useBirthdayExperience();

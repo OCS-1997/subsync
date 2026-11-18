@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 class ErrorBoundary extends Component {
   constructor(props) {

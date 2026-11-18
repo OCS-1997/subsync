@@ -15,7 +15,7 @@ import { getMyActiveAppraisal } from '@/features/Appraisals/appraisalSlice';
 import { fetchPendingCounts } from '@/features/Leaves/leavesSlice';
 import { fetchTaskStats } from '@/features/Tasks/taskSlice';
 import { playTaskNotificationSound } from '@/utils/soundNotifications';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import SidebarTree from './SidebarTree.jsx';
 import SidebarHeader from './sidebar/SidebarHeader.jsx';
 import SidebarTooltip from './sidebar/SidebarTooltip.jsx';
@@ -118,8 +118,7 @@ function SideBar({ isOpen, toggleSidebar }) {
       if (currentActiveCount > prevActiveTasksRef.current) {
         playTaskNotificationSound();
         toast.info('You have new task assignments!', {
-          position: 'top-right',
-          autoClose: 4000,
+          duration: 4000,
         });
       }
       prevActiveTasksRef.current = currentActiveCount;

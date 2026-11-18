@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import {
   UserPlus,
   UserRoundPen,

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Search, ExternalLink, Loader2, Sparkles, AlertCircle, Globe, Link2 } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 function QuickToolsWidget() {
   const [tools, setTools] = useState([]);

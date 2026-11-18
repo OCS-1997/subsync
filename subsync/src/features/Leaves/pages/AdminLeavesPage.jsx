@@ -18,7 +18,7 @@ import PermissionSettingsForm from '../components/PermissionSettingsForm';
 import BalanceAdjustmentModal from '../components/BalanceAdjustmentModal';
 import EmployeeBalanceCard from '../components/EmployeeBalanceCard';
 import EmployeeBalanceDetailsModal from '../components/EmployeeBalanceDetailsModal';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { PERMISSIONS } from '@/constants/permissions';
 

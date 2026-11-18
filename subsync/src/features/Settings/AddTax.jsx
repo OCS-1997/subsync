@@ -1,7 +1,7 @@
 import { AlertCircle, ArrowLeft, Receipt, Info, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 import { motion } from "framer-motion";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";

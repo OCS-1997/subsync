@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
 import BentoCard from '../BentoCard';

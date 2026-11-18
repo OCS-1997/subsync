@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Square, Clock, ArrowRight, Timer } from 'lucide-react';
 import api from '@/lib/axiosInstance.js';
 import { getStorageItem } from '@/utils/storage.js';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 
 const TimerWidget = ({ onTimerUpdate }) => {
     const [activeTimer, setActiveTimer] = useState(null);

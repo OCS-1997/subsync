@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.jsx";

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { useCallDetector } from '@/hooks/useCallDetector';
 import { CallDetector } from '@/plugins/CallDetectorPlugin';
 import PostCallDialog from './PostCallDialog';
@@ -33,8 +33,13 @@ export const CallDetectorManager = () => {
       checkOverlayPermission().then(granted => {
         if (!granted) {
           requestOverlayPermission();
-          toast.info("Please enable 'Appear on top' permission to allow call logging from the home screen.", {
-            autoClose: 10000,
+          toast.info("Permission required", {
+            description: "Please enable 'Appear on top' permission to allow call logging from the home screen.",
+            duration: 2000,
+            button: {
+              title: "Enable",
+              onClick: () => requestOverlayPermission()
+            }
           });
         }
       });
@@ -44,9 +49,13 @@ export const CallDetectorManager = () => {
         try {
           const { isIgnoring } = await CallDetector.checkBatteryOptimization();
           if (!isIgnoring) {
-            toast.warn("Subsync needs battery exemption to reliably track calls 24/7. Tap here to allow.", {
-              autoClose: false,
-              onClick: () => CallDetector.requestIgnoreBatteryOptimization()
+            toast.warn("Battery exemption needed", {
+              description: "Subsync needs battery exemption to reliably track calls 24/7.",
+              duration: null,
+              button: {
+                title: "Allow",
+                onClick: () => CallDetector.requestIgnoreBatteryOptimization()
+              }
             });
           }
         } catch (err) {

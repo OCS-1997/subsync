@@ -19,7 +19,7 @@ import {
     Loader2
 } from 'lucide-react';
 import api from '@/lib/axiosInstance';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format } from 'date-fns';
 
 export function BirthdayFormDialog({ open, onOpenChange, selectedBirthday, onSuccess }) {

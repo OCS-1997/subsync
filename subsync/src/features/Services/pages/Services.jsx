@@ -3,7 +3,7 @@ import { Eye, FileDown, FileUp, Plus, Trash2, Search, Filter, ChevronDown } from
 import * as Papa from "papaparse";
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 import { useState, useEffect, useRef } from 'react';
 import { ThemeToggle } from "@/components/layouts/ThemeToggle.jsx";
 import { motion, AnimatePresence } from "framer-motion";

@@ -2,7 +2,7 @@ import { saveAs } from "file-saver";
 import { Eye, FileDown, FileUp, UserPlus, Search, ChevronDown } from "lucide-react";
 import * as Papa from "papaparse";
 import { Link, useParams } from "react-router-dom";
-import { toast, Bounce } from "react-toastify";
+import { toast, Bounce } from '@/utils/toast';
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";

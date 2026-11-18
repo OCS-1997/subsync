@@ -6,7 +6,7 @@ import api from "@/lib/axiosInstance.js";
 import * as Papa from "papaparse";
 import { saveAs } from "file-saver";
 import "jspdf-autotable";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert.jsx";
 import {
   AlertDialog,

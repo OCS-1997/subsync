@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Calendar, Clock, Send, Loader2, Info } from 'lucide-react';
 import leavesService from '../leavesService';
-import { toast } from 'react-toastify';
+import { toast } from '@/utils/toast';
 import { format } from 'date-fns';
 import { PERMISSIONS } from '@/constants/permissions';
 import axiosInstance from '@/lib/axiosInstance';

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { toast } from "react-toastify";
+import { toast } from '@/utils/toast';
 import api from "@/lib/axiosInstance";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
