@@ -34,9 +34,22 @@ const STATUS_COLORS = {
     soon: '#f59e0b'
 };
 
+const getMonthNames = () => {
+    const now = new Date();
+    const currentShort = now.toLocaleString('en-US', { month: 'short' });
+    const currentLong = now.toLocaleString('en-US', { month: 'long' });
+    const nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextShort = nextDate.toLocaleString('en-US', { month: 'short' });
+    const nextLong = nextDate.toLocaleString('en-US', { month: 'long' });
+    return { currentShort, currentLong, nextShort, nextLong };
+};
+
+const { currentShort, currentLong, nextShort, nextLong } = getMonthNames();
+
 const FILTER_OPTIONS = [
     { id: 'today', label: 'Today', icon: AlertTriangle },
-    { id: 'this_month', label: 'This Month', icon: Calendar },
+    { id: 'this_month', label: `This Month (${currentShort})`, icon: Calendar },
+    { id: 'next_month', label: `Next Month (${nextShort})`, icon: Calendar },
     { id: 'expiring', label: 'Expiring Soon', icon: Clock },
     { id: 'renewed', label: 'Renewed', icon: RefreshCw },
     { id: 'expired', label: 'Expired', icon: XCircle },
@@ -67,6 +80,7 @@ function SubscriptionsTab({ visibleWidgets }) {
         renewed: 0,
         expiringSoon: 0,
         expiringThisMonth: 0,
+        expiringNextMonth: 0,
         expiringIn7Days: 0,
         expiringIn15Days: 0,
         expiringSoonRevenue: 0,
@@ -134,6 +148,7 @@ function SubscriptionsTab({ visibleWidgets }) {
             const renewedCount = dashData.stats?.renewedCount || 0;
             const expiringSoon = dashData.stats?.expiringSoonCount || dashData.renewals?.expiringSoonCount || 0;
             const expiringThisMonth = dashData.stats?.expiringThisMonthCount || dashData.renewals?.expiringThisMonthCount || 0;
+            const expiringNextMonth = dashData.stats?.expiringNextMonthCount || 0;
             const expiringIn7Days = dashData.stats?.expiringIn7DaysCount || 0;
             const expiringIn15Days = dashData.stats?.expiringIn15DaysCount || 0;
             const expiringSoonRevenue = dashData.stats?.expiringSoonRevenue || 0;
@@ -145,6 +160,7 @@ function SubscriptionsTab({ visibleWidgets }) {
                 renewed: renewedCount,
                 expiringSoon,
                 expiringThisMonth,
+                expiringNextMonth,
                 expiringIn7Days,
                 expiringIn15Days,
                 expiringSoonRevenue,
@@ -651,7 +667,7 @@ function SubscriptionsTab({ visibleWidgets }) {
                 <div className="flex flex-col justify-center h-full">
                     <p className="text-4xl font-black text-slate-900 dark:text-white">{formatCurrency(stats.totalRevenue)}</p>
                     <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 mt-1">
-                        This Month's Subscription Revenue
+                        This Month's Subscription Revenue ({currentLong})
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mt-4">
                         <Button

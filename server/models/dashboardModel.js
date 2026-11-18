@@ -33,6 +33,9 @@ export async function getRenewalsWithFilters(filters = {}) {
                 whereClause += ` AND YEAR(s.end_date) = YEAR(CURDATE()) AND MONTH(s.end_date) = MONTH(CURDATE())`;
             }
             break;
+        case 'next_month':
+            whereClause += ` AND YEAR(s.end_date) = YEAR(DATE_ADD(CURDATE(), INTERVAL 1 MONTH)) AND MONTH(s.end_date) = MONTH(DATE_ADD(CURDATE(), INTERVAL 1 MONTH))`;
+            break;
         case 'expiring':
         case 'soon':
             whereClause += ` AND DATE(s.end_date) >= CURDATE() AND DATE(s.end_date) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND s.status != 'renewed'`;
@@ -229,6 +232,7 @@ export async function getDashboardStats() {
         openOpportunities,
         kbArticles,
         expiringThisMonth,
+        expiringNextMonth,
         expiringSoon,
         expiringIn7Days,
         expiringIn15Days,
@@ -270,6 +274,15 @@ export async function getDashboardStats() {
             AND end_date IS NOT NULL 
             AND YEAR(end_date) = YEAR(?) 
             AND MONTH(end_date) = MONTH(?)
+        `, [now, now]),
+        // Expiring next month
+        safeQuery(`
+            SELECT COUNT(*) as count 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND end_date IS NOT NULL 
+            AND YEAR(end_date) = YEAR(DATE_ADD(?, INTERVAL 1 MONTH)) 
+            AND MONTH(end_date) = MONTH(DATE_ADD(?, INTERVAL 1 MONTH))
         `, [now, now]),
         // Expiring soon (next 30 days, not renewed)
         safeQuery(`
@@ -323,6 +336,7 @@ export async function getDashboardStats() {
         openOpportunities: openOpportunities[0]?.count || 0,
         kbArticles: kbArticles[0]?.count || 0,
         expiringThisMonthCount: expiringThisMonth[0]?.count || 0,
+        expiringNextMonthCount: expiringNextMonth[0]?.count || 0,
         expiringSoonCount: expiringSoon[0]?.count || 0,
         expiringIn7DaysCount: expiringIn7Days[0]?.count || 0,
         expiringIn15DaysCount: expiringIn15Days[0]?.count || 0,
