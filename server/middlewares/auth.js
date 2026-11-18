@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { buildUserContext } from '../services/rbacService.js';
+import { getUserAuthProfile } from '../models/userModel.js';
 
 export const isAuthenticated = async (req, res, next) => {
     try {
@@ -25,6 +26,10 @@ export const isAuthenticated = async (req, res, next) => {
         const decoded = jwt.verify(token, secret);
         const userContext = await buildUserContext(decoded.username);
         if (!userContext) {
+            const userProfile = await getUserAuthProfile(decoded.username);
+            if (userProfile && (userProfile.is_active === false || userProfile.isActive === false || userProfile.is_active === 0 || userProfile.isActive === 0)) {
+                return res.status(403).json({ error: "Account is inactive. Access denied. Please contact an administrator." });
+            }
             return res.status(401).json({ error: "Invalid user context" });
         }
         userContext.ip = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 
 import api from "@/lib/axiosInstance.js";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label.jsx";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
+import RenewSubscriptionModal from "@/features/Dashboard/components/RenewSubscriptionModal.jsx";
 
 import ViewSubscription from "./ViewSubscription.jsx";
 
@@ -22,6 +23,7 @@ export default function ViewSubscriptionPage() {
 
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
 
@@ -124,6 +126,15 @@ export default function ViewSubscriptionPage() {
             <Button
               size="lg"
               variant="outline"
+              onClick={() => setIsRenewModalOpen(true)}
+              className="rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-95 transition-all shadow-sm"
+            >
+              <RefreshCw className="w-4 h-4 mr-3" />
+              Renew
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
               onClick={handleEdit}
               className="rounded-[1.2rem] px-8 h-14 font-black uppercase tracking-widest text-[11px] border-gray-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all"
             >
@@ -150,9 +161,17 @@ export default function ViewSubscriptionPage() {
           subscription={subscription}
           onEdit={handleEdit}
           onDelete={canDelete ? openDeleteDialog : undefined}
+          onRenew={() => setIsRenewModalOpen(true)}
           showActions={false}
         />
       </div>
+
+      <RenewSubscriptionModal
+        isOpen={isRenewModalOpen}
+        onClose={() => setIsRenewModalOpen(false)}
+        subscription={subscription}
+        onSuccess={() => fetchSubscription()}
+      />
 
       {/* Delete confirmation dialog - Premium Styled */}
       <Dialog

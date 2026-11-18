@@ -16,6 +16,20 @@ const validateLogin = async (req, res) => {
         const user = await checkLogin(username, password);
 
         if (user) {
+            // Block inactive accounts from logging in
+            if (user.isActive === false || user.isActive === 0 || user.is_active === false || user.is_active === 0) {
+                await logActivity({
+                    username: user.username,
+                    action: 'LOGIN_BLOCKED_INACTIVE',
+                    ipAddress: req.ip,
+                    details: { failureReason: 'Account is inactive' }
+                });
+                return res.status(403).json({
+                    success: false,
+                    message: "Your account is currently inactive. Please contact an administrator to reactivate it."
+                });
+            }
+
             const secret = process.env.JWT_SECRET;
             if (!secret) {
                 console.error("CRITICAL: JWT_SECRET is missing during login!".red);
@@ -24,6 +38,12 @@ const validateLogin = async (req, res) => {
             //console.log(`[LOGIN] Signing token with secret length: ${secret.length}`);
             const token = jwt.sign({ username: user.username, roleId: user.roleId }, secret, { expiresIn: '30d' });
             const authContext = await buildUserContext(user.username);
+            if (!authContext) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Account access restricted. Please contact an administrator."
+                });
+            }
             const loginTime = new Date().toISOString();
             // Log successful login
             await logActivity({ username: user.username, action: 'LOGIN_SUCCESS', ipAddress: req.ip, details: { loginTime } });

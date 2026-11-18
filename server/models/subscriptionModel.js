@@ -10,8 +10,8 @@ function computeStatus(startDate, endDate, soonDays = 30, dbStatus = null) {
   if (isNaN(end.getTime())) return { status: "Unknown", daysToExpiry: null };
   const diffMs = end.getTime() - now.getTime();
   const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (days < 0) return { status: "Expired", daysToExpiry: days };
   if (dbStatus === 'renewed') return { status: "Renewed", daysToExpiry: days };
+  if (days < 0) return { status: "Expired", daysToExpiry: days };
   if (days <= soonDays) return { status: "Soon Expiring", daysToExpiry: days };
   return { status: "Active", daysToExpiry: days };
 }
@@ -126,10 +126,10 @@ async function getSubscriptions({ searchType, search, sort, order, page = 1, lim
     if (statusFilter) {
       const f = statusFilter.toLowerCase();
       filtered = enriched.filter(r => {
-        if (f === 'active') return r.dynamic_status === 'Active' || r.dynamic_status === 'Renewed';
-        if (f === 'renewed') return r.dynamic_status === 'Renewed';
-        if (f === 'expired') return r.dynamic_status === 'Expired';
-        if (f === 'soon') return r.dynamic_status === 'Soon Expiring';
+        if (f === 'active') return r.dynamic_status === 'Active' || r.dynamic_status === 'Renewed' || r.status === 'renewed';
+        if (f === 'renewed') return r.dynamic_status === 'Renewed' || r.status === 'renewed';
+        if (f === 'expired') return r.dynamic_status === 'Expired' && r.status !== 'renewed';
+        if (f === 'soon') return r.dynamic_status === 'Soon Expiring' && r.status !== 'renewed';
         return true;
       });
     }

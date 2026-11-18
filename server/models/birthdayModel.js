@@ -26,6 +26,9 @@ export async function getUpcomingBirthdays() {
          FROM birthdays b
          LEFT JOIN customers c
              ON b.customer_id COLLATE utf8mb4_unicode_ci = c.customer_id COLLATE utf8mb4_unicode_ci
+         LEFT JOIN users u
+             ON b.user_id COLLATE utf8mb4_unicode_ci = u.username COLLATE utf8mb4_unicode_ci
+         WHERE (b.type != 'user' OR (u.is_active = 1 AND u.is_active IS NOT NULL))
          ORDER BY b.type, b.name`
     );
 

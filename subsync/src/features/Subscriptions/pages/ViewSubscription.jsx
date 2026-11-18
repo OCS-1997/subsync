@@ -1,4 +1,4 @@
-import { Mail, Edit, Trash2, Globe2, Calendar, IndianRupee, Info } from "lucide-react";
+import { Mail, Edit, Trash2, Globe2, Calendar, IndianRupee, Info, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
@@ -43,6 +43,7 @@ export default function ViewSubscription({
   subscription,
   onEdit,
   onDelete,
+  onRenew,
   showActions = true,
 }) {
   if (!subscription) return null;
@@ -98,7 +99,19 @@ export default function ViewSubscription({
             </div>
 
             <div className="flex flex-col items-center md:items-end gap-4">
-              <StatusPill status={status} />
+              <div className="flex items-center gap-3">
+                <StatusPill status={status} />
+                {onRenew && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onRenew(subscription)}
+                    className="rounded-2xl h-10 px-5 font-black text-[11px] uppercase tracking-widest border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-95 transition-all shadow-sm"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                    Renew Subscription
+                  </Button>
+                )}
+              </div>
               {showActions && (
                 <div className="flex items-center gap-3">
                   {onEdit && (
@@ -256,6 +269,14 @@ export default function ViewSubscription({
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">End Date</p>
                   <p className="text-sm font-black text-slate-900 dark:text-white">{end_date ? formatDate(end_date) : "Never"}</p>
                 </div>
+                {subscription.repeat_every_value && (
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Renewal Cycle</p>
+                    <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                      Every {subscription.repeat_every_value} {subscription.repeat_every_unit}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="p-6 rounded-[1.5rem] bg-slate-50 dark:bg-slate-950/50 border border-gray-100 dark:border-slate-800">

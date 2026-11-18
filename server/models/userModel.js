@@ -122,7 +122,19 @@ const updateUser = async (currentUsername, user) => {
         if (user.date_of_birth !== undefined) { fields.push('date_of_birth = ?'); values.push(formatMySQLDate(user.date_of_birth)); }
         if (user.roleName !== undefined) { fields.push('role = ?'); values.push(user.roleName); }
         if (user.roleId !== undefined) { fields.push('role_id = ?'); values.push(user.roleId); }
-        if (user.is_active !== undefined) { fields.push('is_active = ?'); values.push(user.is_active); }
+        if (user.is_active !== undefined) {
+            const activeVal = (user.is_active === true || user.is_active === 1 || user.is_active === '1') ? 1 : 0;
+            fields.push('is_active = ?');
+            values.push(activeVal);
+            try {
+                await connection.query(
+                    `UPDATE birthdays SET email_send = ?, include_in_communication = ? WHERE user_id = ?`,
+                    [activeVal, activeVal, currentUsername]
+                );
+            } catch (err) {
+                console.warn(`Could not update birthdays table for user ${currentUsername}:`, err.message);
+            }
+        }
 
         fields.push('updated_at = NOW()');
 

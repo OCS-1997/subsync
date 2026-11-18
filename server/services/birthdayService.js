@@ -100,7 +100,7 @@ export async function syncBirthdays() {
         const [users] = await appDB.query(
             `SELECT username, name, email, date_of_birth
              FROM users
-             WHERE date_of_birth IS NOT NULL`
+             WHERE date_of_birth IS NOT NULL AND is_active = 1`
         );
 
         for (const user of users) {

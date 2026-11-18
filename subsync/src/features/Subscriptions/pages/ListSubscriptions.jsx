@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive, Eye } from "lucide-react";
+import { Mail, Plus, RotateCcw, History, Trash2, MoreVertical, Edit, Archive, Eye, RefreshCw } from "lucide-react";
 import Hamster from "@/components/animations/Hamster.jsx";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu.jsx";
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
 import ViewSubscription from "./ViewSubscription.jsx";
+import RenewSubscriptionModal from "@/features/Dashboard/components/RenewSubscriptionModal.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 
@@ -53,6 +54,8 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsSubscription, setDetailsSubscription] = useState(null);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+  const [subscriptionToRenew, setSubscriptionToRenew] = useState(null);
   const debounceTimeout = useRef();
 
   const username = location.pathname.split('/')[1] || '';
@@ -246,6 +249,12 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="p-1 dark:bg-slate-900 dark:border-slate-800 rounded-xl">
+          <DropdownMenuItem onClick={() => {
+            setSubscriptionToRenew(row);
+            setRenewDialogOpen(true);
+          }} className="rounded-lg p-2 text-sm gap-2 text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 dark:focus:bg-emerald-950/20 font-bold">
+            <RefreshCw className="h-4 w-4" /> Renew Subscription
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onEdit && onEdit(row.sub_id)} className="rounded-lg p-2 text-sm gap-2">
             <Edit className="h-4 w-4" /> Edit
           </DropdownMenuItem>
@@ -337,6 +346,7 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
               <SelectContent className="dark:bg-slate-950 dark:border-slate-800 rounded-xl">
                 <SelectItem value="all" className="text-xs font-black uppercase tracking-widest">All</SelectItem>
                 <SelectItem value="active" className="text-xs font-black uppercase tracking-widest">Active</SelectItem>
+                <SelectItem value="renewed" className="text-xs font-black uppercase tracking-widest">Renewed</SelectItem>
                 <SelectItem value="soon" className="text-xs font-black uppercase tracking-widest">Soon Expiring</SelectItem>
                 <SelectItem value="expired" className="text-xs font-black uppercase tracking-widest">Expired</SelectItem>
               </SelectContent>
@@ -425,6 +435,10 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
               <div className="mt-4">
                 <ViewSubscription
                   subscription={detailsSubscription}
+                  onRenew={(sub) => {
+                    setSubscriptionToRenew(sub || detailsSubscription);
+                    setRenewDialogOpen(true);
+                  }}
                   showActions={false}
                 />
               </div>
@@ -485,6 +499,19 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Renew Subscription Modal */}
+      <RenewSubscriptionModal
+        isOpen={renewDialogOpen}
+        onClose={() => setRenewDialogOpen(false)}
+        subscription={subscriptionToRenew}
+        onSuccess={() => {
+          fetchData();
+          if (detailsDialogOpen && detailsSubscription) {
+            openDetailsDialog(detailsSubscription.sub_id);
+          }
+        }}
+      />
     </div>
   );
 }

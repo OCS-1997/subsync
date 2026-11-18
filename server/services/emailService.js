@@ -267,6 +267,37 @@ export async function sendEmail({ to, subject, html, attachment_url = null, atta
         recipients = to.split(',').map(email => email.split('#')[0].trim()).filter(Boolean);
     }
 
+    // Block emails to inactive user accounts
+    if (recipients.length > 0) {
+        try {
+            const [inactiveRows] = await appDB.query(
+                `SELECT LOWER(TRIM(email)) AS email FROM users WHERE (is_active = 0 OR is_active IS FALSE) AND email IS NOT NULL AND TRIM(email) != ''`
+            );
+            if (inactiveRows && inactiveRows.length > 0) {
+                const inactiveEmails = new Set(inactiveRows.map(r => r.email).filter(Boolean));
+                const originalCount = recipients.length;
+                recipients = recipients.filter(email => {
+                    const cleanEmail = String(email).toLowerCase().trim();
+                    return !inactiveEmails.has(cleanEmail);
+                });
+                if (recipients.length < originalCount) {
+                    console.warn(`[sendEmail] Suppressed email delivery to inactive user account(s): ${originalCount - recipients.length} recipient(s) filtered out.`);
+                }
+                if (recipients.length === 0) {
+                    console.warn(`[sendEmail] Email delivery completely blocked: all recipients belong to inactive accounts.`);
+                    return {
+                        success: false,
+                        blocked: true,
+                        error: 'Email delivery blocked: recipient account is inactive',
+                        providerId: null
+                    };
+                }
+            }
+        } catch (err) {
+            console.error('[sendEmail] Error checking inactive users:', err.message);
+        }
+    }
+
     try {
         if (emailProvider === 'sendgrid') {
             const sendgridFrom = cleanEnv(process.env.SENDGRID_FROM_EMAIL, 'noreply@ocsindia.net');

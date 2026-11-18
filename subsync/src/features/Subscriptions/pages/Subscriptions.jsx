@@ -214,6 +214,7 @@ const ListView = ({ onAddNew }) => {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="renewed">Renewed</SelectItem>
               <SelectItem value="soon">Soon Expiring</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
             </SelectContent>

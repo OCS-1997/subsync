@@ -17,8 +17,12 @@ export async function getRenewalsWithFilters(filters = {}) {
             whereClause += ` AND DATE(s.end_date) = CURDATE()`;
             break;
         case 'expired':
-            whereClause += ` AND DATE(s.end_date) < CURDATE()`;
+            whereClause += ` AND DATE(s.end_date) < CURDATE() AND s.status != 'renewed'`;
             orderClause = 'ORDER BY s.end_date DESC';
+            break;
+        case 'renewed':
+            whereClause += ` AND s.status = 'renewed'`;
+            orderClause = 'ORDER BY s.updated_at DESC';
             break;
         case 'this_month':
         case 'current':
@@ -31,7 +35,7 @@ export async function getRenewalsWithFilters(filters = {}) {
             break;
         case 'expiring':
         case 'soon':
-            whereClause += ` AND DATE(s.end_date) >= CURDATE() AND DATE(s.end_date) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)`;
+            whereClause += ` AND DATE(s.end_date) >= CURDATE() AND DATE(s.end_date) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND s.status != 'renewed'`;
             break;
         case 'custom':
             if (startDate && endDate) {
@@ -109,7 +113,7 @@ export async function getExpiredServices(filters = {}) {
     const { startDate, endDate } = filters;
     const now = new Date();
 
-    let whereClause = 'WHERE s.archived_at IS NULL AND s.end_date < ?';
+    let whereClause = "WHERE s.archived_at IS NULL AND s.status != 'renewed' AND s.end_date < ?";
     const whereParams = [now];
 
     if (startDate) {
@@ -219,19 +223,25 @@ export async function getDashboardStats() {
         customers,
         activeSubscriptions,
         expiredSubscriptions,
+        renewedSubscriptions,
         monthlyRevenue,
         todayDCRs,
         openOpportunities,
         kbArticles,
         expiringThisMonth,
-        expiringSoon
+        expiringSoon,
+        expiringIn7Days,
+        expiringIn15Days,
+        expiringSoonRevenue
     ] = await Promise.all([
         // Total customers
         safeQuery('SELECT COUNT(*) as count FROM customers'),
-        // Active subscriptions (not archived and end_date >= today_midnight)
-        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) >= DATE(?)', [todayStart]),
-        // Expired subscriptions (not archived and end_date < today_midnight)
-        safeQuery('SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) < DATE(?)', [todayStart]),
+        // Active subscriptions (not archived and (end_date >= today_midnight OR status = 'renewed'))
+        safeQuery("SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND (DATE(end_date) >= DATE(?) OR status = 'renewed')", [todayStart]),
+        // Expired subscriptions (not archived and end_date < today_midnight and status != 'renewed')
+        safeQuery("SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND DATE(end_date) < DATE(?) AND status != 'renewed'", [todayStart]),
+        // Renewed subscriptions count
+        safeQuery("SELECT COUNT(*) as count FROM subscriptions WHERE archived_at IS NULL AND status = 'renewed'"),
         // Monthly revenue (sum of subscription totals that start/renew this month)
         safeQuery(`
             SELECT COALESCE(SUM(total), 0) as revenue 
@@ -261,11 +271,42 @@ export async function getDashboardStats() {
             AND YEAR(end_date) = YEAR(?) 
             AND MONTH(end_date) = MONTH(?)
         `, [now, now]),
-        // Expiring soon (next 30 days)
+        // Expiring soon (next 30 days, not renewed)
         safeQuery(`
             SELECT COUNT(*) as count 
             FROM subscriptions 
             WHERE archived_at IS NULL 
+            AND status != 'renewed'
+            AND end_date IS NOT NULL 
+            AND DATE(end_date) >= DATE(?) 
+            AND DATE(end_date) <= DATE_ADD(DATE(?), INTERVAL 30 DAY)
+        `, [now, now]),
+        // Expiring in next 7 days (critical)
+        safeQuery(`
+            SELECT COUNT(*) as count 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND status != 'renewed'
+            AND end_date IS NOT NULL 
+            AND DATE(end_date) >= DATE(?) 
+            AND DATE(end_date) <= DATE_ADD(DATE(?), INTERVAL 7 DAY)
+        `, [now, now]),
+        // Expiring in next 15 days
+        safeQuery(`
+            SELECT COUNT(*) as count 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND status != 'renewed'
+            AND end_date IS NOT NULL 
+            AND DATE(end_date) >= DATE(?) 
+            AND DATE(end_date) <= DATE_ADD(DATE(?), INTERVAL 15 DAY)
+        `, [now, now]),
+        // Total value/revenue of subscriptions expiring soon (next 30 days)
+        safeQuery(`
+            SELECT COALESCE(SUM(total), 0) as revenue 
+            FROM subscriptions 
+            WHERE archived_at IS NULL 
+            AND status != 'renewed'
             AND end_date IS NOT NULL 
             AND DATE(end_date) >= DATE(?) 
             AND DATE(end_date) <= DATE_ADD(DATE(?), INTERVAL 30 DAY)
@@ -276,12 +317,16 @@ export async function getDashboardStats() {
         totalCustomers: customers[0]?.count || 0,
         activeSubscriptions: activeSubscriptions[0]?.count || 0,
         expiredCount: expiredSubscriptions[0]?.count || 0,
+        renewedCount: renewedSubscriptions[0]?.count || 0,
         monthlyRevenue: parseFloat(monthlyRevenue[0]?.revenue) || 0,
         todayDCRs: todayDCRs[0]?.count || 0,
         openOpportunities: openOpportunities[0]?.count || 0,
         kbArticles: kbArticles[0]?.count || 0,
         expiringThisMonthCount: expiringThisMonth[0]?.count || 0,
-        expiringSoonCount: expiringSoon[0]?.count || 0
+        expiringSoonCount: expiringSoon[0]?.count || 0,
+        expiringIn7DaysCount: expiringIn7Days[0]?.count || 0,
+        expiringIn15DaysCount: expiringIn15Days[0]?.count || 0,
+        expiringSoonRevenue: parseFloat(expiringSoonRevenue[0]?.revenue) || 0
     };
 }
 

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import RenewSubscriptionModal from '../RenewSubscriptionModal';
+import DueSoonBreakdownModal from '../DueSoonBreakdownModal';
 import { toast } from 'react-toastify';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
@@ -37,6 +38,7 @@ const FILTER_OPTIONS = [
     { id: 'today', label: 'Today', icon: AlertTriangle },
     { id: 'this_month', label: 'This Month', icon: Calendar },
     { id: 'expiring', label: 'Expiring Soon', icon: Clock },
+    { id: 'renewed', label: 'Renewed', icon: RefreshCw },
     { id: 'expired', label: 'Expired', icon: XCircle },
     { id: 'custom', label: 'Custom', icon: Calendar },
 ];
@@ -49,6 +51,7 @@ function SubscriptionsTab({ visibleWidgets }) {
     const [renewalsLoading, setRenewalsLoading] = useState(false);
     const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
     const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+    const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
     const [subToRenew, setSubToRenew] = useState(null);
 
     // Helper to check if widget is visible
@@ -61,8 +64,12 @@ function SubscriptionsTab({ visibleWidgets }) {
         total: 0,
         active: 0,
         expired: 0,
+        renewed: 0,
         expiringSoon: 0,
         expiringThisMonth: 0,
+        expiringIn7Days: 0,
+        expiringIn15Days: 0,
+        expiringSoonRevenue: 0,
         totalRevenue: 0
     });
     const [renewals, setRenewals] = useState([]);
@@ -124,21 +131,30 @@ function SubscriptionsTab({ visibleWidgets }) {
 
             const active = dashData.stats?.activeSubscriptions || 0;
             const expiredCount = dashData.stats?.expiredCount || 0;
+            const renewedCount = dashData.stats?.renewedCount || 0;
             const expiringSoon = dashData.stats?.expiringSoonCount || dashData.renewals?.expiringSoonCount || 0;
             const expiringThisMonth = dashData.stats?.expiringThisMonthCount || dashData.renewals?.expiringThisMonthCount || 0;
+            const expiringIn7Days = dashData.stats?.expiringIn7DaysCount || 0;
+            const expiringIn15Days = dashData.stats?.expiringIn15DaysCount || 0;
+            const expiringSoonRevenue = dashData.stats?.expiringSoonRevenue || 0;
 
             setStats({
                 total: active + expiredCount,
                 active,
                 expired: expiredCount,
+                renewed: renewedCount,
                 expiringSoon,
                 expiringThisMonth,
+                expiringIn7Days,
+                expiringIn15Days,
+                expiringSoonRevenue,
                 totalRevenue: dashData.stats?.monthlyRevenue || 0
             });
 
-            // Build status distribution for pie chart
+            // Build status distribution for pie chart (including Renewed)
             setStatusDistribution([
                 { name: 'Active', value: active, color: STATUS_COLORS.active },
+                { name: 'Renewed', value: renewedCount, color: STATUS_COLORS.renewed },
                 { name: 'Expired', value: expiredCount, color: STATUS_COLORS.expired },
                 { name: 'Expiring Soon', value: expiringSoon, color: STATUS_COLORS['expiring soon'] }
             ].filter(item => item.value > 0));
@@ -271,12 +287,42 @@ function SubscriptionsTab({ visibleWidgets }) {
                 />
             </BentoCard>
 
-            <BentoCard size="sm" icon={Clock} title="Expiring Soon">
-                <StatCard
-                    value={stats.expiringSoon}
-                    label="Due Soon"
-                    variant="amber"
-                />
+            <BentoCard 
+                size="sm" 
+                icon={Clock} 
+                title="Expiring Soon"
+                action={
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 h-6 px-2 rounded-lg flex items-center gap-1"
+                        onClick={() => setIsDueSoonModalOpen(true)}
+                    >
+                        <span>Details</span>
+                        <ArrowRight className="w-3 h-3" />
+                    </Button>
+                }
+            >
+                <div 
+                    onClick={() => setIsDueSoonModalOpen(true)}
+                    className="cursor-pointer group h-full flex flex-col justify-between"
+                >
+                    <StatCard
+                        value={stats.expiringSoon}
+                        label="Due Soon"
+                        variant="amber"
+                    />
+                    <div className="flex items-center gap-1.5 flex-wrap mt-2 pt-2 border-t border-amber-500/15">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                            {stats.expiringIn7Days || 0} in ≤7d
+                        </span>
+                        {stats.expiringSoonRevenue > 0 && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                                {formatCurrency(stats.expiringSoonRevenue)}
+                            </span>
+                        )}
+                    </div>
+                </div>
             </BentoCard>
 
             {/* Subscriptions List with Filters - FULL WIDTH */}
@@ -639,6 +685,17 @@ function SubscriptionsTab({ visibleWidgets }) {
             }}
             subscription={subToRenew}
             onSuccess={handleRenewSuccess}
+        />
+
+        <DueSoonBreakdownModal
+            isOpen={isDueSoonModalOpen}
+            onClose={() => setIsDueSoonModalOpen(false)}
+            stats={stats}
+            onNavigateToTable={() => setActiveFilter('expiring')}
+            onRefreshStats={() => {
+                loadRenewals();
+                loadDashboardStats();
+            }}
         />
         </>
     );

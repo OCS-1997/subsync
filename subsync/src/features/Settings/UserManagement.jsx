@@ -13,6 +13,7 @@ import {
   Users,
   ShieldCheck,
   UserCheck,
+  UserX,
   Filter,
   MoreHorizontal,
   AtSign,
@@ -129,6 +130,21 @@ const UserManagement = () => {
     }
     setShowDeleteDialog(false);
     setUserToDelete(null);
+  };
+
+  // Toggle user active status (block / activate)
+  const handleToggleStatus = async (user) => {
+    try {
+      const newStatus = !user.is_active;
+      await api.put(`/users/${user.username}`, { is_active: newStatus });
+      toast.success(newStatus ? `Account ${user.name} activated successfully` : `Account ${user.name} blocked and set to inactive`);
+      fetchUsers();
+      if (selectedUser && selectedUser.username === user.username) {
+        setSelectedUser(prev => prev ? { ...prev, is_active: newStatus } : null);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update user status');
+    }
   };
 
   // Filter users by search and role
@@ -353,16 +369,28 @@ const UserManagement = () => {
                                   View Details
                                 </DropdownMenuItem>
                                 {canEdit && (
-                                  <DropdownMenuItem
-                                    onSelect={(e) => {
-                                      e.preventDefault();
-                                      navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })
-                                    }}
-                                    className="rounded-lg gap-2 cursor-pointer focus:bg-blue-50 focus:text-blue-700 dark:focus:bg-blue-900/20"
-                                  >
-                                    <UserRoundPen className="w-4 h-4" />
-                                    Edit Profile
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        navigate(`/${username}/dashboard/settings/user-management/add-user/${user.username}`, { state: { user } })
+                                      }}
+                                      className="rounded-lg gap-2 cursor-pointer focus:bg-blue-50 focus:text-blue-700 dark:focus:bg-blue-900/20"
+                                    >
+                                      <UserRoundPen className="w-4 h-4" />
+                                      Edit Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => {
+                                        e.preventDefault();
+                                        handleToggleStatus(user);
+                                      }}
+                                      className={`rounded-lg gap-2 cursor-pointer ${user.is_active ? 'text-amber-600 focus:text-amber-700 focus:bg-amber-50 dark:focus:bg-amber-950/20' : 'text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 dark:focus:bg-emerald-950/20'}`}
+                                    >
+                                      {user.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                                      {user.is_active ? 'Deactivate Account' : 'Activate Account'}
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                                 {canDelete && (
                                   <DropdownMenuItem
@@ -550,11 +578,21 @@ const UserManagement = () => {
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
                   <ShieldCheck className="w-3.5 h-3.5" /> Status
                 </div>
-                <div className="pt-0.5">
+                <div className="flex items-center justify-between pt-0.5">
                   {selectedUser?.is_active ? (
                     <Badge className="bg-emerald-500/10 text-emerald-600 border-none px-2 py-0 text-[10px] h-5">ACTIVE</Badge>
                   ) : (
-                    <Badge className="bg-red-500/10 text-red-600 border-none px-2 py-0 text-[10px] h-5">BLOCKED</Badge>
+                    <Badge className="bg-red-500/10 text-red-600 border-none px-2 py-0 text-[10px] h-5">INACTIVE (BLOCKED)</Badge>
+                  )}
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleStatus(selectedUser)}
+                      className={`h-6 text-[10px] font-bold px-2 rounded-lg ${selectedUser?.is_active ? 'border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-800' : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800'}`}
+                    >
+                      {selectedUser?.is_active ? 'Deactivate' : 'Activate'}
+                    </Button>
                   )}
                 </div>
               </div>
