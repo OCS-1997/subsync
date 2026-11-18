@@ -9,6 +9,7 @@ import TaskCard from '../components/TaskCard';
 import TaskKanbanView from '../components/TaskKanbanView';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { CategorySelect } from '../components/CategorySelect';
+import Pagination from '@/components/layouts/Pagination.jsx';
 import { Breadcrumb, PageHeader } from '@/components/ui/breadcrumb.jsx';
 import { toast } from 'react-toastify';
 import {
@@ -71,12 +72,28 @@ export default function TasksPage() {
   });
 
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [assignedToFilter, setAssignedToFilter] = useState('ALL');
   const [manageableUsers, setManageableUsers] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  // Debounce search input to reduce server requests and load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSplitupModalOpen, setIsSplitupModalOpen] = useState(false);
@@ -135,12 +152,14 @@ export default function TasksPage() {
       const clientTodayStr = `${year}-${month}-${day}`;
       const params = {
         tab: viewMode,
-        search,
+        search: debouncedSearch ? debouncedSearch.trim() : undefined,
         status: statusFilter !== 'ALL' ? statusFilter : undefined,
         priority: priorityFilter !== 'ALL' ? priorityFilter : undefined,
         category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
         assignedTo: assignedToFilter !== 'ALL' ? assignedToFilter : undefined,
         clientDate: clientTodayStr,
+        page,
+        limit: pageSize,
       };
 
       if (activeTab === 'TODAY') params.dueDate = 'today';
@@ -149,15 +168,22 @@ export default function TasksPage() {
       if (activeTab === 'COMPLETED') params.status = 'COMPLETED';
 
       const res = await taskService.getTasks(params);
-      if (res.success && res.data) {
-        setTasks(res.data);
+      if (res.success) {
+        setTasks(res.data || []);
+        if (res.pagination) {
+          setTotalRecords(res.pagination.total ?? (res.data?.length || 0));
+          setTotalPages(res.pagination.totalPages ?? 1);
+        } else {
+          setTotalRecords(res.data?.length || 0);
+          setTotalPages(1);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
     } finally {
       setLoading(false);
     }
-  }, [viewMode, activeTab, search, statusFilter, priorityFilter, categoryFilter, assignedToFilter]);
+  }, [viewMode, activeTab, debouncedSearch, statusFilter, priorityFilter, categoryFilter, assignedToFilter, page, pageSize]);
 
   useEffect(() => {
     fetchStats();
@@ -352,6 +378,7 @@ export default function TasksPage() {
               setViewMode('my_tasks');
               setActiveTab('ALL');
               setAssignedToFilter('ALL');
+              setPage(1);
             }}
             className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'my_tasks'
@@ -367,6 +394,7 @@ export default function TasksPage() {
               setViewMode('assigned_by_me');
               setActiveTab('ALL');
               setAssignedToFilter('ALL');
+              setPage(1);
             }}
             className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
               viewMode === 'assigned_by_me'
@@ -383,6 +411,7 @@ export default function TasksPage() {
                 setViewMode('management');
                 setActiveTab('ALL');
                 setAssignedToFilter('ALL');
+                setPage(1);
               }}
               className={`px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
                 viewMode === 'management'
@@ -455,7 +484,10 @@ export default function TasksPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setPage(1);
+              }}
               className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 activeTab === tab.id
                   ? 'bg-blue-500 text-white shadow-sm shadow-blue-500/20'
@@ -495,7 +527,10 @@ export default function TasksPage() {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="ALL">Status: All</option>
@@ -509,7 +544,10 @@ export default function TasksPage() {
           {/* Priority Filter */}
           <select
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
+            onChange={(e) => {
+              setPriorityFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
           >
             <option value="ALL">Priority: All</option>
@@ -522,7 +560,10 @@ export default function TasksPage() {
           {/* Category Filter */}
           <CategorySelect
             value={categoryFilter}
-            onChange={(newCat) => setCategoryFilter(newCat)}
+            onChange={(newCat) => {
+              setCategoryFilter(newCat);
+              setPage(1);
+            }}
             categories={availableCategories}
             buttonVariant="filter"
             allowCustom={true}
@@ -532,7 +573,10 @@ export default function TasksPage() {
           {(viewMode === 'assigned_by_me' || (canManage && viewMode === 'management')) && (
             <select
               value={assignedToFilter}
-              onChange={(e) => setAssignedToFilter(e.target.value)}
+              onChange={(e) => {
+                setAssignedToFilter(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Assignee: All</option>
@@ -543,6 +587,24 @@ export default function TasksPage() {
               ))}
             </select>
           )}
+
+          {/* Records Per Page Selector */}
+          <div className="flex items-center gap-1.5 ml-auto">
+            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 hidden sm:inline">Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="px-2.5 py-2 rounded-xl text-xs border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer font-medium"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -585,6 +647,16 @@ export default function TasksPage() {
             <TaskCard key={task.id} task={task} onEdit={handleEditTask} viewMode="list" />
           ))}
         </div>
+      )}
+
+      {/* Pagination Footer */}
+      {!loading && tasks.length > 0 && (
+        <Pagination
+          currentPage={page}
+          setCurrentPage={setPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+        />
       )}
 
       {/* Create / Edit Task Modal */}
@@ -671,6 +743,7 @@ export default function TasksPage() {
                         onClick={() => {
                           setStatusFilter(item.status);
                           setIsSplitupModalOpen(false);
+                          setPage(1);
                         }}
                         className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition-all cursor-pointer space-y-1.5 group"
                       >
@@ -723,6 +796,7 @@ export default function TasksPage() {
                             setViewMode('management');
                             setAssignedToFilter(member.username);
                             setIsSplitupModalOpen(false);
+                            setPage(1);
                           }}
                           className="p-3.5 rounded-2xl bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 transition-all cursor-pointer space-y-2.5 group hover:border-blue-400 dark:hover:border-blue-500 shadow-sm"
                         >

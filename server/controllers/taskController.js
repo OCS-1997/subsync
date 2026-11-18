@@ -14,8 +14,8 @@ export const getTasksController = async (req, res, next) => {
             search: req.query.search,
             clientDate: req.query.clientDate,
             tab: req.query.tab,
-            page: req.query.page || 1,
-            limit: req.query.limit || 50
+            page: req.query.page ? parseInt(req.query.page, 10) : 1,
+            limit: req.query.limit ? parseInt(req.query.limit, 10) : 20
         };
 
         const result = await taskService.getTasks(req.user, filters);

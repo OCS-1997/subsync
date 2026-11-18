@@ -49,6 +49,77 @@ const getApproverEmails = async () => {
 };
 
 /**
+ * Helper to build the duration & deduction breakdown HTML block
+ */
+const renderDurationBreakdownHtml = (details, fallbackDuration, halfDayType, dateRangeText) => {
+    const totalDays = details?.totalCalendarDays || Math.max(1, Math.round(fallbackDuration));
+    const sundays = details?.sundaysCount || 0;
+    const holidays = details?.holidaysCount || 0;
+    const holidayList = details?.excludedHolidays || [];
+    const netDeducted = details?.workingDays ?? fallbackDuration;
+
+    return `
+        <!-- Leave Duration & Deduction Breakdown Card -->
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+            <div style="margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                <span style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Leave Duration &amp; Balance Deduction Breakdown
+                </span>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #334155;">
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">Total Calendar Days in Span:</td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: 600; color: #1e293b;">
+                        ${totalDays} ${totalDays === 1 ? 'Day' : 'Days'}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">Sundays (0 days deducted):</td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: 700; color: ${sundays > 0 ? '#059669' : '#64748b'};">
+                        ${sundays > 0 ? `-${sundays} ${sundays === 1 ? 'Sunday' : 'Sundays'} (Exempt)` : '0 Sundays'}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">Public Holidays (0 days deducted):</td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: 700; color: ${holidays > 0 ? '#059669' : '#64748b'};">
+                        ${holidays > 0 ? `-${holidays} ${holidays === 1 ? 'Holiday' : 'Holidays'} (Exempt)` : '0 Holidays'}
+                    </td>
+                </tr>
+                ${holidayList.length > 0 ? `
+                <tr>
+                    <td colspan="2" style="padding: 6px 0;">
+                        <div style="background-color: #ffffff; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 11px; color: #475569;">
+                            <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">Exempt Public Holidays:</div>
+                            ${holidayList.map(h => `<div style="margin-top: 2px;">&bull; <strong>${h.name}</strong> (${formatDate(h.date)}) &mdash; <span style="color: #059669; font-weight: 600;">0 days deducted</span></div>`).join('')}
+                        </div>
+                    </td>
+                </tr>
+                ` : ''}
+                ${halfDayType && halfDayType !== 'none' ? `
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">Half-Day Session Adjustment:</td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: 600; color: #2563eb;">-0.5 Day (${halfDayType === 'first_half' ? 'First Half' : 'Second Half'})</td>
+                </tr>
+                ` : ''}
+                <tr style="border-top: 2px solid #cbd5e1;">
+                    <td style="padding: 10px 0 2px 0; font-weight: 800; color: #0f172a; font-size: 13px;">
+                        Net Deducted from Leave Balance:
+                    </td>
+                    <td style="padding: 10px 0 2px 0; text-align: right; font-weight: 900; color: #059669; font-size: 16px;">
+                        ${netDeducted} ${netDeducted === 1 ? 'Working Day' : 'Working Days'}
+                    </td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 10px; font-size: 11px; color: #64748b; line-height: 1.4; border-top: 1px dotted #e2e8f0; padding-top: 6px;">
+                &#10003; <strong>Policy Confirmation:</strong> Only working days are deducted. Sundays and gazetted public holidays are never deducted from your leave quota.
+            </div>
+        </div>
+    `;
+};
+
+/**
  * Send notification when a leave request is submitted:
  * 1. Email to Admin(s) with details and direct approval link
  * 2. Acknowledgement email to the applicant
@@ -61,7 +132,8 @@ export async function sendLeaveApplicationNotice({
     endDate,
     duration,
     halfDayType,
-    reason
+    reason,
+    durationDetails
 }) {
     try {
         const applicant = await getUserByUsername(userId);
@@ -78,11 +150,12 @@ export async function sendLeaveApplicationNotice({
 
         const durationText = `${duration} ${duration === 1 ? 'Working Day' : 'Working Days'}${halfDayType && halfDayType !== 'none' ? ` (${halfDayType === 'first_half' ? 'First Half' : 'Second Half'})` : ''}`;
         const dateRangeText = (startDate === endDate) ? formatDate(startDate) : `${formatDate(startDate)} to ${formatDate(endDate)}`;
+        const breakdownHtml = renderDurationBreakdownHtml(durationDetails, duration, halfDayType, dateRangeText);
 
         // --- 1. Notification to Admin ---
         const approverEmails = await getApproverEmails();
         if (approverEmails.length > 0) {
-            const adminSubject = `[Leave Request] ${applicantName} applied for ${leaveTypeName} (${durationText})`;
+            const adminSubject = `[Leave Request] ${applicantName} applied for ${leaveTypeName} (${duration} ${duration === 1 ? 'Day' : 'Days'} Deducted - Sundays & Holidays Excluded)`;
             const adminHtml = `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                     <!-- Header -->
@@ -118,9 +191,12 @@ export async function sendLeaveApplicationNotice({
                                 <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-size: 13px; font-weight: 700;">${dateRangeText}</td>
                             </tr>
                             <tr>
-                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Duration</td>
-                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #2563eb; font-size: 13px; font-weight: 800;">
-                                    ${durationText} <span style="font-size: 11px; font-weight: 600; color: #64748b;">(Sundays & holidays excluded)</span>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Deducted Duration</td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #2563eb; font-size: 14px; font-weight: 800;">
+                                    ${durationText}
+                                    <div style="font-size: 11px; font-weight: 600; color: #059669; margin-top: 3px;">
+                                        &#10003; Sundays &amp; Public Holidays excluded from balance
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
@@ -132,6 +208,9 @@ export async function sendLeaveApplicationNotice({
                                 </td>
                             </tr>
                         </table>
+
+                        <!-- Deduction Breakdown -->
+                        ${breakdownHtml}
 
                         <!-- Reason Block -->
                         <div style="margin-bottom: 28px;">
@@ -169,7 +248,7 @@ export async function sendLeaveApplicationNotice({
 
         // --- 2. Acknowledgement to Applicant ---
         if (applicantEmail) {
-            const userSubject = `Leave Application Submitted: ${leaveTypeName} (${durationText})`;
+            const userSubject = `Leave Application Submitted: ${leaveTypeName} (${duration} ${duration === 1 ? 'Day' : 'Days'} Deducted - Sundays & Holidays Excluded)`;
             const userHtml = `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                     <!-- Header -->
@@ -181,7 +260,7 @@ export async function sendLeaveApplicationNotice({
                             Leave Application Acknowledged
                         </h1>
                         <p style="margin: 8px 0 0 0; font-size: 13px; color: #d1fae5;">
-                            Hi ${applicantName}, your request has been safely received and is pending administrator approval.
+                            Hi ${applicantName}, your request has been safely received and is pending administrator review.
                         </p>
                     </div>
 
@@ -197,9 +276,14 @@ export async function sendLeaveApplicationNotice({
                                 <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-size: 13px; font-weight: 700;">${dateRangeText}</td>
                             </tr>
                             <tr>
-                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Calculated Duration</td>
-                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #059669; font-size: 13px; font-weight: 800;">
-                                    ${durationText}
+                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Deducted Duration</td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                                    <span style="display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 800; font-size: 14px; padding: 4px 10px; border-radius: 6px; border: 1px solid #a7f3d0;">
+                                        ${duration} ${duration === 1 ? 'Working Day' : 'Working Days'}${halfDayType && halfDayType !== 'none' ? ` (${halfDayType === 'first_half' ? 'First Half' : 'Second Half'})` : ''} Deducted
+                                    </span>
+                                    <div style="font-size: 11px; color: #059669; font-weight: 600; margin-top: 4px;">
+                                        &#10003; Sundays &amp; Public Holidays are strictly excluded (0 days deducted)
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
@@ -211,6 +295,9 @@ export async function sendLeaveApplicationNotice({
                                 </td>
                             </tr>
                         </table>
+
+                        <!-- Deduction Breakdown -->
+                        ${breakdownHtml}
 
                         <div style="text-align: center; margin: 32px 0 20px 0;">
                             <a href="${userDashboardUrl}" target="_blank" style="background-color: #059669; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -316,8 +403,13 @@ export async function sendLeaveDecisionNotice({
                             <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-size: 13px; font-weight: 700;">${dateRangeText}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Duration</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-size: 13px; font-weight: 700;">${durationText}</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Deducted Duration</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-size: 13px; font-weight: 700;">
+                                ${durationText}
+                                <div style="font-size: 11px; color: #059669; font-weight: 600; margin-top: 2px;">
+                                    &#10003; Sundays &amp; Public Holidays Excluded
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 13px; font-weight: 600;">Decision Status</td>

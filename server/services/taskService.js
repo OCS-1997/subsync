@@ -182,10 +182,12 @@ export async function getTasks(actor, filters = {}) {
         clientDate,
         tab = 'all', // 'my_tasks' | 'assigned_by_me' | 'management' | 'all'
         page = 1,
-        limit = 50
+        limit = 20
     } = filters;
 
-    const offset = (Number(page) - 1) * Number(limit);
+    const safeLimit = Math.max(1, parseInt(limit, 10) || 20);
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeOffset = (safePage - 1) * safeLimit;
     const conditions = [];
     const params = [];
 
@@ -311,15 +313,15 @@ export async function getTasks(actor, filters = {}) {
            t.due_date ASC,
            t.created_at DESC
          LIMIT ? OFFSET ?`,
-        [...params, Number(limit), Number(offset)]
+        [...params, safeLimit, safeOffset]
     );
 
     return {
         tasks,
         total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit))
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.max(1, Math.ceil(total / safeLimit))
     };
 }
 

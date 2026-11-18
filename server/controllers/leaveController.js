@@ -28,7 +28,7 @@ import {
     countPendingPermissionRequests 
 } from "../models/permissionRequestModel.js";
 import { logActivity } from "../models/activityLogModel.js";
-import { calculateWorkingDays } from "../utils/leaveUtils.js";
+import { calculateWorkingDays, calculateLeaveDurationDetails } from "../utils/leaveUtils.js";
 import { sendLeaveApplicationNotice, sendLeaveDecisionNotice } from "../services/leaveNotificationService.js";
 import { PERMISSIONS } from "../constants/permissions.js";
 
@@ -84,20 +84,12 @@ async function applyLeaveController(req, res) {
             return `${y}-${m}-${day}`;
         }).filter(Boolean);
 
-        // 2. Calculate working duration (excluding Sundays and holidays)
-        let duration = calculateWorkingDays(start_date, end_date, holidayDates);
-        
-        if (half_day_type && half_day_type !== 'none') {
-            const isSingleDay = new Date(start_date).toDateString() === new Date(end_date).toDateString();
-            if (isSingleDay) {
-                duration = duration > 0 ? 0.5 : 0;
-            } else {
-                duration = Math.max(0, duration - 0.5);
-            }
-        }
+        // 2. Calculate working duration and breakdown details (excluding Sundays and holidays)
+        const durationDetails = calculateLeaveDurationDetails(start_date, end_date, allHolidays, half_day_type);
+        const duration = durationDetails.workingDays;
 
         if (duration <= 0) {
-            return res.status(400).json({ error: "Selected dates fall on Sundays or Public Holidays. No working days to apply for." });
+            return res.status(400).json({ error: "Selected dates fall entirely on Sundays or Public Holidays. No working days to deduct." });
         }
 
         // 3. Check leave balance (simplified for now, actual implementation would check if enough days remain)
@@ -136,7 +128,8 @@ async function applyLeaveController(req, res) {
             endDate: end_date,
             duration,
             halfDayType: half_day_type,
-            reason
+            reason,
+            durationDetails
         }).catch(err => console.error("Error sending leave application notice:", err));
 
         res.status(201).json({
