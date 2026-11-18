@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
-    Plus, Calendar, Clock, Play, Power, ChevronRight, FileJson, 
-    Trash2, ListChecks, LayoutGrid, Edit, MoreVertical, Copy, 
+    Plus, Calendar, Clock, Play, Power, ChevronRight, FileText, 
+    Trash2, ListChecks, Edit, MoreVertical, Copy, 
     Eye, AlertCircle, CheckCircle2, GripVertical, CheckSquare, Square
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,8 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/ui/breadcrumb.jsx";
 import { 
     AlertDialog, 
     AlertDialogAction, 
@@ -30,7 +31,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -40,19 +40,20 @@ import * as appraisalAPI from "../services/appraisalAPI";
 const DEFAULT_QUESTIONS = [
     { id: "working_days", label: "Working Days", type: "number", required: true },
     { id: "days_present", label: "Days Present", type: "number", required: true },
-    { id: "effective_hours", label: "Effective Hours Put in", type: "number", required: true },
-    { id: "new_skills", label: "New Skills Acquired / Accomplishments", type: "textarea", required: true },
-    { id: "team_contribution", label: "Team Contribution (Seminars, Ideas, Collaboration)", type: "textarea", required: true },
-    { id: "customer_contribution", label: "Contribution to Customers (Webinars, Visits, Suggestions)", type: "textarea", required: true },
-    { id: "company_contribution", label: "Contribution to Company (Business Leads, Feedback, Referrals)", type: "textarea", required: true },
-    { id: "improvement_areas", label: "Areas for Improvement and Improvement Plan", type: "textarea", required: true },
-    { id: "future_goals", label: "Future Goals and Support Needed", type: "textarea", required: true }
+    { id: "effective_hours", label: "Hours Worked", type: "number", required: true },
+    { id: "new_skills", label: "New skills learned and achievements", type: "textarea", required: true },
+    { id: "team_contribution", label: "How you helped your team (ideas, collaboration, teamwork)", type: "textarea", required: true },
+    { id: "customer_contribution", label: "How you helped customers or clients", type: "textarea", required: true },
+    { id: "company_contribution", label: "How you helped the company grow", type: "textarea", required: true },
+    { id: "improvement_areas", label: "Areas you want to improve and your plan", type: "textarea", required: true },
+    { id: "future_goals", label: "Your goals for next quarter and help needed", type: "textarea", required: true }
 ];
 
 export default function AdminAppraisalManager() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { templates, periods, loading } = useSelector((state) => state.appraisals);
+    const { username } = useParams();
+    const { templates = [], periods = [], loading } = useSelector((state) => state.appraisals);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
@@ -82,7 +83,7 @@ export default function AdminAppraisalManager() {
 
     const handleCreatePeriod = async () => {
         if (!newPeriod.template_id || !newPeriod.start_date || !newPeriod.end_date) {
-            toast.error("All planning fields are required.");
+            toast.error("Please fill in all fields.");
             return;
         }
 
@@ -93,11 +94,11 @@ export default function AdminAppraisalManager() {
 
         try {
             await appraisalAPI.createPeriod(newPeriod);
-            toast.success("Appraisal period planned successfully!");
+            toast.success("Review period created successfully!");
             setIsCreateOpen(false);
             dispatch(getPeriods());
         } catch (err) {
-            toast.error(err.response?.data?.error || "Failed to plan period");
+            toast.error(err.response?.data?.error || "Failed to create review period");
         }
     };
 
@@ -107,7 +108,7 @@ export default function AdminAppraisalManager() {
             setTemplateForm({
                 name: template.name,
                 description: template.description || "",
-                questions: [...template.questions]
+                questions: Array.isArray(template.questions) ? [...template.questions] : [...DEFAULT_QUESTIONS]
             });
         } else {
             setActiveTemplate(null);
@@ -120,9 +121,32 @@ export default function AdminAppraisalManager() {
         setIsTemplateDialogOpen(true);
     };
 
+    const handleDuplicateTemplate = (template) => {
+        setActiveTemplate(null);
+        setTemplateForm({
+            name: `${template.name} (Copy)`,
+            description: template.description || "",
+            questions: (template.questions || []).map((q, index) => ({
+                ...q,
+                id: `q_${Date.now()}_${index}`
+            }))
+        });
+        setIsTemplateDialogOpen(true);
+    };
+
     const handleSaveTemplate = async () => {
-        if (!templateForm.name || templateForm.questions.length === 0) {
-            toast.error("Name and at least one question are required.");
+        if (!templateForm.name.trim()) {
+            toast.error("Please enter a template name.");
+            return;
+        }
+        if (!templateForm.questions || templateForm.questions.length === 0) {
+            toast.error("Please add at least one question.");
+            return;
+        }
+
+        const emptyQuestion = templateForm.questions.find(q => !q.label.trim());
+        if (emptyQuestion) {
+            toast.error("Please fill in question text for all questions.");
             return;
         }
 
@@ -146,6 +170,7 @@ export default function AdminAppraisalManager() {
             await dispatch(deleteTemplate(activeTemplate.id)).unwrap();
             toast.success("Template deleted successfully");
             setIsDeleteTemplateOpen(false);
+            setActiveTemplate(null);
         } catch (err) {
             toast.error(err || "Failed to delete template");
         }
@@ -161,10 +186,13 @@ export default function AdminAppraisalManager() {
 
     const handleAction = async (id, action) => {
         try {
-            if (action === 'activate') await appraisalAPI.activatePeriod(id);
-            else if (action === 'close') await appraisalAPI.closePeriod(id);
-            
-            toast.success(`Period ${action}d successfully`);
+            if (action === 'activate') {
+                await appraisalAPI.activatePeriod(id);
+                toast.success("Review period started successfully");
+            } else if (action === 'close') {
+                await appraisalAPI.closePeriod(id);
+                toast.success("Review period closed successfully");
+            }
             dispatch(getPeriods());
         } catch (err) {
             toast.error(err.response?.data?.error || "Action failed");
@@ -175,120 +203,188 @@ export default function AdminAppraisalManager() {
         if (!deletingPeriodId) return;
         try {
             await dispatch(deletePeriod(deletingPeriodId)).unwrap();
-            toast.success("Period deleted successfully");
+            toast.success("Review period deleted successfully");
             setDeletingPeriodId(null);
         } catch (err) {
-            toast.error(err || "Failed to delete period");
+            toast.error(err || "Failed to delete review period");
         }
     };
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'Active': return <Badge className="bg-emerald-500 text-white border-none animate-pulse">Active</Badge>;
-            case 'Closed': return <Badge variant="secondary">Closed</Badge>;
-            default: return <Badge variant="outline">Planned</Badge>;
+            case 'Active':
+                return <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium">Active</Badge>;
+            case 'Closed':
+                return <Badge variant="secondary" className="font-medium text-slate-600 dark:text-slate-300">Closed</Badge>;
+            default:
+                return <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50 dark:bg-blue-950/40 font-medium">Upcoming</Badge>;
         }
     };
 
+    const activePeriodsCount = periods.filter(p => p.status === 'Active').length;
+    const closedPeriodsCount = periods.filter(p => p.status === 'Closed').length;
+
+    const breadcrumbItems = [
+        { label: 'Appraisals' }
+    ];
+
+    const actions = (
+        <div className="flex flex-wrap items-center gap-2">
+            <Button 
+                variant="outline" 
+                onClick={() => handleOpenTemplateDialog()}
+                className="rounded-xl border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold h-9 sm:h-10"
+            >
+                <Plus className="h-4 w-4 mr-1.5 text-blue-600" />
+                New Template
+            </Button>
+
+            <Button 
+                onClick={() => setIsCreateOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm text-xs sm:text-sm font-semibold h-9 sm:h-10"
+            >
+                <Calendar className="h-4 w-4 mr-1.5" />
+                New Review Period
+            </Button>
+        </div>
+    );
+
     return (
-        <div className="p-4 lg:p-8 space-y-8 max-w-7xl mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h1 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-                        Appraisal Studio
-                    </h1>
-                    <p className="text-muted-foreground mt-1">Design your performance review cycles and manage templates.</p>
-                </div>
-                
-                <div className="flex gap-3">
-                    <Button 
-                        variant="outline" 
-                        onClick={() => handleOpenTemplateDialog()}
-                        className="bg-white/50 backdrop-blur-md border-primary/20 hover:bg-primary/5 transition-all duration-300"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Template
-                    </Button>
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
+            {/* Standard Page Header */}
+            <PageHeader 
+                title="Performance Appraisals"
+                description="Manage review periods and question forms for your team."
+                breadcrumbItems={breadcrumbItems}
+                actions={actions}
+            />
 
-                    <Button 
-                        onClick={() => setIsCreateOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all duration-300 text-white"
-                    >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Plan Cycle
-                    </Button>
-                </div>
-            </header>
+            {/* Quick Overview Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <Card className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total Periods</p>
+                            <h3 className="text-xl font-bold text-foreground">{periods.length}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
 
+                <Card className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                            <Play className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active Periods</p>
+                            <h3 className="text-xl font-bold text-foreground">{activePeriodsCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Form Templates</p>
+                            <h3 className="text-xl font-bold text-foreground">{templates.length}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                    <CardContent className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-slate-500/10 border border-slate-500/20 flex items-center justify-center shrink-0">
+                            <Clock className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Closed Periods</p>
+                            <h3 className="text-xl font-bold text-foreground">{closedPeriodsCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Main Tabs */}
             <Tabs defaultValue="periods" className="w-full">
-                <TabsList className="bg-muted/50 p-1 rounded-2xl border border-white/20 backdrop-blur-sm self-start mb-8">
-                    <TabsTrigger value="periods" className="rounded-xl px-8 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        Appraisal Periods
+                <TabsList className="border-b border-slate-200 dark:border-slate-800 bg-transparent p-0 h-auto justify-start gap-4 sm:gap-6 rounded-none mb-6 w-full flex-wrap">
+                    <TabsTrigger 
+                        value="periods" 
+                        className="border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400"
+                    >
+                        <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                        Review Periods ({periods.length})
                     </TabsTrigger>
-                    <TabsTrigger value="templates" className="rounded-xl px-8 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                        Design Templates
+                    <TabsTrigger 
+                        value="templates" 
+                        className="border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-transparent rounded-none px-2 sm:px-3 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400"
+                    >
+                        <FileText className="w-4 h-4 mr-2 text-purple-600" />
+                        Question Forms ({templates.length})
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="periods" className="space-y-6">
-                    <div className="grid gap-6">
+                {/* Review Periods Tab Content */}
+                <TabsContent value="periods" className="space-y-4">
+                    <div className="grid gap-4">
                         <AnimatePresence mode="popLayout">
                             {periods.map((period, idx) => (
                                 <motion.div
                                     key={period.id}
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.05 }}
+                                    transition={{ delay: idx * 0.04 }}
                                 >
-                                    <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 bg-white/60 dark:bg-black/20 backdrop-blur-xl group">
+                                    <Card className="rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all duration-200 bg-white dark:bg-slate-900 overflow-hidden">
                                         <div className="flex flex-col md:flex-row items-stretch">
-                                            <div className={`w-1.5 md:w-2 transition-all duration-500 group-hover:w-3 ${
+                                            <div className={`w-1.5 md:w-2 shrink-0 ${
                                                 period.status === 'Active' ? 'bg-emerald-500' : 
-                                                period.status === 'Closed' ? 'bg-slate-400' : 'bg-primary/40'
+                                                period.status === 'Closed' ? 'bg-slate-400' : 'bg-blue-500'
                                             }`} />
-                                            <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                                <div className="space-y-3">
+                                            <div className="flex-1 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div className="space-y-2">
                                                     <div className="flex items-center gap-3">
-                                                        <h2 className="text-2xl font-black">{period.quarter} {period.year}</h2>
+                                                        <h2 className="text-xl font-bold text-foreground">
+                                                            {period.quarter} {period.year}
+                                                        </h2>
                                                         {getStatusBadge(period.status)}
                                                     </div>
-                                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                                            <div className="p-1 bg-primary/5 rounded-md">
-                                                                <ListChecks className="h-3.5 w-3.5 text-primary" />
-                                                            </div>
-                                                            Template: <span className="font-bold text-foreground">{period.template_name}</span>
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                                            <div className="p-1 bg-emerald-500/5 rounded-md">
-                                                                <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-                                                            </div>
-                                                            {new Date(period.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(period.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                        </p>
+                                                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <ListChecks className="h-3.5 w-3.5 text-blue-600" />
+                                                            Form: <strong className="text-foreground font-semibold">{period.template_name || 'Standard Form'}</strong>
+                                                        </span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                                                            {new Date(period.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} – {new Date(period.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        </span>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex flex-wrap items-center gap-3">
+                                                <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
                                                     <Button 
-                                                        variant="ghost" 
+                                                        variant="outline" 
                                                         size="sm"
                                                         onClick={() => navigate(`period/${period.id}`)}
-                                                        className="hover:bg-primary/5 rounded-full px-4"
+                                                        className="rounded-lg text-xs font-semibold h-9"
                                                     >
-                                                        View Reports
+                                                        View Submissions
                                                         <ChevronRight className="h-4 w-4 ml-1" />
                                                     </Button>
-
-                                                    <div className="w-px h-8 bg-border/50 hidden md:block" />
 
                                                     {period.status === 'Planned' && (
                                                         <Button 
                                                             size="sm" 
-                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 shadow-lg shadow-emerald-500/20"
+                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold h-9"
                                                             onClick={() => handleAction(period.id, 'activate')}
                                                         >
-                                                            <Play className="h-4 w-4 mr-2" />
-                                                            Activate
+                                                            <Play className="h-3.5 w-3.5 mr-1.5" />
+                                                            Start Period
                                                         </Button>
                                                     )}
 
@@ -296,21 +392,22 @@ export default function AdminAppraisalManager() {
                                                         <Button 
                                                             size="sm" 
                                                             variant="destructive"
-                                                            className="rounded-full px-6 shadow-lg shadow-destructive/20"
+                                                            className="rounded-lg text-xs font-semibold h-9"
                                                             onClick={() => handleAction(period.id, 'close')}
                                                         >
-                                                            <Power className="h-4 w-4 mr-2" />
-                                                            Close Appraisal Forms
+                                                            <Power className="h-3.5 w-3.5 mr-1.5" />
+                                                            Close Submissions
                                                         </Button>
                                                     )}
 
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon" 
-                                                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 w-10 rounded-full transition-colors"
+                                                        className="text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 h-9 w-9 rounded-lg"
                                                         onClick={() => setDeletingPeriodId(period.id)}
+                                                        title="Delete Review Period"
                                                     >
-                                                        <Trash2 className="h-4 w-5" />
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -320,62 +417,59 @@ export default function AdminAppraisalManager() {
                             ))}
                         </AnimatePresence>
                         
-                        {periods.length === 0 && (
-                            <div className="text-center py-24 bg-muted/20 rounded-[2rem] border-2 border-dashed border-muted transition-all hover:bg-muted/30">
-                                <div className="relative inline-block">
-                                    <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-10" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <AlertCircle className="h-6 w-6 text-muted-foreground/30" />
-                                    </div>
+                        {periods.length === 0 && !loading && (
+                            <div className="text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 mx-auto flex items-center justify-center mb-3">
+                                    <Calendar className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-xl font-bold text-muted-foreground/50">No Active Cycles</h3>
-                                <p className="text-muted-foreground max-w-xs mx-auto mt-2">Plan a new appraisal period to start collecting performance feedback.</p>
-                                <Button variant="outline" className="mt-6 rounded-full" onClick={() => setIsCreateOpen(true)}>
-                                    Get Started
+                                <h3 className="text-base font-semibold text-foreground">No review periods yet</h3>
+                                <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
+                                    Create a review period so team members can fill out and submit their appraisals.
+                                </p>
+                                <Button className="mt-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold" onClick={() => setIsCreateOpen(true)}>
+                                    <Plus className="h-4 w-4 mr-1.5" />
+                                    Create Review Period
                                 </Button>
                             </div>
                         )}
                     </div>
                 </TabsContent>
 
-                <TabsContent value="templates" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Question Forms Tab Content */}
+                <TabsContent value="templates" className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <AnimatePresence mode="popLayout">
                             {templates.map((template, idx) => (
                                 <motion.div
                                     key={template.id}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: idx * 0.05 }}
-                                    whileHover={{ y: -5 }}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.04 }}
                                 >
-                                    <Card className="border-none shadow-xl bg-white/80 dark:bg-zinc-900/40 backdrop-blur-xl relative group overflow-hidden h-full flex flex-col">
-                                        {/* Gradient Accent */}
-                                        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary/80 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                        
-                                        <CardHeader className="pb-4">
-                                            <div className="flex justify-between items-start">
-                                                <div className="p-3 bg-primary/10 text-primary rounded-2xl group-hover:scale-110 transition-transform duration-500">
-                                                    <FileJson className="h-6 w-6" />
+                                    <Card className="rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all duration-200 bg-white dark:bg-slate-900 h-full flex flex-col justify-between">
+                                        <CardHeader className="p-4 sm:p-5 pb-3">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <div className="w-10 h-10 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg flex items-center justify-center shrink-0">
+                                                    <FileText className="h-5 w-5" />
                                                 </div>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
                                                             <MoreVertical className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl p-2">
-                                                        <DropdownMenuItem onClick={() => handleOpenTemplateDialog(template)} className="rounded-lg gap-2">
-                                                            <Edit className="h-4 w-4" /> Edit
+                                                    <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+                                                        <DropdownMenuItem onClick={() => handleOpenTemplateDialog(template)} className="rounded-lg gap-2 text-xs font-medium cursor-pointer">
+                                                            <Edit className="h-3.5 w-3.5" /> Edit Form
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => {
                                                             setActiveTemplate(template);
                                                             setIsPreviewOpen(true);
-                                                        }} className="rounded-lg gap-2">
-                                                            <Eye className="h-4 w-4" /> Preview
+                                                        }} className="rounded-lg gap-2 text-xs font-medium cursor-pointer">
+                                                            <Eye className="h-3.5 w-3.5" /> Preview
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="rounded-lg gap-2">
-                                                            <Copy className="h-4 w-4" /> Duplicate
+                                                        <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)} className="rounded-lg gap-2 text-xs font-medium cursor-pointer">
+                                                            <Copy className="h-3.5 w-3.5" /> Duplicate
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem 
@@ -383,58 +477,59 @@ export default function AdminAppraisalManager() {
                                                                 setActiveTemplate(template);
                                                                 setIsDeleteTemplateOpen(true);
                                                             }} 
-                                                            className="rounded-lg gap-2 text-destructive focus:text-destructive"
+                                                            className="rounded-lg gap-2 text-xs font-medium text-red-600 focus:text-red-600 cursor-pointer"
                                                         >
-                                                            <Trash2 className="h-4 w-4" /> Delete
+                                                            <Trash2 className="h-3.5 w-3.5" /> Delete Form
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>
-                                            <CardTitle className="text-xl font-black mt-4 group-hover:text-primary transition-colors">{template.name}</CardTitle>
-                                            <CardDescription className="line-clamp-2 h-10 mt-1">{template.description || "Versatile appraisal form for comprehensive performance reviews."}</CardDescription>
+                                            <CardTitle className="text-base font-bold mt-3 text-foreground line-clamp-1">{template.name}</CardTitle>
+                                            <CardDescription className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                                {template.description || "Question form for staff appraisals."}
+                                            </CardDescription>
                                         </CardHeader>
-                                        <CardContent className="space-y-6 flex-1">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-muted/30 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-colors group-hover:bg-primary/5">
-                                                    <span className="text-2xl font-black text-primary">{template.questions?.length || 0}</span>
-                                                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mt-1">Questions</span>
-                                                </div>
-                                                <div className="bg-muted/30 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-colors group-hover:bg-emerald-500/5">
-                                                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mb-1" />
-                                                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Certified</span>
-                                                </div>
+
+                                        <CardContent className="p-4 sm:p-5 pt-0 space-y-4">
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-slate-100 dark:border-slate-800">
+                                                <span className="font-medium text-foreground">
+                                                    {template.questions?.length || 0} questions
+                                                </span>
+                                                <span>
+                                                    {template.updated_at ? `Updated ${new Date(template.updated_at).toLocaleDateString()}` : 'Ready to use'}
+                                                </span>
                                             </div>
                                             
-                                            <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs font-medium uppercase tracking-widest text-muted-foreground/60">
-                                                <span>Modified</span>
-                                                <span>{new Date(template.updated_at || template.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                        </CardContent>
-                                        
-                                        <div className="p-4 pt-0">
                                             <Button 
                                                 variant="outline" 
-                                                className="w-full rounded-xl border-dashed hover:border-solid hover:bg-blue-600 hover:text-white transition-all duration-300 gap-2"
+                                                size="sm"
+                                                className="w-full rounded-lg text-xs font-semibold border-slate-200 dark:border-slate-800 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 gap-1.5"
                                                 onClick={() => {
                                                     setNewPeriod(p => ({ ...p, template_id: template.id.toString() }));
                                                     setIsCreateOpen(true);
                                                 }}
                                             >
-                                                <Play className="h-3.5 w-3.5 " /> Use to Plan Cycle
+                                                <Calendar className="h-3.5 w-3.5" />
+                                                Use in New Period
                                             </Button>
-                                        </div>
+                                        </CardContent>
                                     </Card>
                                 </motion.div>
                             ))}
                         </AnimatePresence>
 
-                        {templates.length === 0 && (
-                            <div className="col-span-full text-center py-24 bg-muted/10 rounded-[2rem] border-2 border-dashed border-muted/50">
-                                <LayoutGrid className="h-20 w-20 text-muted-foreground mx-auto mb-4 opacity-5" />
-                                <h3 className="text-xl font-bold text-muted-foreground/40">No Blueprints Found</h3>
-                                <p className="text-muted-foreground mt-2">Create your first appraisal blueprint to start standardizing reviews.</p>
-                                <Button className="mt-8 rounded-full px-10" onClick={() => handleOpenTemplateDialog()}>
-                                    Build Blueprint
+                        {templates.length === 0 && !loading && (
+                            <div className="col-span-full text-center py-16 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 mx-auto flex items-center justify-center mb-3">
+                                    <FileText className="h-6 w-6" />
+                                </div>
+                                <h3 className="text-base font-semibold text-foreground">No form templates yet</h3>
+                                <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
+                                    Create a question form to use when starting a review period.
+                                </p>
+                                <Button className="mt-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold" onClick={() => handleOpenTemplateDialog()}>
+                                    <Plus className="h-4 w-4 mr-1.5" />
+                                    Create Template
                                 </Button>
                             </div>
                         )}
@@ -442,315 +537,341 @@ export default function AdminAppraisalManager() {
                 </TabsContent>
             </Tabs>
 
-            {/* Template Creation/Edit Dialog */}
+            {/* Template Creation / Edit Dialog */}
             <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-                <DialogContent className="max-w-3xl max-h-[95vh] rounded-[2rem] overflow-hidden p-0 gap-0 border-none shadow-2xl">
-                    <div className="bg-primary/5 p-8 border-b border-primary/10">
-                        <DialogHeader>
-                            <div className="flex items-center gap-4 mb-2">
-                                <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/30">
-                                    <FileJson className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <DialogTitle className="text-2xl font-black">{activeTemplate ? 'Edit Blueprint' : 'Design Blueprint'}</DialogTitle>
-                                    <DialogDescription>Construct the perfect set of questions for your team feedback.</DialogDescription>
-                                </div>
-                            </div>
-                        </DialogHeader>
-                    </div>
+                <DialogContent className="max-w-2xl max-h-[90vh] rounded-2xl p-0 overflow-hidden flex flex-col">
+                    <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <DialogTitle className="text-lg font-bold text-foreground">
+                            {activeTemplate ? 'Edit Question Form' : 'Create Question Form'}
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            Set a name and add the questions you want employees to answer.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                    <div className="p-8 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 200px)' }}>
-                        <div className="grid gap-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">Blueprint Identity</Label>
-                                    <Input 
-                                        placeholder="e.g. Executive Performance Framework" 
-                                        className="rounded-xl border-2 focus:border-primary transition-all hover:bg-muted/10 h-12"
-                                        value={templateForm.name}
-                                        onChange={(e) => setTemplateForm(p => ({ ...p, name: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">Scope / Context</Label>
-                                    <Input 
-                                        placeholder="Brief context for managers using this" 
-                                        className="rounded-xl border-2 focus:border-primary transition-all hover:bg-muted/10 h-12"
-                                        value={templateForm.description}
-                                        onChange={(e) => setTemplateForm(p => ({ ...p, description: e.target.value }))}
-                                    />
-                                </div>
+                    <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                        <div className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">Form Name</Label>
+                                <Input 
+                                    placeholder="e.g. Quarterly Performance Review" 
+                                    className="rounded-xl h-10"
+                                    value={templateForm.name}
+                                    onChange={(e) => setTemplateForm(p => ({ ...p, name: e.target.value }))}
+                                />
                             </div>
-                            
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-center border-b pb-4 border-border/50">
-                                    <h3 className="text-lg font-black tracking-tight">Question Architecture</h3>
-                                    <Button size="sm" variant="outline" className="rounded-full px-6 bg-primary/5 border-primary/20 text-primary hover:bg-primary transition-all hover:text-white" onClick={handleAddQuestion}>
-                                        <Plus className="h-4 w-4 mr-1.5" /> Append Question
-                                    </Button>
-                                </div>
 
-                                <div className="space-y-4">
-                                    <AnimatePresence>
-                                        {templateForm.questions.map((q, idx) => (
-                                            <motion.div 
-                                                key={q.id}
-                                                layout
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                exit={{ opacity: 0, x: 20 }}
-                                                className="group relative"
-                                            >
-                                                <div className="p-5 border-2 border-border/40 rounded-[1.5rem] bg-muted/5 transition-all focus-within:border-primary/40 focus-within:shadow-lg focus-within:bg-white dark:focus-within:bg-zinc-900 group-hover:border-border group-hover:shadow-md">
-                                                    <div className="flex gap-4 items-start">
-                                                        <div className="mt-8 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-primary transition-colors">
-                                                            <GripVertical className="h-5 w-5" />
-                                                        </div>
-                                                        <div className="flex-1 space-y-4">
-                                                            <div className="grid grid-cols-12 gap-4">
-                                                                <div className="col-span-12 md:col-span-8 space-y-1.5">
-                                                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">Question Text</Label>
-                                                                    <Input 
-                                                                        className="rounded-lg border-muted h-10 transition-all font-medium"
-                                                                        value={q.label}
-                                                                        onChange={(e) => {
-                                                                            const qs = [...templateForm.questions];
-                                                                            qs[idx].label = e.target.value;
-                                                                            setTemplateForm(p => ({ ...p, questions: qs }));
-                                                                        }}
-                                                                        placeholder="e.g. Critical milestones achieved this quarter?"
-                                                                    />
-                                                                </div>
-                                                                <div className="col-span-6 md:col-span-3 space-y-1.5">
-                                                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">Response Mode</Label>
-                                                                    <Select 
-                                                                        value={q.type}
-                                                                        onValueChange={(val) => {
-                                                                            const qs = [...templateForm.questions];
-                                                                            qs[idx].type = val;
-                                                                            setTemplateForm(p => ({ ...p, questions: qs }));
-                                                                        }}
-                                                                    >
-                                                                        <SelectTrigger className="rounded-lg h-10">
-                                                                            <SelectValue />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent className="rounded-xl overflow-hidden shadow-2xl">
-                                                                            <SelectItem value="text">Single Line Text</SelectItem>
-                                                                            <SelectItem value="textarea" className="p-2">Multi-line Essay</SelectItem>
-                                                                            <SelectItem value="number">Numeric Metrics</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                                <div className="col-span-12 md:col-span-3 flex items-center gap-3 mt-6 ml-4">
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        className={`rounded-full px-4 border transition-all ${q.required ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-muted/20 border-border text-muted-foreground'}`}
-                                                                        onClick={() => {
-                                                                            const qs = [...templateForm.questions];
-                                                                            qs[idx].required = !qs[idx].required;
-                                                                            setTemplateForm(p => ({ ...p, questions: qs }));
-                                                                        }}
-                                                                    >
-                                                                        {q.required ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
-                                                                        Required
-                                                                    </Button>
-                                                                </div>
-                                                                <div className="col-span-12 md:col-span-1 flex items-center justify-end mt-6">
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="icon" 
-                                                                        className="text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-full h-10 w-10 transition-all"
-                                                                        onClick={() => {
-                                                                            const qs = templateForm.questions.filter((_, i) => i !== idx);
-                                                                            setTemplateForm(p => ({ ...p, questions: qs }));
-                                                                        }}
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">Description (Optional)</Label>
+                                <Input 
+                                    placeholder="e.g. Standard review questions for team members" 
+                                    className="rounded-xl h-10"
+                                    value={templateForm.description}
+                                    onChange={(e) => setTemplateForm(p => ({ ...p, description: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Questions Editor */}
+                        <div className="space-y-3 pt-2">
+                            <div className="flex justify-between items-center">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                    Questions ({templateForm.questions.length})
+                                </Label>
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="rounded-lg text-xs font-semibold h-8"
+                                    onClick={handleAddQuestion}
+                                >
+                                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Question
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                {templateForm.questions.map((q, idx) => (
+                                    <div 
+                                        key={q.id || idx}
+                                        className="p-3.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 space-y-3"
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-xs font-bold text-muted-foreground mt-2 w-5 text-center">
+                                                {idx + 1}.
+                                            </span>
+                                            <div className="flex-1 space-y-2">
+                                                <Input 
+                                                    className="rounded-lg h-9 text-sm"
+                                                    value={q.label}
+                                                    onChange={(e) => {
+                                                        const qs = [...templateForm.questions];
+                                                        qs[idx].label = e.target.value;
+                                                        setTemplateForm(p => ({ ...p, questions: qs }));
+                                                    }}
+                                                    placeholder="Enter question text here..."
+                                                />
+
+                                                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Label className="text-xs text-muted-foreground font-medium">Answer type:</Label>
+                                                        <Select 
+                                                            value={q.type}
+                                                            onValueChange={(val) => {
+                                                                const qs = [...templateForm.questions];
+                                                                qs[idx].type = val;
+                                                                setTemplateForm(p => ({ ...p, questions: qs }));
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="rounded-lg h-8 text-xs w-36">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent className="rounded-xl">
+                                                                <SelectItem value="textarea">Long text</SelectItem>
+                                                                <SelectItem value="text">Short text</SelectItem>
+                                                                <SelectItem value="number">Number</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`rounded-lg h-8 px-2.5 text-xs font-medium border ${
+                                                                q.required 
+                                                                    ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/40 dark:border-blue-900' 
+                                                                    : 'border-slate-200 dark:border-slate-800 text-muted-foreground'
+                                                            }`}
+                                                            onClick={() => {
+                                                                const qs = [...templateForm.questions];
+                                                                qs[idx].required = !qs[idx].required;
+                                                                setTemplateForm(p => ({ ...p, questions: qs }));
+                                                            }}
+                                                        >
+                                                            {q.required ? <CheckSquare className="h-3.5 w-3.5 mr-1" /> : <Square className="h-3.5 w-3.5 mr-1" />}
+                                                            Required
+                                                        </Button>
+
+                                                        <Button 
+                                                            type="button"
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg h-8 w-8"
+                                                            onClick={() => {
+                                                                const qs = templateForm.questions.filter((_, i) => i !== idx);
+                                                                setTemplateForm(p => ({ ...p, questions: qs }));
+                                                            }}
+                                                            title="Delete Question"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
                                                     </div>
                                                 </div>
-                                            </motion.div>
-                                        ))}
-                                    </AnimatePresence>
-                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-8 border-t border-border bg-muted/10">
-                        <DialogFooter className="gap-3">
-                            <Button variant="ghost" onClick={() => setIsTemplateDialogOpen(false)} className="rounded-full px-8">Discard</Button>
-                            <Button onClick={handleSaveTemplate} className="rounded-full px-10 shadow-xl shadow-primary/20">
-                                <CheckCircle2 className="h-4 w-4 mr-2" />
-                                {activeTemplate ? 'Update Blueprint' : 'Finalize & Save'}
-                            </Button>
-                        </DialogFooter>
-                    </div>
+                    <DialogFooter className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                        <Button variant="ghost" onClick={() => setIsTemplateDialogOpen(false)} className="rounded-xl text-xs font-semibold">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveTemplate} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                            {activeTemplate ? 'Save Changes' : 'Create Form'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Cycle Planning Dialog */}
+            {/* Create Review Period Dialog */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogContent className="rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl max-w-md">
-                    <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-500 p-8 text-white relative overflow-hidden">
-                        <div className="relative z-10">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl font-black">Plan Appraisal Cycle</DialogTitle>
-                                <DialogDescription className="text-primary-foreground/80 mt-1">Initiate a formal review period for the entire organization.</DialogDescription>
-                            </DialogHeader>
-                        </div>
-                        <Calendar className="absolute -bottom-8 -right-8 h-40 w-40 text-white/10 rotate-12" />
-                    </div>
+                <DialogContent className="rounded-2xl max-w-md p-6">
+                    <DialogHeader className="space-y-1">
+                        <DialogTitle className="text-lg font-bold text-foreground">New Review Period</DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            Choose a question form and set dates for this review period.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                    <div className="p-8 space-y-6">
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest px-1">Blueprint Selection</Label>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-foreground">Question Form</Label>
+                            <Select 
+                                value={newPeriod.template_id}
+                                onValueChange={(val) => setNewPeriod(p => ({ ...p, template_id: val }))}
+                            >
+                                <SelectTrigger className="rounded-xl h-10">
+                                    <SelectValue placeholder="Select a question form..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                    {templates.map(t => (
+                                        <SelectItem key={t.id} value={t.id.toString()} className="text-xs font-medium">
+                                            {t.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">Quarter</Label>
                                 <Select 
-                                    value={newPeriod.template_id}
-                                    onValueChange={(val) => setNewPeriod(p => ({ ...p, template_id: val }))}
+                                    defaultValue="Q1" 
+                                    value={newPeriod.quarter}
+                                    onValueChange={(val) => setNewPeriod(p => ({ ...p, quarter: val }))}
                                 >
-                                    <SelectTrigger className="rounded-2xl h-12 border-2 focus:ring-primary">
-                                        <SelectValue placeholder="Choose a blueprint..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-2xl">
-                                        {templates.map(t => (
-                                            <SelectItem key={t.id} value={t.id.toString()} className="rounded-lg">{t.name}</SelectItem>
-                                        ))}
+                                    <SelectTrigger className="rounded-xl h-10"><SelectValue /></SelectTrigger>
+                                    <SelectContent className="rounded-xl">
+                                        <SelectItem value="Q1">Q1 (Jan – Mar)</SelectItem>
+                                        <SelectItem value="Q2">Q2 (Apr – Jun)</SelectItem>
+                                        <SelectItem value="Q3">Q3 (Jul – Sep)</SelectItem>
+                                        <SelectItem value="Q4">Q4 (Oct – Dec)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Quarter</Label>
-                                    <Select 
-                                        defaultValue="Q1" 
-                                        onValueChange={(val) => setNewPeriod(p => ({ ...p, quarter: val }))}
-                                    >
-                                        <SelectTrigger className="rounded-xl h-11 border-2"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="rounded-xl">
-                                            <SelectItem value="Q1">Q1 (Jan-Mar)</SelectItem>
-                                            <SelectItem value="Q2">Q2 (Apr-Jun)</SelectItem>
-                                            <SelectItem value="Q3">Q3 (Jul-Sep)</SelectItem>
-                                            <SelectItem value="Q4">Q4 (Oct-Dec)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Year</Label>
-                                    <Input 
-                                        type="number" 
-                                        className="rounded-xl h-11 border-2"
-                                        value={newPeriod.year} 
-                                        onChange={(e) => setNewPeriod(p => ({ ...p, year: e.target.value }))} 
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Start Trigger</Label>
-                                    <Input 
-                                        type="date" 
-                                        className="rounded-xl h-11 border-2"
-                                        onChange={(e) => setNewPeriod(p => ({ ...p, start_date: e.target.value }))} 
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Official Deadline</Label>
-                                    <Input 
-                                        type="date" 
-                                        className="rounded-xl h-11 border-2"
-                                        onChange={(e) => setNewPeriod(p => ({ ...p, end_date: e.target.value }))} 
-                                    />
-                                </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">Year</Label>
+                                <Input 
+                                    type="number" 
+                                    className="rounded-xl h-10"
+                                    value={newPeriod.year} 
+                                    onChange={(e) => setNewPeriod(p => ({ ...p, year: e.target.value }))} 
+                                />
                             </div>
                         </div>
 
-                        <DialogFooter>
-                            <Button variant="ghost" className="rounded-full px-8" onClick={() => setIsCreateOpen(false)}>Nevermind</Button>
-                            <Button onClick={handleCreatePeriod} className="rounded-full px-10 shadow-xl shadow-primary/30">
-                                Launch Cycle
-                            </Button>
-                        </DialogFooter>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">Start Date</Label>
+                                <Input 
+                                    type="date" 
+                                    className="rounded-xl h-10"
+                                    value={newPeriod.start_date}
+                                    onChange={(e) => setNewPeriod(p => ({ ...p, start_date: e.target.value }))} 
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-foreground">End Date</Label>
+                                <Input 
+                                    type="date" 
+                                    className="rounded-xl h-10"
+                                    value={newPeriod.end_date}
+                                    onChange={(e) => setNewPeriod(p => ({ ...p, end_date: e.target.value }))} 
+                                />
+                            </div>
+                        </div>
                     </div>
+
+                    <DialogFooter className="pt-4 flex justify-end gap-2">
+                        <Button variant="ghost" className="rounded-xl text-xs font-semibold" onClick={() => setIsCreateOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreatePeriod} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">
+                            Create Period
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Preview Dialog */}
+            {/* Template Preview Dialog */}
             <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-                <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-                    <div className="bg-emerald-500 p-6 text-white flex items-center gap-3">
-                        <Eye className="h-6 w-6" />
-                        <h2 className="text-xl font-bold">Blueprint Preview: {activeTemplate?.name}</h2>
-                    </div>
-                    <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto bg-muted/10">
+                <DialogContent className="max-w-xl max-h-[85vh] rounded-2xl p-0 overflow-hidden flex flex-col">
+                    <DialogHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <DialogTitle className="text-base font-bold text-foreground">
+                            Preview: {activeTemplate?.name}
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            This is how the questions will appear to employees.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="p-6 overflow-y-auto space-y-4 flex-1">
                         {activeTemplate?.questions?.map((q, i) => (
-                            <div key={q.id} className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-black">{i + 1}</div>
-                                    <Label className="text-sm font-semibold text-foreground/80">{q.label} {q.required && <span className="text-destructive">*</span>}</Label>
-                                </div>
+                            <div key={q.id || i} className="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                                <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    <span className="text-blue-600 font-bold">{i + 1}.</span>
+                                    {q.label}
+                                    {q.required && <span className="text-red-500">*</span>}
+                                </Label>
                                 {q.type === 'textarea' ? (
-                                    <div className="w-full h-32 rounded-2xl bg-white border border-border shadow-inner" />
+                                    <div className="w-full h-20 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 text-xs text-muted-foreground italic">
+                                        Employee answer (long text)...
+                                    </div>
                                 ) : (
-                                    <div className="w-full h-11 rounded-xl bg-white border border-border shadow-inner" />
+                                    <div className="w-full h-9 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 flex items-center text-xs text-muted-foreground italic">
+                                        Employee answer ({q.type === 'number' ? 'number' : 'short text'})...
+                                    </div>
                                 )}
                             </div>
                         ))}
                     </div>
-                    <div className="p-4 bg-white border-t flex justify-end">
-                        <Button className="rounded-full px-8" onClick={() => setIsPreviewOpen(false)}>Done</Button>
-                    </div>
+
+                    <DialogFooter className="p-4 border-t border-slate-100 dark:border-slate-800">
+                        <Button className="rounded-xl text-xs font-semibold" onClick={() => setIsPreviewOpen(false)}>
+                            Close
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Period Deletion Dialog */}
+            {/* Simple Delete Review Period Dialog */}
             <AlertDialog open={!!deletingPeriodId} onOpenChange={() => setDeletingPeriodId(null)}>
-                <AlertDialogContent className="rounded-[2.5rem] p-8">
+                <AlertDialogContent className="rounded-2xl p-6 max-w-md">
                     <AlertDialogHeader>
-                        <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 mx-auto">
-                            <AlertCircle className="h-8 w-8" />
+                        <div className="w-12 h-12 bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-2 mx-auto">
+                            <Trash2 className="h-6 w-6" />
                         </div>
-                        <AlertDialogTitle className="text-2xl font-black text-center">Terminate Cycle?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-lg mt-2">
-                            This will permanently delete the appraisal period and all associated user submissions. 
-                            <span className="block font-black text-destructive mt-2">This action is irreversible.</span>
+                        <AlertDialogTitle className="text-lg font-bold text-center text-foreground">
+                            Delete Review Period?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-xs text-muted-foreground mt-2 leading-relaxed">
+                            Are you sure you want to delete this appraisal period? All employee answers submitted for this period will also be deleted. This cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <div className="flex gap-4 mt-8">
-                        <AlertDialogCancel className="flex-1 rounded-full h-12">Keep it</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeletePeriod} className="flex-1 rounded-full h-12 bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20">
-                            Delete Permanently
+                    <AlertDialogFooter className="mt-5 flex gap-2">
+                        <AlertDialogCancel className="rounded-xl text-xs font-semibold flex-1">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleDeletePeriod} 
+                            className="rounded-xl text-xs font-semibold flex-1 bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Period
                         </AlertDialogAction>
-                    </div>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Template Deletion Dialog */}
+            {/* Simple Delete Form Template Dialog */}
             <AlertDialog open={isDeleteTemplateOpen} onOpenChange={setIsDeleteTemplateOpen}>
-                <AlertDialogContent className="rounded-[2.5rem] p-8">
+                <AlertDialogContent className="rounded-2xl p-6 max-w-md">
                     <AlertDialogHeader>
-                        <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4 mx-auto">
-                            <Trash2 className="h-8 w-8" />
+                        <div className="w-12 h-12 bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-2 mx-auto">
+                            <Trash2 className="h-6 w-6" />
                         </div>
-                        <AlertDialogTitle className="text-2xl font-black text-center">Delete Blueprint?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-lg mt-2">
-                            Are you sure you want to remove <span className="font-bold text-foreground">"{activeTemplate?.name}"</span>? 
-                            This cannot be undone and may fail if the blueprint is active in a cycle.
+                        <AlertDialogTitle className="text-lg font-bold text-center text-foreground">
+                            Delete Question Form?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-xs text-muted-foreground mt-2 leading-relaxed">
+                            Are you sure you want to delete <strong className="text-foreground">"{activeTemplate?.name}"</strong>? Any questions saved in this form will be removed.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <div className="flex gap-4 mt-8">
-                        <AlertDialogCancel className="flex-1 rounded-full h-12">Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteTemplate} className="flex-1 rounded-full h-12 bg-destructive hover:bg-destructive/90">
-                            Confirm Deletion
+                    <AlertDialogFooter className="mt-5 flex gap-2">
+                        <AlertDialogCancel className="rounded-xl text-xs font-semibold flex-1">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleDeleteTemplate} 
+                            className="rounded-xl text-xs font-semibold flex-1 bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Form
                         </AlertDialogAction>
-                    </div>
+                    </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
         </div>
