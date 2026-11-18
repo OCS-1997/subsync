@@ -123,4 +123,39 @@ export const RELEASE_GUIDES = [
     ],
     autoShow: true,
   },
+
+  {
+    id: '2.5.0-appraisals-revamp',
+    version: '2.5.0',
+    title: "What's New in 2.5.0",
+    description: 'Performance Appraisals revamp, clean everyday language, standard page navigation, and simplified workflows.',
+    steps: [
+      {
+        id: 'step-appraisals-overview',
+        title: '📈 Revamped Appraisals & Overview Stats',
+        body: 'A redesigned performance appraisal hub with live overview cards for active periods, closed periods, and form templates.',
+      },
+      {
+        id: 'step-simple-language',
+        title: '✨ Plain, Everyday Language',
+        body: 'Replaced heavy corporate jargon with simple, natural language across all question forms, review periods, and employee questionnaires.',
+      },
+      {
+        id: 'step-page-header-breadcrumbs',
+        title: '🧭 Standard Page Headers & Breadcrumbs',
+        body: 'Integrated standard PageHeader navigation with breadcrumb trails and quick actions consistent with other core pages.',
+      },
+      {
+        id: 'step-form-builder',
+        title: '📝 Simplified Question Form Builder',
+        body: 'Customize review questions, pick answer types (short text, long text, number), preview employee forms, and duplicate templates in one click.',
+      },
+      {
+        id: 'step-clear-dialogs',
+        title: '🗑️ Clear & Simple Delete Dialogs',
+        body: 'Transparent confirmation dialogs for deleting periods, form templates, and submissions without confusing technical jargon.',
+      },
+    ],
+    autoShow: true,
+  },
 ];

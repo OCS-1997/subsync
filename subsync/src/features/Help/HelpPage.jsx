@@ -458,18 +458,18 @@ export default function HelpPage() {
                             </div>
                             <CardContent className="p-8 space-y-6">
                                 <div className="flex items-center gap-4">
-                                    <Badge className="bg-emerald-600 text-white border-none py-1.5 px-4 font-black">v2.4.0</Badge>
-                                    <span className="text-sm font-bold text-slate-500 italic">August 17, 2026</span>
+                                    <Badge className="bg-emerald-600 text-white border-none py-1.5 px-4 font-black">v2.5.0</Badge>
+                                    <span className="text-sm font-bold text-slate-500 italic">November 18, 2026</span>
                                 </div>
                                 <div className="space-y-4">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Tasks Module, Leaves, Goals & Celebrations</h3>
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Performance Appraisals Revamp & Simplified Experience</h3>
                                     <ul className="space-y-3">
                                         {[
-                                            "Interactive Tasks & Kanban Board module with sub-tasks, permission rules, and analytics.",
-                                            "Comprehensive Leave & Self-Service Management for request submissions, balance tracking, and approvals.",
-                                            "Goals & Milestone tracking system with visual progress indicators and master configuration.",
-                                            "Interactive Birthday Celebrations experience and personalized employee birthday preferences.",
-                                            "Real-time BOP Webhook sync, BullMQ queue processing, and Service Credit tracking."
+                                            "Revamped Performance Appraisals hub with real-time stats overview and period tracking.",
+                                            "Eliminated complex corporate jargon in favor of plain, everyday language across all screens.",
+                                            "Integrated standard PageHeader component with breadcrumbs and quick actions for seamless navigation.",
+                                            "Simplified Question Form builder with customizable questions, answer types, and instant preview.",
+                                            "User-friendly confirmation dialogs with clear, transparent deletion options."
                                         ].map((item, i) => (
                                             <li key={i} className="flex items-start gap-3 text-[0.95rem] text-slate-600 dark:text-slate-400">
                                                 <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
@@ -564,7 +564,7 @@ export default function HelpPage() {
                     <div className="flex flex-col items-center gap-2 pt-4">
                         <Badge className="bg-emerald-500/10 text-emerald-500 border-none px-4 py-1 text-[10px] items-center gap-1.5 font-bold">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Stable Build 2.4.0
+                            Stable Build 2.5.0
                         </Badge>
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">&copy; 2026 OCS Platform</span>
                     </div>
