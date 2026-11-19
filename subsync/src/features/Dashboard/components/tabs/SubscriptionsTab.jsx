@@ -52,7 +52,6 @@ const FILTER_OPTIONS = [
     { id: 'next_month', label: `Next Month (${nextShort})`, icon: Calendar },
     { id: 'expiring', label: 'Expiring Soon', icon: Clock },
     { id: 'renewed', label: 'Renewed', icon: RefreshCw },
-    { id: 'expired', label: 'Expired', icon: XCircle },
     { id: 'custom', label: 'Custom', icon: Calendar },
 ];
 
@@ -217,8 +216,11 @@ function SubscriptionsTab({ visibleWidgets }) {
         return `₹${value}`;
     };
 
-    // Filter subscriptions based on search query
+    // Filter subscriptions based on search query (excluding expired ones)
     const filteredSubscriptions = renewals.filter(sub => {
+        if (sub.days_left < 0 || sub.renewal_status === 'expired' || sub.status === 'expired') {
+            return false;
+        }
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
@@ -344,8 +346,8 @@ function SubscriptionsTab({ visibleWidgets }) {
             {/* Subscriptions List with Filters - FULL WIDTH */}
             <BentoCard
                 size="full"
-                icon={AlertTriangle}
-                title="Expiring & Expired Subscriptions"
+                icon={Clock}
+                title="Expiring Subscriptions"
                 action={
                     <Button
                         variant="ghost"

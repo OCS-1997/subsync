@@ -10,7 +10,13 @@ import {
   Sparkles, 
   Sun, 
   Moon, 
-  ArrowRight 
+  ArrowRight,
+  RefreshCw,
+  TrendingUp,
+  ShieldCheck,
+  CheckCircle2,
+  Zap,
+  BarChart3
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { toast } from '@/utils/toast';
@@ -118,12 +124,14 @@ function LoginPage() {
 
         {/* Content Container - Clean & Centered */}
         <div className="relative z-10 w-full max-w-lg text-center flex flex-col items-center justify-center">
-          {/* OCS Logo */}
-          <img
-            src="/logo.png"
-            alt="OCS Logo"
-            className="h-12 xl:h-14 w-auto mb-8 drop-shadow-md brightness-105 object-contain"
-          />
+          {/* OCS Logo with crisp white background badge */}
+          <div className="mb-8 p-3 sm:p-3.5 px-6 sm:px-7 rounded-2xl bg-white shadow-xl shadow-blue-950/20 border border-white/80 inline-flex items-center justify-center transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+            <img
+              src="/logo.png"
+              alt="OCS Logo"
+              className="h-9 sm:h-11 w-auto object-contain"
+            />
+          </div>
 
           {festival ? (
             <>
@@ -164,17 +172,50 @@ function LoginPage() {
               )}
             </>
           ) : (
-            <>
-              {/* Business Operations Platform Headline */}
-              <h1 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-4 tracking-tight">
-                Business Operations Platform
+            <div className="w-full flex flex-col items-center">
+              {/* Minimalist Live Pill */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[11px] font-bold text-white tracking-widest uppercase">
+                  Business Operations Platform
+                </span>
+              </div>
+
+              {/* Aesthetic Headline */}
+              <h1 className="text-3xl xl:text-4xl 2xl:text-5xl font-black text-white leading-[1.18] mb-4 tracking-tight drop-shadow-sm">
+                Empowering Business,<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-sky-100 to-white">
+                  Simplifying Operations.
+                </span>
               </h1>
 
-              {/* Description */}
-              <p className="text-base xl:text-lg text-blue-100/90 leading-relaxed max-w-md font-normal">
-                Centralized business operations, pipeline management, client tracking, and internal team workflows.
+              {/* Refined Description */}
+              <p className="text-sm xl:text-base text-blue-100/80 leading-relaxed max-w-sm font-normal mb-8">
+                Centralized subscription lifecycle, CRM pipeline, and internal team workflows in one intuitive workspace.
               </p>
-            </>
+
+              {/* Aesthetic Feature Badges */}
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
+                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                  <RefreshCw className="w-3.5 h-3.5 text-blue-200" />
+                  Subscriptions
+                </span>
+                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                  <TrendingUp className="w-3.5 h-3.5 text-indigo-200" />
+                  CRM Pipeline
+                </span>
+                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  Enterprise Security
+                </span>
+              </div>
+
+              {/* Minimal Brand Tag */}
+              <div className="mt-10 flex items-center gap-2 text-[11px] text-blue-200/70 font-medium tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-300/60" />
+                <span>SubSync Enterprise Suite • Online Consultancy Services</span>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -184,8 +225,10 @@ function LoginPage() {
         {/* Top Bar with Theme Toggle */}
         <div className="flex justify-between items-center w-full max-w-md mx-auto">
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-2">
-            <img src="/logo.png" alt="Subsync Logo" className="h-8 w-auto dark:brightness-110" />
+          <div className="lg:hidden flex items-center gap-2.5">
+            <div className="p-1.5 px-3 rounded-xl bg-white shadow-xs border border-slate-200/80 dark:border-slate-700">
+              <img src="/logo.png" alt="Subsync Logo" className="h-6 w-auto object-contain" />
+            </div>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Internal</span>
           </div>
           <div className="hidden lg:block" />

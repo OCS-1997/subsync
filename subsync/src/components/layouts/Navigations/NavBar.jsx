@@ -1,12 +1,13 @@
-import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock, LayoutDashboard, Users as UsersIcon, Palette } from "lucide-react";
+import { HelpCircle, User, Settings, LogOut, X, UserCog, ReceiptIndianRupeeIcon, UserRound, FileText, Shield, Calculator, Bell, Mail, Link2, Search, Database, Clock, LayoutDashboard, Users as UsersIcon, Palette, Globe, ShieldCheck } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button.jsx";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.jsx";
+import { toast } from "@/utils/toast";
 
-import { logoutUser } from "@/features/Auth/authSlice";
+import { logoutUser, logout } from "@/features/Auth/authSlice";
 import { usePermissions } from "@/context/PermissionsContext.jsx";
 import { PERMISSIONS } from "@/constants/permissions.js";
 import QuickToolsWidget from "@/features/QuickTools/components/QuickToolsWidget.jsx";
@@ -78,14 +79,35 @@ function NavBar({ toggleSidebar }) {
     };
   }, [toggleSidebar, navigate, user?.username]);
 
-  const handleLogout = async () => {
+  const performLogout = async () => {
+    const loadingId = toast.loading("Logging out...");
     try {
       await dispatch(logoutUser()).unwrap();
     } catch (error) {
-      console.warn('Logout logging failed, proceeding with logout:', error);
+      console.warn('Logout logging failed, proceeding with local logout:', error);
     } finally {
+      dispatch(logout());
+      toast.dismiss(loadingId);
+      toast.success("Logged out successfully");
       navigate('/');
     }
+  };
+
+  const promptLogout = () => {
+    setOpen(false);
+    toast.confirm("Log Out of SubSync?", {
+      description: "Are you sure you want to end your active session?",
+      button: {
+        title: "Yes, Log Out",
+        onClick: performLogout,
+      },
+      secondaryButton: {
+        title: "Cancel",
+        onClick: () => {
+          // Toast closes automatically
+        },
+      },
+    });
   };
 
   const handleCalculatorToggle = () => {
@@ -190,6 +212,7 @@ function NavBar({ toggleSidebar }) {
             </Button>
           </div>
 
+          {/* User Popover Profile Card */}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <div>
@@ -197,60 +220,91 @@ function NavBar({ toggleSidebar }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0"
-                    title="User Menu"
+                    className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border border-border hover:bg-accent transition-colors shrink-0 cursor-pointer"
+                    title="User Account Menu"
                   >
                     <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </BirthdayBadge>
               </div>
             </PopoverTrigger>
-            <PopoverContent className="w-64" align="end">
-              {/* IP Address */}
-              {loginIp && (
-                <div className="px-2 py-2 mb-2 border-b border-border">
-                  <div className="text-xs font-medium text-foreground">IP: {formatIp(loginIp)}</div>
+            <PopoverContent className="w-72 p-3 rounded-2xl shadow-xl border-border bg-popover" align="end">
+              {/* User Header Profile Card */}
+              <div className="p-3 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-slate-500/10 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 rounded-xl border border-blue-500/15 dark:border-blue-900/30 mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                    {(user?.name || user?.display_name || user?.username || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-foreground truncate">
+                      {user?.name || user?.display_name || user?.username}
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground font-medium truncate">
+                      @{user?.username}
+                    </p>
+                  </div>
                 </div>
-              )}
 
-              {/* Profile Link */}
-              <Link
-                to={`/${user?.username}/dashboard/settings/profile`}
-                className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
-                onClick={() => setOpen(false)}
-              >
-                <UserRound className="mr-2 h-4 w-4" />
-                Profile
-              </Link>
+                <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between text-[10px]">
+                  <span className="font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    {user?.role || 'Staff'}
+                  </span>
+                  {loginIp && (
+                    <span className="font-mono text-muted-foreground flex items-center gap-1">
+                      <Globe className="w-3 h-3 text-muted-foreground/70" />
+                      IP: {formatIp(loginIp)}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              {/* Navigation Items */}
-              {navItems.map((item) => (
-                item.key === "logout" ? (
-                  <button
-                    key={item.key}
-                    className="flex items-center w-full px-2 py-2 text-sm text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 hover:border hover:translate-x-2 transition-all duration-200 ease-in-out hover:border-destructive rounded-md"
-                    onClick={() => {
-                      setOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.title}
-                  </button>
-                ) : (
-                  <Link
-                    key={item.key}
-                    to={`/${user?.username}/dashboard/${item.path}`}
-                    className="flex items-center px-2 py-2 text-sm text-foreground hover:bg-accent rounded-md"
-                    onClick={() => setOpen(false)}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.title}
-                  </Link>
-                )
-              ))}
+              {/* Navigation Links */}
+              <div className="space-y-1 py-1">
+                <Link
+                  to={`/${user?.username}/dashboard/settings/profile`}
+                  className="flex items-center px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent rounded-lg transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  <UserRound className="mr-2.5 h-4 w-4 text-blue-500" />
+                  My Profile & Settings
+                </Link>
+
+                <Link
+                  to={`/${user?.username}/dashboard/help`}
+                  className="flex items-center px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent rounded-lg transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  <HelpCircle className="mr-2.5 h-4 w-4 text-slate-400" />
+                  Help & Documentation
+                </Link>
+              </div>
+
+              {/* Quick Sign Out inside Popover */}
+              <div className="pt-2 mt-1 border-t border-border">
+                <button
+                  className="group flex items-center justify-center gap-2 w-full py-2.5 px-3 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white rounded-xl border border-rose-200/60 dark:border-rose-900/40 transition-all duration-300 ease-out cursor-pointer active:scale-95 shadow-2xs"
+                  onClick={promptLogout}
+                >
+                  <LogOut className="h-4 w-4 text-rose-500 group-hover:text-white transition-all duration-300 ease-out transform group-hover:translate-x-1.5 group-hover:scale-110 group-hover:-rotate-6" />
+                  <span>Log Out</span>
+                </button>
+              </div>
             </PopoverContent>
           </Popover>
+
+          {/* External Logout Button - Kept at the Very Top Right Corner */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="group relative flex items-center gap-2 h-9 px-2.5 sm:px-3.5 rounded-xl border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white font-bold text-xs transition-all duration-300 ease-out active:scale-95 shadow-2xs hover:shadow-md hover:shadow-rose-500/20 shrink-0 cursor-pointer overflow-hidden ml-1"
+            onClick={promptLogout}
+            title="Log Out of your account"
+          >
+            <span className="relative flex items-center justify-center">
+              <LogOut className="h-4 w-4 text-rose-500 group-hover:text-white transition-all duration-300 ease-out transform group-hover:translate-x-1 group-hover:scale-110 group-hover:-rotate-6" />
+            </span>
+            
+          </Button>
         </div>
       </div>
 

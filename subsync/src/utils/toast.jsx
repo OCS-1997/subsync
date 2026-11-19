@@ -110,6 +110,16 @@ function formatToastOptions(msgOrOpts, maybeOpts) {
     };
   }
 
+  // Support secondary button shortcuts
+  if (rawOpts.cancelAction && typeof rawOpts.cancelAction === 'object') {
+    rawOpts.secondaryButton = rawOpts.cancelAction;
+  } else if (rawOpts.cancelText && typeof rawOpts.onCancel === 'function') {
+    rawOpts.secondaryButton = {
+      title: rawOpts.cancelText,
+      onClick: rawOpts.onCancel,
+    };
+  }
+
   return rawOpts;
 }
 
@@ -118,6 +128,13 @@ function formatToastOptions(msgOrOpts, maybeOpts) {
  */
 export const toast = function(msgOrOpts, maybeOpts) {
   return dynaura.info(formatToastOptions(msgOrOpts, maybeOpts));
+};
+
+toast.confirm = (msgOrOpts, maybeOpts) => {
+  const opts = formatToastOptions(msgOrOpts, maybeOpts);
+  opts.duration = null;
+  opts.autoClose = false;
+  return dynaura.warning(opts);
 };
 
 toast.success = (msgOrOpts, maybeOpts) => {
