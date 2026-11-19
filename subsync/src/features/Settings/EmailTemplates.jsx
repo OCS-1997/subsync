@@ -10,12 +10,21 @@ import { PERMISSIONS } from "@/constants/permissions.js";
 import { cn } from "@/lib/utils";
 import {
   Loader2, Mail, Plus, Trash2, Save, X, Eye, Search,
-  AlertCircle, FileCode, Type, Code, MousePointerClick, Copy, GripVertical
+  AlertCircle, FileCode, Type, Code, MousePointerClick, Copy, GripVertical,
+  ChevronDown, Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
 import { Checkbox } from "@/components/ui/checkbox.jsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.jsx";
 
 const EmailTemplates = () => {
   const [templates, setTemplates] = useState([]);
@@ -35,60 +44,122 @@ const EmailTemplates = () => {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [activeTarget, setActiveTarget] = useState('subject'); // 'subject' | 'body'
 
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_CREATE);
   const canUpdate = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_UPDATE);
   const canDelete = hasPermission(PERMISSIONS.EMAIL_TEMPLATES_DELETE);
 
+  const subjectInputRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Available template variables with descriptions
+  // Available template variables with descriptions and subject-friendliness
   const AVAILABLE_VARIABLES = [
-    { key: 'customer_name', description: 'Customer full name' },
-    { key: 'subscription_id', description: 'Subscription ID (e.g., SUB123456)' },
-    { key: 'domain_name', description: 'Domain/service name' },
-    { key: 'days_left', description: 'Days until expiry (or negative if expired)' },
-    { key: 'start_date', description: 'Subscription start date' },
-    { key: 'end_date', description: 'Subscription end/expiry date' },
-    { key: 'total', description: 'Total subscription amount' },
-    { key: 'currency', description: 'Currency symbol (₹, $, etc.)' },
-    { key: 'items_table_html', description: 'HTML table of subscription services/items' },
-    { key: 'renewal_link', description: 'Link for customer to renew subscription' },
-    { key: 'current_year', description: 'Current year (for copyright)' },
-    { key: 'company_name', description: 'Your company name' },
-    { key: 'support_email', description: 'Support email address' },
+    { key: 'domain_name', label: 'Domain Name', description: 'Domain or service name (e.g., example.com)', subjectPopular: true },
+    { key: 'customer_name', label: 'Customer Name', description: 'Customer full name', subjectPopular: true },
+    { key: 'subscription_id', label: 'Subscription ID', description: 'Subscription ID (e.g., SUB123456)', subjectPopular: true },
+    { key: 'days_left', label: 'Days Left', description: 'Days until expiry (or negative if expired)', subjectPopular: true },
+    { key: 'end_date', label: 'Expiry Date', description: 'Subscription end/expiry date', subjectPopular: true },
+    { key: 'start_date', label: 'Start Date', description: 'Subscription start date' },
+    { key: 'total', label: 'Total Amount', description: 'Total subscription amount', subjectPopular: true },
+    { key: 'currency', label: 'Currency', description: 'Currency symbol (₹, $, etc.)' },
+    { key: 'company_name', label: 'Company Name', description: 'Your company name', subjectPopular: true },
+    { key: 'support_email', label: 'Support Email', description: 'Support email address' },
+    { key: 'renewal_link', label: 'Renewal Link', description: 'Link for customer to renew subscription' },
+    { key: 'current_year', label: 'Current Year', description: 'Current year (for copyright)' },
+    { key: 'items_table_html', label: 'Invoice Table', description: 'HTML table of subscription services/items' },
   ];
 
-  // Insert variable at cursor position in textarea
-  const insertVariable = (varKey) => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      // Fallback: append to end
-      setTemplateForm(prev => ({
-        ...prev,
-        body_html: prev.body_html + `{{${varKey}}}`
-      }));
-      toast.success(`Inserted {{${varKey}}}`);
-      return;
+  // Helper to render live subject preview with realistic mock data
+  const renderSubjectPreview = (subject) => {
+    if (!subject || !subject.trim()) return "Enter a subject line to preview";
+    const sampleMap = {
+      domain_name: 'example.com',
+      domain: 'example.com',
+      customer_name: 'John Doe',
+      client_name: 'John Doe',
+      name: 'John Doe',
+      subscription_id: 'SUB001',
+      sub_id: 'SUB001',
+      days_left: '30',
+      days_remaining: '30',
+      days: '30',
+      end_date: '31/12/2026',
+      expiry_date: '31/12/2026',
+      due_date: '31/12/2026',
+      start_date: '01/01/2026',
+      company_name: 'Online Consultancy Services',
+      company: 'Online Consultancy Services',
+      currency: '₹',
+      total: '1,180.00',
+      amount: '1,180.00',
+      support_email: 'support@subsync.example.com',
+      current_year: new Date().getFullYear(),
+    };
+    return subject.replace(/\{\{?\s*([a-zA-Z0-9_]+)\s*\}\}?/g, (match, key) => {
+      return sampleMap[key] !== undefined ? sampleMap[key] : match;
+    });
+  };
+
+  // Insert variable into either subject or body at cursor position
+  const insertVariable = (varKey, explicitTarget = null) => {
+    const target = explicitTarget || activeTarget || 'subject';
+    const tag = `{{${varKey}}}`;
+
+    if (target === 'subject') {
+      const input = subjectInputRef.current;
+      if (!input) {
+        setTemplateForm(prev => ({
+          ...prev,
+          subject: (prev.subject ? prev.subject + ' ' : '') + tag
+        }));
+        toast.success(`Inserted ${tag} into Subject`);
+        return;
+      }
+
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const text = templateForm.subject || '';
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      const newText = before + tag + after;
+
+      setTemplateForm(prev => ({ ...prev, subject: newText }));
+      toast.success(`Inserted ${tag} into Subject`);
+
+      setTimeout(() => {
+        input.focus();
+        const newPos = start + tag.length;
+        input.setSelectionRange(newPos, newPos);
+      }, 0);
+    } else {
+      const textarea = textareaRef.current;
+      if (!textarea) {
+        setTemplateForm(prev => ({
+          ...prev,
+          body_html: (prev.body_html || '') + tag
+        }));
+        toast.success(`Inserted ${tag} into Body`);
+        return;
+      }
+
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      const text = templateForm.body_html || '';
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      const newText = before + tag + after;
+
+      setTemplateForm(prev => ({ ...prev, body_html: newText }));
+      toast.success(`Inserted ${tag} into Body`);
+
+      setTimeout(() => {
+        textarea.focus();
+        const newPos = start + tag.length;
+        textarea.setSelectionRange(newPos, newPos);
+      }, 0);
     }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = templateForm.body_html;
-    const before = text.substring(0, start);
-    const after = text.substring(end);
-    const newText = before + `{{${varKey}}}` + after;
-
-    setTemplateForm(prev => ({ ...prev, body_html: newText }));
-    toast.success(`Inserted {{${varKey}}}`);
-
-    // Restore cursor position after the inserted variable
-    setTimeout(() => {
-      textarea.focus();
-      const newPos = start + varKey.length + 4; // {{ + varKey + }}
-      textarea.setSelectionRange(newPos, newPos);
-    }, 0);
   };
 
   // Copy all variables formatted for AI prompt
@@ -205,28 +276,29 @@ const EmailTemplates = () => {
   };
 
   const handlePreview = async () => {
-    if (!templateForm.id) {
-      // Mock preview for unsaved or new templates if needed, or just warn
-      if (!templateForm.body_html) {
-        toast.error("Please add content to preview");
-        return;
-      }
-      setPreviewData({
-        subject: templateForm.subject || "No Subject",
-        html: templateForm.body_html
-      });
-      setShowPreviewDialog(true);
-      return;
-    }
-
     setPreviewLoading(true);
+    setShowPreviewDialog(true);
     try {
-      const response = await api.post(`/email-templates/${templateForm.id}/preview`, {});
+      const endpoint = (templateForm.id && templateForm.id !== 'new')
+        ? `/email-templates/${templateForm.id}/preview`
+        : `/email-templates/preview`;
+      const response = await api.post(endpoint, {
+        subject: templateForm.subject,
+        body_html: templateForm.body_html,
+        template_key: templateForm.template_key
+      });
       setPreviewData(response.data);
-      setShowPreviewDialog(true);
     } catch (error) {
-      toast.error("Failed to preview template");
-      console.error(error);
+      console.error("Preview error:", error);
+      setPreviewData({
+        subject: renderSubjectPreview(templateForm.subject) || "No Subject",
+        html: templateForm.body_html || "<p style='color: #888; font-style: italic;'>No content to preview</p>",
+        context: {
+          customer_name: 'John Doe',
+          customer_email: 'customer@example.com',
+          domain_name: 'example.com',
+        }
+      });
     } finally {
       setPreviewLoading(false);
     }
@@ -431,21 +503,128 @@ const EmailTemplates = () => {
                   </div>
                 </section>
 
-                {/* Content Section */}
-                <section className="space-y-8 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm">
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      <Mail className="w-3 h-3" />
-                      Subject Line
-                    </Label>
+                {/* Subject Line Section */}
+                <section className="space-y-4 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <Label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <Mail className="w-3.5 h-3.5 text-blue-500" />
+                        Subject Line
+                      </Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Use variables like <code className="text-blue-600 dark:text-blue-400 font-mono font-bold">{"{{domain_name}}"}</code> to dynamically personalize the email subject.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-3.5 rounded-xl border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[10px] uppercase tracking-wider hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all flex items-center gap-1.5 shadow-sm"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            Insert Variable
+                            <ChevronDown className="w-3 h-3 opacity-60" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-72 max-h-80 overflow-y-auto rounded-xl p-1.5">
+                          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-400 px-2 py-1">
+                            Click to insert into Subject
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {AVAILABLE_VARIABLES.filter(v => v.key !== 'items_table_html').map((v) => (
+                            <DropdownMenuItem
+                              key={v.key}
+                              onClick={() => insertVariable(v.key, 'subject')}
+                              className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                            >
+                              <div className="flex flex-col pr-2">
+                                <span className="font-bold text-xs text-slate-800 dark:text-slate-200">{v.label}</span>
+                                <span className="text-[10px] text-slate-400 line-clamp-1">{v.description}</span>
+                              </div>
+                              <Badge variant="secondary" className="font-mono text-[9px] shrink-0 bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                {`{{${v.key}}}`}
+                              </Badge>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="relative group">
                     <Input
+                      ref={subjectInputRef}
                       value={templateForm.subject}
+                      onFocus={() => setActiveTarget('subject')}
                       onChange={(e) => setTemplateForm({ ...templateForm, subject: e.target.value })}
-                      placeholder="Enter a compelling subject..."
-                      className="h-16 bg-slate-50 dark:bg-slate-950 border-transparent rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/10 text-lg font-medium transition-all"
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const data = e.dataTransfer.getData("text/plain");
+                        if (!data) return;
+                        const input = subjectInputRef.current;
+                        const start = input?.selectionStart ?? (templateForm.subject || '').length;
+                        const end = input?.selectionEnd ?? (templateForm.subject || '').length;
+                        const text = templateForm.subject || '';
+                        const newText = text.substring(0, start) + data + text.substring(end);
+                        setTemplateForm(prev => ({ ...prev, subject: newText }));
+                        toast.success(`Inserted ${data} into subject`);
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      placeholder="e.g. Action Required: Renewal for {{domain_name}} - {{days_left}} days remaining"
+                      className="h-16 bg-slate-50 dark:bg-slate-950 border-gray-100 dark:border-slate-800 rounded-2xl focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-blue-500/10 text-base md:text-lg font-medium transition-all shadow-sm"
                     />
                   </div>
 
+                  {/* Quick-Add Subject Variable Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      Quick Add to Subject:
+                    </span>
+                    {AVAILABLE_VARIABLES.filter(v => v.subjectPopular).map(v => (
+                      <button
+                        key={v.key}
+                        type="button"
+                        draggable="true"
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", `{{${v.key}}}`);
+                        }}
+                        onClick={() => insertVariable(v.key, 'subject')}
+                        title={`${v.description} (Drag or click to insert)`}
+                        className="group flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200/70 dark:border-slate-700/70 hover:border-blue-300 dark:hover:border-blue-700 px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer active:scale-95 shadow-2xs"
+                      >
+                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                          +{v.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {`{{${v.key}}}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Real-time Live Subject Preview */}
+                  <div className="mt-3 p-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 dark:from-slate-800/70 dark:via-slate-850 dark:to-slate-900 rounded-2xl border border-blue-100 dark:border-slate-800 text-xs">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                        <Eye className="w-3 h-3" />
+                        Live Subject Preview
+                      </span>
+                      <Badge variant="outline" className="text-[9px] px-2 py-0 border-blue-200 dark:border-slate-700 text-slate-500 font-semibold bg-white/50 dark:bg-slate-900/50">
+                        Sample: example.com
+                      </Badge>
+                    </div>
+                    <div className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">
+                      {renderSubjectPreview(templateForm.subject)}
+                    </div>
+                  </div>
+                </section>
+
+                {/* Content Section */}
+                <section className="space-y-8 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-slate-800 shadow-sm">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -480,10 +659,11 @@ const EmailTemplates = () => {
                       <Textarea
                         ref={textareaRef}
                         value={templateForm.body_html}
+                        onFocus={() => setActiveTarget('body')}
                         onChange={(e) => setTemplateForm({ ...templateForm, body_html: e.target.value })}
                         className="min-h-[500px] font-mono text-sm bg-slate-900 text-slate-300 dark:bg-slate-950/50 dark:text-slate-300 rounded-3xl p-6 border-none focus:ring-0 leading-relaxed resize-y"
                         style={{ fontFamily: '"JetBrains Mono", "Fira Code", monospace' }}
-                        placeholder="<html>&#10;  <body>&#10;    <h1>Hello {{customer_name}}!</h1>&#10;  </body>&#10;</html>"
+                        placeholder="<html>&#10;  <body>&#10;    <h1>Hello {{customer_name}}!</h1>&#10;    <p>Domain: {{domain_name}}</p>&#10;  </body>&#10;</html>"
                       />
                       <div className="absolute top-4 right-6">
                         <Badge variant="outline" className="bg-white/10 text-white/50 border-white/10 text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
@@ -492,42 +672,85 @@ const EmailTemplates = () => {
                       </div>
                     </div>
 
+                    {/* Template Variables Palette */}
                     <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                          <MousePointerClick className="w-3 h-3" />
-                          Click to Insert Variables
-                        </h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                            <MousePointerClick className="w-3.5 h-3.5" />
+                            Insert Variables
+                          </h4>
+                          <div className="flex items-center bg-white dark:bg-slate-900 rounded-xl p-0.5 border border-blue-200 dark:border-blue-800 text-[10px] font-bold shadow-2xs">
+                            <span className="text-slate-400 px-2 uppercase tracking-wider text-[9px]">Target:</span>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTarget('subject')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all uppercase tracking-wider text-[9px]",
+                                activeTarget === 'subject'
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-slate-600 dark:text-slate-300 hover:text-blue-600"
+                              )}
+                            >
+                              Subject Line
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActiveTarget('body')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all uppercase tracking-wider text-[9px]",
+                                activeTarget === 'body'
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-slate-600 dark:text-slate-300 hover:text-blue-600"
+                              )}
+                            >
+                              HTML Body
+                            </button>
+                          </div>
+                        </div>
+
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={copyAllVariables}
-                          className="h-8 px-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider"
+                          className="h-8 px-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wider self-start sm:self-auto"
                         >
                           <Copy className="w-3 h-3 mr-1.5" />
                           Copy All for AI
                         </Button>
                       </div>
+
                       <div className="flex flex-wrap gap-2">
                         {AVAILABLE_VARIABLES.map(v => (
-                          <button
-                            key={v.key}
-                            type="button"
-                            draggable="true"
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData("text/plain", `{{${v.key}}}`);
-                            }}
-                            onClick={() => insertVariable(v.key)}
-                            title={v.description}
-                            className="group flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-800 px-2.5 py-1.5 rounded-lg text-[10px] text-slate-600 dark:text-slate-400 font-bold font-mono hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300 transition-all cursor-grab active:cursor-grabbing active:scale-95"
-                          >
-                            <GripVertical className="w-2.5 h-2.5 opacity-30 group-hover:opacity-60" />
-                            {`{{${v.key}}}`}
-                          </button>
+                          <div key={v.key} className="inline-flex rounded-lg shadow-2xs">
+                            <button
+                              type="button"
+                              draggable="true"
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData("text/plain", `{{${v.key}}}`);
+                              }}
+                              onClick={() => insertVariable(v.key)}
+                              title={`${v.label} - ${v.description}\nClick to insert into ${activeTarget === 'subject' ? 'Subject Line' : 'HTML Body'}. Drag to drop anywhere.`}
+                              className="group flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-800 px-2.5 py-1.5 rounded-l-lg text-[10px] text-slate-600 dark:text-slate-400 font-bold font-mono hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-300 transition-all cursor-grab active:cursor-grabbing active:scale-95"
+                            >
+                              <GripVertical className="w-2.5 h-2.5 opacity-30 group-hover:opacity-60" />
+                              <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-blue-600">{v.label}</span>
+                              <span className="text-[9px] opacity-70">{`{{${v.key}}}`}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => insertVariable(v.key, activeTarget === 'subject' ? 'body' : 'subject')}
+                              title={`Direct insert into ${activeTarget === 'subject' ? 'HTML Body' : 'Subject Line'}`}
+                              className="bg-blue-50/70 dark:bg-slate-800 border-y border-r border-blue-100 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-1.5 py-1.5 rounded-r-lg text-[9px] font-bold transition-all"
+                            >
+                              {activeTarget === 'subject' ? '→Body' : '→Subj'}
+                            </button>
+                          </div>
                         ))}
                       </div>
+
                       <p className="mt-3 text-[10px] text-slate-400 italic">
-                        Click any variable to insert at cursor position. Use "Copy All for AI" to get a formatted list for AI template generation.
+                        Click any variable to insert into the active target (<span className="font-bold text-blue-600 dark:text-blue-400">{activeTarget === 'subject' ? 'Subject Line' : 'HTML Content'}</span>). You can also drag-and-drop any variable directly into the input fields.
                       </p>
                     </div>
                   </div>
@@ -597,18 +820,24 @@ const EmailTemplates = () => {
 
             {/* Email Header Fields */}
             {previewData && (
-              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm">
-                <div className="flex">
-                  <span className="w-20 text-slate-400 font-medium shrink-0">From:</span>
-                  <span className="text-slate-900 dark:text-white font-medium">Your Company &lt;noreply@company.com&gt;</span>
+              <div className="space-y-2.5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm border border-gray-100 dark:border-slate-800">
+                <div className="flex items-center text-xs">
+                  <span className="w-20 text-slate-400 font-semibold shrink-0">From:</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-medium">
+                    {previewData.context?.company_name || 'Online Consultancy Services'} &lt;{previewData.context?.support_email || 'noreply@subsync.example.com'}&gt;
+                  </span>
                 </div>
-                <div className="flex">
-                  <span className="w-20 text-slate-400 font-medium shrink-0">To:</span>
-                  <span className="text-slate-900 dark:text-white font-medium">&#123;&#123;customer_name&#125;&#125; &lt;customer@example.com&gt;</span>
+                <div className="flex items-center text-xs">
+                  <span className="w-20 text-slate-400 font-semibold shrink-0">To:</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-medium">
+                    {previewData.context?.customer_name || 'John Doe'} &lt;{previewData.context?.customer_email || 'john@example.com'}&gt;
+                  </span>
                 </div>
-                <div className="flex">
-                  <span className="w-20 text-slate-400 font-medium shrink-0">Subject:</span>
-                  <span className="text-slate-900 dark:text-white font-bold">{previewData.subject}</span>
+                <div className="flex items-center text-xs">
+                  <span className="w-20 text-slate-400 font-semibold shrink-0">Subject:</span>
+                  <span className="text-slate-900 dark:text-white font-bold bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800/50 text-sm">
+                    {previewData.subject || "(No Subject)"}
+                  </span>
                 </div>
               </div>
             )}

@@ -436,6 +436,7 @@ router.delete('/reminder-policies/:id', isAuthenticated, authorize(PERMISSIONS.R
 
 // Email Templates
 router.get('/email-templates', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), listEmailTemplatesController);
+router.post('/email-templates/preview', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), previewEmailTemplateController);
 router.get('/email-templates/:id', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_VIEW), getEmailTemplateController);
 router.post('/email-templates', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_CREATE), upsertEmailTemplateController);
 router.put('/email-templates/:id', isAuthenticated, authorize(PERMISSIONS.EMAIL_TEMPLATES_UPDATE), updateEmailTemplateController);

@@ -6,7 +6,7 @@ import {
     updateEmailTemplate,
     deleteEmailTemplate,
 } from '../models/emailTemplateModel.js';
-import { renderEmailTemplate, buildTemplateContext } from '../services/emailService.js';
+import { renderEmailTemplate, renderTemplateString, buildTemplateContext } from '../services/emailService.js';
 import { getSubscriptionById } from '../models/subscriptionModel.js';
 import { getCustomerById } from '../models/customerModel.js';
 import { logActivity } from '../models/activityLogModel.js';
@@ -158,17 +158,30 @@ export const deleteEmailTemplateController = async (req, res) => {
 };
 
 /**
- * POST /api/email-templates/:id/preview
- * Preview email template with sample data
+ * POST /api/email-templates/:id/preview and POST /api/email-templates/preview
+ * Preview email template with sample or subscription data
  */
 export const previewEmailTemplateController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { subscription_id } = req.body;
+        const { subscription_id, subject: rawSubject, body_html: rawBodyHtml, template_key } = req.body;
 
-        const template = await getEmailTemplateById(parseInt(id, 10));
-        if (!template) {
-            return res.status(404).json({ error: 'Email template not found' });
+        let template = null;
+        if (id && id !== 'new') {
+            const parsedId = parseInt(id, 10);
+            if (!isNaN(parsedId)) {
+                template = await getEmailTemplateById(parsedId);
+            }
+        }
+        if (!template && template_key) {
+            template = await getEmailTemplateByKey(template_key);
+        }
+
+        const subjectToRender = rawSubject !== undefined ? rawSubject : (template?.subject || '');
+        const bodyToRender = rawBodyHtml !== undefined ? rawBodyHtml : (template?.body_html || '');
+
+        if (!subjectToRender && !bodyToRender && !template) {
+            return res.status(404).json({ error: 'Email template not found or no content provided' });
         }
 
         // Use provided subscription or create sample data
@@ -179,34 +192,51 @@ export const previewEmailTemplateController = async (req, res) => {
                 return res.status(404).json({ error: 'Subscription not found' });
             }
             const customer = await getCustomerById(subscription.customer_id);
-            const items = []; // Could fetch items if needed
+            const items = [];
             context = buildTemplateContext(subscription, customer, items, new Date());
         } else {
-            // Sample data
+            // Rich sample data with all variable aliases
+            const compName = process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)';
+            const suppEmail = process.env.SUPPORT_EMAIL || 'support@subsync.example.com';
+            const startDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+            const endDateStr = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
             context = {
                 customer_name: 'John Doe',
+                client_name: 'John Doe',
+                name: 'John Doe',
                 customer_email: 'john@example.com',
                 subscription_id: 'SUB001',
+                sub_id: 'SUB001',
                 domain_name: 'example.com',
-                start_date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
-                end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+                domain: 'example.com',
+                service_name: 'Web Hosting & Domain',
+                start_date: startDateStr,
+                end_date: endDateStr,
+                expiry_date: endDateStr,
+                due_date: endDateStr,
                 days_left: 30,
-                currency: 'INR',
-                subtotal: 1000,
-                tax_total: 180,
-                total: 1180,
+                days_remaining: 30,
+                days: 30,
+                currency: '₹',
+                subtotal: '1000.00',
+                tax_total: '180.00',
+                total: '1180.00',
+                amount: '1180.00',
                 items: [],
                 items_table_html: '',
                 renewal_link: `${process.env.APP_BASE_URL || 'http://localhost'}/subscriptions/SUB001/renew`,
                 current_year: new Date().getFullYear(),
-                company_name: process.env.COMPANY_NAME || 'Online Consultancy Services (OCS)',
-                support_email: process.env.SUPPORT_EMAIL || 'support@subsync.example.com',
+                company_name: compName,
+                company: compName,
+                support_email: suppEmail,
             };
         }
 
-        const { subject, html } = await renderEmailTemplate(template.template_key, context);
+        const subject = renderTemplateString(subjectToRender, context, { noEscape: true });
+        const html = renderTemplateString(bodyToRender, context, { noEscape: false });
 
-        res.json({ subject, html });
+        res.json({ subject, html, context });
     } catch (error) {
         console.error('Error previewing email template:', error);
         res.status(500).json({ error: error.message || 'Failed to preview email template' });

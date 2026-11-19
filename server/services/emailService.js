@@ -56,6 +56,37 @@ async function getSubscriptionItems(subscriptionId) {
 }
 
 /**
+ * Render a template string with Handlebars and fallback normalization
+ * @param {string} str - Template string containing {{var}} or {var}
+ * @param {Object} context - Template variables context
+ * @param {Object} options - Options (e.g. noEscape)
+ * @returns {string}
+ */
+export function renderTemplateString(str, context = {}, { noEscape = false } = {}) {
+    if (!str || typeof str !== 'string') return '';
+    try {
+        // Normalize single braces {var_name} to {{var_name}} if user didn't type double braces
+        // Negative lookbehind and lookahead to ensure not already surrounded by braces
+        const normalized = str.replace(/(?<!\{)\{([a-zA-Z0-9_]+)\}(?!\})/g, '{{$1}}');
+        const templateFn = Handlebars.compile(normalized, { noEscape });
+        return templateFn(context || {});
+    } catch (err) {
+        console.error('Error rendering template string with Handlebars:', err.message);
+        // Resilient fallback: replace basic {{key}} or {key} using regex
+        let fallback = str;
+        if (context && typeof context === 'object') {
+            for (const [k, v] of Object.entries(context)) {
+                if (v !== undefined && v !== null && typeof v !== 'object') {
+                    const regex = new RegExp(`\\{\\{?\\s*${k}\\s*\\}\\}?`, 'g');
+                    fallback = fallback.replace(regex, String(v));
+                }
+            }
+        }
+        return fallback;
+    }
+}
+
+/**
  * Render email template with Handlebars
  * @param {string} templateKey
  * @param {Object} context
@@ -73,12 +104,9 @@ export async function renderEmailTemplate(templateKey, context) {
             console.warn(`Template ${templateKey} is inactive, using anyway`);
         }
 
-        // Compile Handlebars templates
-        const subjectTemplate = Handlebars.compile(template.subject);
-        const bodyTemplate = Handlebars.compile(template.body_html);
-
-        const subject = subjectTemplate(context);
-        const html = bodyTemplate(context);
+        // Render subject with noEscape: true so HTML entities (like &amp; or &#x27;) don't appear in email subjects
+        const subject = renderTemplateString(template.subject, context, { noEscape: true });
+        const html = renderTemplateString(template.body_html, context, { noEscape: false });
 
         return { subject, html };
     } catch (error) {
@@ -215,14 +243,23 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
         </div>
     `;
 
+    const domainName = subscription.domain_name || (items && items.length > 0 && items[0]?.service_name) || 'N/A';
+    const customerName = customer?.display_name || customer?.first_name || 'Valued Customer';
+    const subId = subscription.sub_id;
+    const formattedStartDate = startDate ? startDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A';
+    const formattedEndDate = endDate ? endDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A';
+    const daysLeftVal = daysLeft !== null ? daysLeft : 'N/A';
+    const companyName = cleanEnv(process.env.COMPANY_NAME, 'Online Consultancy Services (OCS)');
+    const supportEmail = cleanEnv(process.env.SUPPORT_EMAIL, 'support@subsync.example.com');
+
     return {
-        customer_name: customer?.display_name || customer?.first_name || 'Valued Customer',
+        customer_name: customerName,
         customer_email: customer?.primary_email || '',
-        subscription_id: subscription.sub_id,
-        domain_name: subscription.domain_name || 'N/A',
-        start_date: startDate ? startDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A',
-        end_date: endDate ? endDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A',
-        days_left: daysLeft !== null ? daysLeft : 'N/A',
+        subscription_id: subId,
+        domain_name: domainName,
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
+        days_left: daysLeftVal,
         currency: currency,
         subtotal: subtotal,
         tax_total: taxTotal,
@@ -236,10 +273,23 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
         items_table_html: invoiceHtml,
         renewal_link: `${cleanEnv(process.env.APP_BASE_URL, 'http://localhost')}/subscriptions/${subscription.sub_id}/renew`,
         current_year: new Date().getFullYear(),
-        company_name: cleanEnv(process.env.COMPANY_NAME, 'Online Consultancy Services (OCS)'),
-        support_email: cleanEnv(process.env.SUPPORT_EMAIL, 'support@subsync.example.com'),
+        company_name: companyName,
+        support_email: supportEmail,
         subscription: subscription,
         customer: customer,
+
+        // Plug-in aliases for flexible subject line and template authoring
+        domain: domainName,
+        service_name: (items && items.length > 0 && items[0]?.service_name) || domainName,
+        client_name: customerName,
+        name: customerName,
+        sub_id: subId,
+        expiry_date: formattedEndDate,
+        due_date: formattedEndDate,
+        days_remaining: daysLeftVal,
+        days: daysLeftVal,
+        company: companyName,
+        amount: total,
     };
 }
 
