@@ -316,6 +316,7 @@ import {
     triggerMonthlyProductHoursReport,
     getSystemInfo
 } from '../controllers/developerController.js';
+import { getPublicQuote } from '../controllers/quoteController.js';
 
 const router = express.Router();
 
@@ -323,6 +324,9 @@ const router = express.Router();
 router.get('/health', (req, res) => {
     res.status(200).json({ message: 'Server is running' });
 });
+
+// Public Quote for login / branding
+router.get('/public/quote', getPublicQuote);
 
 // Login/Logout
 router.post('/login/user', validateLogin);

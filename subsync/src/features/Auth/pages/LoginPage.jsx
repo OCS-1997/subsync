@@ -16,9 +16,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   Zap,
-  BarChart3
+  BarChart3,
+  Quote
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import api from '@/lib/axiosInstance';
 import { toast } from '@/utils/toast';
 import { loginUser } from "../authSlice";
 import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
@@ -49,6 +51,36 @@ function LoginPage() {
     if (activeFestival) {
       setFestival(activeFestival);
     }
+  }, []);
+
+  // Dynamic aesthetic quotes fetched securely from server
+  const [dailyQuote, setDailyQuote] = useState({
+    quote: "The secret of change is to focus all of your energy not on fighting the old, but on building the new.",
+    author: "Socrates"
+  });
+  const [isLoadingQuote, setIsLoadingQuote] = useState(false);
+
+  const fetchQuote = async (isManual = false) => {
+    try {
+      if (isManual) setIsLoadingQuote(true);
+      const res = await api.get('/public/quote');
+      if (res.data?.success && res.data?.quote) {
+        setDailyQuote({
+          quote: res.data.quote,
+          author: res.data.author || 'Anonymous'
+        });
+      }
+    } catch (err) {
+      console.warn("Could not fetch quote from server, using fallback:", err);
+    } finally {
+      if (isManual) {
+        setTimeout(() => setIsLoadingQuote(false), 350);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchQuote();
   }, []);
 
   // Avoid "Login successful" toast on initial load when already authenticated
@@ -172,48 +204,44 @@ function LoginPage() {
               )}
             </>
           ) : (
-            <div className="w-full flex flex-col items-center">
-              {/* Minimalist Live Pill */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-                <span className="text-[11px] font-bold text-white tracking-widest uppercase">
-                  Business Operations Platform
+            <div className="w-full flex flex-col items-center max-w-lg mx-auto text-center px-2">
+              {/* Inspiration Pill */}
+              {/* <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                <span className="text-[11px] font-semibold text-white tracking-widest uppercase">
+                  Daily Inspiration
                 </span>
-              </div>
+              </div> */}
 
-              {/* Aesthetic Headline */}
-              <h1 className="text-3xl xl:text-4xl 2xl:text-5xl font-black text-white leading-[1.18] mb-4 tracking-tight drop-shadow-sm">
-                Empowering Business,<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-sky-100 to-white">
-                  Simplifying Operations.
-                </span>
-              </h1>
+              {/* Aesthetic Glass Quote Card */}
+              <div className="relative group w-full p-8 sm:p-10 rounded-3xl bg-white/[0.08] backdrop-blur-xl border border-white/15 shadow-2xl transition-all duration-300 hover:border-white/25">
+                {/* Decorative Quotation Icon */}
+                <Quote className="absolute -top-3.5 -left-2.5 w-10 h-10 text-white/15 pointer-events-none rotate-180" />
+                
+                {/* Quote Text */}
+                <blockquote className="relative z-10 text-lg sm:text-xl xl:text-2xl font-light text-white leading-relaxed tracking-wide drop-shadow-xs italic font-serif">
+                  “{dailyQuote.quote}”
+                </blockquote>
 
-              {/* Refined Description */}
-              <p className="text-sm xl:text-base text-blue-100/80 leading-relaxed max-w-sm font-normal mb-8">
-                Centralized subscription lifecycle, CRM pipeline, and internal team workflows in one intuitive workspace.
-              </p>
+                {/* Author Citation & Refresh Action */}
+                <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-left min-w-0">
+                    <span className="w-4 h-[2px] bg-blue-300/60 rounded-full shrink-0" />
+                    <cite className="text-sm sm:text-base font-medium not-italic text-blue-100/90 tracking-wide truncate">
+                      {dailyQuote.author}
+                    </cite>
+                  </div>
 
-              {/* Aesthetic Feature Badges */}
-              <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
-                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
-                  <RefreshCw className="w-3.5 h-3.5 text-blue-200" />
-                  Subscriptions
-                </span>
-                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
-                  <TrendingUp className="w-3.5 h-3.5 text-indigo-200" />
-                  CRM Pipeline
-                </span>
-                <span className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-xs font-semibold text-white/95 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  Enterprise Security
-                </span>
-              </div>
-
-              {/* Minimal Brand Tag */}
-              <div className="mt-10 flex items-center gap-2 text-[11px] text-blue-200/70 font-medium tracking-wide">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-300/60" />
-                <span>SubSync Enterprise Suite • Online Consultancy Services</span>
+                  <button
+                    type="button"
+                    onClick={() => fetchQuote(true)}
+                    disabled={isLoadingQuote}
+                    title="Get another quote"
+                    className="shrink-0 p-2 rounded-xl text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-white/10 transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingQuote ? 'animate-spin text-blue-200' : ''}`} />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -381,7 +409,7 @@ function LoginPage() {
         {/* Minimal Footer */}
         <div className="w-full max-w-md mx-auto pt-6 border-t border-slate-100 dark:border-slate-800/80 text-center">
           <p className="text-slate-400 dark:text-slate-500 text-xs flex items-center justify-center gap-1.5">
-            &copy; {new Date().getFullYear()} RMS • Internal Operations Platform
+            &copy; {new Date().getFullYear()} OCS BOP • Internal Operations Platform
           </p>
         </div>
       </div>
