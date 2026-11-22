@@ -3,6 +3,7 @@ import { THEMES, FONT_PRESETS } from "../constants/themes";
 
 const ThemeContext = createContext({
   theme: "light",
+  isDark: false,
   setTheme: () => {},
   toggleTheme: () => {},
   fonts: {
@@ -141,14 +142,18 @@ export const ThemeProvider = ({ children }) => {
 
   }, []);
 
+  const currentThemeObj = THEMES.find((t) => t.id === themeId);
+  const isDark = themeId === "dark" || currentThemeObj?.type === "dark";
+
   // --- Actions ---
   const setTheme = (id) => {
     setThemeId(id);
     localStorage.setItem("themeId", id);
+    applyTheme(id, customColors);
   };
 
   const toggleTheme = () => {
-    const nextTheme = themeId === "dark" ? "light" : "dark";
+    const nextTheme = isDark ? "light" : "dark";
     setTheme(nextTheme);
   };
 
@@ -226,6 +231,7 @@ export const ThemeProvider = ({ children }) => {
     <ThemeContext.Provider 
       value={{ 
         theme: themeId, 
+        isDark,
         setTheme, 
         toggleTheme, 
         fonts, 

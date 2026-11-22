@@ -68,7 +68,7 @@ import { createServiceController, getAllServicesController, getServiceByIdContro
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
 import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController, getSubscriptionHistoryController } from '../controllers/subscriptionController.js';
-import { renewSubscriptionController, archiveSubscriptionController, unarchiveSubscriptionController, enqueueRemindersController } from '../controllers/subscriptionReminderController.js';
+import { renewSubscriptionController, previewRenewalEmailController, archiveSubscriptionController, unarchiveSubscriptionController, enqueueRemindersController } from '../controllers/subscriptionReminderController.js';
 import { listReminderPoliciesController, getReminderPolicyController, createReminderPolicyController, updateReminderPolicyController, deleteReminderPolicyController } from '../controllers/reminderPolicyController.js';
 import { listEmailTemplatesController, getEmailTemplateController, upsertEmailTemplateController, updateEmailTemplateController, deleteEmailTemplateController, previewEmailTemplateController } from '../controllers/emailTemplateController.js';
 import { listNotificationLogsController, getNotificationLogController } from '../controllers/notificationLogController.js';
@@ -426,6 +426,7 @@ router.get('/subscriptions/:id/history', isAuthenticated, authorize(PERMISSIONS.
 router.put('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), updateSubscriptionController);
 router.delete('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_DELETE), deleteSubscriptionController);
 router.post('/subscriptions/:id/renew', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), renewSubscriptionController);
+router.post('/subscriptions/:id/renewal-preview', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), previewRenewalEmailController);
 router.post('/subscription/:id/renew', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), renewSubscriptionController);
 router.post('/subscriptions/:id/archive', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), archiveSubscriptionController);
 router.post('/subscriptions/:id/unarchive', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_UPDATE), unarchiveSubscriptionController);

@@ -1,111 +1,139 @@
 import React, { useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
  * SplashScreen Component
- * Displays a minimal and professional entrance animation for Subsync.
- * Theme: Enterprise Blue (Professional, Trustworthy, Modern)
+ * Displays a snappy, high-precision entrance animation for Subsync.
+ * Dismissible on click/press and cached per session so it never interrupts workflow.
  */
 const SplashScreen = ({ onFinish }) => {
   useEffect(() => {
-    // Finish after animation + dwell time
-    const timer = setTimeout(() => {
+    // If already seen in this tab session, skip immediately
+    if (typeof window !== "undefined" && sessionStorage.getItem("subsync_splash_seen")) {
       onFinish?.();
-    }, 2800);
-    return () => clearTimeout(timer);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("subsync_splash_seen", "true");
+      }
+      onFinish?.();
+    }, 1400);
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("subsync_splash_seen", "true");
+        }
+        onFinish?.();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [onFinish]);
 
+  const handleDismiss = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("subsync_splash_seen", "true");
+    }
+    onFinish?.();
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 text-white overflow-hidden px-6">
-      {/* Background Gradient Mesh - Deep Blue Professional */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950/30 opacity-80" />
-      
-      {/* Animated Blobs - Subtle & Professional */}
-      <div className="absolute -top-[10%] -right-[10%] w-[280px] h-[280px] md:w-[600px] md:h-[600px] bg-blue-600/10 rounded-full blur-[80px] md:blur-[120px] animate-pulse" />
-      <div className="absolute top-[40%] left-[20%] w-[200px] h-[200px] md:w-[400px] md:h-[400px] bg-slate-700/10 rounded-full blur-[60px] md:blur-[100px] animate-pulse" style={{ animationDelay: "2s" }} />
-      <div className="absolute -bottom-[10%] -left-[10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-indigo-600/10 rounded-full blur-[70px] md:blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+    <motion.div
+      onClick={handleDismiss}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07090e] text-white overflow-hidden px-6 cursor-pointer select-none"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+    >
+      {/* Background Architectural Grid Lines */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.035]"
+        style={{
+          backgroundImage: "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
+          backgroundSize: "48px 48px"
+        }}
+      />
+
+      {/* Subtle Ambient Vignette */}
+      <div className="absolute inset-0 bg-radial from-transparent via-[#07090e]/70 to-[#07090e] pointer-events-none" />
 
       <motion.div
-        className="relative z-10 flex flex-col items-center justify-center w-full max-w-lg mx-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        className="relative z-10 flex flex-col items-center justify-center w-full max-w-sm mx-auto text-center"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Logo Animation */}
+        {/* Emblem */}
         <motion.div
-          className="relative w-28 h-28 md:w-36 md:h-36 mb-8 md:mb-10"
-          initial={{ scale: 0.8, opacity: 0, y: 30 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, type: "spring", stiffness: 40 }}
+          className="relative w-20 h-20 mb-6 flex items-center justify-center"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-             {/* Professional Glow */}
-            <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
-            <div className="absolute inset-2 bg-indigo-500/10 blur-xl rounded-full animate-pulse" />
-            
+          <div className="absolute inset-0 bg-blue-500/15 rounded-2xl blur-xl" />
+          <div className="relative p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md shadow-2xl">
             <img 
-                src="/pwa-192x192.png" 
-                alt="OCS" 
-                className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(59,130,246,0.4)] brightness-105" 
+              src="/logo.png" 
+              alt="OCS BOP" 
+              className="w-12 h-12 object-contain"
             />
+          </div>
         </motion.div>
 
-        {/* Text Reveal */}
-        <div className="text-center overflow-hidden w-full px-4">
-            <motion.h1
-                className="text-4xl md:text-6xl font-black tracking-tight mb-3 text-white drop-shadow-sm"
-                initial={{ y: 60, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.8, type: "spring", stiffness: 50 }}
-            >
-                OCS <span className="text-blue-500">RMS</span>
-            </motion.h1>
-            
-            <motion.div
-                className="flex items-center justify-center gap-4 py-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.8 }}
-            >
-                <div className="h-[1px] w-8 md:w-12 bg-gradient-to-l from-blue-500/40 to-transparent" />
-                <span className="text-[10px] md:text-sm font-bold uppercase tracking-[0.4em] md:tracking-[0.5em] text-slate-400 whitespace-nowrap">
-                    Business Operations Platform
-                </span>
-                <div className="h-[1px] w-8 md:w-12 bg-gradient-to-r from-blue-500/40 to-transparent" />
-            </motion.div>
-        </div>
-
-        {/* Loading Indicator - Professional Blue */}
-        <motion.div 
-            className="mt-12 md:mt-16 w-32 md:w-56 h-[3px] bg-slate-800/80 overflow-hidden rounded-full backdrop-blur-sm"
+        {/* Text */}
+        <div className="space-y-1.5 mb-8">
+          <motion.h1
+            className="text-2xl font-bold tracking-tight text-white flex items-center justify-center gap-1.5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
+            transition={{ delay: 0.15 }}
+          >
+            Sub<span className="text-blue-400">Sync</span>
+            <span className="ml-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 border border-slate-700/80 px-1.5 py-0.5 rounded">
+              BOP
+            </span>
+          </motion.h1>
+          <motion.p
+            className="text-[11px] font-mono tracking-[0.2em] uppercase text-slate-400"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.25 }}
+          >
+            Business Operations Platform
+          </motion.p>
+        </div>
+
+        {/* Snappy Linear Telemetry Loader */}
+        <motion.div 
+          className="w-40 h-[2px] bg-white/[0.08] overflow-hidden rounded-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
         >
-            <motion.div
-                className="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-indigo-500"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5, 
-                    ease: "easeInOut",
-                    repeatDelay: 0.2
-                }}
-            />
+          <motion.div
+            className="h-full bg-gradient-to-r from-blue-500 via-sky-400 to-indigo-400"
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ 
+              repeat: Infinity, 
+              duration: 1.1, 
+              ease: "easeInOut"
+            }}
+          />
         </motion.div>
 
-        {/* Version/Footer Text */}
-        <motion.div
-            className="absolute -bottom-32 md:-bottom-40 text-[9px] text-slate-600 font-medium tracking-widest uppercase opacity-0"
-            animate={{ opacity: 0.5 }}
-            transition={{ delay: 1.5, duration: 1 }}
-        >
-            Initializing Environment
-        </motion.div>
-
+        <span className="mt-4 text-[10px] font-mono text-slate-500 tracking-wider">
+          Click or press Esc to skip
+        </span>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

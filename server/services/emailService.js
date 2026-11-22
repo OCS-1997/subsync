@@ -30,11 +30,87 @@ if (EMAIL_PROVIDER === 'sendgrid') {
 }
 
 /**
+ * Default fallback template for renewal confirmation
+ */
+const DEFAULT_RENEWAL_CONFIRMATION_SUBJECT = '✅ Subscription Renewed Successfully - {{domain_name}}';
+const DEFAULT_RENEWAL_CONFIRMATION_BODY = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Renewed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px 24px; text-align: center;">
+            <div style="font-size: 36px; margin-bottom: 12px;">✅</div>
+            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold;">Subscription Renewed!</h1>
+            <p style="margin: 8px 0 0; color: rgba(255, 255, 255, 0.9); font-size: 15px;">Your subscription has been successfully renewed</p>
+        </div>
+        <div style="padding: 30px 24px;">
+            <p style="margin: 0 0 16px; font-size: 15px; color: #333333; line-height: 1.6;">
+                Dear {{customer_name}},
+            </p>
+            <p style="margin: 0 0 20px; font-size: 15px; color: #333333; line-height: 1.6;">
+                Great news! Your subscription for <strong>{{domain_name}}</strong> has been successfully renewed on <strong>{{renewal_date}}</strong>.
+            </p>
+            <div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 18px; margin: 20px 0; border-radius: 8px;">
+                <h3 style="margin: 0 0 12px; font-size: 13px; color: #6b7280; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Subscription Details</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #6b7280;">Subscription ID:</td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #111827; font-weight: bold; text-align: right;">{{subscription_id}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #6b7280;">Domain:</td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #111827; font-weight: bold; text-align: right;">{{domain_name}}</td>
+                    </tr>
+                    {{#if old_end_date}}
+                    <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #6b7280;">Previous End Date:</td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #6b7280; text-decoration: line-through; text-align: right;">{{old_end_date}}</td>
+                    </tr>
+                    {{/if}}
+                    <tr>
+                        <td style="padding: 6px 0; font-size: 14px; color: #6b7280;">New Expiry Date:</td>
+                        <td style="padding: 6px 0; font-size: 14px; color: #10b981; font-weight: bold; text-align: right;">{{end_date}}</td>
+                    </tr>
+                    <tr style="border-top: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0 0; font-size: 15px; color: #111827; font-weight: bold;">Total Amount:</td>
+                        <td style="padding: 10px 0 0; font-size: 16px; color: #10b981; font-weight: bold; text-align: right;">{{currency}} {{total}}</td>
+                    </tr>
+                </table>
+            </div>
+            {{#if invoice_html}}
+            <div style="margin: 24px 0;">
+                {{{invoice_html}}}
+            </div>
+            {{/if}}
+            <p style="margin: 20px 0 16px; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                All pending reminder notifications have been cleared, and new reminders have been scheduled based on your updated subscription period.
+            </p>
+            <p style="margin: 0 0 20px; font-size: 14px; color: #4b5563; line-height: 1.6;">
+                Thank you for your continued trust in our services!
+            </p>
+        </div>
+        <div style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280;">
+                Need help? Contact us at <a href="mailto:{{support_email}}" style="color: #10b981; text-decoration: none;">{{support_email}}</a>
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                © {{current_year}} {{company_name}}. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+/**
  * Get subscription items for template rendering
  * @param {string} subscriptionId
  * @returns {Promise<Array>}
  */
-async function getSubscriptionItems(subscriptionId) {
+export async function getSubscriptionItems(subscriptionId) {
     try {
         const [items] = await appDB.query(`
             SELECT 
@@ -94,10 +170,18 @@ export function renderTemplateString(str, context = {}, { noEscape = false } = {
  */
 export async function renderEmailTemplate(templateKey, context) {
     try {
-        const template = await getEmailTemplateByKey(templateKey);
+        let template = await getEmailTemplateByKey(templateKey);
 
         if (!template) {
-            throw new Error(`Email template not found: ${templateKey}`);
+            if (templateKey === 'renewal_confirmation') {
+                template = {
+                    subject: DEFAULT_RENEWAL_CONFIRMATION_SUBJECT,
+                    body_html: DEFAULT_RENEWAL_CONFIRMATION_BODY,
+                    active: 1
+                };
+            } else {
+                throw new Error(`Email template not found: ${templateKey}`);
+            }
         }
 
         if (!template.active) {
@@ -250,7 +334,7 @@ export function buildTemplateContext(subscription, customer, items, runAt) {
     const formattedEndDate = endDate ? endDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'N/A';
     const daysLeftVal = daysLeft !== null ? daysLeft : 'N/A';
     const companyName = cleanEnv(process.env.COMPANY_NAME, 'Online Consultancy Services (OCS)');
-    const supportEmail = cleanEnv(process.env.SUPPORT_EMAIL, 'support@subsync.example.com');
+    const supportEmail = cleanEnv(process.env.SUPPORT_EMAIL, 'support@ocsindia.net');
 
     return {
         customer_name: customerName,
@@ -486,13 +570,22 @@ export async function sendReminderEmail(subscriptionId, templateKey, runAt, opti
 
         // Build template context
         const context = buildTemplateContext(subscription, customer, items, runAt);
+        context.renewal_date = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+        if (options.old_end_date) {
+            context.old_end_date = options.old_end_date;
+        }
 
         // Render template
-        const { subject, html } = await renderEmailTemplate(templateKey, context);
+        let { subject, html } = await renderEmailTemplate(templateKey, context);
+        if (options.customSubject) {
+            subject = options.customSubject;
+        }
 
         // Determine recipient list
         let recipients = [];
-        if (subscription.email_list && Array.isArray(subscription.email_list) && subscription.email_list.length > 0) {
+        if (options.to) {
+            recipients = Array.isArray(options.to) ? options.to : [options.to];
+        } else if (subscription.email_list && Array.isArray(subscription.email_list) && subscription.email_list.length > 0) {
             recipients = subscription.email_list;
         } else if (customer.primary_email) {
             recipients = [customer.primary_email];

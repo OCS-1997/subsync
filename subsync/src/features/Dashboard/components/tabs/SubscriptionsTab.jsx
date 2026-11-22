@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
     Package, Calendar, TrendingUp, AlertTriangle, Filter,
-    CheckCircle, CheckCircle2, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2, Maximize2
+    CheckCircle, CheckCircle2, XCircle, Clock, ArrowRight, RefreshCw, Search, Mail, Loader2, Maximize2,
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, ChevronDown
 } from 'lucide-react';
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import RenewSubscriptionModal from '../RenewSubscriptionModal';
@@ -50,7 +51,7 @@ const FILTER_OPTIONS = [
     { id: 'today', label: 'Today', icon: AlertTriangle },
     { id: 'this_month', label: `This Month (${currentShort})`, icon: Calendar },
     { id: 'next_month', label: `Next Month (${nextShort})`, icon: Calendar },
-    { id: 'expiring', label: 'Expiring Soon', icon: Clock },
+    { id: 'expired', label: 'Expired', icon: XCircle },
     { id: 'renewed', label: 'Renewed', icon: RefreshCw },
     { id: 'custom', label: 'Custom', icon: Calendar },
 ];
@@ -91,7 +92,15 @@ function SubscriptionsTab({ visibleWidgets }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const listTopRef = useRef(null);
     const [sendingReminder, setSendingReminder] = useState(null); // Track which sub is sending
+
+    // Reset pagination on filter or search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeFilter, searchQuery, dateFrom, dateTo]);
 
     // Send reminder email for a subscription
     const sendReminder = async (subId, e) => {
@@ -216,10 +225,13 @@ function SubscriptionsTab({ visibleWidgets }) {
         return `₹${value}`;
     };
 
-    // Filter subscriptions based on search query (excluding expired ones)
+    // Filter subscriptions based on search query
     const filteredSubscriptions = renewals.filter(sub => {
-        if (sub.days_left < 0 || sub.renewal_status === 'expired' || sub.status === 'expired') {
-            return false;
+        // Exclude expired contracts only from forward-looking filters (today, this_month, next_month)
+        if (['today', 'this_month', 'next_month'].includes(activeFilter)) {
+            if (sub.days_left < 0 || sub.renewal_status === 'expired' || sub.status === 'expired') {
+                return false;
+            }
         }
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
@@ -229,6 +241,22 @@ function SubscriptionsTab({ visibleWidgets }) {
             sub.services?.some(s => (s.service_name || s.name)?.toLowerCase().includes(query))
         );
     });
+
+    // Pagination calculations
+    const totalRecords = filteredSubscriptions.length;
+    const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalRecords);
+    const paginatedSubscriptions = filteredSubscriptions.slice(startIndex, endIndex);
+
+    const changePage = (newPage) => {
+        const target = Math.max(1, Math.min(totalPages, newPage));
+        setCurrentPage(target);
+        if (listTopRef.current) {
+            listTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
 
     const getStatusBadge = (sub) => {
         const days = sub.days_left;
@@ -297,12 +325,32 @@ function SubscriptionsTab({ visibleWidgets }) {
                 />
             </BentoCard>
 
-            <BentoCard size="sm" icon={XCircle} title="Expired">
-                <StatCard
-                    value={stats.expired}
-                    label="Expired"
-                    variant="rose"
-                />
+            <BentoCard 
+                size="sm" 
+                icon={XCircle} 
+                title="Expired"
+                action={
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 h-6 px-2 rounded-lg flex items-center gap-1"
+                        onClick={() => setActiveFilter('expired')}
+                    >
+                        <span>View</span>
+                        <ArrowRight className="w-3 h-3" />
+                    </Button>
+                }
+            >
+                <div 
+                    onClick={() => setActiveFilter('expired')}
+                    className="cursor-pointer group h-full flex flex-col justify-between"
+                >
+                    <StatCard
+                        value={stats.expired}
+                        label="Expired Contracts"
+                        variant="rose"
+                    />
+                </div>
             </BentoCard>
 
             <BentoCard 
@@ -346,8 +394,8 @@ function SubscriptionsTab({ visibleWidgets }) {
             {/* Subscriptions List with Filters - FULL WIDTH */}
             <BentoCard
                 size="full"
-                icon={Clock}
-                title="Expiring Subscriptions"
+                icon={Calendar}
+                title="Subscriptions & Renewals"
                 action={
                     <Button
                         variant="ghost"
@@ -449,6 +497,18 @@ function SubscriptionsTab({ visibleWidgets }) {
                                         All systems clear! There are currently no subscriptions scheduled to expire today.
                                     </p>
                                 </>
+                            ) : activeFilter === 'expired' ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 shadow-sm">
+                                        <CheckCircle className="w-6 h-6" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                        No Expired Subscriptions
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+                                        All subscriptions are up to date! There are currently no expired contracts.
+                                    </p>
+                                </>
                             ) : activeFilter === 'custom' && !dateFrom && !dateTo ? (
                                 <div className="text-slate-500 text-sm py-4">
                                     Please select a date range to view subscriptions
@@ -460,8 +520,8 @@ function SubscriptionsTab({ visibleWidgets }) {
                             )}
                         </div>
                     ) : (
-                        <div className="space-y-2 pr-1">
-                            {filteredSubscriptions.slice(0, 25).map((sub, i) => (
+                        <div className="space-y-2 pr-1" ref={listTopRef}>
+                            {paginatedSubscriptions.map((sub, i) => (
                                 <Tooltip key={sub.sub_id || i}>
                                     <TooltipTrigger asChild>
                                         <div
@@ -608,10 +668,117 @@ function SubscriptionsTab({ visibleWidgets }) {
                                     </TooltipContent>
                                 </Tooltip>
                             ))}
-                            {filteredSubscriptions.length > 25 && (
-                                <p className="text-center text-[10px] text-slate-500 py-2">
-                                    Showing 25 of {filteredSubscriptions.length} subscriptions
-                                </p>
+                            {/* Pagination Toolbar */}
+                            {totalPages > 1 && (
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-3 border-t border-slate-200/80 dark:border-slate-800">
+                                    {/* Record Range & Page Size */}
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                            Showing <strong className="text-slate-800 dark:text-slate-200">{startIndex + 1}</strong>–<strong className="text-slate-800 dark:text-slate-200">{endIndex}</strong> of <strong className="text-slate-800 dark:text-slate-200">{totalRecords}</strong> {activeFilter === 'expired' ? 'expired contracts' : 'items'}
+                                        </span>
+                                        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium pl-2 border-l border-slate-200 dark:border-slate-800">
+                                            <span>Per page:</span>
+                                            {[10, 25, 50].map((size) => (
+                                                <button
+                                                    key={size}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPageSize(size);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    className={cn(
+                                                        "px-2 py-0.5 rounded text-[11px] font-bold transition-all",
+                                                        pageSize === size
+                                                            ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white"
+                                                            : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                                                    )}
+                                                >
+                                                    {size}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Navigation Buttons: Prev / Next / First / Last */}
+                                    <div className="flex items-center gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => changePage(1)}
+                                            disabled={safeCurrentPage <= 1}
+                                            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30"
+                                            title="First Page"
+                                        >
+                                            <ChevronsLeft className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => changePage(safeCurrentPage - 1)}
+                                            disabled={safeCurrentPage <= 1}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-30 flex items-center gap-1"
+                                            title="Previous Page (Move up list)"
+                                        >
+                                            <ChevronLeft className="h-3.5 w-3.5" />
+                                            <span>Prev</span>
+                                        </Button>
+
+                                        {/* Page Numbers */}
+                                        <div className="flex items-center gap-1 px-1">
+                                            {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                                                .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
+                                                .reduce((acc, p, i, arr) => {
+                                                    if (i > 0 && p - arr[i - 1] > 1) {
+                                                        acc.push(-1 * p);
+                                                    }
+                                                    acc.push(p);
+                                                    return acc;
+                                                }, [])
+                                                .map((p, idx) => {
+                                                    if (p < 0) {
+                                                        return <span key={`ellipsis-${idx}`} className="text-slate-400 px-1 text-xs">…</span>;
+                                                    }
+                                                    return (
+                                                        <button
+                                                            key={p}
+                                                            type="button"
+                                                            onClick={() => changePage(p)}
+                                                            className={cn(
+                                                                "h-8 min-w-8 px-2 rounded-lg text-xs font-bold transition-all",
+                                                                safeCurrentPage === p
+                                                                    ? "bg-blue-600 text-white shadow-sm"
+                                                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                            )}
+                                                        >
+                                                            {p}
+                                                        </button>
+                                                    );
+                                                })}
+                                        </div>
+
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => changePage(safeCurrentPage + 1)}
+                                            disabled={safeCurrentPage >= totalPages}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-30 flex items-center gap-1"
+                                            title="Next Page (Move down list)"
+                                        >
+                                            <span>Next</span>
+                                            <ChevronRight className="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => changePage(totalPages)}
+                                            disabled={safeCurrentPage >= totalPages}
+                                            className="h-8 w-8 p-0 rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30"
+                                            title="Last Page"
+                                        >
+                                            <ChevronsRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}
@@ -709,7 +876,7 @@ function SubscriptionsTab({ visibleWidgets }) {
             isOpen={isDueSoonModalOpen}
             onClose={() => setIsDueSoonModalOpen(false)}
             stats={stats}
-            onNavigateToTable={() => setActiveFilter('expiring')}
+            onNavigateToTable={() => setActiveFilter('this_month')}
             onRefreshStats={() => {
                 loadRenewals();
                 loadDashboardStats();

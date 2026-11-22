@@ -352,7 +352,7 @@ export default function DueSoonBreakdownModal({ isOpen, onClose, stats, onNaviga
                                     }}
                                     className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                                 >
-                                    Filter Table to Due Soon <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                                    Filter Table to This Month <ArrowRight className="w-3.5 h-3.5 ml-1" />
                                 </Button>
                             )}
                             <Button

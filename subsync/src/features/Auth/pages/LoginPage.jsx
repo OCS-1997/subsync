@@ -8,8 +8,9 @@ import {
   User, 
   Calendar, 
   Sparkles, 
-  Sun, 
-  Moon, 
+  Sun,  
+  Moon,
+  Ghost, 
   ArrowRight,
   RefreshCw,
   TrendingUp,
@@ -36,8 +37,7 @@ function LoginPage() {
   const [festival, setFestival] = useState(null);
   const [showSplash, setShowSplash] = useState(true);
 
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === "dark" || (typeof document !== 'undefined' && document.documentElement.classList.contains("dark"));
+  const { theme, isDark, toggleTheme } = useTheme();
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -268,7 +268,7 @@ function LoginPage() {
             aria-label="Toggle theme"
             className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer active:scale-95"
           >
-            {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            {isDark ? <Sun size={17} /> : <Ghost size={17} />}
           </button>
         </div>
 

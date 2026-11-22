@@ -1,19 +1,96 @@
 import { renewSubscription, enqueueReminders } from '../services/reminderService.js';
 import { getSubscriptionById } from '../models/subscriptionModel.js';
+import { getCustomerById } from '../models/customerModel.js';
 import { logActivity } from '../models/activityLogModel.js';
+import { buildTemplateContext, renderEmailTemplate, sendReminderEmail, getSubscriptionItems } from '../services/emailService.js';
 import appDB from '../db/subsyncDB.js';
 
 /**
+ * POST /api/subscriptions/:id/renewal-preview
+ * Generate a preview of the renewal confirmation email
+ */
+export const previewRenewalEmailController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { end_date } = req.body || {};
+
+        const subscription = await getSubscriptionById(id);
+        if (!subscription) {
+            return res.status(404).json({ error: 'Subscription not found' });
+        }
+
+        const customer = await getCustomerById(subscription.customer_id);
+        const items = await getSubscriptionItems(id);
+
+        const oldEndDateFormatted = subscription.end_date
+            ? new Date(subscription.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
+            : 'N/A';
+
+        // Prepare simulated subscription with the target new end date
+        const simulatedSub = { ...subscription };
+        if (end_date) {
+            simulatedSub.end_date = end_date;
+        }
+
+        const context = buildTemplateContext(simulatedSub, customer, items, new Date());
+        context.renewal_date = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+        context.old_end_date = oldEndDateFormatted;
+
+        const { subject, html } = await renderEmailTemplate('renewal_confirmation', context);
+
+        let recipientEmail = '';
+        if (subscription.email_list && Array.isArray(subscription.email_list) && subscription.email_list.length > 0) {
+            recipientEmail = subscription.email_list.join(', ');
+        } else if (customer?.primary_email) {
+            recipientEmail = customer.primary_email;
+        }
+
+        res.json({
+            success: true,
+            subject,
+            html,
+            to: recipientEmail,
+            customer_name: customer?.display_name || customer?.first_name || 'Customer',
+            domain_name: subscription.domain_name,
+            new_end_date: simulatedSub.end_date
+        });
+    } catch (error) {
+        console.error('Error previewing renewal email:', error);
+        res.status(500).json({ error: error.message || 'Failed to preview renewal email' });
+    }
+};
+
+/**
  * POST /api/subscriptions/:id/renew
- * Renew a subscription and enqueue new reminders
+ * Renew a subscription, optionally send confirmation email, and enqueue new reminders
  */
 export const renewSubscriptionController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { end_date } = req.body || {};
+        const { end_date, send_email = true, recipient_email = null, custom_subject = null } = req.body || {};
         const userId = req.user?.id || null;
 
+        const subscription = await getSubscriptionById(id);
+        const oldEndDateFormatted = subscription?.end_date
+            ? new Date(subscription.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
+            : null;
+
         const result = await renewSubscription(id, end_date || null, userId);
+
+        let emailResult = null;
+        if (send_email) {
+            try {
+                emailResult = await sendReminderEmail(id, 'renewal_confirmation', new Date(), {
+                    isManual: true,
+                    to: recipient_email ? recipient_email.split(',').map(e => e.trim()).filter(Boolean) : undefined,
+                    customSubject: custom_subject || undefined,
+                    old_end_date: oldEndDateFormatted
+                });
+            } catch (err) {
+                console.error('Error sending renewal confirmation email:', err);
+                emailResult = { success: false, error: err.message };
+            }
+        }
 
         if (req.user?.username) {
             await logActivity({
@@ -22,7 +99,12 @@ export const renewSubscriptionController = async (req, res) => {
                 resourceType: 'Subscription',
                 resourceId: id,
                 ipAddress: req.ip,
-                details: { end_date: result.newEndDate, enqueued: result.enqueued },
+                details: {
+                    end_date: result.newEndDate,
+                    enqueued: result.enqueued,
+                    emailSent: emailResult ? emailResult.success : false,
+                    recipient: recipient_email || undefined
+                },
             });
         }
 
@@ -30,7 +112,9 @@ export const renewSubscriptionController = async (req, res) => {
             message: result.message,
             success: true,
             newEndDate: result.newEndDate,
-            enqueued: result.enqueued
+            enqueued: result.enqueued,
+            emailSent: send_email ? (emailResult?.success || false) : false,
+            emailError: emailResult && !emailResult.success ? emailResult.error : null
         });
     } catch (error) {
         console.error('Error renewing subscription:', error);
