@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog.jsx";
+import SendReminderModal from "../components/SendReminderModal.jsx";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -62,6 +63,8 @@ const ListView = ({ onAddNew }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [subscriptionForReminder, setSubscriptionForReminder] = useState(null);
 
   // Export dialog state
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -168,13 +171,9 @@ const ListView = ({ onAddNew }) => {
       <div className="flex gap-2">
         {/* Edit to be implemented */}
         <Button size="sm" variant="outline">Edit</Button>
-        <Button size="sm" variant="ghost" onClick={async () => {
-          try {
-            await api.post(`/subscription/${row.sub_id}/reminder`);
-            toast.success('Reminder sent successfully');
-          } catch (e) {
-            toast.error(e.normalizedMessage || 'Failed to send reminder');
-          }
+        <Button size="sm" variant="ghost" onClick={() => {
+          setSubscriptionForReminder(row);
+          setReminderDialogOpen(true);
         }}>
           <Mail className="w-4 h-4" /> Reminder
         </Button>
@@ -252,6 +251,17 @@ const ListView = ({ onAddNew }) => {
       )}
 
       <Pagination currentPage={page} setCurrentPage={setPage} totalPages={totalPages} totalRecords={totalRecords} />
+
+      {/* Send Reminder Modal */}
+      <SendReminderModal
+        isOpen={reminderDialogOpen}
+        onClose={() => {
+          setReminderDialogOpen(false);
+          setSubscriptionForReminder(null);
+        }}
+        subscription={subscriptionForReminder}
+        onSuccess={fetchData}
+      />
     </div>
   );
 };

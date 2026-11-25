@@ -75,6 +75,7 @@ async function createDcrEntry(dcrData) {
             user_id,
             timestamp,
             call_type,
+            communication_mode = 'phone_call',
             time_spent_minutes,
             domain_id,
             domain_free_text,
@@ -96,13 +97,13 @@ async function createDcrEntry(dcrData) {
 
         const [result] = await appDB.query(
             `INSERT INTO dcr_entries (
-                user_id, timestamp, call_type, time_spent_minutes,
+                user_id, timestamp, call_type, communication_mode, time_spent_minutes,
                 domain_id, domain_free_text, company_name,
                 contact_name, contact_phone_country_code, contact_phone_number, contact_email, contact_id,
                 notes, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                user_id, timestampStr, call_type, time_spent_minutes,
+                user_id, timestampStr, call_type, communication_mode, time_spent_minutes,
                 domain_id || null, domain_free_text || null, company_name || null,
                 contact_name || null, contact_phone_country_code || null, contact_phone_number || null,
                 contact_email || null, contact_id || null,
@@ -141,6 +142,7 @@ async function getDcrEntries({
     endDate = null,
     search = null,
     callType = null,
+    communicationMode = null,
     sort = null,
     order = null,
     page = 1,
@@ -177,6 +179,12 @@ async function getDcrEntries({
             params.push(callType);
         }
 
+        // Communication mode filtering
+        if (communicationMode) {
+            whereClauses.push('de.communication_mode = ?');
+            params.push(communicationMode);
+        }
+
         // Search filtering
         if (search) {
             whereClauses.push(`(
@@ -210,6 +218,7 @@ async function getDcrEntries({
                 'user_name': 'u.name',
                 'domain_display': 'COALESCE(d.domain_name, de.domain_free_text, de.company_name)',
                 'contact_display': 'de.contact_name',
+                'communication_mode': 'de.communication_mode',
                 'call_type': 'de.call_type',
                 'time_spent': 'de.time_spent_minutes'
             };
@@ -227,6 +236,7 @@ async function getDcrEntries({
                 u.name as user_name,
                 de.timestamp,
                 de.call_type,
+                de.communication_mode,
                 de.time_spent_minutes,
                 de.domain_id,
                 d.domain_name,
@@ -273,6 +283,7 @@ async function getDcrEntryById(id, user_id, isAdmin = false) {
                 u.name as user_name,
                 de.timestamp,
                 de.call_type,
+                de.communication_mode,
                 de.time_spent_minutes,
                 de.domain_id,
                 d.domain_name,
@@ -328,6 +339,7 @@ async function updateDcrEntry(id, dcrData, user_id, isAdmin = false) {
         const {
             timestamp,
             call_type,
+            communication_mode,
             time_spent_minutes,
             domain_id,
             domain_free_text,
@@ -350,6 +362,10 @@ async function updateDcrEntry(id, dcrData, user_id, isAdmin = false) {
         if (call_type !== undefined) {
             updateFields.push('call_type = ?');
             params.push(call_type);
+        }
+        if (communication_mode !== undefined) {
+            updateFields.push('communication_mode = ?');
+            params.push(communication_mode);
         }
         if (time_spent_minutes !== undefined) {
             updateFields.push('time_spent_minutes = ?');
@@ -455,6 +471,7 @@ async function getDcrEntriesForDate(date) {
                 u.name as user_name,
                 de.timestamp,
                 de.call_type,
+                de.communication_mode,
                 de.time_spent_minutes,
                 de.domain_id,
                 d.domain_name,

@@ -205,10 +205,13 @@ function generateEmailHTML(data) {
         const contactPhone = entry.contact_phone_number ? `${entry.contact_phone_country_code || ''} ${entry.contact_phone_number}`.trim() : '-';
         const notesDisplay = entry.notes ? (entry.notes.length > 100 ? entry.notes.substring(0, 100) + '...' : entry.notes) : '-';
         
+        const modeDisplay = entry.communication_mode === 'whatsapp_message' ? 'WhatsApp Message' : 'Phone Call';
+        
         return `
             <tr style="background-color: ${entries.indexOf(entry) % 2 === 0 ? '#eff6ff' : '#ffffff'};">
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${timeStr}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${entry.user_name || entry.user_id}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${modeDisplay}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${entry.call_type}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${minutesToTime(entry.time_spent_minutes || 0)}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${domainDisplay}</td>
@@ -304,6 +307,7 @@ function generateEmailHTML(data) {
                     <tr>
                         <th>Time</th>
                         <th>User</th>
+                        <th>Mode</th>
                         <th>Call Type</th>
                         <th style="text-align: center;">Time Spent</th>
                         <th>Domain</th>

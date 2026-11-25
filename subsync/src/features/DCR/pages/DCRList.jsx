@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Filter, X, Eye, FileDown, Copy, Phone, MessageSquare } from "lucide-react";
 import { toast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ export default function DCRList() {
   const [showFilters, setShowFilters] = useState(false);
   const [filterUserId, setFilterUserId] = useState("");
   const [filterCallType, setFilterCallType] = useState("");
+  const [filterCommunicationMode, setFilterCommunicationMode] = useState("");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
   const [allUsers, setAllUsers] = useState([]);
@@ -65,6 +66,7 @@ export default function DCRList() {
     user: isAdmin,
     domain: true,
     contact: true,
+    communicationMode: true,
     callType: true,
     duration: true,
     notes: true
@@ -92,12 +94,12 @@ export default function DCRList() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, filterUserId, filterCallType, filterStartDate, filterEndDate, sortBy, sortOrder]);
+  }, [debouncedSearch, filterUserId, filterCallType, filterCommunicationMode, filterStartDate, filterEndDate, sortBy, sortOrder]);
 
   // Fetch entries when filters change
   useEffect(() => {
     fetchEntries();
-  }, [currentPage, debouncedSearch, filterUserId, filterCallType, filterStartDate, filterEndDate, sortBy, sortOrder]);
+  }, [currentPage, debouncedSearch, filterUserId, filterCallType, filterCommunicationMode, filterStartDate, filterEndDate, sortBy, sortOrder]);
 
   const fetchEntries = () => {
     const params = {
@@ -114,6 +116,7 @@ export default function DCRList() {
     }
     if (isAdmin && filterUserId) params.userId = filterUserId;
     if (filterCallType) params.callType = filterCallType;
+    if (filterCommunicationMode) params.communicationMode = filterCommunicationMode;
     if (sortBy && sortOrder) {
       params.sort = sortBy;
       params.order = sortOrder;
@@ -171,6 +174,7 @@ export default function DCRList() {
       }
       if (isAdmin && filterUserId) params.userId = filterUserId;
       if (filterCallType) params.callType = filterCallType;
+      if (filterCommunicationMode) params.communicationMode = filterCommunicationMode;
 
       // Fetch all entries for export (without pagination)
       const response = await dispatch(getDcrEntries({ ...params, limit: 10000 })).unwrap();
@@ -202,6 +206,7 @@ export default function DCRList() {
     if (exportFields.user && isAdmin) headers.push("User");
     if (exportFields.domain) headers.push("Domain / Company");
     if (exportFields.contact) headers.push("Contact Person");
+    if (exportFields.communicationMode) headers.push("Communication Mode");
     if (exportFields.callType) headers.push("Call Type");
     if (exportFields.duration) headers.push("Duration");
     if (exportFields.notes) headers.push("Description");
@@ -213,6 +218,7 @@ export default function DCRList() {
       if (exportFields.user && isAdmin) row.push(`"${entry.user_name || '-'}"`);
       if (exportFields.domain) row.push(`"${entry.domain_name || entry.domain_free_text || entry.company_name || '-'}"`);
       if (exportFields.contact) row.push(`"${entry.contact_name || '-'}"`);
+      if (exportFields.communicationMode) row.push(`"${entry.communication_mode === 'whatsapp_message' ? 'WhatsApp Message' : 'Phone Call'}"`);
       if (exportFields.callType) row.push(`"${entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1)}"`);
       if (exportFields.duration) row.push(`"${entry.time_spent || '-'}"`);
       if (exportFields.notes) row.push(`"${(entry.notes || '-').replace(/"/g, '""')}"`);
@@ -262,6 +268,9 @@ export default function DCRList() {
       }
       if (exportFields.contact) {
         content += `Contact Person:    ${entry.contact_name || '-'}\n`;
+      }
+      if (exportFields.communicationMode) {
+        content += `Communication Mode:${entry.communication_mode === 'whatsapp_message' ? ' WhatsApp Message' : ' Phone Call'}\n`;
       }
       if (exportFields.callType) {
         content += `Call Type:         ${entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1)}\n`;
@@ -315,13 +324,14 @@ export default function DCRList() {
     ...(isAdmin ? [{ key: "user_name", label: "User" }] : []),
     { key: "domain_display", label: "Domain / Company" },
     { key: "contact_display", label: "Contact" },
+    { key: "communication_mode", label: "Mode" },
     { key: "call_type", label: "Call Type" },
     { key: "time_spent", label: "Duration" },
     { key: "notes_preview", label: "Short Description" },
     { key: "actions", label: "Actions" }
   ];
 
-  const activeFiltersCount = [filterUserId, filterCallType, filterStartDate, filterEndDate].filter(Boolean).length;
+  const activeFiltersCount = [filterUserId, filterCallType, filterCommunicationMode, filterStartDate, filterEndDate].filter(Boolean).length;
 
   return (
     <div className="max-w-[1600px] mx-auto py-4 sm:py-8 px-4">
@@ -417,6 +427,27 @@ export default function DCRList() {
                   />
                 </div>
 
+                {/* Communication Mode Filter */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Communication Mode</label>
+                  <Select
+                    value={filterCommunicationMode || "all"}
+                    onValueChange={(val) => {
+                      setFilterCommunicationMode(val === "all" ? "" : val);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Modes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Modes</SelectItem>
+                      <SelectItem value="phone_call">Phone Call</SelectItem>
+                      <SelectItem value="whatsapp_message">WhatsApp Message</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Call Type Filter */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">Call Type</label>
@@ -507,6 +538,24 @@ export default function DCRList() {
                       {entry.contact_name || "-"}
                     </Link>
                   ) : (entry.contact_name || "-"),
+                  communication_mode: (
+                    <span className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap",
+                      entry.communication_mode === 'whatsapp_message'
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60"
+                        : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60"
+                    )}>
+                      {entry.communication_mode === 'whatsapp_message' ? (
+                        <>
+                          <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> WhatsApp
+                        </>
+                      ) : (
+                        <>
+                          <Phone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Phone Call
+                        </>
+                      )}
+                    </span>
+                  ),
                   call_type: entry.call_type.charAt(0).toUpperCase() + entry.call_type.slice(1).replace('-', '-'),
                   notes_preview: (
                     <span title={entry.notes || "-"} className="cursor-help">
@@ -725,6 +774,20 @@ export default function DCRList() {
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
                       Contact Person
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="export-communicationMode"
+                      checked={exportFields.communicationMode}
+                      onCheckedChange={() => toggleExportField('communicationMode')}
+                    />
+                    <label
+                      htmlFor="export-communicationMode"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Communication Mode
                     </label>
                   </div>
 

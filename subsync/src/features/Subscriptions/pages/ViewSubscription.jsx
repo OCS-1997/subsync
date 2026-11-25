@@ -44,6 +44,7 @@ export default function ViewSubscription({
   onEdit,
   onDelete,
   onRenew,
+  onSendReminder,
   showActions = true,
 }) {
   if (!subscription) return null;
@@ -109,6 +110,16 @@ export default function ViewSubscription({
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-2" />
                     Renew Subscription
+                  </Button>
+                )}
+                {onSendReminder && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onSendReminder(subscription)}
+                    className="rounded-2xl h-10 px-5 font-black text-[11px] uppercase tracking-widest border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 active:scale-95 transition-all shadow-sm"
+                  >
+                    <Mail className="w-3.5 h-3.5 mr-2" />
+                    Send Reminder
                   </Button>
                 )}
               </div>

@@ -18,6 +18,7 @@ import { toast } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
 import RenewSubscriptionModal from './RenewSubscriptionModal';
+import SendReminderModal from '@/features/Subscriptions/components/SendReminderModal';
 
 function RenewalsSection() {
     const navigate = useNavigate();
@@ -31,6 +32,8 @@ function RenewalsSection() {
     const [sendingReminder, setSendingReminder] = useState(null);
     const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
     const [subToRenew, setSubToRenew] = useState(null);
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+    const [subForReminder, setSubForReminder] = useState(null);
 
 
 
@@ -312,20 +315,14 @@ function RenewalsSection() {
                                                         <Button
                                                             size="sm"
                                                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
-                                                            onClick={(e) => sendReminder(renewal.sub_id, e)}
-                                                            disabled={sendingReminder === renewal.sub_id}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSubForReminder(renewal);
+                                                                setIsReminderModalOpen(true);
+                                                            }}
                                                         >
-                                                            {sendingReminder === renewal.sub_id ? (
-                                                                <>
-                                                                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                                                                    Sending...
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Mail className="w-3 h-3 mr-1.5" />
-                                                                    Send Reminder
-                                                                </>
-                                                            )}
+                                                            <Mail className="w-3 h-3 mr-1.5" />
+                                                            Send Reminder
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -346,6 +343,18 @@ function RenewalsSection() {
                     setSubToRenew(null);
                 }}
                 subscription={subToRenew}
+                onSuccess={() => {
+                    loadRenewals();
+                }}
+            />
+
+            <SendReminderModal
+                isOpen={isReminderModalOpen}
+                onClose={() => {
+                    setIsReminderModalOpen(false);
+                    setSubForReminder(null);
+                }}
+                subscription={subForReminder}
                 onSuccess={() => {
                     loadRenewals();
                 }}

@@ -9,6 +9,7 @@ import {
 import RevenueBreakdownModal from '../RevenueBreakdownModal';
 import RenewSubscriptionModal from '../RenewSubscriptionModal';
 import DueSoonBreakdownModal from '../DueSoonBreakdownModal';
+import SendReminderModal from '@/features/Subscriptions/components/SendReminderModal';
 import { toast } from '@/utils/toast';
 import api from '@/lib/axiosInstance';
 import BentoGrid from '../BentoGrid';
@@ -66,6 +67,8 @@ function SubscriptionsTab({ visibleWidgets }) {
     const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
     const [isDueSoonModalOpen, setIsDueSoonModalOpen] = useState(false);
     const [subToRenew, setSubToRenew] = useState(null);
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+    const [subForReminder, setSubForReminder] = useState(null);
 
     // Helper to check if widget is visible
     const isWidgetVisible = (widgetKey) => {
@@ -126,6 +129,13 @@ function SubscriptionsTab({ visibleWidgets }) {
         if (e) e.stopPropagation();
         setSubToRenew(sub);
         setIsRenewModalOpen(true);
+    };
+
+    // Open reminder modal with preview & edit for a subscription
+    const handleOpenReminderModal = (sub, e) => {
+        if (e) e.stopPropagation();
+        setSubForReminder(sub);
+        setIsReminderModalOpen(true);
     };
 
     // When subscription is renewed successfully
@@ -648,20 +658,10 @@ function SubscriptionsTab({ visibleWidgets }) {
                                                 <Button
                                                     size="sm"
                                                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg h-8 shadow-sm transition-all active:scale-95"
-                                                    onClick={(e) => sendReminder(sub.sub_id, e)}
-                                                    disabled={sendingReminder === sub.sub_id}
+                                                    onClick={(e) => handleOpenReminderModal(sub, e)}
                                                 >
-                                                    {sendingReminder === sub.sub_id ? (
-                                                        <>
-                                                            <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                                                            Sending...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Mail className="w-3 h-3 mr-1.5" />
-                                                            Send Reminder
-                                                        </>
-                                                    )}
+                                                    <Mail className="w-3 h-3 mr-1.5" />
+                                                    Send Reminder
                                                 </Button>
                                             </div>
                                         </div>
@@ -870,6 +870,19 @@ function SubscriptionsTab({ visibleWidgets }) {
             }}
             subscription={subToRenew}
             onSuccess={handleRenewSuccess}
+        />
+
+        <SendReminderModal
+            isOpen={isReminderModalOpen}
+            onClose={() => {
+                setIsReminderModalOpen(false);
+                setSubForReminder(null);
+            }}
+            subscription={subForReminder}
+            onSuccess={() => {
+                loadRenewals();
+                loadDashboardStats();
+            }}
         />
 
         <DueSoonBreakdownModal

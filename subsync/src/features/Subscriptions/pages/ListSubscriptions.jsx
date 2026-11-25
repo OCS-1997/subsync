@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import SubscriptionHistory from "../components/SubscriptionHistory.jsx";
 import ViewSubscription from "./ViewSubscription.jsx";
 import RenewSubscriptionModal from "@/features/Dashboard/components/RenewSubscriptionModal.jsx";
+import SendReminderModal from "../components/SendReminderModal.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 
@@ -56,6 +57,8 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
   const [detailsSubscription, setDetailsSubscription] = useState(null);
   const [renewDialogOpen, setRenewDialogOpen] = useState(false);
   const [subscriptionToRenew, setSubscriptionToRenew] = useState(null);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [subscriptionForReminder, setSubscriptionForReminder] = useState(null);
   const debounceTimeout = useRef();
 
   const username = location.pathname.split('/')[1] || '';
@@ -258,13 +261,9 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
           <DropdownMenuItem onClick={() => onEdit && onEdit(row.sub_id)} className="rounded-lg p-2 text-sm gap-2">
             <Edit className="h-4 w-4" /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={async () => {
-            try {
-              await api.post(`/subscription/${row.sub_id}/reminder`);
-              toast.success('Reminder sent successfully');
-            } catch (e) {
-              toast.error(e.normalizedMessage || 'Failed to send reminder');
-            }
+          <DropdownMenuItem onClick={() => {
+            setSubscriptionForReminder(row);
+            setReminderDialogOpen(true);
           }} className="rounded-lg p-2 text-sm gap-2">
             <Mail className="h-4 w-4" /> Send Reminder
           </DropdownMenuItem>
@@ -439,6 +438,10 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
                     setSubscriptionToRenew(sub || detailsSubscription);
                     setRenewDialogOpen(true);
                   }}
+                  onSendReminder={(sub) => {
+                    setSubscriptionForReminder(sub || detailsSubscription);
+                    setReminderDialogOpen(true);
+                  }}
                   showActions={false}
                 />
               </div>
@@ -510,6 +513,19 @@ export default function ListSubscriptions({ onAddNew, onEdit, onViewArchived }) 
           if (detailsDialogOpen && detailsSubscription) {
             openDetailsDialog(detailsSubscription.sub_id);
           }
+        }}
+      />
+
+      {/* Send Reminder Modal with Preview & Edit */}
+      <SendReminderModal
+        isOpen={reminderDialogOpen}
+        onClose={() => {
+          setReminderDialogOpen(false);
+          setSubscriptionForReminder(null);
+        }}
+        subscription={subscriptionForReminder}
+        onSuccess={() => {
+          fetchData();
         }}
       />
     </div>

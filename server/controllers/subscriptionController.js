@@ -2,7 +2,7 @@ import { getSubscriptions, addSubscription, getSubscriptionById, updateSubscript
 import { getSubscriptionHistory, getSubscriptionHistoryCount } from "../models/subscriptionHistoryModel.js";
 import { logActivity } from "../models/activityLogModel.js";
 import { enqueueReminders, cancelPendingReminderJobs } from "../services/reminderService.js";
-import { sendReminderEmail } from "../services/emailService.js";
+import { sendReminderEmail, previewReminderEmail } from "../services/emailService.js";
 import { publishHelpdeskEvent } from '../services/webhookService.js';
 
 // RESTful: POST /subscriptions
@@ -182,15 +182,35 @@ const deleteSubscriptionController = async (req, res) => {
   }
 };
 
+// Preview reminder email for a subscription
+const previewReminderController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { templateKey = 'renewal_reminder' } = req.body || {};
+
+    const preview = await previewReminderEmail(id, templateKey);
+    return res.status(200).json(preview);
+  } catch (error) {
+    console.error('Error previewing reminder:', error);
+    return res.status(500).json({
+      error: error.message || 'Failed to preview reminder email',
+      success: false
+    });
+  }
+};
+
 // Send reminder email instantly for a subscription
 const sendReminderController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { templateKey = 'renewal_reminder' } = req.body;
+    const { templateKey = 'renewal_reminder', to, subject, html } = req.body || {};
 
     // Send the email immediately
     const result = await sendReminderEmail(id, templateKey, new Date(), {
-      isManual: true
+      isManual: true,
+      to,
+      customSubject: subject,
+      customHtml: html
     });
 
     if (!result.success) {
@@ -261,5 +281,6 @@ export {
   updateSubscriptionController,
   deleteSubscriptionController,
   sendReminderController,
+  previewReminderController,
   getSubscriptionHistoryController
 };

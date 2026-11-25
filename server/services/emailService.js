@@ -580,11 +580,14 @@ export async function sendReminderEmail(subscriptionId, templateKey, runAt, opti
         if (options.customSubject) {
             subject = options.customSubject;
         }
+        if (options.customHtml) {
+            html = options.customHtml;
+        }
 
         // Determine recipient list
         let recipients = [];
         if (options.to) {
-            recipients = Array.isArray(options.to) ? options.to : [options.to];
+            recipients = Array.isArray(options.to) ? options.to : (typeof options.to === 'string' ? options.to.split(',').map(s => s.trim()).filter(Boolean) : [options.to]);
         } else if (subscription.email_list && Array.isArray(subscription.email_list) && subscription.email_list.length > 0) {
             recipients = subscription.email_list;
         } else if (customer.primary_email) {
@@ -611,4 +614,57 @@ export async function sendReminderEmail(subscriptionId, templateKey, runAt, opti
         };
     }
 }
+
+/**
+ * Generate preview of reminder email for a subscription
+ */
+export async function previewReminderEmail(subscriptionId, templateKey = 'renewal_reminder') {
+    // Load subscription and related data
+    const subscription = await getSubscriptionById(subscriptionId);
+    if (!subscription) {
+        throw new Error(`Subscription not found: ${subscriptionId}`);
+    }
+
+    // Load customer
+    const customer = await getCustomerById(subscription.customer_id);
+    if (!customer) {
+        throw new Error(`Customer not found: ${subscription.customer_id}`);
+    }
+
+    // Load subscription items
+    const items = await getSubscriptionItems(subscriptionId);
+
+    // Build template context
+    const context = buildTemplateContext(subscription, customer, items, new Date());
+    context.renewal_date = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+
+    // Render template
+    const { subject, html } = await renderEmailTemplate(templateKey, context);
+
+    // Determine recipient list
+    let recipients = [];
+    if (subscription.email_list && Array.isArray(subscription.email_list) && subscription.email_list.length > 0) {
+        recipients = subscription.email_list;
+    } else if (customer.primary_email) {
+        recipients = [customer.primary_email];
+    }
+
+    const expiryFormatted = subscription.end_date
+        ? new Date(subscription.end_date).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
+        : 'N/A';
+
+    return {
+        success: true,
+        subject,
+        html,
+        to: recipients.join(', '),
+        recipients,
+        customer_name: customer?.display_name || customer?.first_name || 'Customer',
+        domain_name: subscription.domain_name || 'N/A',
+        end_date: subscription.end_date,
+        expiry_date_formatted: expiryFormatted,
+        templateKey
+    };
+}
+
 

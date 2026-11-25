@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Clock, Building2, User, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Save, Clock, Building2, User, Mail, Phone, MessageSquare } from "lucide-react";
 import { toast } from '@/utils/toast';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,7 @@ export default function DCRForm() {
     hours: "00",
     minutes: "05",
     call_type: "incoming",
+    communication_mode: "phone_call",
     domain_id: null,
     domain_free_text: "",
     company_name: "",
@@ -93,6 +94,7 @@ export default function DCRForm() {
         hours: String(hours).padStart(2, '0'),
         minutes: String(minutes).padStart(2, '0'),
         call_type: entry.call_type || "incoming",
+        communication_mode: entry.communication_mode || "phone_call",
         domain_id: entry.domain_id || null,
         domain_free_text: entry.domain_free_text || "",
         company_name: entry.company_name || "",
@@ -284,6 +286,7 @@ export default function DCRForm() {
       const submitData = {
         timestamp: timestamp.toISOString(),
         call_type: formData.call_type,
+        communication_mode: formData.communication_mode || "phone_call",
         time_spent: `${formData.hours}:${formData.minutes}`,
         domain_id: isExistingCustomer ? formData.domain_id : null,
         domain_free_text: !isExistingCustomer ? formData.domain_free_text : null,
@@ -401,6 +404,31 @@ export default function DCRForm() {
                   </Select>
                 </div>
               </div>
+            </div>
+
+            {/* Communication Mode */}
+            <div className="flex flex-col gap-3">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-500">
+                Communication Mode <span className="text-red-500 font-bold ml-1">*</span>
+              </Label>
+              <RadioGroup
+                value={formData.communication_mode}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, communication_mode: value }))}
+                className="flex gap-8"
+              >
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="phone_call" id="comm_phone" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-blue-500 data-[state=checked]:text-blue-500" />
+                  <Label htmlFor="comm_phone" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-blue-500 transition-colors flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-blue-500" /> Phone Call
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 group">
+                  <RadioGroupItem value="whatsapp_message" id="comm_whatsapp" className="border-gray-300 dark:border-slate-700 data-[state=checked]:border-emerald-500 data-[state=checked]:text-emerald-500" />
+                  <Label htmlFor="comm_whatsapp" className="font-bold text-sm text-gray-700 dark:text-slate-300 cursor-pointer group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp Message
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
 
             {/* Call Type */}

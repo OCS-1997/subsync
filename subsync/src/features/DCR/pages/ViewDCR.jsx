@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Phone, Calendar, Clock, Building2, User, Mail, BookOpen } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, Calendar, Clock, Building2, User, Mail, BookOpen, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Breadcrumb } from "@/components/ui/breadcrumb.jsx";
@@ -171,6 +171,26 @@ export default function ViewDCR() {
                                 <div className="flex items-center gap-2">
                                     <Clock className="w-4 h-4 text-gray-400" />
                                     <p className="text-base dark:text-white">{entry.time_spent || `${Math.floor(entry.time_spent_minutes / 60)}:${String(entry.time_spent_minutes % 60).padStart(2, '0')}`}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">
+                                    Communication Mode
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    {entry.communication_mode === 'whatsapp_message' ? (
+                                        <MessageSquare className="w-4 h-4 text-emerald-500" />
+                                    ) : (
+                                        <Phone className="w-4 h-4 text-blue-500" />
+                                    )}
+                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                        entry.communication_mode === 'whatsapp_message'
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
+                                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200'
+                                    }`}>
+                                        {entry.communication_mode === 'whatsapp_message' ? 'WhatsApp Message' : 'Phone Call'}
+                                    </span>
                                 </div>
                             </div>
 

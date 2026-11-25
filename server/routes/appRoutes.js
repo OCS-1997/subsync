@@ -67,7 +67,7 @@ import { createContact, getContacts, getContactById, updateContact, deleteContac
 import { createServiceController, getAllServicesController, getServiceByIdController, updateServiceController, deleteServiceController } from '../controllers/serviceController.js';
 import { createVendorController, getAllVendorsController, getVendorByIdController, updateVendorController, deleteVendorController } from "../controllers/vendorController.js";
 import { createItemGroupController, getAllItemGroupsController, getItemGroupByIdController, updateItemGroupController, deleteItemGroupController } from "../controllers/itemGroupController.js";
-import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController, getSubscriptionHistoryController } from '../controllers/subscriptionController.js';
+import { getSubscriptionsController, createSubscription, getSubscriptionByIdController, updateSubscriptionController, deleteSubscriptionController, sendReminderController, previewReminderController, getSubscriptionHistoryController } from '../controllers/subscriptionController.js';
 import { renewSubscriptionController, previewRenewalEmailController, archiveSubscriptionController, unarchiveSubscriptionController, enqueueRemindersController } from '../controllers/subscriptionReminderController.js';
 import { listReminderPoliciesController, getReminderPolicyController, createReminderPolicyController, updateReminderPolicyController, deleteReminderPolicyController } from '../controllers/reminderPolicyController.js';
 import { listEmailTemplatesController, getEmailTemplateController, upsertEmailTemplateController, updateEmailTemplateController, deleteEmailTemplateController, previewEmailTemplateController } from '../controllers/emailTemplateController.js';
@@ -419,6 +419,9 @@ router.delete('/delete-item-group/:id', isAuthenticated, authorize(PERMISSIONS.S
 
 // Subscriptions
 router.post('/subscription/:id/reminder', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), sendReminderController);
+router.post('/subscriptions/:id/reminder', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_SEND_REMINDER), sendReminderController);
+router.post('/subscription/:id/reminder-preview', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), previewReminderController);
+router.post('/subscriptions/:id/reminder-preview', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), previewReminderController);
 router.get('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionsController);
 router.post('/subscriptions', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_CREATE), createSubscription);
 router.get('/subscriptions/:id', isAuthenticated, authorize(PERMISSIONS.SUBSCRIPTIONS_VIEW), getSubscriptionByIdController);

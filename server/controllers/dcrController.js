@@ -26,6 +26,7 @@ const createDcr = async (req, res) => {
         const {
             timestamp,
             call_type,
+            communication_mode,
             time_spent, // HH:MM format
             domain_id,
             domain_free_text,
@@ -43,11 +44,13 @@ const createDcr = async (req, res) => {
         const time_spent_minutes = timeToMinutes(time_spent);
 
         const normalizedTimestamp = toMySqlDateTime(timestamp || new Date());
+        const normalizedMode = (communication_mode === 'whatsapp_message' || communication_mode === 'WhatsApp Message') ? 'whatsapp_message' : 'phone_call';
 
         const dcrData = {
             user_id: req.user.username,
             timestamp: normalizedTimestamp,
             call_type: call_type || 'incoming',
+            communication_mode: normalizedMode,
             time_spent_minutes,
             domain_id: domain_id || null,
             domain_free_text: domain_free_text || null,
@@ -156,6 +159,7 @@ const getDcrList = async (req, res) => {
             userId, // Admin filter
             search,
             callType,
+            communicationMode,
             sort,
             order,
             page = 1,
@@ -180,6 +184,7 @@ const getDcrList = async (req, res) => {
             endDate: end,
             search: search || null,
             callType: callType || null,
+            communicationMode: communicationMode || null,
             sort: sort || null,
             order: order || null,
             page: parseInt(page),
@@ -264,6 +269,7 @@ const updateDcr = async (req, res) => {
         const {
             timestamp,
             call_type,
+            communication_mode,
             time_spent, // HH:MM format
             domain_id,
             domain_free_text,
@@ -280,6 +286,9 @@ const updateDcr = async (req, res) => {
 
         if (timestamp !== undefined) updateData.timestamp = toMySqlDateTime(timestamp);
         if (call_type !== undefined) updateData.call_type = call_type;
+        if (communication_mode !== undefined) {
+            updateData.communication_mode = (communication_mode === 'whatsapp_message' || communication_mode === 'WhatsApp Message') ? 'whatsapp_message' : 'phone_call';
+        }
         if (time_spent !== undefined) {
             updateData.time_spent_minutes = timeToMinutes(time_spent);
         }
@@ -618,6 +627,14 @@ async function getDcrDetailedReport(req, res) {
             GROUP BY de.call_type
         `, params);
 
+        // Communication mode distribution
+        const [communicationModes] = await appDB.query(`
+            SELECT de.communication_mode as name, COUNT(*) as value
+            FROM dcr_entries de
+            WHERE ${whereClause}
+            GROUP BY de.communication_mode
+        `, params);
+
         // User breakdown
         const [userBreakdown] = await appDB.query(`
             SELECT u.name, COUNT(*) as calls, SUM(de.time_spent_minutes) as minutes
@@ -641,7 +658,7 @@ async function getDcrDetailedReport(req, res) {
 
         res.status(200).json({ 
             success: true, 
-            data: { dailyTrend, callTypes, userBreakdown, summary } 
+            data: { dailyTrend, callTypes, communicationModes, userBreakdown, summary } 
         });
     } catch (error) {
         console.error("Error in getDcrDetailedReport:", error);
