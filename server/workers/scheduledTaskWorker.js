@@ -8,6 +8,7 @@ import { syncBirthdays } from '../models/birthdayModel.js';
 import { syncDirectory } from '../services/directoryService.js';
 import { sendAppraisalReminders } from '../services/appraisalService.js';
 import { sendDailyTaskDigestEmails } from '../services/taskDigestService.js';
+import { sendDailyGoalReminderEmails } from '../services/goalDigestService.js';
 import { sendWeeklyTaskReportEmail } from '../services/weeklyTaskReportService.js';
 import { sendWeeklyProductHoursReportEmail } from '../services/weeklyProductHoursReportService.js';
 import { sendMonthlyProductHoursReports } from '../services/monthlyProductHoursReportService.js';
@@ -53,6 +54,9 @@ async function processScheduledTask(job) {
                 break;
             case 'daily_task_digest':
                 result = await sendDailyTaskDigestEmails();
+                break;
+            case 'daily_goal_reminder':
+                result = await sendDailyGoalReminderEmails();
                 break;
             case 'weekly_task_report':
                 result = await sendWeeklyTaskReportEmail();

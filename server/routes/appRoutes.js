@@ -25,7 +25,8 @@ import {
     uploadAttachment as uploadGoalAttachmentCtrl,
     removeAttachment as deleteGoalAttachmentCtrl,
     postComment as postGoalCommentCtrl,
-    exportGoalsReport
+    exportGoalsReport,
+    triggerDailyGoalRemindersCtrl
 } from '../controllers/goalController.js';
 import { uploadGoalAttachmentMiddleware, uploadTaskAttachmentMiddleware } from '../middlewares/uploadMiddleware.js';
 import {
@@ -832,6 +833,7 @@ router.delete('/holidays/:id', isAuthenticated, authorize([PERMISSIONS.HOLIDAYS_
 
 // Goals Module Endpoints
 router.get('/goals/dashboard-stats', isAuthenticated, authorize(['goals.view']), getDashboardStats);
+router.post('/goals/trigger-daily-reminders', isAuthenticated, triggerDailyGoalRemindersCtrl);
 router.get('/goals/export', isAuthenticated, authorize(['goals.export']), exportGoalsReport);
 router.get('/goals', isAuthenticated, authorize(['goals.view']), getGoalsList);
 router.post('/goals', isAuthenticated, authorize(['goals.create']), postGoal);

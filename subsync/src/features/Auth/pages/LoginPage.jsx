@@ -26,6 +26,7 @@ import { toast } from '@/utils/toast';
 import { loginUser } from "../authSlice";
 import { getActiveFestival, getFestivalDateString } from "../../../utils/festivalThemes";
 import SplashScreen from "../components/SplashScreen";
+import Hamster from "@/components/animations/Hamster.jsx";
 import { isPWA, getRememberMe } from "../../../utils/storage";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -125,6 +126,14 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans">
+      {/* Hamster Loading Screen when authenticating or slow */}
+      {isLoading && (
+        <div className="py-40 flex flex-col justify-center items-center">
+            <Hamster />
+            <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">Loading...</p>
+          </div>
+      )}
+
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
 
       {/* Left Panel - Centered Branding / Festival Panel */}

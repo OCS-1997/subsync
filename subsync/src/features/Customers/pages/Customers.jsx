@@ -208,7 +208,7 @@ function Customers() {
         {loading ? (
           <div className="py-40 flex flex-col justify-center items-center">
             <Hamster />
-            <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">Scanning Registry...</p>
+            <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">Loading...</p>
           </div>
         ) : customers.length > 0 ? (
           <motion.div

@@ -15,6 +15,7 @@ import {
 import { getGoalActivityLogs } from "../models/goalActivityModel.js";
 import { generateGoalsExcelReport } from "../services/excelExportService.js";
 import { triggerGoalNotification } from "../services/goalNotificationService.js";
+import { sendDailyGoalReminderEmails } from "../services/goalDigestService.js";
 
 export const getGoalsList = async (req, res) => {
     try {
@@ -262,5 +263,15 @@ export const exportGoalsReport = async (req, res) => {
     } catch (error) {
         console.error("Error exporting goals report:", error);
         return res.status(500).json({ error: "Failed to export goals report" });
+    }
+};
+
+export const triggerDailyGoalRemindersCtrl = async (req, res) => {
+    try {
+        const result = await sendDailyGoalReminderEmails();
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Error triggering daily goal reminders:", error);
+        return res.status(500).json({ error: error.message || "Failed to trigger daily goal reminders" });
     }
 };

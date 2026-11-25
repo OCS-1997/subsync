@@ -97,7 +97,16 @@ export async function syncScheduledTasks() {
             }
         );
 
-        // 10. Weekly Tasks Report for Admins (Every Saturday at 18:00 IST / 12:30 UTC)
+        // 10. Daily Goal Reminder Email (Daily at 10:00 AM IST / 04:30 UTC - same time as task digest)
+        await scheduledTasksQueue.add(
+            'daily_goal_reminder',
+            { taskName: 'daily_goal_reminder' },
+            {
+                repeat: { pattern: '30 4 * * *', tz: 'UTC' }
+            }
+        );
+
+        // 11. Weekly Tasks Report for Admins (Every Saturday at 18:00 IST / 12:30 UTC)
         await scheduledTasksQueue.add(
             'weekly_task_report',
             { taskName: 'weekly_task_report' },
